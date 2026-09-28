@@ -67,7 +67,10 @@ def test_analyst_materializes_conclusions_and_evidence(tmp_path):
 def test_run_case_end_to_end_with_rejection(tmp_path):
     _make_case(tmp_path)
     fake = FakeClient(GOOD_BAD_JSON)
-    result = run_case(tmp_path, out_dir=tmp_path / "out", client=fake)
+    # 注入单分析师：周 1 最小闭环口径（协同段仅 ≥2 分析师才走）
+    single = [Analyst("mainstream", "测试角色", fake, "test-model")]
+    result = run_case(tmp_path, out_dir=tmp_path / "out", client=fake,
+                      analysts=single)
     assert isinstance(result, PipelineResult)
 
     # 好证据存活、编造引文被打回
@@ -96,8 +99,10 @@ def test_run_case_end_to_end_with_rejection(tmp_path):
 
 def test_run_case_without_analyst_output_still_writes_report(tmp_path):
     _make_case(tmp_path)
-    result = run_case(tmp_path, out_dir=tmp_path / "out",
-                      client=FakeClient('{"conclusions": []}'))
+    fake = FakeClient('{"conclusions": []}')
+    single = [Analyst("mainstream", "测试角色", fake, "test-model")]
+    result = run_case(tmp_path, out_dir=tmp_path / "out", client=fake,
+                      analysts=single)
     assert result.dossier.conclusions == []
     assert result.chain.verify_chain().ok
     assert "无结论" in result.report_md

@@ -178,24 +178,37 @@ class EvidenceNode:
 
 @dataclass
 class Conclusion:
-    """结论：由某个研判智能体产出，挂证据链、置信度与少数意见。"""
+    """结论：由某个研判智能体产出，挂证据链、置信度与少数意见。
+
+    status 状态机：
+    - majority 默认态（独立结论或归并/仲裁后的多数结论）；
+    - dissent  少数意见：仲裁落败但按榜单要求保留，不参与主表置信度排序；
+    - merged   已并入归并组，仅作溯源保留（其证据已转挂到组结论）。
+    """
 
     id: str
     statement: str
-    author: str = ""                       # 产出智能体名
+    author: str = ""                       # 产出智能体名（单人）
+    authors: list[str] = field(default_factory=list)  # 归并组的全体署名
+    status: str = "majority"
     evidence_ids: list[str] = field(default_factory=list)
     confidence: float = 0.0                # 0-1（confidence 融合后回填）
     confidence_parts: dict = field(default_factory=dict)  # 分量解释
-    dissent: list[dict] = field(default_factory=list)     # 少数意见（周 2 填充）
+    dissent: list[dict] = field(default_factory=list)     # 少数意见记录
 
     @classmethod
     def create(cls, statement: str, author: str = "", **kw) -> "Conclusion":
         return cls(id=kw.pop("id", None) or _new_id("CON"), statement=statement,
                    author=author, **kw)
 
+    def author_names(self) -> list[str]:
+        """该结论的全部署名（归并组看 authors，单人看 author）。"""
+        return self.authors or ([self.author] if self.author else [])
+
     def to_dict(self) -> dict:
         return {
             "id": self.id, "statement": self.statement, "author": self.author,
+            "authors": self.authors, "status": self.status,
             "evidence_ids": self.evidence_ids, "confidence": self.confidence,
             "confidence_parts": self.confidence_parts, "dissent": self.dissent,
         }
@@ -205,6 +218,8 @@ class Conclusion:
         return cls(
             id=str(d["id"]), statement=str(d.get("statement", "")),
             author=str(d.get("author", "")),
+            authors=[str(a) for a in d.get("authors") or []],
+            status=str(d.get("status", "majority")),
             evidence_ids=[str(x) for x in d.get("evidence_ids") or []],
             confidence=float(d.get("confidence", 0.0)),
             confidence_parts=dict(d.get("confidence_parts") or {}),
@@ -214,13 +229,17 @@ class Conclusion:
 
 @dataclass
 class Dossier:
-    """研判案卷：一次研判任务的全部来源、证据与结论。"""
+    """研判案卷：一次研判任务的全部来源、证据、结论与冲突记录。"""
 
     question: str
     sources: list[Source] = field(default_factory=list)
     evidences: list[EvidenceNode] = field(default_factory=list)
     conclusions: list[Conclusion] = field(default_factory=list)
     title: str = ""
+    # 冲突对与消解记录（ConflictPair.to_dict，见 core/conflicts.py；
+    # 存 dict 避免与 evidence 模块互相 import 成环）
+    conflicts: list[dict] = field(default_factory=list)
+    panel: list[str] = field(default_factory=list)  # 参与研判的分析师名
 
     # -- 索引 --
 
@@ -242,6 +261,11 @@ class Dossier:
 
     def conclusion(self, conclusion_id: str) -> Conclusion | None:
         return next((c for c in self.conclusions if c.id == conclusion_id), None)
+
+    def statement_of(self, conclusion_id: str) -> str:
+        """结论 id → 陈述文本（报告引用用；不存在返回占位）。"""
+        con = self.conclusion(conclusion_id)
+        return f"「{con.statement}」" if con else "（结论已不存在）"
 
     def evidences_of(self, conclusion_id: str) -> list[EvidenceNode]:
         return [e for e in self.evidences if e.conclusion_id == conclusion_id]
@@ -268,18 +292,22 @@ class Dossier:
     def to_dict(self) -> dict:
         return {
             "question": self.question, "title": self.title,
+            "panel": self.panel,
             "sources": [s.to_dict() for s in self.sources],
             "evidences": [e.to_dict() for e in self.evidences],
             "conclusions": [c.to_dict() for c in self.conclusions],
+            "conflicts": self.conflicts,
         }
 
     @classmethod
     def from_dict(cls, d: dict) -> "Dossier":
         return cls(
             question=str(d.get("question", "")), title=str(d.get("title", "")),
+            panel=[str(p) for p in d.get("panel") or []],
             sources=[Source.from_dict(s) for s in d.get("sources") or []],
             evidences=[EvidenceNode.from_dict(e) for e in d.get("evidences") or []],
             conclusions=[Conclusion.from_dict(c) for c in d.get("conclusions") or []],
+            conflicts=list(d.get("conflicts") or []),
         )
 
     def to_json(self, path: Path) -> Path:

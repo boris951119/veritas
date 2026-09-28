@@ -8,3 +8,6 @@ sources:
     type: note
   - file: news_update.txt
     type: news
+  - file: report_progress.md
+    type: report
+    credibility: 0.65
