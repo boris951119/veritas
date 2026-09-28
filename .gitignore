@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+
+# 环境与密钥
+.env
+*.key
+
+# 数据与本地产物
+data/
+*.db
+*.sqlite3
+
+# macOS / IDE
+.DS_Store
+.idea/
+.vscode/
