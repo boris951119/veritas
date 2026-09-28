@@ -58,6 +58,9 @@ veritas/
 # 3b) 离线演示兜底（零网络零 key，全流程出产物）
 .venv/bin/python scripts/demo_offline.py
 
+# 3c) 可视化工作台（证据图下钻 / 人工修改重算 / 防篡改演示）
+.venv/bin/python -m app.server --port 8765   # 浏览器开 http://127.0.0.1:8765/
+
 # 4) 测试（零 key 全绿）
 .venv/bin/python -m pytest tests/ -q
 ```

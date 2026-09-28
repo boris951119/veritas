@@ -87,6 +87,20 @@ python3 -m venv .venv
 **通过判据**：打印真实研判报告，产物写入 `cases/demo-solid-state/out/`；
 `chain.jsonl` 为全程哈希链研判日志。
 
+## 第 5 步：可视化工作台（演示主入口）
+
+```bat
+:: Windows
+.venv\Scripts\python -m app.server --port 8765
+```
+
+浏览器打开 `http://127.0.0.1:8765/`（默认只读本机）。工作台读取
+`cases/*/out*/report.json`：证据链三级下钻（结论→逐字引文→原文段落）、
+置信度分量面板、冲突消解与少数意见视图、信源可信度调整、删证据/改权重
+即时重算、哈希链校验与「篡改演示（改一字即红）」。人工修改会以 human
+事件追加进 chain.jsonl（修改可审计，链仍自洽）。若 8765 被占用换端口
+即可；依赖 fastapi/uvicorn（已在 requirements.txt，一键脚本会装）。
+
 ## 故障排查
 
 | 症状 | 处理 |

@@ -139,9 +139,11 @@ def test_merge_merges_synonyms_and_keeps_provenance():
     group_id = [i for i in active if i != "CON-0"][0]
     group = d.conclusion(group_id)
     assert group.authors == ["a1", "a2"]
-    assert len(group.evidence_ids) == 2        # 成员证据全部转挂
+    # 同引文去重：CON-1 与 CON-2 摘的是同一段原话 → 组内只保留一条
+    assert len(group.evidence_ids) == 1
     assert d.conclusion("CON-1").status == "merged"
-    assert d.evidences_of("CON-1") == []       # 证据已不挂在成员上
+    # 重复引文留在成员结论上作溯源，不随组重复计数
+    assert len(d.evidences_of("CON-2")) == 1
     assert {e.conclusion_id for e in d.evidences_of(group_id)} == {group_id}
 
 

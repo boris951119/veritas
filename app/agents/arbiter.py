@@ -78,8 +78,17 @@ class Coordinator:
                 authors=sorted({a for m in members for a in m.author_names()}),
             )
             dossier.conclusions.append(group_con)
+            # 证据转挂 + 同引文去重：不同分析师摘了同一段原话时只保留一条
+            # （独立同证的"一致"信号由 confidence 的 agreement 分量体现，
+            # 不该在证据计数里重复膨胀）
+            seen_quote: set[tuple] = set()
             for member in members:
                 for ev in dossier.evidences_of(member.id):
+                    signature = (ev.quote.strip(), tuple(sorted(ev.segment_ids)),
+                                 ev.relation, ev.level)
+                    if signature in seen_quote:
+                        continue  # 重复引文：留在成员上作溯源，不转挂
+                    seen_quote.add(signature)
                     ev.conclusion_id = group_con.id
                     group_con.evidence_ids.append(ev.id)
                 member.status = "merged"

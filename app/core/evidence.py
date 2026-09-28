@@ -240,6 +240,8 @@ class Dossier:
     # 存 dict 避免与 evidence 模块互相 import 成环）
     conflicts: list[dict] = field(default_factory=list)
     panel: list[str] = field(default_factory=list)  # 参与研判的分析师名
+    # 被引文核对打回的证据清单（EvidenceRef dict + problems；持久化供工作台展示）
+    rejected: list[dict] = field(default_factory=list)
 
     # -- 索引 --
 
@@ -297,6 +299,7 @@ class Dossier:
             "evidences": [e.to_dict() for e in self.evidences],
             "conclusions": [c.to_dict() for c in self.conclusions],
             "conflicts": self.conflicts,
+            "rejected": self.rejected,
         }
 
     @classmethod
@@ -308,6 +311,7 @@ class Dossier:
             evidences=[EvidenceNode.from_dict(e) for e in d.get("evidences") or []],
             conclusions=[Conclusion.from_dict(c) for c in d.get("conclusions") or []],
             conflicts=list(d.get("conflicts") or []),
+            rejected=list(d.get("rejected") or []),
         )
 
     def to_json(self, path: Path) -> Path:

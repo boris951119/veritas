@@ -86,6 +86,7 @@ def run_case(
 
     # 2) 引文机械核对（协同段之前：坏证据不进归并与仲裁）
     rejected = _reject_failed_citations(dossier, chain)
+    dossier.rejected = rejected  # 持久化进 report.json（工作台展示）
 
     # 3) 协同段：归并 → 冲突 → 质证 → 仲裁（≥2 分析师才走；逐步降级）
     if len(analysts) >= 2:
