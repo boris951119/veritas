@@ -25,3 +25,4 @@ data/
 # 运行产物与本地密钥配置（connections 段可含 key，勿提交）
 cases/*/out/
 config.json
+cases/*/out_offline/

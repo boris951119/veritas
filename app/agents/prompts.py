@@ -117,11 +117,11 @@ def render_conclusions_block(dossier: Dossier, conclusion_ids: list[str]) -> str
         if con is None:
             continue
         evs = dossier.evidences_of(cid)
-        ev_brief = "；".join(
-            f"『{e.quote[:50]}{"…" if len(e.quote) > 50 else ""}』"
-            f"({e.level.value},{e.relation.value})"
-            for e in evs
-        ) or "（无证据）"
+        ev_briefs = []
+        for e in evs:
+            quote = e.quote[:50] + ("…" if len(e.quote) > 50 else "")
+            ev_briefs.append(f"『{quote}』({e.level.value},{e.relation.value})")
+        ev_brief = "；".join(ev_briefs) or "（无证据）"
         authors = "、".join(con.author_names()) or "未知"
         lines.append(f"[{cid}]（{authors}）{con.statement}\n    证据：{ev_brief}")
     return "\n".join(lines)

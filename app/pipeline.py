@@ -265,6 +265,17 @@ def _render_dissent_section(lines: list[str], dossier: Dossier) -> None:
 
 
 def main() -> int:
+    # Windows 防线：stdout 被重定向/管道时 Python 落回 GBK 代码页，
+    # print 中文报告会 UnicodeEncodeError（token-burner 实证教训）——
+    # 进 main 即钉死 UTF-8，乱码最多一行，绝不假红。
+    import sys
+
+    try:
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+        sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
+
     parser = argparse.ArgumentParser(description="veritas 研判管线")
     parser.add_argument("case_dir", help="案例目录（含 manifest.yaml 与资料文件）")
     parser.add_argument("--out", default=None, help="报告输出目录（默认 cases/<case>/out）")

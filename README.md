@@ -37,19 +37,26 @@ veritas/
 └── docs/           # 方案文档（答辩材料）
 ```
 
-## 快速开始
+## 快速开始（macOS / Windows 通用）
+
+**换机部署（U 盘携带、现场 Windows 机）**：看 [AGENTS.md](AGENTS.md)——
+给 AI 智能体执行的分步部署指引（环境自检 → 一键脚本 → 零 key 验证 →
+离线演示兜底 → 在线研判），配套 `setup-windows.bat` / `setup-mac.sh`。
+打包：`bash scripts/make_usb_bundle.sh`（排除 `.venv`，现场重建）。
 
 ```bash
-# 1) 环境（python3.12）
+# 1) 环境（Python 3.9–3.12 均兼容；Windows 用 setup-windows.bat）
 /opt/homebrew/bin/python3.12 -m venv .venv
 .venv/bin/pip install -r requirements.txt litellm   # litellm 仅真实调用需要
 
-# 2) 网关配置：.env 放 OPENAI_API_KEY / OPENAI_BASE_URL（不进 git），
+# 2) 网关配置：.env 放 OPENAI_API_KEY / OPENAI_BASE_URL（不进 git，模板 .env.example），
 #    config.json 可覆盖模型清单（参考 config.example.json）
 
-# 3) 跑一个研判案例
+# 3) 跑一个研判案例（在线）
 .venv/bin/python -m app.pipeline cases/demo-solid-state
-# 输出：cases/demo-solid-state/out/{report.json, report.md, chain.jsonl}
+
+# 3b) 离线演示兜底（零网络零 key，全流程出产物）
+.venv/bin/python scripts/demo_offline.py
 
 # 4) 测试（零 key 全绿）
 .venv/bin/python -m pytest tests/ -q
