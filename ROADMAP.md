@@ -4,13 +4,13 @@
 
 ## 第 1 周：最小闭环（D1–D7）
 
-- [ ] 基建搬运：`model_client` / `budget` / `rate_limiter` / `model_ledger` / `load_yaml_robust` 从 token-burner 复制到 `app/llm/`，适配 import 独立于原仓库
-- [ ] `core/evidence.py`：Source / Segment / EvidenceNode / Conclusion 数据模型（含相关 vs 因果标注、证据等级字段）
-- [ ] `core/hashchain.py`：append-only 研判日志哈希链 + `verify_chain()`
-- [ ] `ingest/`：PDF / HTML / Markdown / TXT 切段入库
-- [ ] 引文核对器（零 LLM）：逐字引文必须在所指 Segment 中机械命中，不合格证据打回
-- [ ] 单分析师最小闭环：案例 → 报告 v0
-- [ ] tests 随写（全 stub，无 key 全绿）
+- [x] 基建搬运：`model_client` / `rate_limiter` 整文件移植 + `budget` / `connections` / `load_yaml_robust` 精简重写到 `app/llm/`（import 适配，独立于 token-burner）
+- [x] `core/evidence.py`：Source / Segment / EvidenceNode / Conclusion 数据模型（含相关 vs 因果标注、证据等级字段）
+- [x] `core/hashchain.py`：append-only 研判日志哈希链 + `verify_chain()`
+- [x] `ingest/`：PDF / HTML / Markdown / TXT 切段入库（PDF 走 pypdf 可选依赖）
+- [x] 引文核对器（零 LLM）：逐字引文必须在所指 Segment 中机械命中，不合格证据打回
+- [x] 单分析师最小闭环：案例 → 报告 v0（JSON + MD + chain.jsonl）
+- [x] tests 42 项全 stub 全绿 + deepseek-v4-flash 真实网关冒烟通过
 
 ## 第 2 周：多智能体与可信层（D8–D14）
 

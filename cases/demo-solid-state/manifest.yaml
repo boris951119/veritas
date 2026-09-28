@@ -1,0 +1,10 @@
+question: 固态电池路线 2030 年前能否在乘用车上规模量产？
+title: 固态电池成熟度研判（演示案例）
+sources:
+  - file: report_optimistic.md
+    type: report
+    credibility: 0.75
+  - file: note_skeptic.txt
+    type: note
+  - file: news_update.txt
+    type: news

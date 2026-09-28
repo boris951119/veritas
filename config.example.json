@@ -1,0 +1,4 @@
+{
+  "models": ["openai/deepseek-v4-flash", "openai/deepseek-v4-pro"],
+  "connections": { "openai/": {"api_key": "sk-...", "base_url": "https://gw.example.com/v1"} }
+}

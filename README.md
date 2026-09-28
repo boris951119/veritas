@@ -39,8 +39,27 @@ veritas/
 
 ## 快速开始
 
-（待第 1 周开发落地后补充）
+```bash
+# 1) 环境（python3.12）
+/opt/homebrew/bin/python3.12 -m venv .venv
+.venv/bin/pip install -r requirements.txt litellm   # litellm 仅真实调用需要
+
+# 2) 网关配置：.env 放 OPENAI_API_KEY / OPENAI_BASE_URL（不进 git），
+#    config.json 可覆盖模型清单（参考 config.example.json）
+
+# 3) 跑一个研判案例
+.venv/bin/python -m app.pipeline cases/demo-solid-state
+# 输出：cases/demo-solid-state/out/{report.json, report.md, chain.jsonl}
+
+# 4) 测试（零 key 全绿）
+.venv/bin/python -m pytest tests/ -q
+```
+
+演示案例 `cases/demo-solid-state` 已埋入乐观报告 / 怀疑笔记 / 新闻汇编三种
+信源，manifest.yaml 里声明的 `type`/`credibility` 会参与置信度加权。
 
 ## 路线图
 
-见 [ROADMAP.md](ROADMAP.md) —— 21 天里程碑。
+见 [ROADMAP.md](ROADMAP.md) —— 21 天里程碑。第 1 周最小闭环已落地
+（证据模型 / 哈希链 / 引文核对器 / 单分析师管线，42 项测试全绿 + 真实
+网关冒烟通过）。

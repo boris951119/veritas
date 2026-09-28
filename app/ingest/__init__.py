@@ -1,1 +1,2 @@
-"""多源摄取：PDF / HTML / Markdown / TXT / 结构化 JSON → Source + Segment。"""
+"""多源摄取：PDF / HTML / Markdown / TXT → Source + Segment；
+案例目录（manifest.yaml + 资料文件）→ Dossier。"""
