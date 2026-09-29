@@ -167,3 +167,23 @@ counting_discipline / level_tone，headroom=0 无功效可测但无损害）+
 `1647.60-1188.00=459.60万` 经复核为**单位后缀误报**（输入裸写、
 万只挂结果）——已修为双解释容忍（值或缩放值任一相符即通过）并加
 回归测试；错杀诚实算术比漏杀更伤闸的信誉。
+
+### 6.8 网关切换与 v4-pro 验证（2026-09-30）
+
+`sk-sp-` 新 key 配套**专属端点** `token-plan.cn-beijing.maas.aliyuncs.com`
+（非 dashscope——端点不匹配即 401）。该 plan 上 `deepseek-v4-flash`
+未开通（Access to model denied），主模型切换为 `deepseek-v4-pro`，
+重跑最终注册表产线验证 3 次（`out_ab_p_{1..3}`）：
+
+| 指标 | flash（§6.7，F' 组） | **v4-pro（P 组）** |
+|---|---|---|
+| 结论中位 | 30 | 21（健康，≥ A 组一半） |
+| 冲突 | 3/2/0（中位 2） | 0/0/2（仍属涌现噪声，未塌缩归零） |
+| 引文打回 | 9–21 | **0/2/6**——v4-pro 的逐字引文遵从度显著更好 |
+| calc 红灯 | 0 | 0 |
+| 黄牌分布 | rebut_quote 2–5、hedge 3–5 | 稳定小量：premise 2、provenance 2–3、hedge 2、level_tone 1 |
+
+**判定**：新网关 + 最终注册表产线健康，闸链全程正常。§6.2 的 skill
+停用判定基于 flash 数据；v4-pro 对纪律的遵从度更高，若需重判三条
+停用 skill，须按本协议**重新预注册一组 v4-pro 的 3+3 对照**，不得
+沿用旧数据翻案。
