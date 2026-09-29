@@ -153,9 +153,24 @@ assert all(s.gate in KNOWN_GATES for s in SKILLS)
 
 # ---------------------------------------------------------------- 接口
 
+# 运行时总开关（A/B 对照用；pipeline 按 Settings.skills_enabled 置位。
+# 对照组只关「教」——render_skills_rules 返回空——机械闸照常运行）
+_SKILLS_ENABLED = True
+
+
+def set_skills_enabled(value: bool) -> None:
+    global _SKILLS_ENABLED
+    _SKILLS_ENABLED = bool(value)
+
+
+def skills_enabled() -> bool:
+    return _SKILLS_ENABLED
+
 
 def detect_skills(dossier: Dossier) -> list[GateSkill]:
     """enabled 且 trigger 命中的 skill（决定注入什么）。"""
+    if not _SKILLS_ENABLED:
+        return []
     return [s for s in SKILLS
             if s.enabled and (s.trigger is _always or s.trigger(dossier))]
 
@@ -178,6 +193,7 @@ def skill_status(dossier: Dossier) -> list[dict]:
         "description": s.description,
         "gate": s.gate,
         "enabled": s.enabled,
-        "triggered": bool(s.enabled and s.trigger(dossier)),
+        "triggered": bool(_SKILLS_ENABLED and s.enabled
+                          and s.trigger(dossier)),
         "disabled_reason": s.disabled_reason,
     } for s in SKILLS]

@@ -47,7 +47,7 @@ from app.core.evidence import Dossier
 from app.core.hashchain import HashChain
 from app.core.numeric_check import audit_conservation, audit_counting, audit_numeric
 from app.core.premise_check import premise_flags
-from app.core.skills import detect_skills
+from app.core.skills import detect_skills, set_skills_enabled, skills_enabled
 from app.ingest.case_loader import load_case
 from app.llm.budget import BudgetGuard, set_active_budget_guard
 from app.llm.model_client import ModelClient, ModelClientFactory
@@ -96,9 +96,12 @@ def run_case(
     # 0) 议题前提核对（零 LLM）：问题实体在信源零命中 → 亮灯前置
     premise = premise_flags(dossier)
     chain.append("premise_check", "pipeline", summarize(premise))
-    # 0.5) skill 注册表按案卷特征触发（命中才注入分析师提示词，入链留痕）
+    # 0.5) skill 注册表按案卷特征触发（命中才注入分析师提示词，入链留痕；
+    #      VERITAS_SKILLS=0 可整体关注入入——A/B 对照组只关「教」不关「验」）
+    set_skills_enabled(settings.skills_enabled)
     chain.append("skills_triggered", "pipeline",
-                 {"skills": [s.name for s in detect_skills(dossier)]})
+                 {"skills": [s.name for s in detect_skills(dossier)],
+                  "injection": skills_enabled()})
 
     guard = BudgetGuard(settings.budget_tokens, settings.budget_throttle_threshold)
     set_active_budget_guard(guard)

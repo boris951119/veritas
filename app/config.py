@@ -93,6 +93,10 @@ class Settings:
     # 这类语义抖动
     llm_temperature: float | None = None
 
+    # skill 纪律注入总开关（A/B 对照用；VERITAS_SKILLS=0 关闭注入，
+    # 机械闸照常运行——对照组只关「教」，不关「验」）
+    skills_enabled: bool = True
+
     # ---- 可选组件（默认关；关闭时不 import 对应模块）----
     embedding_cache_enabled: bool = False
     llm_rate_limit_enabled: bool = False
@@ -133,6 +137,9 @@ class Settings:
         budget = os.environ.get("VERITAS_BUDGET_TOKENS")
         if budget and budget.strip().isdigit():
             s.budget_tokens = int(budget)
+        skills_env = (os.environ.get("VERITAS_SKILLS") or "").strip().lower()
+        if skills_env in ("0", "false", "off", "no"):
+            s.skills_enabled = False
         return s.validate()
 
     @classmethod

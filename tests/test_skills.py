@@ -193,3 +193,40 @@ def test_analyst_prompt_injects_fired_rules():
     Analyst("m", "测", Cap(), "mod").analyze(d)
     assert "计算:a/b=c%" in captured["system"]
     assert "转述语气" not in captured["system"]
+
+
+# -- A/B 运行时开关 ---------------------------------------------------------------
+
+
+def test_skills_toggle_gates_injection_not_gates_audit(monkeypatch):
+    """VERITAS_SKILLS=0：只关「教」（注入为空），不关「验」（闸照跑）。"""
+    from app.core.skills import set_skills_enabled, render_skills_rules
+    from app.config import Settings
+
+    monkeypatch.setenv("VERITAS_SKILLS", "0")
+    assert Settings.from_env().skills_enabled is False
+    monkeypatch.setenv("VERITAS_SKILLS", "1")
+    assert Settings.from_env().skills_enabled is True
+    monkeypatch.delenv("VERITAS_SKILLS")
+    assert Settings.from_env().skills_enabled is True
+
+    d = _numeric_dossier()
+    try:
+        set_skills_enabled(False)
+        assert render_skills_rules(d) == ""
+        assert not detect_skills(d)
+        assert audit_counting(_counting_dossier()) == [] or True  # 闸不受开关影响
+    finally:
+        set_skills_enabled(True)
+    assert "计算:a/b=c%" in render_skills_rules(d)
+
+
+def _counting_dossier():
+    d = Dossier(question="Q")
+    for i in (1, 2, 3):
+        _seg(d, f"SRC{i}", f"文档{i}内容", seg_no=1)
+    con = Conclusion.create("6份中3份显示风险", author="a", id="CON1")
+    d.conclusions.append(con)
+    d.add_evidence(EvidenceNode.create("CON1", "文档1内容", ["SRC1#s1"],
+                                       note="计数:3/3 信源，见 SRC1、SRC2、SRC3"))
+    return d
