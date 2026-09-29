@@ -1,4 +1,5 @@
 {
   "models": ["openai/deepseek-v4-flash", "openai/deepseek-v4-pro"],
+  "llm_temperature": 0.2,
   "connections": { "openai/": {"api_key": "sk-...", "base_url": "https://gw.example.com/v1"} }
 }

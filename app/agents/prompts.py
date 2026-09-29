@@ -36,8 +36,12 @@ def render_system_prompt(persona: str, isolated: bool = True) -> str:
     return SYSTEM_TEMPLATE.format(persona=persona, extra=extra)
 
 
-def render_segments_block(dossier: Dossier, per_segment_chars: int = 700) -> str:
-    """把案卷全部段落渲染为带编号的资料清单（提示词侧截断防爆上下文）。"""
+def render_segments_block(dossier: Dossier, per_segment_chars: int = 900) -> str:
+    """把案卷全部段落渲染为带编号的资料清单（提示词侧截断防爆上下文）。
+
+    截断上限须与 ingest.segment 的切段上限（900）对齐——低了会造出
+    「段落尾部对分析师不可见」的盲区，表格型信源尤甚（看不见的原文
+    只能靠模型脑补，诱发编造引文被打回）。"""
     lines: list[str] = [f"研判议题：{dossier.question}", "", "资料清单："]
     for src in dossier.sources:
         lines.append(f"◆ 来源 {src.id}《{src.title}》（类型 {src.source_type.value}）")

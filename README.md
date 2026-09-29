@@ -53,7 +53,8 @@ veritas/
 # 2) 网关配置：.env 放 OPENAI_API_KEY / OPENAI_BASE_URL（不进 git，模板 .env.example），
 #    config.json 可覆盖模型清单（参考 config.example.json）
 
-# 3) 跑一个研判案例（在线；案例二 bi-delivery-risk 为企业情报·交付风险研判）
+# 3) 跑一个研判案例（在线；案例二 bi-delivery-risk 为企业情报·交付风险研判；
+#    --roster my_roster.yaml 可换自定义分析师编队，至少 2 人）
 .venv/bin/python -m app.pipeline cases/demo-solid-state
 
 # 3b) 离线演示兜底（零网络零 key，全流程出产物）
@@ -79,4 +80,6 @@ veritas/
 
 见 [ROADMAP.md](ROADMAP.md) —— 21 天里程碑。第 1–3 周已全部落地：
 最小闭环 → 多智能体协同与可信层 → 可视化工作台 + MCP 标准接口，
-64 项测试全绿（零 key）+ 真实网关冒烟通过。
+88 项测试全绿（零 key）+ 真实网关冒烟通过。方案文档见
+[docs/proposal.md](docs/proposal.md)，演示口述稿见
+[docs/demo-script.md](docs/demo-script.md)。

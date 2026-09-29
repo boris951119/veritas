@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import argparse
 import copy
+import shutil
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
@@ -30,6 +31,10 @@ from app.core.reasoning_graph import build_reasoning_graph
 
 _REPO_ROOT = Path(__file__).resolve().parent.parent
 _WEB_DIR = _REPO_ROOT / "web"
+# 首次人工修改前的原始产物快照（重置端点的还原点；随 out* 一起被
+# 打包脚本排除，不进携带包）
+_PRISTINE_REPORT = "report.pristine.json"
+_PRISTINE_CHAIN = "chain.pristine.jsonl"
 
 
 def _cases_root(cases_root: Path | None) -> Path:
@@ -71,11 +76,22 @@ def _dossier_payload(out_dir: Path) -> dict:
     }
 
 
+def _ensure_pristine(out_dir: Path) -> None:
+    """首次人工修改前快照管线原始产物（幂等，后续修改不再覆盖快照）。"""
+    if (out_dir / _PRISTINE_REPORT).is_file():
+        return
+    shutil.copy2(out_dir / "report.json", out_dir / _PRISTINE_REPORT)
+    chain_path = out_dir / "chain.jsonl"
+    if chain_path.is_file():
+        shutil.copy2(chain_path, out_dir / _PRISTINE_CHAIN)
+
+
 def _mutate(cases_root: Path | None, case: str, event: str,
             payload: dict, mutate_fn) -> dict:
     """变更端点公共骨架：改 → 重算 → 哈希链留痕 → 落盘 → 回最新全量。"""
     out_dir = _find_out_dir(cases_root, case)
     dossier, chain = _load_pair(out_dir)
+    _ensure_pristine(out_dir)
     mutate_fn(dossier)
     recompute_all(dossier, n_panel=max(1, len(dossier.panel)))
     chain.append(event, "human", payload)
@@ -112,6 +128,10 @@ class ConflictOverrideReq(BaseModel):
     case: str
     conflict_id: str
     winner_id: str
+
+
+class CaseResetReq(BaseModel):
+    case: str
 
 
 def create_app(cases_root: Path | None = None) -> FastAPI:
@@ -170,6 +190,24 @@ def create_app(cases_root: Path | None = None) -> FastAPI:
         return _mutate(cases_root, req.case, "conflict_override",
                        {"conflict_id": req.conflict_id,
                         "winner_id": req.winner_id}, apply)
+
+    @app.post("/api/case/reset")
+    def reset_case(req: CaseResetReq) -> dict:
+        """撤销本案例全部人工修改：还原到首次修改前的快照。
+
+        重置本身也是人工动作——在还原后的链上追加 case_reset 事件，
+        「可还原」不等于「无痕」。无快照（从未人工修改过）时 422。"""
+        out_dir = _find_out_dir(cases_root, req.case)
+        pristine_report = out_dir / _PRISTINE_REPORT
+        if not pristine_report.is_file():
+            raise HTTPException(422, "无快照可还原（本案例尚无人工修改）")
+        dossier = Dossier.from_json(pristine_report)
+        chain = (HashChain.from_jsonl(out_dir / _PRISTINE_CHAIN)
+                 if (out_dir / _PRISTINE_CHAIN).is_file() else HashChain())
+        chain.append("case_reset", "human", {"restored_to": "pristine"})
+        dossier.to_json(out_dir / "report.json")
+        chain.to_jsonl(out_dir / "chain.jsonl")
+        return _dossier_payload(out_dir)
 
     @app.post("/api/evidence/weight")
     def set_weight(req: EvidenceWeightReq) -> dict:

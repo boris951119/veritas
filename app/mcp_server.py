@@ -159,59 +159,21 @@ def _make_server():
                 "reason": result.reason, "n_records": len(chain.records)}
 
     def _run_pipeline(question: str, sources: list[dict],
-                      n_analysts: int, persona: str | None) -> dict:
-        from app.agents.arbiter import Coordinator
-        from app.agents.panel import build_panel, run_panel
-        from app.core.citation_check import audit_dossier
-        from app.core.confidence import recompute_all
-        from app.core.conflicts import apply_resolution
-        from app.core.hashchain import HashChain
+                      roster: list[tuple[str, str]] | None) -> dict:
+        """外部信源 → 复用主管线 run_case（审计/出清/归并/冲突/仲裁/置信度
+        与 CLI 完全同一条代码路径——曾因手抄副本漂移过：MCP 侧零证据结论
+        不出清、打回记录丢引文、分析师失败不入链）。"""
         from app.llm.model_client import ModelClientFactory
+        from app.pipeline import run_case
 
         settings = Settings.from_env()
         client = ModelClientFactory(settings).create()
         dossier = build_dossier_from_sources(question, sources)
-        chain = HashChain()
-        chain.append("case_loaded", "mcp", {"question": question,
-                                            "n_sources": len(dossier.sources)})
-
-        roster = [(f"analyst{i + 1}", persona or f"独立研判分析师{i + 1}")
-                  for i in range(max(1, n_analysts))]
-        analysts = build_panel(client, settings.models[0], roster=roster)
-        run_panel(dossier, analysts, on_done=lambda name, cons: chain.append(
-            "analyst_done", name, {"n_conclusions": len(cons)}))
-
-        failures = audit_dossier(dossier)
-        for f in failures:
-            dossier.remove_evidence(f.evidence_id)
-        dossier.rejected = [{"evidence_id": f.evidence_id,
-                             "conclusion_id": f.conclusion_id,
-                             "quote": "", "problems": f.problems}
-                            for f in failures]
-        chain.append("citation_audit", "mcp",
-                     {"n_rejected": len(dossier.rejected)})
-
-        if len(analysts) >= 2:
-            coordinator = Coordinator(client, settings.models[0])
-            active = [c.id for c in dossier.conclusions if c.status == "majority"]
-            active = coordinator.merge_conclusions(dossier, active)
-            for pair in coordinator.detect_conflicts(dossier, active):
-                rebuts = coordinator.run_rebuttals(dossier, pair)
-                pair.resolution = coordinator.arbitrate(dossier, pair, rebuts)
-                problems = apply_resolution(pair, dossier)
-                dossier.conflicts.append(pair.to_dict())
-                if problems:
-                    chain.append("conflict_unresolved", "mcp", {"pair": pair.to_dict()})
-                else:
-                    chain.append("conflict_resolved", "mcp",
-                                 {"pair_id": pair.id,
-                                  "winner": pair.resolution.winner_id if pair.resolution else ""})
-
-        recompute_all(dossier, n_panel=len(analysts))
-        chain.append("report_finalized", "mcp", {})
-        summary = _judgment_summary(dossier, len(analysts))
-        summary["n_chain_records"] = len(chain.records)
-        summary["chain_ok"] = chain.verify_chain().ok
+        result = run_case(None, out_dir=None, client=client, settings=settings,
+                          dossier=dossier, roster=roster)
+        summary = _judgment_summary(result.dossier, len(result.dossier.panel))
+        summary["n_chain_records"] = len(result.chain.records)
+        summary["chain_ok"] = result.chain.verify_chain().ok
         return summary
 
     @mcp.tool()
@@ -243,7 +205,8 @@ def _make_server():
         sources: [{"title","text","type"?,"credibility"?}]，text 为信源全文。
         返回该角色的结论+逐字引文证据链（引文已经机械核对）。
         """
-        return _run_pipeline(question, sources, 1, persona)
+        return _run_pipeline(question, sources,
+                             roster=[("analyst1", persona)])
 
     @mcp.tool()
     def run_judgment(question: str, sources: list[dict]) -> dict:
@@ -253,7 +216,7 @@ def _make_server():
         流程：3 视角独立研判（互不可见）→ 逐字引文机械核对 → 同义归并
         → 冲突检测 → 质证 → 仲裁（保留少数意见）→ 置信度。
         """
-        return _run_pipeline(question, sources, 3, None)
+        return _run_pipeline(question, sources, roster=None)
 
     return mcp
 

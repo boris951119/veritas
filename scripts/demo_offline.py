@@ -54,12 +54,15 @@ def _quote_of(dossier: Dossier, keyword: str, cap: int = 110) -> tuple[str, str]
 class OfflineStubClient:
     """按 system 提示角色分流的桩；协同段从提示文本动态解析 id。
 
-    子类通过类属性适配案例：PESSIM_RE/PROG_RE（分组与冲突/仲裁定向）、
-    TOPIC/CONFLICT_DESC/RATIONALE（冲突与仲裁文案）、_panel_payloads()。
+    子类通过类属性适配案例：PESSIM_RE/PROG_RE（兜底正则）、POLARITY
+    （语句→「悲观/进展」精确映射，归并分组以此为准——正则会被「无…风险」
+    这类正向措辞骗到，把健康结论误入悲观组）、TOPIC/CONFLICT_DESC/
+    RATIONALE（冲突与仲裁文案）、_panel_payloads()。
     """
 
     PESSIM_RE = r"悲观|不确定|难以|风险|叙事|纠纷|延期"
     PROG_RE = r"进展|路径|正常|健康|提前"
+    POLARITY: dict[str, str] = {}
     TOPIC = ""
     CONFLICT_DESC = ""
     RATIONALE = ""
@@ -113,11 +116,15 @@ class OfflineStubClient:
                 out.append((m.group(1), m.group(3)))
         return out
 
+    def _group_of(self, stmt: str) -> str:
+        """归并定向：精确映射优先，正则兜底（未登记的新语句）。"""
+        return self.POLARITY.get(stmt) or (
+            "悲观" if re.search(self.PESSIM_RE, stmt) else "进展")
+
     def _merge_reply(self, user: str) -> str:
         groups: dict[str, list[str]] = {}
         for cid, stmt in self._lines(user):
-            key = "悲观" if re.search(self.PESSIM_RE, stmt) else "进展"
-            groups.setdefault(key, []).append(cid)
+            groups.setdefault(self._group_of(stmt), []).append(cid)
         payload = [{"statement": f"{k}方向结论", "member_ids": ids}
                    for k, ids in groups.items() if ids]
         return json.dumps({"groups": payload}, ensure_ascii=False)
@@ -150,6 +157,13 @@ class BatteryStubClient(OfflineStubClient):
     TOPIC = "2030年量产可行性"
     CONFLICT_DESC = "对量产时间表与工程瓶颈的判断对立"
     RATIONALE = ("乙方证据等级更高且与中试客观数据一致，甲方核心论据依赖 D 级转述")
+    POLARITY = {
+        "固态电池2030年前规模量产存在较大不确定性": "悲观",
+        "全固态电池2030年前难以规模量产，宣称的目标偏融资叙事": "悲观",
+        "半固态电池能量密度优势已获装车验证": "进展",
+        "界面阻抗已有工程化抑制手段，2027年装车路测后量产路径明确": "进展",
+        "试点产线点亮与设备国产化采购表明产线准备度持续上升": "进展",
+    }
 
     def _panel_payloads(self):
         q_doom, seg_doom = _quote_of(self.dossier, "良率")
@@ -198,6 +212,15 @@ class DeliveryRiskStubClient(OfflineStubClient):
     CONFLICT_DESC = "对交付进度与回款/结算风险的判断对立"
     RATIONALE = ("乙方有账目与进度双重客观证据支撑；甲方的纠纷与延期信号"
                  "来自单一条目，未构成系统性风险证据，列为少数意见保留")
+    POLARITY = {
+        # 主流派两句都是正向陈述——含「风险」字样也必须归进展组
+        "数据中台业务线整体交付进度正常，各项目按计划推进": "进展",
+        "财务回款整体健康，无逾期与坏账风险": "进展",
+        "技术选型经POC对比验证，实时链路满足业务实时性要求": "进展",
+        "项目已预留应急预算并建立风险登记机制，交付韧性有制度保障": "进展",
+        "回款与结算已出现实际纠纷信号，交付健康度被内部汇报美化": "悲观",
+        "客户B项目高风险项未闭环，存在验收延期与回款延迟风险": "悲观",
+    }
 
     def _panel_payloads(self):
         q_rate, seg_rate = _quote_of(self.dossier, "整体完成率")

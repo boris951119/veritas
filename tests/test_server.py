@@ -146,3 +146,24 @@ def test_tamper_demo_turns_red_without_touching_disk(api):
 def test_unknown_case_404(api):
     with pytest.raises(Exception):
         _get(api + "/api/dossier?case=nope")
+
+
+def test_case_reset_restores_pristine_and_chains(api):
+    """重置 = 还原首次修改前快照 + case_reset 入链（可还原，但非无痕）。"""
+    before = _get(api + "/api/dossier?case=demo")
+    ev = before["dossier"]["evidences"][0]
+    _post(api + "/api/evidence/remove", {"case": "demo", "evidence_id": ev["id"]})
+    assert all(e["id"] != ev["id"] for e in
+               _get(api + "/api/dossier?case=demo")["dossier"]["evidences"])
+
+    after = _post(api + "/api/case/reset", {"case": "demo"})
+    assert any(e["id"] == ev["id"] for e in after["dossier"]["evidences"])
+    assert after["chain"]["ok"]
+
+    # 重置后再改权重再重置：回到快照原值，链始终自洽
+    _post(api + "/api/evidence/weight",
+          {"case": "demo", "evidence_id": ev["id"], "weight": 0.1})
+    again = _post(api + "/api/case/reset", {"case": "demo"})
+    assert next(e["weight"] for e in again["dossier"]["evidences"]
+                if e["id"] == ev["id"]) == 1.0
+    assert again["chain"]["ok"]

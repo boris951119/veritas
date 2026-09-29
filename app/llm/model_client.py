@@ -381,6 +381,8 @@ class ModelClient:
             "max_tokens": self.settings.max_response_tokens,  # 第 2 层护栏
             "timeout": self.settings.llm_timeout_seconds,     # 9 章：单次调用超时
         }
+        if self.settings.llm_temperature is not None:
+            kwargs["temperature"] = self.settings.llm_temperature
         # v1.1 C1：连接注册表命中 → 注入 api_key/base_url(热加载);
         # 未命中回落环境变量密钥检查(行为与 v1.0 一致)
         if not _apply_connection_creds(model, kwargs):

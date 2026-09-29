@@ -88,6 +88,10 @@ class Settings:
     retry_backoff_base: float = 1.0       # 指数退避基数（秒）
     strict_json_response: bool = True     # json_mode 携带 response_format
     llm_wall_clock_seconds: int = 0       # 网关长挂防御墙钟（0=关）
+    # 采样温度（None=不传，走网关默认）。演示/复现场景建议在 config.json
+    # 设 0.2 左右：不追求严格确定，但显著收敛「同案例两跑冲突数 0↔1」
+    # 这类语义抖动
+    llm_temperature: float | None = None
 
     # ---- 可选组件（默认关；关闭时不 import 对应模块）----
     embedding_cache_enabled: bool = False
@@ -107,6 +111,9 @@ class Settings:
             raise ValueError("retry_backoff_base 必须非负")
         if self.llm_max_retries < 0:
             raise ValueError("llm_max_retries 必须非负")
+        if self.llm_temperature is not None and \
+                not 0.0 <= self.llm_temperature <= 2.0:
+            raise ValueError("llm_temperature 须落在 [0, 2]")
         if self.llm_rate_limit_enabled:
             if self.llm_rate_limit_rps <= 0:
                 raise ValueError("llm_rate_limit_rps 必须为正数")
@@ -149,4 +156,8 @@ class Settings:
             val = data.get(key)
             if isinstance(val, int) and not isinstance(val, bool) and val > 0:
                 setattr(s, key, val)
+        temp = data.get("llm_temperature")
+        if isinstance(temp, (int, float)) and not isinstance(temp, bool) \
+                and 0.0 <= float(temp) <= 2.0:
+            s.llm_temperature = float(temp)
         return s

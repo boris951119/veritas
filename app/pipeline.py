@@ -16,7 +16,13 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from app.agents.arbiter import Coordinator
-from app.agents.panel import DEFAULT_ROSTER, Analyst, build_panel, run_panel
+from app.agents.panel import (
+    DEFAULT_ROSTER,
+    Analyst,
+    build_panel,
+    load_roster,
+    run_panel,
+)
 from app.config import Settings
 from app.core.citation_check import audit_dossier
 from app.core.confidence import recompute_all
@@ -51,16 +57,21 @@ class PipelineResult:
 
 
 def run_case(
-    case_dir: Path,
+    case_dir: Path | None = None,
     out_dir: Path | None = None,
     client: ModelClient | None = None,
     settings: Settings | None = None,
     analysts: list[Analyst] | None = None,
     coordinator: Coordinator | None = None,
+    roster: list[tuple[str, str]] | None = None,
+    dossier: Dossier | None = None,
 ) -> PipelineResult:
-    """跑一次完整研判。client/analysts/coordinator 均可注入桩（测试零 key）。"""
+    """跑一次完整研判。client/analysts/coordinator 均可注入桩（测试零 key）。
+
+    roster：自定义编队（CLI --roster / MCP 工具传入），None 走默认三视角；
+    dossier：直接注入案卷（MCP 外部信源路径），此时可不带 case_dir。"""
     settings = settings or Settings.from_env()
-    dossier = load_case(Path(case_dir))
+    dossier = dossier or load_case(Path(case_dir))
     chain = HashChain()
     chain.append("case_loaded", "pipeline", {
         "question": dossier.question,
@@ -74,7 +85,7 @@ def run_case(
     if client is None:
         client = ModelClientFactory(settings).create()
     if analysts is None:
-        analysts = build_panel(client, settings.models[0])
+        analysts = build_panel(client, settings.models[0], roster=roster)
 
     # 1) 并行独立研判（硬隔离；单分析师失败只降级）
     results = run_panel(dossier, analysts, on_done=lambda name, cons: chain.append(
@@ -288,13 +299,23 @@ def main() -> int:
     parser.add_argument("case_dir", help="案例目录（含 manifest.yaml 与资料文件）")
     parser.add_argument("--out", default=None, help="报告输出目录（默认 cases/<case>/out）")
     parser.add_argument("--model", default=None, help="覆盖编队模型")
+    parser.add_argument("--roster", default=None,
+                        help="自定义编队 YAML 路径（{roster:[{name,persona}...]}，至少 2 人）")
     args = parser.parse_args()
 
     settings = Settings.from_env()
     if args.model:
         settings.models = [args.model, *settings.models]
+    roster = None
+    if args.roster:
+        try:
+            roster = load_roster(Path(args.roster))
+        except (ValueError, OSError) as exc:
+            raise SystemExit(f"编队配置加载失败: {exc}")
 
-    result = run_case(Path(args.case_dir), Path(args.out or (Path(args.case_dir) / "out")))
+    result = run_case(Path(args.case_dir),
+                      Path(args.out or (Path(args.case_dir) / "out")),
+                      roster=roster)
     print(result.report_md)
     print(f"报告与日志已写入 {result.out_dir}")
     return 0

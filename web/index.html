@@ -83,6 +83,7 @@ h2{font-size:15px;margin:26px 0 12px;color:var(--dim);font-weight:600;letter-spa
   <span id="chainPill" class="pill">…</span>
   <button class="primary" onclick="verifyChain()">校验防篡改链</button>
   <button onclick="tamperDemo()">篡改演示（改一字即红）</button>
+  <button onclick="resetCase()">重置案例修改</button>
   <span class="sub" id="panelInfo"></span>
 </div>
 <div class="wrap">
@@ -108,6 +109,8 @@ const REL_CN={causation:"因果",correlation:"相关",expert_judgment:"专家判
 const TYPE_CN={paper:"文献",patent:"专利",report:"报告",news:"新闻",note:"笔记",web:"网页",other:"其他"};
 const KIND_CN={conclusion:"结论",evidence:"证据",segment:"段落",source:"信源",
   conflict:"冲突",rebuttal:"质证",arbitration:"仲裁",analyst:"分析师"};
+const EDGE_CN={supports:"支撑",cites:"引用",from_source:"属信源",authored_by:"署名",
+  conflicts_with:"对立",rebuts:"质证",decides:"裁定"};
 function esc(s){return (s||"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
 function toast(msg,ms=2600){const t=$("#toast");t.textContent=msg;t.style.display="block";clearTimeout(t._h);t._h=setTimeout(()=>t.style.display="none",ms)}
 function confColor(c){return c>=.5?"var(--good)":c>=.2?"var(--warn)":"var(--bad)"}
@@ -138,9 +141,11 @@ function renderGraph(g){
   const order=["conclusion","conflict","arbitration","rebuttal","evidence","segment","source","analyst"];
   const nodes=[...g.nodes].sort((a,b)=>order.indexOf(a.kind)-order.indexOf(b.kind));
   const shown=nodes.filter(n=>["conclusion","conflict","arbitration","rebuttal","source","analyst"].includes(n.kind));
+  const label=id=>{const n=(g.nodes||[]).find(x=>x.id===id);const t=(n&&n.label||"").trim();
+    return t?(t.length>16?t.slice(0,16)+"…":t):id};
   $("#graph").innerHTML=`<div class="kv">节点 ${g.nodes.length} · 边 ${g.edges.length}</div>
     <div class="graph" style="margin-top:8px">${shown.map(n=>`<div class="gnode"><b>${KIND_CN[n.kind]||n.kind}</b>${esc(n.label)}</div>`).join("")}</div>
-    <div class="gedges">${(g.edges||[]).slice(0,40).map(e=>`<div><code>${esc(e.kind)}</code> ${esc(e.source)} → ${esc(e.target)}</div>`).join("")}
+    <div class="gedges">${(g.edges||[]).slice(0,40).map(e=>`<div><code>${EDGE_CN[e.kind]||e.kind}</code> ${esc(label(e.source))} → ${esc(label(e.target))}</div>`).join("")}
       ${(g.edges||[]).length>40?`<div class="sub">… 另有 ${(g.edges.length-40)} 条边</div>`:""}</div>`;
 }
 function renderChains(d){
@@ -273,6 +278,13 @@ async function overrideWin(cid,winner){
     body:JSON.stringify({case:CUR,conflict_id:cid,winner_id:winner})});
   G=await api("/api/reasoning_graph?case="+encodeURIComponent(CUR)).catch(()=>G);
   render();toast("人工裁决已落卷并入链");
+}
+async function resetCase(){
+  if(!confirm("撤销本案例的全部人工修改，还原到管线产物？重置动作会记入防篡改链。"))return;
+  D=await api("/api/case/reset",{method:"POST",headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({case:CUR})});
+  G=await api("/api/reasoning_graph?case="+encodeURIComponent(CUR)).catch(()=>G);
+  render();toast("已还原到管线产物（重置动作入链）");
 }
 async function verifyChain(){
   const r=await api("/api/chain/verify",{method:"POST",headers:{"Content-Type":"application/json"},

@@ -67,3 +67,18 @@ def test_custom_roster_enters_dossier_panel(tmp_path):
     result = run_case(tmp_path, out_dir=tmp_path / "out",
                       client=client, analysts=analysts)
     assert result.dossier.panel == ["hawk", "dove"]
+
+
+def test_run_case_roster_param_and_yaml_path(tmp_path):
+    """roster= 直通 run_case（CLI --roster 的路径）：YAML 文件 → 编队入卷。"""
+    from app.agents.panel import load_roster
+
+    _case(tmp_path)
+    roster_yaml = tmp_path / "roster.yaml"
+    roster_yaml.write_text(
+        "roster:\n  - name: bull\n    persona: 乐观派\n"
+        "  - name: bear\n    persona: 悲观派\n", encoding="utf-8")
+    result = run_case(tmp_path, out_dir=tmp_path / "out2",
+                      client=FakeClient(), roster=load_roster(roster_yaml))
+    assert result.dossier.panel == ["bull", "bear"]
+    assert result.chain.verify_chain().ok
