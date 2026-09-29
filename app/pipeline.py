@@ -5,6 +5,12 @@
 一轮质证 → 仲裁（败方保留为少数意见）→ 置信度融合 → 报告（JSON +
 Markdown）+ 研判日志 chain.jsonl。
 
+全程穿插零 LLM 机械闸（模型负责主张，程序负责复算）：
+议题前提核对 → 引文核对 → 数字核对（计算复算+溯源）→ 话语核对
+（归并守恒+质证/仲裁引用）。前三道在协同段之前拦坏证据；话语闸在
+协同段之后亮灯（黄牌警示不剔除内容）。警示为派生视图（core/audit
+即时重算），人工修改与文件篡改天然被覆盖。
+
 编排原则：协同段（归并/冲突/辩论/仲裁）每一步失败都降级继续——
 最坏情况退化为「多结论并列、无消解记录」，主报告永远能出。
 """
@@ -24,6 +30,7 @@ from app.agents.panel import (
     run_panel,
 )
 from app.config import Settings
+from app.core.audit import audit_all, summarize
 from app.core.citation_check import audit_dossier
 from app.core.confidence import recompute_all
 from app.core.conflicts import (
@@ -31,8 +38,11 @@ from app.core.conflicts import (
     dissent_conclusions,
     majority_conclusions,
 )
+from app.core.discourse_check import audit_discourse
 from app.core.evidence import Dossier
 from app.core.hashchain import HashChain
+from app.core.numeric_check import audit_conservation, audit_numeric
+from app.core.premise_check import premise_flags
 from app.ingest.case_loader import load_case
 from app.llm.budget import BudgetGuard, set_active_budget_guard
 from app.llm.model_client import ModelClient, ModelClientFactory
@@ -78,6 +88,9 @@ def run_case(
         "n_sources": len(dossier.sources),
         "n_segments": sum(len(s.segments) for s in dossier.sources),
     })
+    # 0) 议题前提核对（零 LLM）：问题实体在信源零命中 → 亮灯前置
+    premise = premise_flags(dossier)
+    chain.append("premise_check", "pipeline", summarize(premise))
 
     guard = BudgetGuard(settings.budget_tokens, settings.budget_throttle_threshold)
     set_active_budget_guard(guard)
@@ -98,10 +111,17 @@ def run_case(
     # 2) 引文机械核对（协同段之前：坏证据不进归并与仲裁）
     rejected = _reject_failed_citations(dossier, chain)
     dossier.rejected = rejected  # 持久化进 report.json（工作台展示）
+    # 2.5) 数字机械核对（计算复算 + 数字溯源，零 LLM；警示不剔除结论）
+    numeric = audit_numeric(dossier)
+    chain.append("numeric_audit", "pipeline", summarize(numeric))
 
     # 3) 协同段：归并 → 冲突 → 质证 → 仲裁（≥2 分析师才走；逐步降级）
     if len(analysts) >= 2:
         _run_collaboration(dossier, chain, analysts, coordinator, client, settings)
+
+    # 3.5) 协同段话语机械核对：归并守恒 + 质证/仲裁引用（零 LLM）
+    discourse = audit_conservation(dossier) + audit_discourse(dossier)
+    chain.append("discourse_audit", "pipeline", summarize(discourse))
 
     # 4) 置信度融合 + 收口
     recompute_all(dossier, n_panel=len(analysts))
@@ -220,6 +240,8 @@ def render_report_md(dossier: Dossier, chain: HashChain, rejected: list[dict]) -
                          f"（引文：{r['quote'][:60]}…）")
         lines.append("")
 
+    _render_flags_section(lines, dossier)
+
     lines += [
         "## 防篡改校验",
         "",
@@ -228,6 +250,41 @@ def render_report_md(dossier: Dossier, chain: HashChain, rejected: list[dict]) -
         "",
     ]
     return "\n".join(lines)
+
+
+_KIND_LABEL = {
+    "calc": "计算复算不符",
+    "provenance": "来源外数字",
+    "merge_conservation": "归并概括漂移",
+    "rebut_quote": "质证引文未命中",
+    "rebut_ref": "质证引用不存在编号",
+    "arbiter_ref": "仲裁理由引用不存在编号",
+    "premise": "议题前提未覆盖",
+}
+
+
+def _render_flags_section(lines: list[str], dossier: Dossier) -> None:
+    """机械核对警示（零 LLM 复算）：报告落定后再全案卷扫一遍。
+
+    红（high）=算式复算不符/输入造假；黄（medium）=来源外数字、归并
+    概括漂移、质证疑似歪曲、前提未覆盖等。警示不剔除内容——语义取舍
+    仍归分析师与读者，机械侧只保证「每个数字都能对账」。"""
+    flags = audit_all(dossier)
+    lines += ["## 机械核对警示（零 LLM 复算）", ""]
+    if not flags:
+        lines += ["- 计算复算、数字溯源、议题前提、质证/仲裁引用：全部通过 ✅", ""]
+        return
+    high = [f for f in flags if f["severity"] == "high"]
+    medium = [f for f in flags if f["severity"] == "medium"]
+    if high:
+        lines.append(f"- 🔴 未通过 {len(high)} 项：")
+        lines += [f"  - [{_KIND_LABEL.get(f['kind'], f['kind'])}] {f['detail']}"
+                  for f in high]
+    if medium:
+        lines.append(f"- 🟡 警示 {len(medium)} 项：")
+        lines += [f"  - [{_KIND_LABEL.get(f['kind'], f['kind'])}] {f['detail']}"
+                  for f in medium]
+    lines.append("")
 
 
 def _render_evidence_table(lines: list[str], dossier: Dossier, con) -> None:

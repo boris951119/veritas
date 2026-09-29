@@ -92,6 +92,7 @@ class Coordinator:
                     ev.conclusion_id = group_con.id
                     group_con.evidence_ids.append(ev.id)
                 member.status = "merged"
+                member.group_id = group_con.id  # 守恒闸按此回溯成员
             merged_ids.append(group_con.id)
         # LLM 漏掉的结论兜底收回（不允许任何结论无组丢失）
         merged_ids.extend(i for i in active if i not in seen)

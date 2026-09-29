@@ -64,6 +64,12 @@ h2{font-size:15px;margin:26px 0 12px;color:var(--dim);font-weight:600;letter-spa
 .dissent{border-left:3px solid var(--warn);padding:8px 12px;background:var(--panel2);border-radius:8px;margin-bottom:6px;font-size:13px}
 .rejected{color:var(--dim);font-size:12.5px;padding:6px 0;border-bottom:1px dashed var(--line)}
 .rejected code{color:var(--bad)}
+.flagitem{font-size:12.5px;padding:7px 10px;border-radius:8px;margin-bottom:6px;border:1px solid var(--line);background:var(--panel2)}
+.flagitem.high{border-color:var(--bad);background:#2a1214}
+.flagitem.medium{border-color:var(--warn);background:#241d0d}
+.flagitem .tag{margin-right:6px}
+.flagitem .tag.high{color:var(--bad);border-color:var(--bad)}
+.flagitem .tag.medium{color:var(--warn);border-color:var(--warn)}
 .toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);background:var(--panel2);border:1px solid var(--accent);border-radius:10px;padding:10px 18px;font-size:13px;display:none;z-index:99;max-width:80vw}
 .empty{color:var(--dim);font-size:12.5px;padding:8px}
 .dissent-note{background:#231d2e;border:1px solid #3d3356;border-radius:8px;padding:6px 10px;margin-top:8px;font-size:12px;color:#c9b8f0}
@@ -97,6 +103,8 @@ h2{font-size:15px;margin:26px 0 12px;color:var(--dim);font-weight:600;letter-spa
   <div id="dissents"></div>
   <h2>被引文核对打回的证据（机械闸）</h2>
   <div id="rejected"></div>
+  <h2>机械核对警示 <span class="sub">零 LLM 复算：计算复算 · 数字溯源 · 归并守恒 · 质证/仲裁引用 · 议题前提　·　每次加载即时重算，人工修改与文件篡改都会在此现形</span></h2>
+  <div id="flags" class="sec"></div>
   <h2>信源清单（可信度可调，调整即重算全链）</h2>
   <div id="sources"></div>
 </div>
@@ -111,6 +119,9 @@ const KIND_CN={conclusion:"结论",evidence:"证据",segment:"段落",source:"�
   conflict:"冲突",rebuttal:"质证",arbitration:"仲裁",analyst:"分析师"};
 const EDGE_CN={supports:"支撑",cites:"引用",from_source:"属信源",authored_by:"署名",
   conflicts_with:"对立",rebuts:"质证",decides:"裁定"};
+const FLAG_CN={calc:"计算复算不符",provenance:"来源外数字",merge_conservation:"归并概括漂移",
+  rebut_quote:"质证引文未命中",rebut_ref:"质证引用不存在编号",
+  arbiter_ref:"仲裁理由引用不存在编号",premise:"议题前提未覆盖"};
 function esc(s){return (s||"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
 function toast(msg,ms=2600){const t=$("#toast");t.textContent=msg;t.style.display="block";clearTimeout(t._h);t._h=setTimeout(()=>t.style.display="none",ms)}
 function confColor(c){return c>=.5?"var(--good)":c>=.2?"var(--warn)":"var(--bad)"}
@@ -134,7 +145,7 @@ function render(){
   const pill=$("#chainPill");
   pill.textContent=D.chain.ok?`防篡改链 ✅ ${D.chain.n_records} 条`:`防篡改链 ❌ #${D.chain.bad_index}`;
   pill.className="pill "+(D.chain.ok?"ok":"bad");
-  renderGraph(G);renderChains(d);renderConflicts(d);renderDissents(d);renderRejected(d);renderSources(d);
+  renderGraph(G);renderChains(d);renderConflicts(d);renderDissents(d);renderRejected(d);renderFlags(D.audit);renderSources(d);
 }
 function renderGraph(g){
   if(!g||!(g.nodes||[]).length){$("#graph").innerHTML=`<div class="empty">无图数据</div>`;return}
@@ -236,6 +247,18 @@ function renderRejected(d){
     <span class="sub">引文：${esc(String(r.quote).slice(0,80))}…（结论 ${esc(r.conclusion_id)}）</span></div>`).join("")
     ||`<div class="sec empty">无打回记录——全部证据通过逐字引文核对</div>`;
 }
+function renderFlags(audit){
+  if(!audit){$("#flags").innerHTML=`<div class="empty">（无审计数据）</div>`;return}
+  const fs=audit.flags||[];
+  const head=`<div class="kv" style="margin-bottom:8px">红灯（计算不复现等）<b style="color:${audit.n_high?"var(--bad)":"var(--good)"}">${audit.n_high}</b> ·
+    黄牌（来源外数字等）<b style="color:${audit.n_medium?"var(--warn)":"var(--good)"}">${audit.n_medium}</b>　
+    <span class="sub">警示不剔除内容——语义取舍归分析师与读者，机械侧保证「每个数字都能对账」</span></div>`;
+  $("#flags").innerHTML=head+(fs.map(f=>`
+    <div class="flagitem ${esc(f.severity)}"><span class="tag ${esc(f.severity)}">${f.severity==="high"?"红":"黄"}</span>
+    <b>${esc(FLAG_CN[f.kind]||f.kind)}</b>　${esc(f.detail)}
+    ${f.human_edit?`<span class="tag high">人工修改引入</span>`:""}</div>`).join("")
+    ||`<div class="empty">全部通过 ✅（结论与说明中的每个算式都复算无误、每个数字都有出处）</div>`);
+}
 function renderSources(d){
   $("#sources").innerHTML=d.sources.map(s=>`<div class="card" style="margin-bottom:8px">
     <b>${esc(s.title||s.id)}</b>　<span class="tag">${TYPE_CN[s.source_type]||s.source_type}</span>
@@ -271,7 +294,12 @@ async function editCon(id){
   D=await api("/api/conclusion/edit",{method:"POST",headers:{"Content-Type":"application/json"},
     body:JSON.stringify({case:CUR,conclusion_id:id,statement:el.value})});
   G=await api("/api/reasoning_graph?case="+encodeURIComponent(CUR)).catch(()=>G);
-  render();toast("结论已改写并入链");
+  render();
+  const op=D.op;
+  if(op&&op.flags&&op.flags.length){
+    toast(`⚠ 结论已改写入链，但本次修改引入 ${op.flags.length} 项机械核对警示：`+
+      op.flags.map(f=>FLAG_CN[f.kind]||f.kind).join("、"),5200);
+  }else{toast("结论已改写并入链（机械核对通过）")}
 }
 async function overrideWin(cid,winner){
   D=await api("/api/conflict/override",{method:"POST",headers:{"Content-Type":"application/json"},

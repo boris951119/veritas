@@ -26,3 +26,4 @@ data/
 cases/*/out/
 config.json
 cases/*/out_offline/
+dist/

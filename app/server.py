@@ -23,6 +23,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 
+from app.core.audit import audit_all, summarize
 from app.core.confidence import recompute_all
 from app.core.evidence import Dossier
 from app.core.hashchain import HashChain
@@ -63,10 +64,14 @@ def _load_pair(out_dir: Path) -> tuple[Dossier, HashChain]:
 def _dossier_payload(out_dir: Path) -> dict:
     dossier, chain = _load_pair(out_dir)
     verify = chain.verify_chain()
+    # 机械核对警示为派生视图：每次加载即时重算——人工修改与文件篡改
+    # 都逃不过下一次读取（「改数字即红」的工作台侧实现）
+    flags = audit_all(dossier)
     return {
         "case": out_dir.parent.name,
         "out_dir": out_dir.name,
         "dossier": dossier.to_dict(),
+        "audit": {"flags": flags, **summarize(flags)},
         "chain": {
             "n_records": len(chain.records),
             "ok": verify.ok,
@@ -88,16 +93,22 @@ def _ensure_pristine(out_dir: Path) -> None:
 
 def _mutate(cases_root: Path | None, case: str, event: str,
             payload: dict, mutate_fn) -> dict:
-    """变更端点公共骨架：改 → 重算 → 哈希链留痕 → 落盘 → 回最新全量。"""
+    """变更端点公共骨架：改 → 重算 → 哈希链留痕 → 落盘 → 回最新全量。
+
+    mutate_fn 可返回 dict——并入链事件 payload（审计计数等）并随响应
+    回传（resp["op"]），供前端提示「本次修改新引入了什么」。"""
     out_dir = _find_out_dir(cases_root, case)
     dossier, chain = _load_pair(out_dir)
     _ensure_pristine(out_dir)
-    mutate_fn(dossier)
+    extra = mutate_fn(dossier)
     recompute_all(dossier, n_panel=max(1, len(dossier.panel)))
-    chain.append(event, "human", payload)
+    chain.append(event, "human", {**payload, **(extra or {})})
     dossier.to_json(out_dir / "report.json")
     chain.to_jsonl(out_dir / "chain.jsonl")
-    return _dossier_payload(out_dir)
+    result = _dossier_payload(out_dir)
+    if extra:
+        result["op"] = extra
+    return result
 
 
 
@@ -165,13 +176,25 @@ def create_app(cases_root: Path | None = None) -> FastAPI:
 
     @app.post("/api/conclusion/edit")
     def edit_conclusion_api(req: ConclusionEditReq) -> dict:
-        def apply(d: Dossier) -> None:
+        def apply(d: Dossier) -> dict:
+            before = audit_all(d)
             try:
                 edit_conclusion(d, req.conclusion_id, req.statement)
             except KeyError as exc:
                 raise HTTPException(404, str(exc)) from exc
             except ValueError as exc:
                 raise HTTPException(422, str(exc)) from exc
+            after = audit_all(d)
+            # 本次人工修改新引入的机械核对警示（黄/红）——人是最高权限，
+            # 修改照常落卷，但「引入了未溯源内容」必须当场亮灯并入链
+            keys_before = {(f["kind"], f.get("conclusion_id"), f["value"])
+                           for f in before}
+            introduced = [f for f in after
+                          if (f["kind"], f.get("conclusion_id"), f["value"])
+                          not in keys_before]
+            for f in introduced:
+                f["human_edit"] = True
+            return {"n_new_flags": len(introduced), "flags": introduced}
 
         return _mutate(cases_root, req.case, "conclusion_edit",
                        {"conclusion_id": req.conclusion_id,

@@ -190,6 +190,7 @@ class Conclusion:
     statement: str
     author: str = ""                       # 产出智能体名（单人）
     authors: list[str] = field(default_factory=list)  # 归并组的全体署名
+    group_id: str = ""                     # 作为归并组成员时指向组结论（溯源/守恒闸用）
     status: str = "majority"
     evidence_ids: list[str] = field(default_factory=list)
     confidence: float = 0.0                # 0-1（confidence 融合后回填）
@@ -208,7 +209,8 @@ class Conclusion:
     def to_dict(self) -> dict:
         return {
             "id": self.id, "statement": self.statement, "author": self.author,
-            "authors": self.authors, "status": self.status,
+            "authors": self.authors, "group_id": self.group_id,
+            "status": self.status,
             "evidence_ids": self.evidence_ids, "confidence": self.confidence,
             "confidence_parts": self.confidence_parts, "dissent": self.dissent,
         }
@@ -219,6 +221,7 @@ class Conclusion:
             id=str(d["id"]), statement=str(d.get("statement", "")),
             author=str(d.get("author", "")),
             authors=[str(a) for a in d.get("authors") or []],
+            group_id=str(d.get("group_id", "")),
             status=str(d.get("status", "majority")),
             evidence_ids=[str(x) for x in d.get("evidence_ids") or []],
             confidence=float(d.get("confidence", 0.0)),
