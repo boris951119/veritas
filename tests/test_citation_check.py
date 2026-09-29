@@ -61,3 +61,20 @@ def test_audit_dossier_marks_and_collects():
 
 def test_normalize_strips_all_whitespace():
     assert normalize("a b\tc\n d") == "abcd"
+
+
+def test_typography_marks_are_tolerated():
+    """Markdown 记号与全半角标点属排版差异：不构成打回理由。"""
+    d, sid = _dossier_with_text("项目整体完成率**62%**，较计划提前。执行进度：100%。")
+    stars = EvidenceNode.create("CON1", "整体完成率62%，较计划提前", [sid])
+    colon = EvidenceNode.create("CON1", "执行进度:100%", [sid])
+    assert check_evidence(stars, d) == []
+    assert check_evidence(colon, d) == []
+
+
+def test_content_change_still_fails_despite_mark_noise():
+    """排版宽容不豁免内容篡改：数字被改写仍必须打回。"""
+    d, sid = _dossier_with_text("完成率**62%**。")
+    ev = EvidenceNode.create("CON1", "完成率**63%**", [sid])
+    problems = check_evidence(ev, d)
+    assert problems and "未命中" in problems[0]

@@ -58,7 +58,7 @@ python3 -m venv .venv
 .venv/bin/python -m pytest tests -q
 ```
 
-**通过判据**：`63 passed`（或更多，零 failed；装了 mcp 后为 64）。测试全 stub，无需密钥。
+**通过判据**：`66 passed`（或更多，零 failed；装了 mcp 后为 67）。测试全 stub，无需密钥。
 
 ## 第 3 步：离线演示（断网/无 key 时的完整演示兜底）
 
@@ -67,9 +67,11 @@ python3 -m venv .venv
 .venv\Scripts\python scripts\demo_offline.py
 ```
 
-**通过判据**：打印完整研判报告（含多分析师归并、冲突消解、少数意见、
-防篡改校验 ✅），产物写入 `cases/demo-solid-state/out_offline/`
-（`report.json` / `report.md` / `chain.jsonl`）。桩客户端离线模拟了
+**通过判据**：先后打印**两个案例**的完整研判报告（含多分析师归并、
+冲突消解、少数意见、防篡改校验 ✅），产物分别写入
+`cases/demo-solid-state/out_offline/`（固态电池科研情报）与
+`cases/bi-delivery-risk/out_offline/`（数据中台交付风险企业情报，
+各含 `report.json` / `report.md` / `chain.jsonl`）。桩客户端离线模拟了
 三分析师协同全流程，演示「系统长什么样」足够用。
 
 ## 第 4 步：在线真实研判（需要 API key）
@@ -80,12 +82,16 @@ python3 -m venv .venv
 2. 运行：
 
 ```bat
-:: Windows
+:: Windows（案例一：固态电池科研情报）
 .venv\Scripts\python -m app.pipeline cases\demo-solid-state
+
+:: 案例二：数据中台交付风险企业情报（可选，工作台多一个案例可切）
+.venv\Scripts\python -m app.pipeline cases\bi-delivery-risk
 ```
 
-**通过判据**：打印真实研判报告，产物写入 `cases/demo-solid-state/out/`；
-`chain.jsonl` 为全程哈希链研判日志。
+**通过判据**：打印真实研判报告，产物写入 `cases/<案例>/out/`；
+`chain.jsonl` 为全程哈希链研判日志。案例二由
+`scripts/build_bi_case.py` 从脱敏语料构建（机构名已匿名化，可直接对外演示）。
 
 ## 第 5 步：可视化工作台（演示主入口）
 
@@ -124,12 +130,14 @@ python3 -m venv .venv
 | pip 装不上 litellm | 加镜像参数重试；仍失败可暂时跳过——`pytest` 与 `demo_offline` 不依赖 litellm（懒加载），仅第 4 步在线研判需要 |
 | PDF 信源摄取报 pypdf 缺失 | `pip install pypdf`（PDF 是可选格式，demo 案例不含 PDF 不影响演示） |
 | venv 激活后命令找不到 | 直接用绝对路径调 python：`.venv\Scripts\python`（Win）/ `.venv/bin/python`（Mac） |
-| 测试出现 failed | 把失败摘要原样反馈给开发者；在修好前用第 3 步离线演示兜底（未装 mcp 时 MCP 协议测试自动跳过，63 passed + 1 skipped 属正常） |
+| 测试出现 failed | 把失败摘要原样反馈给开发者；在修好前用第 3 步离线演示兜底（未装 mcp 时 MCP 协议测试自动跳过，66 passed + 1 skipped 属正常） |
 
 ## 仓库速览（供智能体理解上下文）
 
 - 入口：`python -m app.pipeline <case_dir>`；编排：`app/pipeline.py`
 - 三级证据链与判分：`app/core/`（evidence / citation_check / confidence / conflicts / hashchain）
 - 智能体：`app/agents/`（panel 三视角编队、arbiter 归并/冲突/质证/仲裁）
-- 演示案例：`cases/demo-solid-state/`（manifest.yaml 声明信源类型与可信度）
+- 演示案例：`cases/demo-solid-state/`（固态电池科研情报）与
+  `cases/bi-delivery-risk/`（数据中台交付风险企业情报，信源已脱敏；
+  由 `scripts/build_bi_case.py` 从外部语料构建）；manifest.yaml 声明信源类型与可信度
 - 路线图：`ROADMAP.md`；架构说明：`README.md`

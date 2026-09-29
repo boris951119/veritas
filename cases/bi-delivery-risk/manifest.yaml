@@ -1,0 +1,26 @@
+question: 星辰数智数据中台业务线交付健康度与风险研判：各客户项目是否存在延期、回款/坏账或人员流失风险？厂商技术方案的自述指标可信吗？
+title: 企业情报：数据中台交付风险研判（案例二）
+sources:
+  - file: client_a_proposal_20240405.md
+    title: 客户A（某股份制商业银行）数据中台V2.0技术方案
+    type: report
+    credibility: 0.7
+  - file: client_b_progress_20260805.md
+    title: 客户B（某地产集团）数据中台项目进度汇报
+    type: note
+    credibility: 0.55
+  - file: client_c_accounts_20250407.md
+    title: 客户C（某头部券商）数据中台来往账目
+    type: other
+    credibility: 0.8
+  - file: client_d_accounts_20250828.md
+    title: 客户D（某国有大行）数据中台来往账目
+    type: other
+    credibility: 0.8
+  - file: client_e_staffing_20260405.md
+    title: 客户E（某商业地产运营商）数据中台项目人员清单
+    type: note
+  - file: client_f_plan_20260110.md
+    title: 客户F（某电子科技集团）数据中台项目管理计划
+    type: note
+    credibility: 0.5

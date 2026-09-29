@@ -4,7 +4,8 @@
 不合格证据打回——判定全程字符串运算，零模型调用、秒级、可复现。
 
 命中口径：
-- 归一化（NFC + 去除全部空白 + 全角空格）后子串匹配；
+- 归一化（NFC + 去除全部空白/全角空格 + Markdown 记号剔除 + 全半角
+  标点统一）后子串匹配——只宽容排版差异，内容一字不改仍须逐字命中；
 - 引文含省略号（……/.../。。。）时按省略段切分，各段须按原顺序
   依次命中（支持跨段摘录的省略式引文）。
 """
@@ -18,12 +19,18 @@ from dataclasses import dataclass
 from app.core.evidence import Dossier, EvidenceNode
 
 _ELLIPSIS = re.compile(r"(\.{3,}|…+|。{2,})")
+_MD_MARKS = re.compile(r"[*_`#~]|<br\s*/?>", re.IGNORECASE)
+_FULLWIDTH = str.maketrans({
+    "：": ":", "，": ",", "；": ";", "！": "!", "？": "?",
+    "（": "(", "）": ")", "［": "[", "］": "]", "．": ".",
+})
 
 
 def normalize(text: str) -> str:
-    """引文比对归一化：NFC + 去除全部空白（含全角空格）。"""
+    """引文比对归一化：NFC + 去空白 + 去 Markdown 记号 + 全半角标点统一。"""
     collapsed = unicodedata.normalize("NFC", text)
-    return "".join(collapsed.split())
+    collapsed = "".join(collapsed.split()).translate(_FULLWIDTH)
+    return _MD_MARKS.sub("", collapsed)
 
 
 @dataclass

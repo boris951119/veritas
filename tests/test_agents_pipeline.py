@@ -106,3 +106,20 @@ def test_run_case_without_analyst_output_still_writes_report(tmp_path):
     assert result.dossier.conclusions == []
     assert result.chain.verify_chain().ok
     assert "无结论" in result.report_md
+
+
+def test_conclusions_with_all_evidence_rejected_are_dropped(tmp_path):
+    """结论的全部引文被机械核对打回 → 结论不进报告，链上留痕。"""
+    _make_case(tmp_path)
+    fake = FakeClient('{"conclusions": [{"statement": "成本已经低于液态电池", '
+                      '"evidence": [{"quote": "成本已降至液态电池一半以下", '
+                      '"segment_id": "SRC1#s1", "relation": "causation", '
+                      '"level": "A", "note": "编造"}]}]}')
+    single = [Analyst("mainstream", "测试角色", fake, "test-model")]
+    result = run_case(tmp_path, out_dir=tmp_path / "out", client=fake,
+                      analysts=single)
+    assert result.dossier.conclusions == []
+    assert result.rejected and "未命中" in result.rejected[0]["problems"][0]
+    audit = next(r for r in result.chain.records if r.event == "citation_audit")
+    assert audit.payload["n_conclusions_dropped"] == 1
+    assert "无结论" in result.report_md

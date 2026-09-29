@@ -32,7 +32,7 @@ veritas/
 │   ├── server.py   # FastAPI 可视化工作台
 │   └── mcp_server.py # MCP 标准接口（研判能力暴露为智能体可调用工具）
 ├── web/            # 前端单页（证据图 / 推理树 / 置信度面板）
-├── cases/          # 演示案例数据（科研情报：某技术路线成熟度研判）
+├── cases/          # 演示案例：固态电池科研情报 + 数据中台交付风险企业情报（信源已脱敏）
 ├── tests/          # 全 stub 测试，无 key 即全绿
 ├── scripts/        # 演示 / 评测 / 打包脚本
 └── docs/           # 方案文档（答辩材料）
@@ -53,7 +53,7 @@ veritas/
 # 2) 网关配置：.env 放 OPENAI_API_KEY / OPENAI_BASE_URL（不进 git，模板 .env.example），
 #    config.json 可覆盖模型清单（参考 config.example.json）
 
-# 3) 跑一个研判案例（在线）
+# 3) 跑一个研判案例（在线；案例二 bi-delivery-risk 为企业情报·交付风险研判）
 .venv/bin/python -m app.pipeline cases/demo-solid-state
 
 # 3b) 离线演示兜底（零网络零 key，全流程出产物）
@@ -71,6 +71,9 @@ veritas/
 
 演示案例 `cases/demo-solid-state` 已埋入乐观报告 / 怀疑笔记 / 新闻汇编三种
 信源，manifest.yaml 里声明的 `type`/`credibility` 会参与置信度加权。
+案例二 `cases/bi-delivery-risk`（数据中台交付风险研判）从企业内部文档
+脱敏构建——6 份信源覆盖技术方案/账目/进度/人员等 6 类文类，内置真实
+仲裁冲突与引文打回演示；构建脚本 `scripts/build_bi_case.py`。
 
 ## 路线图
 

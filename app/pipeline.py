@@ -116,7 +116,10 @@ def run_case(
 
 
 def _reject_failed_citations(dossier: Dossier, chain: HashChain) -> list[dict]:
-    """引文打回：不合格证据移除并留痕，返回打回清单。"""
+    """引文打回：不合格证据移除并留痕，返回打回清单。
+
+    证据被全部打回的结论一并移出案卷（不进归并与报告）——零证据结论
+    留在主表只会展示 0 置信度空壳；打回明细在本清单与 chain 中可查。"""
     failures = audit_dossier(dossier)
     rejected: list[dict] = []
     for f in failures:
@@ -128,9 +131,13 @@ def _reject_failed_citations(dossier: Dossier, chain: HashChain) -> list[dict]:
             "problems": f.problems,
         })
         dossier.remove_evidence(f.evidence_id)
+    empties = [c for c in dossier.conclusions if not dossier.evidences_of(c.id)]
+    for con in empties:
+        dossier.conclusions.remove(con)
     chain.append("citation_audit", "pipeline", {
         "n_verified": sum(1 for e in dossier.evidences if e.verified),
         "n_rejected": len(rejected),
+        "n_conclusions_dropped": len(empties),
     })
     return rejected
 
