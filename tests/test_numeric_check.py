@@ -85,6 +85,15 @@ def test_unit_scaled_mismatch_flagged():
     assert flags and flags[0]["severity"] == "high"
 
 
+def test_unit_suffix_on_result_only_passes():
+    """输入裸写、万单位只挂结果（1647.60-1188.00=459.60万）是诚实写法，
+    双解释容忍下不得错杀——真实网关 F' 验证跑抓到的唯一红灯即此误报。"""
+    seg = "合同额1,647.60万元，已回款1,188.00万元。"
+    d = _dossier("回款缺口459.60万元。", note="计算:1647.60-1188.00=459.60万",
+                 seg=seg)
+    assert not [f for f in audit_numeric(d) if f["kind"] == "calc"]
+
+
 def test_percent_input_without_source_flagged():
     """用材料中不存在的百分比推导金额——乘数本身无溯源，红。"""
     d = _dossier("预期回款512万元。", note="计算:1280×40%=512")

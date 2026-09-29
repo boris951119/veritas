@@ -76,14 +76,6 @@ class GateSkill:
 
 SKILLS: list[GateSkill] = [
     GateSkill(
-        name="table_citation",
-        description="表格型信源的引文跨单元格拼接/脑补",
-        rule="涉及表格的引文必须摘自同一行的连续内容并逐字含列名与数值；"
-             "禁止从不同行/不同单元格拼接句子。",
-        trigger=lambda d: _table_share(d) >= 0.15,
-        gate="citation",
-    ),
-    GateSkill(
         name="calc_discipline",
         description="推导数字（比率/合计/差额）心算出错",
         rule="凡结论涉及推导数字，必须在对应证据的 note 里写显式算式："
@@ -98,6 +90,10 @@ SKILLS: list[GateSkill] = [
              "计算结果；资料没有的数字一律不写，改下「资料不足」类结论。",
         trigger=lambda d: _numeric_share(d) >= 0.25,
         gate="provenance",
+        enabled=False,
+        disabled_reason="首轮A/B(2026-09-30,3+3):provenance黄牌中位2↔2无改善"
+                        "（flash级模型未遵从建议性纪律），溯源闸本身照常运行；"
+                        "改写为强制格式后重测",
     ),
     GateSkill(
         name="counting_discipline",
@@ -114,6 +110,21 @@ SKILLS: list[GateSkill] = [
              "转述语气（「报道称」「疑似」「未经官方证实」），不得写成已证事实。",
         trigger=lambda d: _lowcred_share(d) >= 0.4,
         gate="hedge",
+        enabled=False,
+        disabled_reason="首轮A/B主指标hedge黄牌中位3↔3与对照持平，逐条消融"
+                        "(3跑)亦并列→按预注册协议停用；单条注入时冲突正常"
+                        "(1/5/4)，证实组级冲突塌缩非本skill所致",
+    ),
+    GateSkill(
+        name="table_citation",
+        description="表格型信源的引文跨单元格拼接/脑补",
+        rule="涉及表格的引文必须摘自同一行的连续内容并逐字含列名与数值；"
+             "禁止从不同行/不同单元格拼接句子。",
+        trigger=lambda d: _table_share(d) >= 0.15,
+        gate="citation",
+        enabled=False,
+        disabled_reason="首轮A/B:引文打回率中位0.239→0.318（预注册主指标反向）；"
+                        "rule需改写为可机械定位的行内摘录格式后重测",
     ),
     GateSkill(
         name="level_tone",
@@ -153,9 +164,15 @@ assert all(s.gate in KNOWN_GATES for s in SKILLS)
 
 # ---------------------------------------------------------------- 接口
 
+import os
+
 # 运行时总开关（A/B 对照用；pipeline 按 Settings.skills_enabled 置位。
 # 对照组只关「教」——render_skills_rules 返回空——机械闸照常运行）
 _SKILLS_ENABLED = True
+# 逐 skill 消融白名单（VERITAS_SKILLS_ONLY=name1,name2）：非空时视为
+# 实验指定的参与名单，覆盖 enabled 标志——供单条 skill 的公平重测
+_ONLY = {s.strip() for s in
+         (os.environ.get("VERITAS_SKILLS_ONLY") or "").split(",") if s.strip()}
 
 
 def set_skills_enabled(value: bool) -> None:
@@ -167,12 +184,18 @@ def skills_enabled() -> bool:
     return _SKILLS_ENABLED
 
 
+def _eligible(s: GateSkill) -> bool:
+    if _ONLY:
+        return s.name in _ONLY  # 消融白名单覆盖 enabled 标志
+    return s.enabled
+
+
 def detect_skills(dossier: Dossier) -> list[GateSkill]:
     """enabled 且 trigger 命中的 skill（决定注入什么）。"""
     if not _SKILLS_ENABLED:
         return []
     return [s for s in SKILLS
-            if s.enabled and (s.trigger is _always or s.trigger(dossier))]
+            if _eligible(s) and (s.trigger is _always or s.trigger(dossier))]
 
 
 def render_skills_rules(dossier: Dossier) -> str:
@@ -192,8 +215,8 @@ def skill_status(dossier: Dossier) -> list[dict]:
         "name": s.name,
         "description": s.description,
         "gate": s.gate,
-        "enabled": s.enabled,
-        "triggered": bool(_SKILLS_ENABLED and s.enabled
+        "enabled": _eligible(s) if _ONLY else s.enabled,
+        "triggered": bool(_SKILLS_ENABLED and _eligible(s)
                           and s.trigger(dossier)),
         "disabled_reason": s.disabled_reason,
     } for s in SKILLS]

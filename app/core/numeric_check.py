@@ -179,7 +179,9 @@ def check_calc(conclusion, dossier: Dossier) -> tuple[list[dict], str]:
             got = _eval_expr(lhs)
             if got is None:
                 continue  # 解析不了的不武断（交给溯源闸）
-            if not _close(got, result.scaled):
+            # 双解释容忍：结果带万/亿/%而输入裸写时（「1280-512=768万」），
+            # 万单位按惯例继承——值或缩放值任一相符即通过；真算错两边都不中
+            if not (_close(got, result.scaled) or _close(got, result.value)):
                 flags.append({
                     "kind": "calc", "severity": "high",
                     "conclusion_id": conclusion.id,

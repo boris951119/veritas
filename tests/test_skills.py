@@ -34,9 +34,20 @@ def test_every_skill_pairs_a_known_gate():
 
 
 def test_disabled_skills_have_reason():
-    disabled = [s for s in SKILLS if not s.enabled]
-    assert {s.name for s in disabled} == {"negation_guard", "sic_verbatim"}
-    assert all(s.disabled_reason for s in disabled)
+    disabled = {s.name for s in SKILLS if not s.enabled}
+    assert disabled == {"negation_guard", "sic_verbatim",
+                        "number_provenance", "hedged_claim", "table_citation"}
+    assert all(s.disabled_reason for s in SKILLS if not s.enabled)
+
+
+def test_registry_completeness():
+    """注册表清单守护：改名/误删 skill 时立刻红——首轮 A/B 曾因批量
+    编辑把 calc_discipline 整条丢出注册表，靠触发核对才 incidental 发现。"""
+    assert {s.name for s in SKILLS} == {
+        "table_citation", "calc_discipline", "number_provenance",
+        "counting_discipline", "hedged_claim", "level_tone",
+        "negation_guard", "sic_verbatim",
+    }
 
 
 # -- 触发器 --------------------------------------------------------------------
@@ -50,17 +61,19 @@ def _numeric_dossier() -> Dossier:
 
 def test_numeric_case_fires_calc_and_provenance_only_relevant():
     fired = {s.name for s in detect_skills(_numeric_dossier())}
-    assert {"calc_discipline", "number_provenance", "level_tone"} <= fired
+    assert {"calc_discipline", "level_tone"} <= fired
     assert "counting_discipline" not in fired  # 单信源不触发计数
     assert "hedged_claim" not in fired         # 无低可信信源
+    assert "number_provenance" not in fired    # 首轮A/B判负停用
+    assert "table_citation" not in fired       # 无表格信源且已停用
 
 
-def test_lowcred_case_fires_hedge():
+def test_lowcred_case_fires_nothing_disabled():
     d = Dossier(question="Q")
     _seg(d, "SRC1", "网友爆料某厂资金紧张", SourceType.WEB)
     _seg(d, "SRC2", "媒体报道称该厂裁员", SourceType.NEWS)
     fired = {s.name for s in detect_skills(d)}
-    assert "hedged_claim" in fired
+    assert "hedged_claim" not in fired  # 首轮A/B判负停用（闸照常运行）
 
 
 def test_render_skills_rules_contains_fired_rules_only():
@@ -75,6 +88,23 @@ def test_skill_status_reports_full_registry():
     assert st["calc_discipline"]["enabled"] and st["calc_discipline"]["triggered"]
     assert not st["negation_guard"]["enabled"] and st["negation_guard"]["disabled_reason"]
     assert not st["negation_guard"]["triggered"]
+
+
+def test_ablation_whitelist_overrides_enabled_flag():
+    """VERITAS_SKILLS_ONLY 消融白名单：非空时覆盖 enabled 标志。"""
+    import app.core.skills as sk
+
+    d = Dossier(question="Q")
+    _seg(d, "SRC1", "网友爆料某厂资金紧张", SourceType.WEB)
+    _seg(d, "SRC2", "媒体报道称该厂裁员", SourceType.NEWS)
+    old = sk._ONLY
+    try:
+        sk._ONLY = {"hedged_claim"}  # 已停用的 skill 被白名单点名 → 参与注入
+        assert any(s.name == "hedged_claim" for s in sk.detect_skills(d))
+        assert "转述语气" in sk.render_skills_rules(d)
+    finally:
+        sk._ONLY = old
+    assert "转述语气" not in sk.render_skills_rules(d)
 
 
 # -- 计数闸 ----------------------------------------------------------------------
