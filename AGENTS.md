@@ -103,7 +103,10 @@ python3 -m venv .venv
 浏览器打开 `http://127.0.0.1:8765/`（默认只读本机）。工作台读取
 `cases/*/out*/report.json`：证据链三级下钻（结论→逐字引文→原文段落）、
 置信度分量面板、冲突消解与少数意见视图、信源可信度调整、删证据/改权重
-即时重算、哈希链校验与「篡改演示（改一字即红）」。人工修改会以 human
+即时重算、哈希链校验与「篡改演示（改一字即红）」。新增**机械核对警示**
+面板（计算复算/数字溯源/计数/归并守恒/质证引用/议题前提，零 LLM 即时
+重算——人工改结论引入未溯源数字会当场亮黄灯）与 **skill 注册表**状态
+（触发才注入提示词，每条纪律配一道机械闸）。人工修改会以 human
 事件追加进 chain.jsonl（修改可审计，链仍自洽）。若 8765 被占用换端口
 即可；依赖 fastapi/uvicorn（已在 requirements.txt，一键脚本会装）。
 
@@ -137,6 +140,9 @@ python3 -m venv .venv
 
 - 入口：`python -m app.pipeline <case_dir>`；编排：`app/pipeline.py`
 - 三级证据链与判分：`app/core/`（evidence / citation_check / confidence / conflicts / hashchain）
+- 零 LLM 机械闸族：`app/core/audit.py` 汇总（numeric_check 计算/溯源/计数、
+  discourse_check 质证/仲裁/措辞、premise_check 前提）；skill 注册表
+  `app/core/skills.py`（触发才注入，无闸的 skill 不注册）
 - 智能体：`app/agents/`（panel 三视角编队、arbiter 归并/冲突/质证/仲裁）
 - 演示案例：`cases/demo-solid-state/`（固态电池科研情报）与
   `cases/bi-delivery-risk/`（数据中台交付风险企业情报，信源已脱敏；

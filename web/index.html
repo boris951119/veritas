@@ -119,9 +119,12 @@ const KIND_CN={conclusion:"结论",evidence:"证据",segment:"段落",source:"�
   conflict:"冲突",rebuttal:"质证",arbitration:"仲裁",analyst:"分析师"};
 const EDGE_CN={supports:"支撑",cites:"引用",from_source:"属信源",authored_by:"署名",
   conflicts_with:"对立",rebuts:"质证",decides:"裁定"};
-const FLAG_CN={calc:"计算复算不符",provenance:"来源外数字",merge_conservation:"归并概括漂移",
-  rebut_quote:"质证引文未命中",rebut_ref:"质证引用不存在编号",
-  arbiter_ref:"仲裁理由引用不存在编号",premise:"议题前提未覆盖"};
+const FLAG_CN={calc:"计算复算不符",provenance:"来源外数字",counting:"计数断言无法复核",
+  merge_conservation:"归并概括漂移",rebut_quote:"质证引文未命中",rebut_ref:"质证引用不存在编号",
+  arbiter_ref:"仲裁理由引用不存在编号",hedge:"低可信信源配断言语气",
+  level_tone:"措辞强度超过证据等级",premise:"议题前提未覆盖"};
+const GATE_CN={citation:"引文核对",calc:"计算复算",provenance:"数字溯源",counting:"计数复核",
+  hedge:"转述语气",level_tone:"措辞等级"};
 function esc(s){return (s||"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
 function toast(msg,ms=2600){const t=$("#toast");t.textContent=msg;t.style.display="block";clearTimeout(t._h);t._h=setTimeout(()=>t.style.display="none",ms)}
 function confColor(c){return c>=.5?"var(--good)":c>=.2?"var(--warn)":"var(--bad)"}
@@ -250,9 +253,13 @@ function renderRejected(d){
 function renderFlags(audit){
   if(!audit){$("#flags").innerHTML=`<div class="empty">（无审计数据）</div>`;return}
   const fs=audit.flags||[];
-  const head=`<div class="kv" style="margin-bottom:8px">红灯（计算不复现等）<b style="color:${audit.n_high?"var(--bad)":"var(--good)"}">${audit.n_high}</b> ·
+  const skills=(audit.skills||[]);
+  const skillLine=skills.length?`<div class="kv" style="margin-top:6px">skill 注册表：${
+    skills.map(s=>`<span class="chip" style="${s.triggered?"color:var(--good)":""}">${esc(s.name)}${s.enabled?(s.triggered?" ✓触发":" 待命"):" ✗停用"}</span>`).join("")
+  } <span class="sub">触发才注入提示词；每条纪律配一道零 LLM 机械闸（无闸的 skill 是许愿）</span></div>`:"";
+  const head=`<div class="kv">红灯（计算不复现等）<b style="color:${audit.n_high?"var(--bad)":"var(--good)"}">${audit.n_high}</b> ·
     黄牌（来源外数字等）<b style="color:${audit.n_medium?"var(--warn)":"var(--good)"}">${audit.n_medium}</b>　
-    <span class="sub">警示不剔除内容——语义取舍归分析师与读者，机械侧保证「每个数字都能对账」</span></div>`;
+    <span class="sub">警示不剔除内容——语义取舍归分析师与读者，机械侧保证「每个数字都能对账」</span></div>${skillLine}`;
   $("#flags").innerHTML=head+(fs.map(f=>`
     <div class="flagitem ${esc(f.severity)}"><span class="tag ${esc(f.severity)}">${f.severity==="high"?"红":"黄"}</span>
     <b>${esc(FLAG_CN[f.kind]||f.kind)}</b>　${esc(f.detail)}

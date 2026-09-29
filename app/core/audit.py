@@ -7,29 +7,39 @@ flag 不持久化——每次加载即时重算（derived view）：人工修改
 
 from __future__ import annotations
 
-from app.core.discourse_check import audit_discourse
+from app.core.discourse_check import (
+    audit_discourse,
+    audit_hedge,
+    audit_level_tone,
+)
 from app.core.evidence import Dossier
-from app.core.numeric_check import audit_conservation, audit_numeric
+from app.core.numeric_check import audit_conservation, audit_counting, audit_numeric
 from app.core.premise_check import premise_flags
 
 KIND_LABEL: dict[str, str] = {
     "calc": "计算复算不符",
     "provenance": "来源外数字",
+    "counting": "计数断言无法复核",
     "merge_conservation": "归并概括漂移",
     "rebut_quote": "质证引文未命中",
     "rebut_ref": "质证引用不存在的编号",
     "arbiter_ref": "仲裁理由引用不存在的编号",
+    "hedge": "低可信信源配断言语气",
+    "level_tone": "措辞强度超过证据等级",
     "premise": "议题前提未被资料覆盖",
 }
 
 
 def audit_all(dossier: Dossier) -> list[dict]:
-    """全部零 LLM 机械闸一次扫描：前提 + 计算/溯源 + 守恒 + 话语。"""
+    """全部零 LLM 机械闸一次扫描：前提 + 计算/溯源/计数 + 守恒 + 话语。"""
     return [
         *premise_flags(dossier),
         *audit_numeric(dossier),
+        *audit_counting(dossier),
         *audit_conservation(dossier),
         *audit_discourse(dossier),
+        *audit_hedge(dossier),
+        *audit_level_tone(dossier),
     ]
 
 

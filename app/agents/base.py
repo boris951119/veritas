@@ -42,9 +42,12 @@ class Analyst:
 
     def analyze(self, dossier: Dossier) -> list[Conclusion]:
         from app.agents.prompts import render_segments_block, render_system_prompt
+        from app.core.skills import render_skills_rules
 
         messages = [
-            {"role": "system", "content": render_system_prompt(self.persona)},
+            {"role": "system",
+             "content": render_system_prompt(
+                 self.persona, skills_rules=render_skills_rules(dossier))},
             {"role": "user", "content": render_segments_block(dossier)},
         ]
         response = self.client.chat(self.model, messages, json_mode=True)

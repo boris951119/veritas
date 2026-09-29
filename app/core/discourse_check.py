@@ -81,3 +81,69 @@ def audit_discourse(dossier: Dossier) -> list[dict]:
         flags.extend(_check_refs(dossier, rationale, "arbiter_ref", "",
                                  conflict_id, "arbiter"))
     return flags
+
+
+# ---------------------------------------------------------------- 措辞闸
+
+# 转述语气词（低可信信源支撑的结论应出现其一）
+_HEDGE_RE = re.compile(
+    r"报道称|据报道|据悉|疑似|传闻|未经官方证实|尚未证实|有待核实|"
+    "或涉|或将|可能|或因|声称|自述|尚待")
+# 断言语气词（弱证据配强措辞即不匹配）
+_ASSERT_RE = re.compile(
+    r"必然|肯定|无疑|确凿|必将|一定|绝对|百分之百|注定")
+
+
+def _supporting_sources(dossier: Dossier, conclusion_id: str) -> list:
+    types = []
+    for ev in dossier.evidences_of(conclusion_id):
+        for sid in ev.segment_ids:
+            src = dossier.source_of_segment(sid)
+            if src is not None:
+                types.append(src)
+    return types
+
+
+def audit_hedge(dossier: Dossier) -> list[dict]:
+    """转述级闸：证据全部来自低可信信源（新闻/网页/笔记）且结论无
+    转述语气 → 黄牌（声称≠事实，OSINT 场景的核心幻觉）。"""
+    flags: list[dict] = []
+    for con in dossier.conclusions:
+        if con.status == "merged":
+            continue
+        sources = _supporting_sources(dossier, con.id)
+        if not sources or not all(s.source_type.value in ("news", "web", "note")
+                                  for s in sources):
+            continue
+        if _HEDGE_RE.search(con.statement):
+            continue
+        flags.append({
+            "kind": "hedge", "severity": "medium",
+            "conclusion_id": con.id,
+            "value": con.statement[:40],
+            "detail": "结论的全部证据来自低可信信源（新闻/网页/笔记），"
+                      "但使用了断言语气——应转述（报道称/疑似/未经证实）",
+        })
+    return flags
+
+
+def audit_level_tone(dossier: Dossier) -> list[dict]:
+    """措辞-等级闸：证据仅为 C/D 级却用断言词 → 黄牌。"""
+    flags: list[dict] = []
+    for con in dossier.conclusions:
+        if con.status == "merged":
+            continue
+        evs = dossier.evidences_of(con.id)
+        if not evs or not all(e.level.value in ("C", "D") for e in evs):
+            continue
+        m = _ASSERT_RE.search(con.statement)
+        if not m:
+            continue
+        flags.append({
+            "kind": "level_tone", "severity": "medium",
+            "conclusion_id": con.id,
+            "value": m.group(0),
+            "detail": f"结论证据仅为 C/D 级，却使用断言词「{m.group(0)}」"
+                      "——措辞强度应与证据等级匹配",
+        })
+    return flags

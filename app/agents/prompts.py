@@ -13,7 +13,7 @@ SYSTEM_TEMPLATE = """你是一名{persona}。你的任务：针对给定研判�
 4. 只依据资料说话；资料未覆盖的问题就下「资料不足」类结论并说明缺口；
 5. relation 判定要诚实：只有资料给出了机制或因果论证才用 causation，共变现象用 correlation，专家观点用 expert_judgment；
 6. level 按证据等级标注：A=同行评审/一手数据，B=单一正式研究或官方文件，C=预印本/灰色文献，D=自媒体/无出处转述。
-
+{skills_rules}
 输出 JSON（不要输出任何 JSON 以外的文字）：
 {{
   "conclusions": [
@@ -31,9 +31,12 @@ SYSTEM_TEMPLATE = """你是一名{persona}。你的任务：针对给定研判�
 REDACTION_NOTE = """\n注意：本轮研判为独立研判，你不知道也无法参考其他分析师的结论；请独立给出你自己的判断。"""
 
 
-def render_system_prompt(persona: str, isolated: bool = True) -> str:
+def render_system_prompt(persona: str, isolated: bool = True,
+                         skills_rules: str = "") -> str:
+    """系统提示词：persona + 隔离声明 + 条件触发的 skill 纪律块。"""
     extra = REDACTION_NOTE if isolated else ""
-    return SYSTEM_TEMPLATE.format(persona=persona, extra=extra)
+    return SYSTEM_TEMPLATE.format(persona=persona, extra=extra,
+                                  skills_rules=skills_rules)
 
 
 def render_segments_block(dossier: Dossier, per_segment_chars: int = 900) -> str:

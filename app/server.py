@@ -29,6 +29,7 @@ from app.core.evidence import Dossier
 from app.core.hashchain import HashChain
 from app.core.human_ops import edit_conclusion, override_resolution
 from app.core.reasoning_graph import build_reasoning_graph
+from app.core.skills import skill_status
 
 _REPO_ROOT = Path(__file__).resolve().parent.parent
 _WEB_DIR = _REPO_ROOT / "web"
@@ -71,7 +72,8 @@ def _dossier_payload(out_dir: Path) -> dict:
         "case": out_dir.parent.name,
         "out_dir": out_dir.name,
         "dossier": dossier.to_dict(),
-        "audit": {"flags": flags, **summarize(flags)},
+        "audit": {"flags": flags, **summarize(flags),
+                  "skills": skill_status(dossier)},
         "chain": {
             "n_records": len(chain.records),
             "ok": verify.ok,

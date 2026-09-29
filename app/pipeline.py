@@ -38,11 +38,16 @@ from app.core.conflicts import (
     dissent_conclusions,
     majority_conclusions,
 )
-from app.core.discourse_check import audit_discourse
+from app.core.discourse_check import (
+    audit_discourse,
+    audit_hedge,
+    audit_level_tone,
+)
 from app.core.evidence import Dossier
 from app.core.hashchain import HashChain
-from app.core.numeric_check import audit_conservation, audit_numeric
+from app.core.numeric_check import audit_conservation, audit_counting, audit_numeric
 from app.core.premise_check import premise_flags
+from app.core.skills import detect_skills
 from app.ingest.case_loader import load_case
 from app.llm.budget import BudgetGuard, set_active_budget_guard
 from app.llm.model_client import ModelClient, ModelClientFactory
@@ -91,6 +96,9 @@ def run_case(
     # 0) 议题前提核对（零 LLM）：问题实体在信源零命中 → 亮灯前置
     premise = premise_flags(dossier)
     chain.append("premise_check", "pipeline", summarize(premise))
+    # 0.5) skill 注册表按案卷特征触发（命中才注入分析师提示词，入链留痕）
+    chain.append("skills_triggered", "pipeline",
+                 {"skills": [s.name for s in detect_skills(dossier)]})
 
     guard = BudgetGuard(settings.budget_tokens, settings.budget_throttle_threshold)
     set_active_budget_guard(guard)
@@ -111,16 +119,17 @@ def run_case(
     # 2) 引文机械核对（协同段之前：坏证据不进归并与仲裁）
     rejected = _reject_failed_citations(dossier, chain)
     dossier.rejected = rejected  # 持久化进 report.json（工作台展示）
-    # 2.5) 数字机械核对（计算复算 + 数字溯源，零 LLM；警示不剔除结论）
-    numeric = audit_numeric(dossier)
+    # 2.5) 数字机械核对（计算复算 + 数字溯源 + 计数，零 LLM；警示不剔除结论）
+    numeric = audit_numeric(dossier) + audit_counting(dossier)
     chain.append("numeric_audit", "pipeline", summarize(numeric))
 
     # 3) 协同段：归并 → 冲突 → 质证 → 仲裁（≥2 分析师才走；逐步降级）
     if len(analysts) >= 2:
         _run_collaboration(dossier, chain, analysts, coordinator, client, settings)
 
-    # 3.5) 协同段话语机械核对：归并守恒 + 质证/仲裁引用（零 LLM）
-    discourse = audit_conservation(dossier) + audit_discourse(dossier)
+    # 3.5) 协同段话语机械核对：归并守恒 + 质证/仲裁引用 + 措辞匹配（零 LLM）
+    discourse = (audit_conservation(dossier) + audit_discourse(dossier)
+                 + audit_hedge(dossier) + audit_level_tone(dossier))
     chain.append("discourse_audit", "pipeline", summarize(discourse))
 
     # 4) 置信度融合 + 收口
@@ -255,10 +264,13 @@ def render_report_md(dossier: Dossier, chain: HashChain, rejected: list[dict]) -
 _KIND_LABEL = {
     "calc": "计算复算不符",
     "provenance": "来源外数字",
+    "counting": "计数断言无法复核",
     "merge_conservation": "归并概括漂移",
     "rebut_quote": "质证引文未命中",
     "rebut_ref": "质证引用不存在编号",
     "arbiter_ref": "仲裁理由引用不存在编号",
+    "hedge": "低可信信源配断言语气",
+    "level_tone": "措辞强度超过证据等级",
     "premise": "议题前提未覆盖",
 }
 

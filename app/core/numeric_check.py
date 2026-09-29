@@ -263,6 +263,67 @@ def audit_numeric(dossier: Dossier) -> list[dict]:
     return flags
 
 
+# ---------------------------------------------------------------- 计数闸
+
+# skill「计数规范」教的格式：note 里写「计数:M/N 信源，见 SRC-…、SRC-…」
+_COUNT_RE = re.compile(r"计数\s*[:：]\s*(\d+)\s*[/／]\s*(\d+)")
+_ID_IN_TEXT = re.compile(r"\b((?:SRC|CON|EV|CFL)-?[0-9a-zA-Z#]+)\b")
+
+
+def audit_counting(dossier: Dossier) -> list[dict]:
+    """计数闸：「N 份中 M 份」类断言必须给出可程序复核的清单。
+
+    只核 skill 教的显式「计数:M/N」格式（隐式计数断言交给溯源闸与
+    质证）：分母须等于案卷信源数，分子须等于列出的存活信源编号数，
+    列表内不得有不存在/重复编号。违规黄牌（计数错误是典型低级幻觉，
+    但不剔除内容）。"""
+    flags: list[dict] = []
+    n_sources = len(dossier.sources)
+    for con in dossier.conclusions:
+        if con.status == "merged":
+            continue
+        texts = [(con.statement, "结论")] + [
+            (ev.note, f"证据 {ev.id} 说明")
+            for ev in dossier.evidences_of(con.id)]
+        seen: set[tuple] = set()
+        for text, where in texts:
+            m = _COUNT_RE.search(text or "")
+            if not m:
+                continue
+            claimed_m, claimed_n = int(m.group(1)), int(m.group(2))
+            tail = text[m.end(): m.end() + 200]
+            listed = _ID_IN_TEXT.findall(tail)
+            key = (claimed_m, claimed_n, tuple(listed))
+            if key in seen:
+                continue
+            seen.add(key)
+            problems = []
+            if claimed_n != n_sources:
+                problems.append(f"分母 {claimed_n} 与案卷信源数 {n_sources} 不符")
+            existing = [i for i in listed
+                        if any(s.id == i or s.id.startswith(i)
+                               for s in dossier.sources)]
+            if not listed:
+                problems.append("未列出所数信源编号")
+            else:
+                if len(existing) != len(listed):
+                    problems.append("列出的信源编号有不存在者")
+                if len(set(existing)) != len(existing):
+                    problems.append("列出的信源编号有重复")
+                if claimed_m != len(set(existing)):
+                    problems.append(
+                        f"分子 {claimed_m} 与列出存活信源数 {len(set(existing))} 不符")
+            if problems:
+                flags.append({
+                    "kind": "counting", "severity": "medium",
+                    "conclusion_id": con.id,
+                    "value": f"计数:{claimed_m}/{claimed_n}",
+                    "detail": f"{where}计数断言「{claimed_m}/{claimed_n}」"
+                              "无法复核：" + "；".join(problems),
+                })
+    return flags
+
+
 # ---------------------------------------------------------------- 守恒闸
 
 
