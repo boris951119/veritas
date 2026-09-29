@@ -29,7 +29,8 @@ veritas/
 │   ├── ingest/     # 多源摄取：pdf / html / md / txt / json → Source + Segment
 │   ├── llm/        # 模型基建（自 token-burner 复制的自有代码，独立适配）
 │   ├── pipeline.py # 端到端编排
-│   └── server.py   # FastAPI 可视化工作台
+│   ├── server.py   # FastAPI 可视化工作台
+│   └── mcp_server.py # MCP 标准接口（研判能力暴露为智能体可调用工具）
 ├── web/            # 前端单页（证据图 / 推理树 / 置信度面板）
 ├── cases/          # 演示案例数据（科研情报：某技术路线成熟度研判）
 ├── tests/          # 全 stub 测试，无 key 即全绿
@@ -61,7 +62,10 @@ veritas/
 # 3c) 可视化工作台（证据图下钻 / 人工修改重算 / 防篡改演示）
 .venv/bin/python -m app.server --port 8765   # 浏览器开 http://127.0.0.1:8765/
 
-# 4) 测试（零 key 全绿）
+# 3d) MCP 标准接口（可选：pip install mcp 后，智能体直连研判工具）
+.venv/bin/python -m app.mcp_server           # stdio；list_cases/get_report/verify_chain/run_*
+
+# 4) 测试（零 key 全绿；未装 mcp 时协议测试自动跳过）
 .venv/bin/python -m pytest tests/ -q
 ```
 
@@ -70,6 +74,6 @@ veritas/
 
 ## 路线图
 
-见 [ROADMAP.md](ROADMAP.md) —— 21 天里程碑。第 1 周最小闭环已落地
-（证据模型 / 哈希链 / 引文核对器 / 单分析师管线，42 项测试全绿 + 真实
-网关冒烟通过）。
+见 [ROADMAP.md](ROADMAP.md) —— 21 天里程碑。第 1–3 周已全部落地：
+最小闭环 → 多智能体协同与可信层 → 可视化工作台 + MCP 标准接口，
+64 项测试全绿（零 key）+ 真实网关冒烟通过。

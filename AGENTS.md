@@ -58,7 +58,7 @@ python3 -m venv .venv
 .venv/bin/python -m pytest tests -q
 ```
 
-**通过判据**：`55 passed`（或更多，零 failed）。测试全 stub，无需密钥。
+**通过判据**：`63 passed`（或更多，零 failed；装了 mcp 后为 64）。测试全 stub，无需密钥。
 
 ## 第 3 步：离线演示（断网/无 key 时的完整演示兜底）
 
@@ -101,6 +101,20 @@ python3 -m venv .venv
 事件追加进 chain.jsonl（修改可审计，链仍自洽）。若 8765 被占用换端口
 即可；依赖 fastapi/uvicorn（已在 requirements.txt，一键脚本会装）。
 
+## 第 6 步：MCP 标准接口（可选，接第三方智能体）
+
+```bat
+:: Windows
+.venv\Scripts\python -m pip install mcp
+.venv\Scripts\python -m app.mcp_server
+```
+
+以 MCP（Model Context Protocol）stdio 服务把研判能力暴露为 5 个标准
+工具：`list_cases` / `get_report` / `verify_chain`（零 LLM，离线可验，
+任何 MCP 客户端如 Claude/其他智能体可直连）+ `run_analyst` /
+`run_judgment`（发起真实研判，需第 4 步的网关配置）。mcp 1.x/2.x 均
+兼容；不装 mcp 不影响前 5 步与测试。
+
 ## 故障排查
 
 | 症状 | 处理 |
@@ -110,7 +124,7 @@ python3 -m venv .venv
 | pip 装不上 litellm | 加镜像参数重试；仍失败可暂时跳过——`pytest` 与 `demo_offline` 不依赖 litellm（懒加载），仅第 4 步在线研判需要 |
 | PDF 信源摄取报 pypdf 缺失 | `pip install pypdf`（PDF 是可选格式，demo 案例不含 PDF 不影响演示） |
 | venv 激活后命令找不到 | 直接用绝对路径调 python：`.venv\Scripts\python`（Win）/ `.venv/bin/python`（Mac） |
-| 55 项测试出现 failed | 把失败摘要原样反馈给开发者；在修好前用第 3 步离线演示兜底 |
+| 测试出现 failed | 把失败摘要原样反馈给开发者；在修好前用第 3 步离线演示兜底（未装 mcp 时 MCP 协议测试自动跳过，63 passed + 1 skipped 属正常） |
 
 ## 仓库速览（供智能体理解上下文）
 
