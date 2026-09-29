@@ -8,10 +8,13 @@ IO 密集），单个分析师失败只降级不炸全局（chain 留痕）。
 from __future__ import annotations
 
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from pathlib import Path
+from typing import Any
 
 from app.agents.base import Analyst
 from app.core.evidence import Conclusion, Dossier
 from app.llm.model_client import ModelClient
+from app.llm.yaml_robust import load_yaml_robust
 
 MAINSTREAM_PERSONA = ("严谨的主流评估派分析师：以同行评审证据为主要依据，"
                       "按主流学术共识的口径评估技术成熟度与可行性")
@@ -26,6 +29,36 @@ DEFAULT_ROSTER: list[tuple[str, str]] = [
     ("redteam", REDTEAM_PERSONA),
     ("technologist", TECHNOL_PERSONA),
 ]
+
+
+def load_roster(data: dict | str | Path) -> list[tuple[str, str]]:
+    """从 dict 或 YAML 路径加载编队；至少 2 人，否则 ValueError。
+
+    形态：{"roster":[{"name":"...","persona":"..."}, ...]}
+    """
+    if isinstance(data, (str, Path)):
+        raw: Any = load_yaml_robust(Path(data))
+    else:
+        raw = data
+    if not isinstance(raw, dict):
+        raise ValueError("roster 须为含 roster 键的对象")
+    items = raw.get("roster")
+    if not isinstance(items, list):
+        raise ValueError("roster 须为列表")
+    out: list[tuple[str, str]] = []
+    for item in items:
+        if not isinstance(item, dict):
+            raise ValueError("roster 项须为对象")
+        name = str(item.get("name") or "").strip()
+        persona = str(item.get("persona") or "").strip()
+        if not name:
+            raise ValueError("roster 项缺少 name")
+        if not persona:
+            raise ValueError(f"roster 项 {name!r} 缺少 persona")
+        out.append((name, persona))
+    if len(out) < 2:
+        raise ValueError("编队至少需要 2 个不同角色")
+    return out
 
 
 def build_panel(client: ModelClient, model: str,

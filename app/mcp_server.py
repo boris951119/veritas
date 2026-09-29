@@ -215,6 +215,27 @@ def _make_server():
         return summary
 
     @mcp.tool()
+    def ingest_external(question: str, sources: list[dict],
+                        agent: str, conclusions: list[dict]) -> dict:
+        """把第三方智能体的结论+证据入卷并做引文机械核对（零 LLM）。
+
+        sources: [{"title","text","type"?,"credibility"?}]
+        conclusions: [{"statement","evidence":[{"quote","segment_id",...}]}]
+        返回入卷后的摘要（含 rejected）。
+        """
+        from app.agents.ingress import ingest_external_judgment
+        from app.core.confidence import recompute_all
+
+        dossier = build_dossier_from_sources(question, sources)
+        ids = ingest_external_judgment(dossier, {
+            "agent": agent, "conclusions": conclusions,
+        })
+        recompute_all(dossier, n_panel=1)
+        summary = _judgment_summary(dossier, 1)
+        summary["ingested_ids"] = ids
+        return summary
+
+    @mcp.tool()
     def run_analyst(question: str, sources: list[dict],
                     persona: str = "严谨的主流评估派分析师：以同行评审证据为主要依据给出独立研判") -> dict:
         """以指定角色视角做一次独立研判（单分析师；需模型网关）。

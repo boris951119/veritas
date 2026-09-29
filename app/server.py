@@ -25,6 +25,8 @@ from pydantic import BaseModel
 from app.core.confidence import recompute_all
 from app.core.evidence import Dossier
 from app.core.hashchain import HashChain
+from app.core.human_ops import edit_conclusion, override_resolution
+from app.core.reasoning_graph import build_reasoning_graph
 
 _REPO_ROOT = Path(__file__).resolve().parent.parent
 _WEB_DIR = _REPO_ROOT / "web"
@@ -100,6 +102,18 @@ class CredibilityReq(BaseModel):
     credibility: float
 
 
+class ConclusionEditReq(BaseModel):
+    case: str
+    conclusion_id: str
+    statement: str
+
+
+class ConflictOverrideReq(BaseModel):
+    case: str
+    conflict_id: str
+    winner_id: str
+
+
 def create_app(cases_root: Path | None = None) -> FastAPI:
     app = FastAPI(title="veritas 工作台", docs_url=None, redoc_url=None)
 
@@ -122,6 +136,40 @@ def create_app(cases_root: Path | None = None) -> FastAPI:
     @app.get("/api/dossier")
     def get_dossier(case: str) -> dict:
         return _dossier_payload(_find_out_dir(cases_root, case))
+
+    @app.get("/api/reasoning_graph")
+    def get_reasoning_graph(case: str) -> dict:
+        out_dir = _find_out_dir(cases_root, case)
+        dossier, _ = _load_pair(out_dir)
+        return build_reasoning_graph(dossier)
+
+    @app.post("/api/conclusion/edit")
+    def edit_conclusion_api(req: ConclusionEditReq) -> dict:
+        def apply(d: Dossier) -> None:
+            try:
+                edit_conclusion(d, req.conclusion_id, req.statement)
+            except KeyError as exc:
+                raise HTTPException(404, str(exc)) from exc
+            except ValueError as exc:
+                raise HTTPException(422, str(exc)) from exc
+
+        return _mutate(cases_root, req.case, "conclusion_edit",
+                       {"conclusion_id": req.conclusion_id,
+                        "statement": req.statement}, apply)
+
+    @app.post("/api/conflict/override")
+    def override_conflict_api(req: ConflictOverrideReq) -> dict:
+        def apply(d: Dossier) -> None:
+            try:
+                override_resolution(d, req.conflict_id, req.winner_id)
+            except KeyError as exc:
+                raise HTTPException(404, str(exc)) from exc
+            except ValueError as exc:
+                raise HTTPException(422, str(exc)) from exc
+
+        return _mutate(cases_root, req.case, "conflict_override",
+                       {"conflict_id": req.conflict_id,
+                        "winner_id": req.winner_id}, apply)
 
     @app.post("/api/evidence/weight")
     def set_weight(req: EvidenceWeightReq) -> dict:

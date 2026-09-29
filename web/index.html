@@ -67,6 +67,13 @@ h2{font-size:15px;margin:26px 0 12px;color:var(--dim);font-weight:600;letter-spa
 .toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);background:var(--panel2);border:1px solid var(--accent);border-radius:10px;padding:10px 18px;font-size:13px;display:none;z-index:99;max-width:80vw}
 .empty{color:var(--dim);font-size:12.5px;padding:8px}
 .dissent-note{background:#231d2e;border:1px solid #3d3356;border-radius:8px;padding:6px 10px;margin-top:8px;font-size:12px;color:#c9b8f0}
+.graph{display:flex;flex-wrap:wrap;gap:8px;align-items:flex-start}
+.gnode{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:6px 10px;font-size:11px;max-width:180px}
+.gnode b{display:block;color:var(--dim);font-weight:600;margin-bottom:2px;text-transform:uppercase;font-size:10px}
+.gedges{margin-top:10px;font-size:11px;color:var(--dim);max-height:160px;overflow:auto}
+.gedges code{color:var(--accent)}
+.editrow{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;align-items:center}
+.editrow input[type=text]{flex:1;min-width:160px;background:#0a0e14;color:var(--text);border:1px solid var(--line);border-radius:6px;padding:5px 8px;font-size:12px}
 </style>
 </head>
 <body>
@@ -79,9 +86,11 @@ h2{font-size:15px;margin:26px 0 12px;color:var(--dim);font-weight:600;letter-spa
   <span class="sub" id="panelInfo"></span>
 </div>
 <div class="wrap">
+  <h2>推理轨迹图 <span class="sub">结论 → 证据 → 段落 → 信源；含冲突 / 质证 / 裁决节点</span></h2>
+  <div id="graph" class="sec"></div>
   <h2>证据链视图 <span class="sub">结论 → 证据（逐字引文）→ 来源原文　·　点击引文卡下钻原文；滑杆改权重、按钮删证据，改动即重算并入链</span></h2>
   <div id="chains"></div>
-  <h2>分歧识别与消解</h2>
+  <h2>分歧识别与消解 <span class="sub">可人工改写结论文案、推翻裁决（入链）</span></h2>
   <div id="conflicts"></div>
   <h2>少数意见（依规保留）</h2>
   <div id="dissents"></div>
@@ -93,10 +102,12 @@ h2{font-size:15px;margin:26px 0 12px;color:var(--dim);font-weight:600;letter-spa
 <div class="toast" id="toast"></div>
 <script>
 const $=s=>document.querySelector(s);
-let CASES=[],CUR=null,D=null;
+let CASES=[],CUR=null,D=null,G=null;
 const LV_COLOR={A:"var(--good)",B:"#58a6ff",C:"var(--warn)",D:"var(--bad)"};
 const REL_CN={causation:"因果",correlation:"相关",expert_judgment:"专家判断"};
 const TYPE_CN={paper:"文献",patent:"专利",report:"报告",news:"新闻",note:"笔记",web:"网页",other:"其他"};
+const KIND_CN={conclusion:"结论",evidence:"证据",segment:"段落",source:"信源",
+  conflict:"冲突",rebuttal:"质证",arbitration:"仲裁",analyst:"分析师"};
 function esc(s){return (s||"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
 function toast(msg,ms=2600){const t=$("#toast");t.textContent=msg;t.style.display="block";clearTimeout(t._h);t._h=setTimeout(()=>t.style.display="none",ms)}
 function confColor(c){return c>=.5?"var(--good)":c>=.2?"var(--warn)":"var(--bad)"}
@@ -111,6 +122,7 @@ async function boot(){
 async function load(){
   CUR=$("#caseSel").value;if(!CUR)return;
   D=await api("/api/dossier?case="+encodeURIComponent(CUR));
+  G=await api("/api/reasoning_graph?case="+encodeURIComponent(CUR)).catch(()=>({nodes:[],edges:[]}));
   render();
 }
 function render(){
@@ -119,7 +131,17 @@ function render(){
   const pill=$("#chainPill");
   pill.textContent=D.chain.ok?`防篡改链 ✅ ${D.chain.n_records} 条`:`防篡改链 ❌ #${D.chain.bad_index}`;
   pill.className="pill "+(D.chain.ok?"ok":"bad");
-  renderChains(d);renderConflicts(d);renderDissents(d);renderRejected(d);renderSources(d);
+  renderGraph(G);renderChains(d);renderConflicts(d);renderDissents(d);renderRejected(d);renderSources(d);
+}
+function renderGraph(g){
+  if(!g||!(g.nodes||[]).length){$("#graph").innerHTML=`<div class="empty">无图数据</div>`;return}
+  const order=["conclusion","conflict","arbitration","rebuttal","evidence","segment","source","analyst"];
+  const nodes=[...g.nodes].sort((a,b)=>order.indexOf(a.kind)-order.indexOf(b.kind));
+  const shown=nodes.filter(n=>["conclusion","conflict","arbitration","rebuttal","source","analyst"].includes(n.kind));
+  $("#graph").innerHTML=`<div class="kv">节点 ${g.nodes.length} · 边 ${g.edges.length}</div>
+    <div class="graph" style="margin-top:8px">${shown.map(n=>`<div class="gnode"><b>${KIND_CN[n.kind]||n.kind}</b>${esc(n.label)}</div>`).join("")}</div>
+    <div class="gedges">${(g.edges||[]).slice(0,40).map(e=>`<div><code>${esc(e.kind)}</code> ${esc(e.source)} → ${esc(e.target)}</div>`).join("")}
+      ${(g.edges||[]).length>40?`<div class="sub">… 另有 ${(g.edges.length-40)} 条边</div>`:""}</div>`;
 }
 function renderChains(d){
   const majors=d.conclusions.filter(c=>c.status==="majority")
@@ -160,6 +182,10 @@ function renderChains(d){
           <div class="bar"><i style="width:${(con.confidence*100).toFixed(0)}%;background:${confColor(con.confidence)}"></i></div></div>
         <div class="chips">${chips}</div>
         <div class="who">研判方：${esc((con.authors&&con.authors.length?con.authors.join("、"):con.author)||"N/A")}</div>
+        <div class="editrow">
+          <input type="text" id="edit-${esc(con.id)}" value="${esc(con.statement)}" placeholder="改写结论文案">
+          <button class="mini" onclick="editCon('${esc(con.id)}')">保存结论</button>
+        </div>
       </div></div>
       <div class="link"></div>
       <div class="lane">${evHtml}</div>
@@ -183,7 +209,12 @@ function renderConflicts(d){
     }
     return `<div class="pair"><b>冲突：${esc(c.topic||"结论对立")}</b>
       <div class="kv">甲方 ${esc(c.a_id)}：${esc(statementOf(d,c.a_id))}</div>
-      <div class="kv">乙方 ${esc(c.b_id)}：${esc(statementOf(d,c.b_id))}</div>${verdict}</div>`;
+      <div class="kv">乙方 ${esc(c.b_id)}：${esc(statementOf(d,c.b_id))}</div>${verdict}
+      <div class="editrow">
+        <button class="mini" onclick="overrideWin('${esc(c.id)}','${esc(c.a_id)}')">判甲方胜</button>
+        <button class="mini" onclick="overrideWin('${esc(c.id)}','${esc(c.b_id)}')">判乙方胜</button>
+        <button class="mini" onclick="overrideWin('${esc(c.id)}','tie')">判未决</button>
+      </div></div>`;
   }).join("")||`<div class="sec empty">本轮研判无冲突对</div>`;
 }
 function statementOf(d,id){const c=(d.conclusions||[]).find(x=>x.id===id);return c?c.statement:"（已不存在）"}
@@ -214,18 +245,34 @@ function renderSources(d){
 async function setWeight(id,w){
   D=await api("/api/evidence/weight",{method:"POST",headers:{"Content-Type":"application/json"},
     body:JSON.stringify({case:CUR,evidence_id:id,weight:parseFloat(w)})});
+  G=await api("/api/reasoning_graph?case="+encodeURIComponent(CUR)).catch(()=>G);
   render();toast(`已调整权重并重算（入链 ${D.chain.n_records} 条）`);
 }
 async function removeEv(id){
   if(!confirm("确认删除该证据？结论置信度将即时重算，操作记入防篡改链。"))return;
   D=await api("/api/evidence/remove",{method:"POST",headers:{"Content-Type":"application/json"},
     body:JSON.stringify({case:CUR,evidence_id:id})});
+  G=await api("/api/reasoning_graph?case="+encodeURIComponent(CUR)).catch(()=>G);
   render();toast("证据已删除并重算（入链）");
 }
 async function setCred(id,v){
   D=await api("/api/source/credibility",{method:"POST",headers:{"Content-Type":"application/json"},
     body:JSON.stringify({case:CUR,source_id:id,credibility:parseFloat(v)})});
+  G=await api("/api/reasoning_graph?case="+encodeURIComponent(CUR)).catch(()=>G);
   render();toast("信源可信度已更新并重算全链（入链）");
+}
+async function editCon(id){
+  const el=document.getElementById("edit-"+id);if(!el)return;
+  D=await api("/api/conclusion/edit",{method:"POST",headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({case:CUR,conclusion_id:id,statement:el.value})});
+  G=await api("/api/reasoning_graph?case="+encodeURIComponent(CUR)).catch(()=>G);
+  render();toast("结论已改写并入链");
+}
+async function overrideWin(cid,winner){
+  D=await api("/api/conflict/override",{method:"POST",headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({case:CUR,conflict_id:cid,winner_id:winner})});
+  G=await api("/api/reasoning_graph?case="+encodeURIComponent(CUR)).catch(()=>G);
+  render();toast("人工裁决已落卷并入链");
 }
 async function verifyChain(){
   const r=await api("/api/chain/verify",{method:"POST",headers:{"Content-Type":"application/json"},
