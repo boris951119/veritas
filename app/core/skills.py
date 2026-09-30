@@ -20,10 +20,10 @@ from typing import Callable
 from app.core.evidence import Dossier, SourceType
 
 # 配对闸的合法 kind（闸本体在 numeric_check / discourse_check / citation_check /
-# temporal_check）
+# temporal_check / question_check）
 KNOWN_GATES = {
     "citation", "calc", "provenance", "counting",
-    "hedge", "level_tone", "as_of",
+    "hedge", "level_tone", "as_of", "question",
 }
 
 _LOWCRED = {SourceType.NEWS, SourceType.WEB, SourceType.NOTE}
@@ -175,6 +175,22 @@ SKILLS: list[GateSkill] = [
         rule_hard="涉及状态/数值的结论必须含时点词（如「截至2025年报」「2026年"
                   "3月」）；程序核对所引信源时点与结论时点词，缺锚即打回。",
     ),
+    GateSkill(
+        name="question_focus",
+        description="宽泛议题下给出笼统总体判断（各主题混为一谈）",
+        rule="本议题表述宽泛：按主题分维度组织结论，每条结论聚焦单一主题"
+             "并各自挂证据；不要给缺乏单一证据锚点的笼统总体判断。",
+        trigger=lambda d: _question_tier(d) == "vague",
+        gate="question",
+    ),
+    GateSkill(
+        name="question_scoped",
+        description="复合议题的子问题被揉在一起回答",
+        rule="本议题含多个子问题：逐子问题作答，statement 开头标注所属"
+             "子题（如「回款方面：…」「交付方面：…」）。",
+        trigger=lambda d: _question_tier(d) == "compound",
+        gate="question",
+    ),
     # ---- 注册未启用：等对应语料出现再按 A/B 协议开启 -------------------
     GateSkill(
         name="negation_guard",
@@ -206,6 +222,12 @@ assert all(s.gate in KNOWN_GATES for s in SKILLS)
 # ---------------------------------------------------------------- 接口
 
 import os
+
+def _question_tier(dossier: Dossier) -> str:
+    from app.core.question_check import question_preflight
+
+    return question_preflight(dossier.question)["tier"]
+
 
 # 运行时总开关（A/B 对照用；pipeline 按 Settings.skills_enabled 置位。
 # 对照组只关「教」——render_skills_rules 返回空——机械闸照常运行）

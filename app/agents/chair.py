@@ -87,6 +87,17 @@ def render_chair_template(dossier: Dossier) -> dict:
     for f in premise_flags(dossier)[:3]:
         open_issues.append({"kind": "gap", "ref": "议题",
                             "text": _trim(f["detail"], _ISSUE_MAX)})
+    # 歧义显式框定：非清晰议题原文照录（预检分级为准），解读分歧由
+    # 多视角+冲突消解显式化，不替用户消歧
+    from app.core.question_check import question_preflight
+
+    pf = question_preflight(dossier.question)
+    if pf["tier"] != "clear":
+        open_issues.append({
+            "kind": "question", "ref": "议题",
+            "text": _trim(f"议题表述{pf['tier_cn']}，本研判按多视角解读——"
+                          f"原文照录「{pf['readback']['原文'][:30]}」",
+                          _ISSUE_MAX)})
     from app.core.fact_ledger import find_collisions
 
     collisions = find_collisions(dossier)

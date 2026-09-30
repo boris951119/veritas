@@ -196,6 +196,10 @@ def _make_server():
         from app.agents.ingress import ingest_external_judgment
         from app.core.confidence import recompute_all
 
+        err = _validate_question(question)
+        if err:
+            return err
+
         dossier = build_dossier_from_sources(question, sources)
         ids = ingest_external_judgment(dossier, {
             "agent": agent, "conclusions": conclusions,
@@ -211,22 +215,64 @@ def _make_server():
         """以指定角色视角做一次独立研判（单分析师；需模型网关）。
 
         sources: [{"title","text","type"?,"credibility"?}]，text 为信源全文。
-        返回该角色的结论+逐字引文证据链（引文已经机械核对）。
+        返回该角色的结论+逐字引文证据链（引文已经机械核对），
+        附 preflight（议题体检：tier/readback/needs_clarification——
+        非清晰议题建议向用户澄清后重问，至多 2 轮）。
         """
-        return _run_pipeline(question, sources,
-                             roster=[("analyst1", persona)])
+        err = _validate_question(question)
+        if err:
+            return err
+        result = _run_pipeline(question, sources,
+                               roster=[("analyst1", persona)])
+        return _attach_preflight(question, result)
 
     @mcp.tool()
     def run_judgment(question: str, sources: list[dict]) -> dict:
         """多智能体全流程研判（需模型网关）。
 
         sources: [{"title","text","type"?,"credibility"?}]。
-        流程：3 视角独立研判（互不可见）→ 逐字引文机械核对 → 同义归并
-        → 冲突检测 → 质证 → 仲裁（保留少数意见）→ 置信度。
+        流程：议题体检 → 3 视角独立研判（互不可见）→ 逐字引文机械核对
+        → 同义归并 → 冲突检测 → 质证 → 仲裁（保留少数意见）→ 置信度
+        → 主席汇总（正面回答议题）。
+        返回附 preflight：非清晰议题（vague/compound/ambiguous/empty）
+        含 needs_clarification 建议清单——由调用方向终端用户澄清后携
+        明确议题重调，至多 2 轮；超轮次请以当前最佳解读继续并接受
+        「议题表述」披露。
         """
-        return _run_pipeline(question, sources, roster=None)
+        err = _validate_question(question)
+        if err:
+            return err
+        result = _run_pipeline(question, sources, roster=None)
+        return _attach_preflight(question, result)
 
     return mcp
+
+
+def _validate_question(question: str) -> dict | None:
+    """MCP 议题入参校验（零 LLM）：非空且 ≤500 字。"""
+    q = (question or "").strip()
+    if not q:
+        return {"error": "question 不能为空"}
+    if len(q) > 500:
+        return {"error": f"question 过长（{len(q)} 字，上限 500）——"
+                         "请拆分为多个具体议题"}
+    return None
+
+
+def _attach_preflight(question: str, result: dict) -> dict:
+    """研判结果附议题体检（澄清协议：调用方拿 needs_clarification 去
+    问它的用户，≤2 轮；问不透以最佳解读继续+歧义披露）。"""
+    from app.core.question_check import question_preflight, readback_line
+
+    pf = question_preflight(question)
+    result["preflight"] = {
+        "tier": pf["tier"], "tier_cn": pf["tier_cn"],
+        "readback": readback_line(question),
+        "needs_clarification": pf["clarify"],
+        "protocol": "至多 2 轮：澄清后携明确议题重调；超轮次以当前最佳"
+                    "解读继续并接受报告中的「议题表述」披露",
+    }
+    return result
 
 
 def main() -> int:

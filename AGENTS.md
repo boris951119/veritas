@@ -58,7 +58,7 @@ python3 -m venv .venv
 .venv/bin/python -m pytest tests -q
 ```
 
-**通过判据**：`228 passed`（或更多，零 failed；未装 mcp 时少 1 条属正常）。测试全 stub，无需密钥。
+**通过判据**：`240 passed`（或更多，零 failed；未装 mcp 时少 1 条属正常）。测试全 stub，无需密钥。
 
 ## 第 3 步：离线演示（断网/无 key 时的完整演示兜底）
 
@@ -134,7 +134,7 @@ python3 -m venv .venv
 | pip 装不上 litellm | 加镜像参数重试；仍失败可暂时跳过——`pytest` 与 `demo_offline` 不依赖 litellm（懒加载），仅第 4 步在线研判需要 |
 | PDF 信源摄取报 pypdf 缺失 | `pip install pypdf`（PDF 是可选格式，demo 案例不含 PDF 不影响演示） |
 | venv 激活后命令找不到 | 直接用绝对路径调 python：`.venv\Scripts\python`（Win）/ `.venv/bin/python`（Mac） |
-| 测试出现 failed | 把失败摘要原样反馈给开发者；在修好前用第 3 步离线演示兜底（未装 mcp 时 MCP 协议测试自动跳过，228 passed ± 1 skipped 属正常） |
+| 测试出现 failed | 把失败摘要原样反馈给开发者；在修好前用第 3 步离线演示兜底（未装 mcp 时 MCP 协议测试自动跳过，240 passed ± 1 skipped 属正常） |
 
 ## 仓库速览（供智能体理解上下文）
 

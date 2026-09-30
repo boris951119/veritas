@@ -342,6 +342,7 @@ def render_report_md(dossier: Dossier, chain: HashChain, rejected: list[dict]) -
         _render_evidence_table(lines, dossier, con)
         lines.append("")
 
+    _render_question_preflight(lines, dossier)
     _render_synthesis(lines, dossier)
     _render_triage_ledger(lines, dossier)
     _render_conflicts_section(lines, dossier)
@@ -382,6 +383,7 @@ _KIND_LABEL = {
     "as_of": "结论未锚定时点",
     "injection": "疑似指令注入内容",
     "near_dup": "疑似同源转述",
+    "question": "议题表述待聚焦",
     "premise": "议题前提未覆盖",
 }
 
@@ -421,6 +423,24 @@ def _render_evidence_table(lines: list[str], dossier: Dossier, con) -> None:
         quote = ev.quote.replace("|", "\\|").replace("\n", " ")
         note = ev.note.replace("|", "\\|")
         lines.append(f"| {quote} | {where} | {ev.level.value} | {ev.relation.value} | {note} |")
+
+
+def _render_question_preflight(lines: list[str], dossier: Dossier) -> None:
+    """议题体检：分级 + 机械回读（二次确认语义）+ 澄清建议（批处理形态）。
+
+    不改写问题——回读只把系统抽到的要素摆出来；澄清建议改 manifest
+    的 question 重跑即新研判（链上留议题演化史）。"""
+    from app.core.question_check import question_preflight, readback_line
+
+    pf = question_preflight(dossier.question)
+    lines += [f"## 议题体检（{pf['tier_cn']}）", "",
+              f"- {readback_line(dossier.question)}"]
+    for s in pf["signals"]:
+        lines.append(f"- {s}")
+    if pf["clarify"]:
+        lines.append("- 澄清建议（可选，聚焦后重跑可获更高置信结论）：")
+        lines += [f"  - {c}" for c in pf["clarify"]]
+    lines.append("")
 
 
 def _render_synthesis(lines: list[str], dossier: Dossier) -> None:
