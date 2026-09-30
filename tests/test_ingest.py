@@ -21,8 +21,8 @@ def test_split_merges_short_adjacent():
 
 def test_split_hard_long_paragraph():
     para = "这是一句。" * 400  # 2400 字
-    segs = split_segments(para, target=600, max_len=900)
-    assert all(len(s) <= 900 for s in segs)
+    segs = split_segments(para, target=500, max_len=650)
+    assert all(len(s) <= 650 for s in segs)
     assert len(segs) >= 3
 
 
@@ -90,3 +90,48 @@ def test_load_case_manifest_indent_selfheal(tmp_path):
     d = load_case(tmp_path)
     assert d.question == "Q"
     assert d.sources[0].source_type == SourceType.REPORT
+
+
+# -- 完整性切分（500/650 + 行感知） -----------------------------------------------
+
+
+def test_table_header_follows_every_chunk():
+    """表格按行组切且表头随块走：数据行永不离开列名成孤儿。"""
+    rows = ["| 客户 | 回款 | 状态 |", "|---|---|---|"]
+    rows += [f"| 客户{i} | 1,28{i}万元 | 正常 |" for i in range(40)]
+    segs = split_segments("\n".join(rows), target=500, max_len=650)
+    assert len(segs) >= 2
+    for s in segs:
+        assert s.splitlines()[0] == rows[0]          # 表头在每块首行
+        assert all(ln.startswith("|") for ln in s.splitlines())
+
+
+def test_list_items_never_mixed_with_prose():
+    """列表按条目行切：条目不被正文句子拦腰合并。"""
+    body = "前言综述。" + "长" * 300
+    items = "\n".join(f"- 条目{i}的内容足够长需要单独成段 Some detail {i}。" * 3
+                      for i in range(10))
+    para = body + "\n" + items
+    segs = split_segments(para, target=500, max_len=650)
+    list_chunks = [s for s in segs if "- 条目" in s]
+    assert list_chunks
+    for s in list_chunks:
+        assert all(ln.lstrip().startswith("-") for ln in s.splitlines()[1:] or ["-"]) or \
+            all(ln.lstrip().startswith("-") for ln in s.splitlines()
+                if not ln.startswith("前言"))
+
+
+def test_sentences_never_cut_midway():
+    """二次切分落在句号后：任一块都不以半个句子结尾。"""
+    para = "".join(f"这是第{i}个完整的句子，包含足够的长度信息。" for i in range(60))
+    segs = split_segments(para, target=500, max_len=650)
+    assert len(segs) >= 2
+    for s in segs[:-1]:
+        assert s.endswith(("。", "！", "？", "；"))
+
+
+def test_default_segment_size_is_fine_grained():
+    """默认参数即 500/650（比赛细颗粒度提问的对齐）。"""
+    from app.ingest.segment import SEGMENT_MAX, SEGMENT_TARGET
+
+    assert (SEGMENT_TARGET, SEGMENT_MAX) == (500, 650)

@@ -39,7 +39,8 @@ def render_system_prompt(persona: str, isolated: bool = True,
                                   skills_rules=skills_rules)
 
 
-def render_segments_block(dossier: Dossier, per_segment_chars: int = 900) -> str:
+def render_segments_block(dossier: Dossier,
+                          per_segment_chars: int | None = None) -> str:
     """把案卷段落渲染为带编号的资料清单（提示词侧截断防爆上下文）。
 
     - 相关性分层（零 LLM）：零相关信源不进清单（报告「未采信信源」
@@ -52,12 +53,16 @@ def render_segments_block(dossier: Dossier, per_segment_chars: int = 900) -> str
     - 资料内数字冲突（对撞台账）：同(实体,指标)不同值的信源打架，
       要求结论正面回应——冲突检测从结论层下沉到事实层。
 
-    截断上限须与 ingest.segment 的切段上限（900）对齐——低了会造出
-    「段落尾部对分析师不可见」的盲区，表格型信源尤甚。"""
+    截断上限须与 ingest.segment 的切段上限（SEGMENT_MAX=650）对齐——
+    低了会造出「段落尾部对分析师不可见」的盲区，表格型信源尤甚。"""
     from app.core.dup_check import duplicate_map
     from app.core.fact_ledger import facts_block
     from app.core.relevance import classify_sources
     from app.core.untrusted import wrap_untrusted
+    from app.ingest.segment import SEGMENT_MAX
+
+    if per_segment_chars is None:
+        per_segment_chars = SEGMENT_MAX
 
     relevance = {s["source_id"]: s for s in classify_sources(dossier)}
     duplicates = duplicate_map(dossier)
