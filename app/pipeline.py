@@ -51,6 +51,7 @@ from app.core.skills import detect_skills, set_skills_enabled, skills_enabled
 from app.ingest.case_loader import load_case
 from app.llm.budget import BudgetGuard, set_active_budget_guard
 from app.llm.model_client import ModelClient, ModelClientFactory
+from app.llm.profile import probe_model
 
 
 def touch_progress() -> None:
@@ -80,12 +81,16 @@ def run_case(
     coordinator: Coordinator | None = None,
     roster: list[tuple[str, str]] | None = None,
     dossier: Dossier | None = None,
+    probe: bool | None = None,
 ) -> PipelineResult:
     """跑一次完整研判。client/analysts/coordinator 均可注入桩（测试零 key）。
 
     roster：自定义编队（CLI --roster / MCP 工具传入），None 走默认三视角；
-    dossier：直接注入案卷（MCP 外部信源路径），此时可不带 case_dir。"""
+    dossier：直接注入案卷（MCP 外部信源路径），此时可不带 case_dir。
+    probe：模型画像自适应开关——None 时仅生产路径（未注入 client）启用；
+    注入桩的测试/离线演示路径固定关闭，保证确定性与零额外调用。"""
     settings = settings or Settings.from_env()
+    injected_client = client is not None
     dossier = dossier or load_case(Path(case_dir))
     chain = HashChain()
     chain.append("case_loaded", "pipeline", {
@@ -111,6 +116,20 @@ def run_case(
     if analysts is None:
         analysts = build_panel(client, settings.models[0], roster=roster)
 
+    # 0.8) 模型画像自适应：探测档位 → 回填分析师（决定建议版/强化版规则）
+    adaptive = bool(probe) if probe is not None else not injected_client
+    tier = "standard"
+    if adaptive and settings.model_probe_enabled and settings.models:
+        try:
+            profile = probe_model(client, settings.models[0])
+            tier = profile["tier"]
+            chain.append("model_profile", "pipeline", profile)
+        except Exception as exc:  # 探测失败不炸管线：维持 standard 档
+            chain.append("model_profile", "pipeline",
+                         {"tier": "standard", "error": f"{type(exc).__name__}: {exc}"})
+    for a in analysts:
+        a.profile_tier = tier
+
     # 1) 并行独立研判（硬隔离；单分析师失败只降级）
     results = run_panel(dossier, analysts, on_done=lambda name, cons: chain.append(
         "analyst_done", name, {"n_conclusions": len(cons)}))
@@ -124,6 +143,16 @@ def run_case(
     dossier.rejected = rejected  # 持久化进 report.json（工作台展示）
     # 2.5) 数字机械核对（计算复算 + 数字溯源 + 计数，零 LLM；警示不剔除结论）
     numeric = audit_numeric(dossier) + audit_counting(dossier)
+    # 2.6) 打回修复环（自适应档）：把违规明细定向发回原分析师重写一次，
+    #      变好才接受；仅生产路径启用，桩/离线演示保持确定不变
+    if adaptive and numeric:
+        from app.agents.repair import run_repair_round
+
+        repair = run_repair_round(dossier, numeric, client,
+                                  settings.models[0], analysts)
+        numeric = audit_numeric(dossier) + audit_counting(dossier)
+        chain.append("repair_round", "pipeline",
+                     {**repair, "flags_after": summarize(numeric)})
     chain.append("numeric_audit", "pipeline", summarize(numeric))
 
     # 3) 协同段：归并 → 冲突 → 质证 → 仲裁（≥2 分析师才走；逐步降级）

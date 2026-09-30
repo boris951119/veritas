@@ -143,6 +143,10 @@ python3 -m venv .venv
 - 零 LLM 机械闸族：`app/core/audit.py` 汇总（numeric_check 计算/溯源/计数、
   discourse_check 质证/仲裁/措辞、premise_check 前提）；skill 注册表
   `app/core/skills.py`（触发才注入，无闸的 skill 不注册）
+- 模型自适应：用户接什么模型未知——生产路径先 1 次探测给模型打
+  「纪律遵从」档（`app/llm/profile.py`，机械判分），noncompliant 档
+  自动改注强化规则 + derived 结构化契约并启用打回修复环
+  （`app/agents/repair.py`，变好才接受）；VERITAS_PROBE=0 可关
 - 智能体：`app/agents/`（panel 三视角编队、arbiter 归并/冲突/质证/仲裁）
 - 演示案例：`cases/demo-solid-state/`（固态电池科研情报）与
   `cases/bi-delivery-risk/`（数据中台交付风险企业情报，信源已脱敏；

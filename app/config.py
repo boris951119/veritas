@@ -97,6 +97,11 @@ class Settings:
     # 机械闸照常运行——对照组只关「教」，不关「验」）
     skills_enabled: bool = True
 
+    # 模型画像探测（自适应提示词）：真实调用前先 1 次探测给模型打
+    # 「纪律遵从」档，noncompliant 档注入强化规则+derived 契约并启用
+    # 打回修复环。VERITAS_PROBE=0 关闭（A/B 需要固定提示词时用）。
+    model_probe_enabled: bool = True
+
     # ---- 可选组件（默认关；关闭时不 import 对应模块）----
     embedding_cache_enabled: bool = False
     llm_rate_limit_enabled: bool = False
@@ -140,6 +145,9 @@ class Settings:
         skills_env = (os.environ.get("VERITAS_SKILLS") or "").strip().lower()
         if skills_env in ("0", "false", "off", "no"):
             s.skills_enabled = False
+        probe_env = (os.environ.get("VERITAS_PROBE") or "").strip().lower()
+        if probe_env in ("0", "false", "off", "no"):
+            s.model_probe_enabled = False
         return s.validate()
 
     @classmethod

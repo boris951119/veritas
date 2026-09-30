@@ -39,6 +39,7 @@ class Analyst:
         self.persona = persona
         self.client = client
         self.model = model
+        self.profile_tier = "standard"  # 模型画像档位（probe 后由管线回填）
 
     def analyze(self, dossier: Dossier) -> list[Conclusion]:
         from app.agents.prompts import render_segments_block, render_system_prompt
@@ -47,7 +48,8 @@ class Analyst:
         messages = [
             {"role": "system",
              "content": render_system_prompt(
-                 self.persona, skills_rules=render_skills_rules(dossier))},
+                 self.persona,
+                 skills_rules=render_skills_rules(dossier, self.profile_tier))},
             {"role": "user", "content": render_segments_block(dossier)},
         ]
         response = self.client.chat(self.model, messages, json_mode=True)
@@ -68,6 +70,7 @@ class Analyst:
                 continue
             con = Conclusion.create(statement=str(item["statement"]).strip(), author=self.name)
             dossier.conclusions.append(con)
+            note_suffix = self._derived_note(item)
             for ev in item.get("evidence") or []:
                 if not isinstance(ev, dict):
                     continue
@@ -82,15 +85,34 @@ class Analyst:
                     level = EvidenceLevel(str(ev.get("level") or "C"))
                 except ValueError:
                     level = EvidenceLevel.C
+                note = str(ev.get("note") or "")
+                if note_suffix:
+                    note = f"{note}；{note_suffix}" if note else note_suffix
                 node = EvidenceNode.create(
                     conclusion_id=con.id,
                     quote=str(ev.get("quote") or ""),
                     segment_ids=seg_ids,
                     relation=relation,
                     level=level,
-                    note=str(ev.get("note") or ""),
+                    note=note,
                     author=self.name,
                 )
                 dossier.add_evidence(node)
             conclusions.append(con)
         return conclusions
+
+    @staticmethod
+    def _derived_note(item: dict) -> str:
+        """结构化 derived 数组 → note 里的机械可复核算式行。
+
+        noncompliant 档把「写算式」从劝说变成输出 schema 字段；即便模型
+        懒散，只要填了 derived，物化器就归一成与 calc 闸同一口径的
+        「计算:…」格式，保证可复算。"""
+        parts = []
+        for d in item.get("derived") or []:
+            if not isinstance(d, dict):
+                continue
+            formula = str(d.get("formula") or "").strip()
+            if formula:
+                parts.append(f"计算:{formula}")
+        return "；".join(parts)

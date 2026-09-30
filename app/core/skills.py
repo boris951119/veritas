@@ -63,7 +63,13 @@ def _always(dossier: Dossier) -> bool:
 
 @dataclass
 class GateSkill:
-    """一条提示词纪律：trigger 命中时把 rule 注入分析师系统提示。"""
+    """一条提示词纪律：trigger 命中时按模型档位注入对应版本。
+
+    - rule      建议版：compliant 档注入（探测显示模型会遵从）；
+    - rule_hard 强化版：noncompliant 档注入——祈使句 + 结构化 derived
+      字段 + 告知会被机械闸打回；**停用的 skill 只是停了建议版**，
+      其强化版随 noncompliant 档参与注入（配对闸不变）。
+    """
 
     name: str
     description: str            # 防什么幻觉（答辩/审计口径）
@@ -72,6 +78,12 @@ class GateSkill:
     gate: str                   # 配对机械闸 kind（必须在 KNOWN_GATES）
     enabled: bool = True
     disabled_reason: str = ""
+    rule_hard: str = ""         # 强化版；空则沿用 rule
+
+    def text_for(self, tier: str) -> str:
+        if tier == "noncompliant" and self.rule_hard:
+            return self.rule_hard
+        return self.rule
 
 
 SKILLS: list[GateSkill] = [
@@ -82,6 +94,9 @@ SKILLS: list[GateSkill] = [
              "「计算:a/b=c%」或「计算:a-b=c」，输入数用资料原值，禁止只给结果。",
         trigger=lambda d: _numeric_share(d) >= 0.25,
         gate="calc",
+        rule_hard="每个含推导数字的结论都必须写 derived 数组，formula 用"
+                  "资料原值写完整算式；漏写、缺输入或算错，程序复算后该结论"
+                  "整条打回。",
     ),
     GateSkill(
         name="number_provenance",
@@ -90,6 +105,9 @@ SKILLS: list[GateSkill] = [
              "计算结果；资料没有的数字一律不写，改下「资料不足」类结论。",
         trigger=lambda d: _numeric_share(d) >= 0.25,
         gate="provenance",
+        rule_hard="结论与 note 里出现的每一个数字，都必须能在所引段落原文中"
+                  "逐字找到，或是 derived 数组里已写算式的结果；找不到的数字"
+                  "程序会检出并打回——写不出出处的数字直接删掉，改下「资料不足」。",
         enabled=False,
         disabled_reason="首轮A/B(2026-09-30,3+3):provenance黄牌中位2↔2无改善"
                         "（flash级模型未遵从建议性纪律），溯源闸本身照常运行；"
@@ -102,6 +120,9 @@ SKILLS: list[GateSkill] = [
              "SRC-…、SRC-…」并列出全部所数信源编号。",
         trigger=lambda d: len(d.sources) >= 4,
         gate="counting",
+        rule_hard="统计资料份数的断言必须在 note 写「计数:M/N 信源，见 SRC-x、"
+                  "SRC-y」并逐个列出所数信源编号；编号不存在或数目对不上，"
+                  "程序会检出并打回。",
     ),
     GateSkill(
         name="hedged_claim",
@@ -110,6 +131,9 @@ SKILLS: list[GateSkill] = [
              "转述语气（「报道称」「疑似」「未经官方证实」），不得写成已证事实。",
         trigger=lambda d: _lowcred_share(d) >= 0.4,
         gate="hedge",
+        rule_hard="你的证据全部来自新闻/网页/笔记类低可信信源时，statement 必须"
+                  "含转述标记（「报道称」「疑似」「未经官方证实」任一），否则"
+                  "程序会以「声称当事实」打回；禁止把单方声称写成已证事实。",
         enabled=False,
         disabled_reason="首轮A/B主指标hedge黄牌中位3↔3与对照持平，逐条消融"
                         "(3跑)亦并列→按预注册协议停用；单条注入时冲突正常"
@@ -122,6 +146,8 @@ SKILLS: list[GateSkill] = [
              "禁止从不同行/不同单元格拼接句子。",
         trigger=lambda d: _table_share(d) >= 0.15,
         gate="citation",
+        rule_hard="表格引文必须摘自同一行的连续内容并逐字含列名与数值；"
+                  "跨行/跨单元格拼接的引文程序逐字核对必然不命中，整条打回。",
         enabled=False,
         disabled_reason="首轮A/B:引文打回率中位0.239→0.318（预注册主指标反向）；"
                         "rule需改写为可机械定位的行内摘录格式后重测",
@@ -133,6 +159,9 @@ SKILLS: list[GateSkill] = [
              "措辞强度必须与证据等级匹配。",
         trigger=_always,
         gate="level_tone",
+        rule_hard="证据等级为 C/D 时，statement 里禁止出现「必然/肯定/无疑/"
+                  "确凿/必将/一定」等断言词，程序逐词扫描，命中即打回；"
+                  "把断言改成「可能/或/待证」。",
     ),
     # ---- 注册未启用：等对应语料出现再按 A/B 协议开启 -------------------
     GateSkill(
@@ -184,39 +213,52 @@ def skills_enabled() -> bool:
     return _SKILLS_ENABLED
 
 
-def _eligible(s: GateSkill) -> bool:
+def _eligible(s: GateSkill, tier: str) -> bool:
     if _ONLY:
         return s.name in _ONLY  # 消融白名单覆盖 enabled 标志
+    if tier == "noncompliant":
+        return True  # 强化档：全部纪律按 rule_hard 参与触发判定
     return s.enabled
 
 
-def detect_skills(dossier: Dossier) -> list[GateSkill]:
-    """enabled 且 trigger 命中的 skill（决定注入什么）。"""
+def detect_skills(dossier: Dossier, tier: str = "standard") -> list[GateSkill]:
+    """按模型档位返回 trigger 命中的 skill（决定注入什么）。"""
     if not _SKILLS_ENABLED:
         return []
     return [s for s in SKILLS
-            if _eligible(s) and (s.trigger is _always or s.trigger(dossier))]
+            if _eligible(s, tier) and (s.trigger is _always or s.trigger(dossier))]
 
 
-def render_skills_rules(dossier: Dossier) -> str:
-    """命中 skill → 系统提示词注入块（无命中返回空串）。"""
-    fired = detect_skills(dossier)
+def render_skills_rules(dossier: Dossier, tier: str = "standard") -> str:
+    """命中 skill → 系统提示词注入块（无命中返回空串）。
+
+    noncompliant 档额外携带结构化 derived 字段契约——把「写算式」从
+    劝说变成输出 schema 的一部分，物化器再机械归一进 note。"""
+    fired = detect_skills(dossier, tier)
     if not fired:
         return ""
+    if tier == "noncompliant":
+        lines = ["输出契约（本任务的输出将被零 LLM 机械闸逐条复核，"
+                 "不合规的结论会被程序打回并要求重写，请严格执行）："]
+        lines += [f"{i}. {s.text_for(tier)}" for i, s in enumerate(fired, 1)]
+        lines.append(
+            "凡结论含推导数字（占比/合计/差额），该结论必须附加 derived 数组："
+            '"derived": [{"value": "40%", "formula": "512/1280=40%"}]，'
+            "formula 用资料原值写完整算式，禁止只给结果。")
+        return "\n" + "\n".join(lines) + "\n"
     lines = ["专项纪律（下列为强制要求，违反将过不了对应的零 LLM 机械核对闸）："]
-    for i, s in enumerate(fired, 1):
-        lines.append(f"{i}. {s.rule}")
+    lines += [f"{i}. {s.text_for(tier)}" for i, s in enumerate(fired, 1)]
     return "\n" + "\n".join(lines) + "\n"
 
 
-def skill_status(dossier: Dossier) -> list[dict]:
+def skill_status(dossier: Dossier, tier: str = "standard") -> list[dict]:
     """注册表全景（工作台/审计用）：每条 skill 的启用与命中状态。"""
     return [{
         "name": s.name,
         "description": s.description,
         "gate": s.gate,
-        "enabled": _eligible(s) if _ONLY else s.enabled,
-        "triggered": bool(_SKILLS_ENABLED and _eligible(s)
+        "enabled": _eligible(s, tier) if _ONLY else s.enabled,
+        "triggered": bool(_SKILLS_ENABLED and _eligible(s, tier)
                           and s.trigger(dossier)),
         "disabled_reason": s.disabled_reason,
     } for s in SKILLS]
