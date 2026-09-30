@@ -136,6 +136,23 @@ def run_case(
     #      VERITAS_SKILLS=0 可整体关注入入——A/B 对照组只关「教」不关「验」）
     set_skills_enabled(settings.skills_enabled)
     set_material_budget(settings.material_char_budget)
+    if client is None:
+        client = ModelClientFactory(settings).create()
+
+    # 0.55) 图片转码（模型只当转码器）：网关有视觉端点且开启时，
+    # 已披露图片逐张转写为低可信派生信源；失败逐张降级回披露。
+    # 桩客户端（测试注入）不触发，离线演示不受影响。
+    if settings.ocr_enabled and dossier.ingest_notes and client is not None:
+        from app.ingest.ocr import transcode_images
+
+        try:
+            ocr_result = transcode_images(dossier, client, settings.models[0])
+            if ocr_result.get("n_pending"):
+                chain.append("image_ocr", "pipeline", ocr_result)
+        except Exception as exc:  # 转码整体失败：维持披露，不炸 run
+            chain.append("image_ocr", "pipeline",
+                         {"error": f"{type(exc).__name__}: {exc}"})
+
     chain.append("skills_triggered", "pipeline",
                  {"skills": [s.name for s in detect_skills(dossier)],
                   "injection": skills_enabled()})
@@ -151,8 +168,6 @@ def run_case(
     guard = BudgetGuard(settings.budget_tokens, settings.budget_throttle_threshold)
     set_active_budget_guard(guard)
 
-    if client is None:
-        client = ModelClientFactory(settings).create()
     if analysts is None:
         analysts = build_panel(client, settings.models[0], roster=roster)
 
@@ -311,6 +326,7 @@ def render_report_md(dossier: Dossier, chain: HashChain, rejected: list[dict]) -
         _render_evidence_table(lines, dossier, con)
         lines.append("")
 
+    _render_triage_ledger(lines, dossier)
     _render_conflicts_section(lines, dossier)
     _render_dissent_section(lines, dossier)
     _render_fact_collisions(lines, dossier)
@@ -388,6 +404,38 @@ def _render_evidence_table(lines: list[str], dossier: Dossier, con) -> None:
         quote = ev.quote.replace("|", "\\|").replace("\n", " ")
         note = ev.note.replace("|", "\\|")
         lines.append(f"| {quote} | {where} | {ev.level.value} | {ev.relation.value} | {note} |")
+
+
+def _render_triage_ledger(lines: list[str], dossier: Dossier) -> None:
+    """输入分诊账本：每个文件的路由与理由（含派生的零相关/重复/兜底）。"""
+    from app.ingest.triage import ROUTE_LABEL, ROUTE_ORDER
+
+    records = list(dossier.triage)
+    # 派生路由并入账本（classify/dup 为即时重算视图）
+    from app.core.dup_check import duplicate_map
+    from app.core.relevance import classify_sources
+
+    for s in classify_sources(dossier):
+        if s["level"] == "zero":
+            records.append({"file": f"{s['source_id']}《{s['title']}》",
+                            "route": "zero", "reason": s["reason"]})
+        elif s["level"] == "low" and "兜底" in (s["reason"] or ""):
+            records.append({"file": f"{s['source_id']}《{s['title']}》",
+                            "route": "promoted_low", "reason": s["reason"]})
+    dups = duplicate_map(dossier)
+    for src in dossier.sources:
+        if src.id in dups:
+            records.append({"file": f"{src.id}《{src.title}》", "route": "dup",
+                            "reason": f"与 {dups[src.id]} 内容完全重复"})
+    if not records:
+        return
+    lines += ["## 输入分诊账本（每个文件的路由与理由）", ""]
+    records.sort(key=lambda r: ROUTE_ORDER.get(r.get("route"), 99))
+    for r in records:
+        label = ROUTE_LABEL.get(r.get("route"), r.get("route"))
+        reason = f"——{r['reason']}" if r.get("reason") else ""
+        lines.append(f"- `{r['file']}` → **{label}**{reason}")
+    lines.append("")
 
 
 def _render_conflicts_section(lines: list[str], dossier: Dossier) -> None:

@@ -272,12 +272,25 @@ function renderSources(d){
   $("#sources").innerHTML=d.sources.map(s=>`<div class="card" style="margin-bottom:8px">
     <b>${esc(s.title||s.id)}</b>　<span class="tag">${TYPE_CN[s.source_type]||s.source_type}</span>
     <span class="chip">${esc(s.id)}</span>
+    ${s.relevance_override==="include"?`<span class="tag" style="color:var(--accent);border-color:var(--accent)">人工纳入</span>`:""}
+    ${s.relevance_override==="exclude"?`<span class="tag" style="color:var(--bad);border-color:var(--bad)">人工排除</span>`:""}
     <div class="cred"><span class="sub">可信度</span>
       <input type="range" min="0" max="1" step="0.05" value="${s.credibility}"
         oninput="this.nextElementSibling.textContent=this.value" onchange="setCred('${esc(s.id)}',this.value)">
       <span class="val">${s.credibility}</span>
       <span class="sub">（${(s.segments||[]).length} 段）</span></div>
+    <div class="evops">
+      <button class="mini" onclick="setRel('${esc(s.id)}','include')">强制纳入</button>
+      <button class="mini danger" onclick="setRel('${esc(s.id)}','exclude')">强制排除</button>
+      <button class="mini" onclick="setRel('${esc(s.id)}','')">恢复自动</button>
+      <span class="sub">相关性人工裁决（入链可审计）</span>
+    </div>
   </div>`).join("")||`<div class="sec empty">无信源</div>`;
+}
+async function setRel(id,ov){
+  D=await api("/api/source/relevance",{method:"POST",headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({case:CUR,source_id:id,override:ov})});
+  render();toast(ov?(ov==="include"?"已强制纳入（入链）":"已强制排除（入链）"):"已恢复自动分层（入链）");
 }
 async function setWeight(id,w){
   D=await api("/api/evidence/weight",{method:"POST",headers:{"Content-Type":"application/json"},

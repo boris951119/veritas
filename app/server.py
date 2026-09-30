@@ -135,6 +135,12 @@ class CredibilityReq(BaseModel):
     credibility: float
 
 
+class RelevanceOverrideReq(BaseModel):
+    case: str
+    source_id: str
+    override: str  # include / exclude / ""（恢复自动）
+
+
 class ConclusionEditReq(BaseModel):
     case: str
     conclusion_id: str
@@ -263,6 +269,25 @@ def create_app(cases_root: Path | None = None) -> FastAPI:
 
         return _mutate(cases_root, req.case, "evidence_removed",
                        {"evidence_id": req.evidence_id}, apply)
+
+    @app.post("/api/source/relevance")
+    def set_relevance(req: RelevanceOverrideReq) -> dict:
+        """相关性人工裁决：机械分层可能错杀同义表述——人是最高权限，
+        强制纳入/排除即时生效并入链（relevance_override 持久化，
+        classify_sources 尊重之）。"""
+        if req.override not in ("include", "exclude", ""):
+            raise HTTPException(422, "override 须为 include/exclude/空串")
+
+        def apply(d: Dossier) -> None:
+            for src in d.sources:
+                if src.id == req.source_id:
+                    src.relevance_override = req.override
+                    return
+            raise HTTPException(404, f"信源不存在: {req.source_id}")
+
+        return _mutate(cases_root, req.case, "source_relevance",
+                       {"source_id": req.source_id,
+                        "override": req.override or "auto"}, apply)
 
     @app.post("/api/source/credibility")
     def set_credibility(req: CredibilityReq) -> dict:

@@ -14,13 +14,15 @@
 
 ```
 load_case（摄取：目录遍历→压缩包安全拆封→图片/链接清单检测→
-  逐文件隔离解析→空/扫描件/内嵌图披露）
+  逐文件隔离解析→空/扫描件/内嵌图披露→输入分诊账本 dossier.triage）
 → premise_check（议题实体×信源覆盖，前置亮灯）
 → fact_ledger（事实对撞台账：实体×指标×数值，同键不同值即对撞）
 → injection_scan + dup_check（注入特征扫描；SHA-256 精确去重 + shingle 近重复）
-→ relevance_layered（信源三档：high/low/zero——zero 不进提示词但披露）
+→ relevance_layered（信源三档：high/low/zero；人工 override 优先，
+  零相关有对撞/高相关标题词汇兜底升档；zero 不进提示词但披露）
 → skills_triggered（skill 注册表按案卷特征条件注入提示词纪律）
 → material_pack（BM25 段级精排 + 跨信源轮转装箱，预算外全披露）
+→ image_ocr（图片转码：网关视觉探测通过时逐字转写为低可信派生信源）
 → model_profile（1 次探测调用给模型打纪律遵从档：compliant/standard/noncompliant）
 → run_panel（≥2 分析师硬隔离并行研判；noncompliant 档注入强化规则+derived 契约）
 → citation_audit（引文逐字核对，坏证据打回+零证据结论出清）
@@ -28,7 +30,7 @@ load_case（摄取：目录遍历→压缩包安全拆封→图片/链接清单�
 → 协同段：归并→冲突检测→质证(1轮)→仲裁（含信源时点对比提示）
 → discourse_audit（归并守恒/质证引文/仲裁引用/转述级/措辞等级）
 → temporal_audit（时效闸 stale / as-of 闸）
-→ recompute_all（三分量置信度）→ 报告 md/json + chain.jsonl 哈希链
+→ recompute_all（三分量置信度）→ 报告 md/json（含输入分诊账本章节）+ chain.jsonl 哈希链
 ```
 
 **输出侧**：server `/api/dossier?clearance=` 与 MCP `get_report(clearance)`
@@ -48,7 +50,7 @@ budget）· `app/server.py` · `app/mcp_server.py` · `app/pipeline.py`。
 ③确定性优先（同输入同输出；skill/预算/权限全部可复算）；④人的介入
 点预埋且入链（人是最高权限，但动作可审计）；⑤每步降级不炸 run。
 
-测试基线：**206 passed**（零 key、零网络；`pytest tests -q`）。
+测试基线：**215 passed**（零 key、零网络；`pytest tests -q`）。
 
 ---
 
@@ -274,7 +276,91 @@ Excel 转 md 形态未压测；650 上限对超长法律条款仍可能截断语
 
 ---
 
-## 9. 建议攻击面清单（给审查 agent 的入手点）
+## 9. 输入分诊收拢：路由账本 / 抓取缓存 / 相关性兜底+人工裁决 / OCR 转码（本批）
+
+**问题怎么产生**：用户质疑——「夹层是否需要一个 skill，在输入后判定
+哪些是直接可用的知识、哪些是链接（抓内容存本地打来源标签）、哪些是
+图片（图转文字打标签）、哪些是无效信息；无效信息要不要再过一轮」。
+
+**总决策**：分诊是**确定性代码，不是 skill**——skill 注册表只放「教
+模型的提示词纪律」，守门判定永远归代码（可复现、可审计、不可被注入；
+让模型当守门员=它自己就是下一个被注入的对象）。用户要的东西 80% 已
+存在但散装，本批收拢成显式结构并补三个真缺口，**按以下顺序实施**
+（与 git 历史对应）：
+
+### 9.1 分诊路由表 + 全量账本
+
+- `ingest/triage.py`：路由 taxonomy（native/archive_expanded/
+  archive_unsupported/fetched/links_disclosed/image_disclosed/
+  image_transcoded/empty/invalid_parse + 派生 zero/dup/promoted_low）
+  与标签/排序表。
+- `Dossier.triage: list[{file, route, reason}]` 持久化（此前"直接可用"
+  的文件没有任何记录，只有被处置的才有——账本不完整）。
+- 报告新增「输入分诊账本」章节：load 期账本 + 渲染期派生路由
+  （零相关/重复/兜底升档）合并一页。
+- **拒绝的方案**：把路由判定做成 skill 注册表项（混淆两层职责）；
+  用 LLM 判「哪份资料可用」（注入面+不可复现）。
+
+### 9.2 抓取本地缓存（确定性重放）
+
+- `_handle_links` 抓取成功后把信源 dict 存入
+  `cases/<case>/.fetched/index.json`（url→Source dict）；重跑先查缓存，
+  命中即 `Source.from_dict` 重建（meta.cached=True），不再触网。
+- **实现中踩的坑（审查要点）**：缓存最初放 `fetched/`（非隐藏目录），
+  被自己的输入遍历当信源捡回来 ingested——改 `.fetched/` 隐藏目录
+  （遍历规则本就跳隐藏目录，自洽）。这类「自产文件被输入层吃回」
+  的环路值得专门检验。
+- 缓存条目损坏 → 视为未命中重新抓取（不炸）。
+
+### 9.3 相关性兜底 + 人工裁决
+
+- **兜底升档**（零 LLM）：被判 zero 的信源，再与「对撞台账的实体与
+  指标（各自成词，不拼接——拼接整串过严是实测教训）+ 高相关信源
+  标题」做覆盖检查，命中 → 升 low 降权纳入，理由入账本。同义/关联
+  表述（议题问"回款"，资料写别的口径）不再被静默错杀。
+- **人工裁决**：`Source.relevance_override ∈ {"",include,exclude}`，
+  `classify_sources` 优先尊重；server 新增 `POST /api/source/relevance`
+  （入链 source_relevance 事件），工作台信源卡加「强制纳入/排除/
+  恢复自动」按钮。**无效信息的"第二轮"= 机械兜底 + 人，不是 LLM**。
+- **拒绝的方案**：LLM 复核相关性（若第一轮需黑盒复核才敢信，说明
+  标准本身不可辩护——正确做法是让标准可辩护+留人工通道）。
+
+### 9.4 图片转码器（模型只当转码器）
+
+- `ingest/ocr.py`：`probe_vision`（1 次微型 1x1 PNG 调用探测网关图像
+  能力，失败=无）→ `transcribe_image`（提示词强制逐字转写文字/数字/
+  表格，读不清标 [无法辨认]，禁止描述/判断/概括/补全/翻译）→
+  派生信源（先验 0.3，meta.ocr/from_file/model，note 类型）→
+  与本地文件同权过全套机械闸。逐张失败逐张降级回「未转写」披露，
+  整体失败（无视觉端点）披露后继续，绝不阻塞。
+- 管线接线：客户端创建提前到装载后、skill 触发前；`image_ocr`
+  入链；`Settings.ocr_enabled`（默认开，自动降级；VERITAS_OCR=0 关）。
+  桩客户端路径不触发（测试确定性）。
+- **已知接线瑕疵**：material_pack 事件在 OCR 之前入链，其 n_total
+  计数不含转码信源（提示词侧 pack 是即时重算的，实际装箱不受影响，
+  仅链上账目口径早一步）。
+
+**验证**：9 个新测试（账本全路由覆盖+序列化往返 / 缓存二次纯重放
+且 fetch_raw 换成「触网即断言」/ 兜底升档命中与真零相关不受扰 /
+override 端点 422+入链 / 转码成功·无视觉降级·逐张失败降级·settings
+门控）；215 全绿；离线演示账本入报告。
+
+**开放问题（邀请检验）**：
+- **缓存投毒**：`.fetched/index.json` 是可写文件且被无条件信任——
+  攻击者篡改缓存即可向研判注入任意"已抓取"内容（无完整性校验、
+  无 TTL/失效）。缓解思路：记录 url→内容哈希，重放时校验；或缓存
+  只读权限。当前按"本机文件=可信边界"接受，**产品化前必须修**；
+- 兜底桥接只解「字符级部分重合」，纯同义词（回款↔应收账款，零共同
+  字符）依然漏——那是语义问题，机械层的诚实边界；
+- `relevance_override` 无权限控制（本机单用户演示可接受；多人场景
+  谁能改相关性应过 clearance）；
+- OCR 的 vision 消息格式（litellm content 列表 + data URI）只过了
+  桩测试，未对真实视觉网关验证；转写文本里的指令文字会随派生信源
+  进围栏（有围栏兜底，但值得检验转写→围栏的路径完整性）；
+- 分诊账本与 ingest_notes 存在语义重叠（links/archive 两类两边都
+  记），冗余但一致——可考虑收敛为单一来源。
+
+## 10. 建议攻击面清单（给审查 agent 的入手点）
 
 按「出事代价」排序：
 
@@ -296,8 +382,14 @@ Excel 转 md 形态未压测；650 上限对超长法律条款仍可能截断语
    探测调用失败、修复环 6 次全拒的极限行为。
 6. **性能**：`extract_facts`/`near_dup_pairs`/BM25 在 500 段语料上的
    复杂度曲线（O(n²) 的位置在哪、会不会卡死工作台）。
+7. **自产文件环路**：`.fetched` 缓存、`report.pristine.json`、解包
+   临时目录——哪些"系统自己写的文件"会被输入层/遍历捡回来（本批
+   已踩过一次 fetched 的坑）；缓存投毒路径（§9 开放问题）。
+8. **分诊完整性**：构造路由边界文件（伪装扩展名的 zip、URL 占比
+   恰在 60% 阈值的清单、含链接的正常报告），验证账本与实际行为一致；
+   `relevance_override` 与密级/预算/装箱的交互次序。
 
-## 10. 环境事实（审查时需要知道的）
+## 11. 环境事实（审查时需要知道的）
 
 - 网关：阿里云百炼 token-plan 专属端点
   `token-plan.cn-beijing.maas.aliyuncs.com/compatible-mode/v1`，

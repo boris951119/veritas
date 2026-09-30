@@ -207,6 +207,8 @@ def load_case(case_dir: Path, fetch_links: bool = False) -> Dossier:
                 "detail": f"解析失败（{type(exc).__name__}: {exc}）——"
                           "该文件内容未进入研判",
             })
+            dossier.triage.append({"file": rel, "route": "invalid_parse",
+                                   "reason": f"{type(exc).__name__}"})
             return
         if not source.segments:
             detail = "未解析出任何文本"
@@ -216,6 +218,8 @@ def load_case(case_dir: Path, fetch_links: bool = False) -> Dossier:
                           "文字层为空，图中数字可能缺失")
             dossier.ingest_notes.append(
                 {"file": rel, "kind": "empty", "detail": detail})
+            dossier.triage.append({"file": rel, "route": "empty",
+                                   "reason": detail[:40]})
             return  # 零段落信源不入卷（已披露）
         if source.meta.get("pdf_images"):
             dossier.ingest_notes.append({
@@ -227,9 +231,19 @@ def load_case(case_dir: Path, fetch_links: bool = False) -> Dossier:
         if classification in ("public", "internal", "confidential"):
             source.classification = classification
         dossier.add_source(source)
+        dossier.triage.append({
+            "file": rel, "route": "native",
+            "reason": f"{len(source.segments)} 段入卷"
+            + (f"（类型 {source.source_type.value}）"
+               if not spec.get("type") else ""),
+        })
 
     def _handle_links(rel: str, text: str, n_links: int) -> None:
-        """链接清单：默认只披露；fetch_links=True 才逐条抓取并披露成败。"""
+        """链接清单：默认只披露；fetch_links=True 才逐条抓取并披露成败。
+
+        抓取结果落本地缓存（cases/<case>/.fetched/index.json，url→信源
+        dict；隐藏目录不被输入遍历捡回）：重跑先查缓存——研判可离线
+        确定性重放，不再重复打网关。"""
         if not fetch_links:
             dossier.ingest_notes.append({
                 "file": rel, "kind": "links",
@@ -237,38 +251,75 @@ def load_case(case_dir: Path, fetch_links: bool = False) -> Dossier:
                           "（网络抓取默认关闭，--fetch-links / "
                           "VERITAS_FETCH_LINKS=1 开启）",
             })
+            dossier.triage.append({"file": rel, "route": "links_disclosed",
+                                   "reason": f"{n_links} 条链接未抓取（默认关）"})
             return
+        import json as _json
+
         from app.ingest.links import LinkFetchError, extract_urls, fetch_link_source
 
-        n_ok = 0
+        cache_file = case_dir / ".fetched" / "index.json"
+        cache: dict[str, dict] = {}
+        if cache_file.is_file():
+            try:
+                cache = dict(_json.loads(cache_file.read_text(encoding="utf-8")))
+            except (ValueError, OSError):
+                cache = {}
+        n_ok = n_cached = 0
         failures: list[str] = []
         for url in extract_urls(text):
+            if url in cache:
+                try:
+                    source = Source.from_dict(cache[url])
+                    source.id = _next_id()
+                    source.meta["cached"] = True
+                    dossier.add_source(source)
+                    n_cached += 1
+                    continue
+                except Exception:
+                    pass  # 缓存条目损坏 → 视为未命中，重新抓取
             try:
                 source = fetch_link_source(url)
                 source.id = _next_id()
                 dossier.add_source(source)
                 n_ok += 1
+                cache[url] = source.to_dict()
             except LinkFetchError as exc:
                 failures.append(f"{url}（{exc}）")
+        if cache:
+            cache_file.parent.mkdir(parents=True, exist_ok=True)
+            cache_file.write_text(
+                _json.dumps(cache, ensure_ascii=False, indent=1),
+                encoding="utf-8")
         detail = f"链接清单 {rel}：抓取成功 {n_ok} 条"
+        if n_cached:
+            detail += f"，缓存命中 {n_cached} 条（未重复打网关）"
         if failures:
             sample = "；".join(failures[:3])
             detail += (f"，失败 {len(failures)} 条：{sample}"
                        + ("…" if len(failures) > 3 else ""))
         dossier.ingest_notes.append(
             {"file": rel, "kind": "links", "detail": detail})
+        dossier.triage.append({
+            "file": rel, "route": "fetched",
+            "reason": f"抓取 {n_ok} + 缓存 {n_cached} / 共 {n_links} 条"})
 
     import tempfile
+
+    def _triage(rel: str, route: str, reason: str) -> None:
+        dossier.triage.append({"file": rel, "route": route, "reason": reason})
 
     def _process_file(path: Path, rel: str, spec: dict | None = None) -> None:
         """单个文件（顶层或压缩包条目）→ 信源或披露，与来源无关同一待遇。"""
         spec = spec or {}
         if path.suffix.lower() in _IMAGE_EXTS:
             dossier.ingest_notes.append({
-                "file": rel, "kind": "image_file",
+                "file": rel, "kind": "image_file", "path": str(path),
                 "detail": "纯图片文件，未做 OCR——图中文字、数字与图表"
                           "信息未进入研判（如有需要请人工整理为文字材料）",
             })
+            _triage(rel, "image_disclosed", "图片文件（OCR 开启且网关支持时"
+                                            "将转写为低可信派生信源）")
             return
         fmt = sniff_format(path) if is_archive_file(path) else ""
         if fmt in ("7z", "rar"):
@@ -276,11 +327,14 @@ def load_case(case_dir: Path, fetch_links: bool = False) -> Dossier:
                 "file": rel, "kind": "archive",
                 "detail": f"不支持的压缩格式 {fmt}——请解压后提供",
             })
+            _triage(rel, "archive_unsupported", f"格式 {fmt}")
             return
         if fmt in ("zip", "tar"):
             entries, notes = expand_archive(
                 path, Path(tempfile.mkdtemp(prefix="veritas_unpack_")), label=rel)
             dossier.ingest_notes.extend(notes)
+            _triage(rel, "archive_expanded",
+                    f"{len(entries)} 个条目拆封后逐条分诊")
             for entry_path, entry_name in entries:
                 entry_spec = declared_name.get(entry_name.rsplit("/", 1)[-1])
                 # 溯源：信源来自哪个包的哪个条目
@@ -294,6 +348,7 @@ def load_case(case_dir: Path, fetch_links: bool = False) -> Dossier:
                 "detail": f"解析失败（{type(exc).__name__}: {exc}）——"
                           "该文件内容未进入研判",
             })
+            _triage(rel, "invalid_parse", f"{type(exc).__name__}")
             return
         is_links, n_links = classify_link_list(text)
         if is_links:

@@ -58,7 +58,7 @@ python3 -m venv .venv
 .venv/bin/python -m pytest tests -q
 ```
 
-**通过判据**：`206 passed`（或更多，零 failed；未装 mcp 时少 1 条属正常）。测试全 stub，无需密钥。
+**通过判据**：`215 passed`（或更多，零 failed；未装 mcp 时少 1 条属正常）。测试全 stub，无需密钥。
 
 ## 第 3 步：离线演示（断网/无 key 时的完整演示兜底）
 
@@ -134,7 +134,7 @@ python3 -m venv .venv
 | pip 装不上 litellm | 加镜像参数重试；仍失败可暂时跳过——`pytest` 与 `demo_offline` 不依赖 litellm（懒加载），仅第 4 步在线研判需要 |
 | PDF 信源摄取报 pypdf 缺失 | `pip install pypdf`（PDF 是可选格式，demo 案例不含 PDF 不影响演示） |
 | venv 激活后命令找不到 | 直接用绝对路径调 python：`.venv\Scripts\python`（Win）/ `.venv/bin/python`（Mac） |
-| 测试出现 failed | 把失败摘要原样反馈给开发者；在修好前用第 3 步离线演示兜底（未装 mcp 时 MCP 协议测试自动跳过，206 passed ± 1 skipped 属正常） |
+| 测试出现 failed | 把失败摘要原样反馈给开发者；在修好前用第 3 步离线演示兜底（未装 mcp 时 MCP 协议测试自动跳过，215 passed ± 1 skipped 属正常） |
 
 ## 仓库速览（供智能体理解上下文）
 
@@ -157,7 +157,11 @@ python3 -m venv .venv
 - 复合输入：压缩包安全拆封（`app/ingest/archive.py`，zip-slip/炸弹/
   数量/嵌套四道边界，7z/rar 明确不支持并披露）；链接清单检测与显式
   抓取（`app/ingest/links.py`，默认只披露，`--fetch-links`/
-  `VERITAS_FETCH_LINKS=1` 开启，逐条披露成败）；子目录有界遍历
+  `VERITAS_FETCH_LINKS=1` 开启，结果缓存 `cases/*/.fetched/` 可离线
+  重放）；子目录有界遍历；**输入分诊账本**（`app/ingest/triage.py`，
+  每个文件一条路由记录，报告渲染）；图片 OCR 转码（`app/ingest/ocr.py`，
+  网关视觉探测通过时逐字转写为低可信派生信源，VERITAS_OCR=0 关）；
+  相关性人工裁决（`POST /api/source/relevance`，入链）
 - 开发日志：`docs/dev-journal.md` ——全部批次的问题来源/方案决策/
   改动/验证/**已知开放问题**，供外部 AI 审查代码用（附攻击面清单）
 - 智能体：`app/agents/`（panel 三视角编队、arbiter 归并/冲突/质证/仲裁）

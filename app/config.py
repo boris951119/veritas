@@ -112,6 +112,11 @@ class Settings:
     # 成败。VERITAS_FETCH_LINKS=1 / CLI --fetch-links 开启。
     fetch_links_enabled: bool = False
 
+    # 图片转码（默认开，自动降级）：网关有视觉端点时把已披露图片
+    # 逐字转写为低可信派生信源（先验 0.3，meta.ocr 标注）；探测不到
+    # 视觉端点自动降级回「未转写」披露。VERITAS_OCR=0 关闭。
+    ocr_enabled: bool = True
+
     # ---- 可选组件（默认关；关闭时不 import 对应模块）----
     embedding_cache_enabled: bool = False
     llm_rate_limit_enabled: bool = False
@@ -161,6 +166,9 @@ class Settings:
         fetch_env = (os.environ.get("VERITAS_FETCH_LINKS") or "").strip().lower()
         if fetch_env in ("1", "true", "on", "yes"):
             s.fetch_links_enabled = True
+        ocr_env = (os.environ.get("VERITAS_OCR") or "").strip().lower()
+        if ocr_env in ("0", "false", "off", "no"):
+            s.ocr_enabled = False
         return s.validate()
 
     @classmethod

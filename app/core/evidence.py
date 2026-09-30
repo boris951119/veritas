@@ -105,6 +105,9 @@ class Source:
     # 密级（public < internal < confidential）：权限视图按此过滤，
     # 审计链与原始案卷永远全量保真——过滤只发生在展示视图上
     classification: str = "internal"
+    # 相关性人工裁决（""=自动 / "include"=强制纳入 / "exclude"=强制排除）：
+    # 机械分层可能错杀同义表述，人是最高权限，裁决入链可审计
+    relevance_override: str = ""
 
     @classmethod
     def create(cls, title: str, source_type: SourceType,
@@ -125,6 +128,7 @@ class Source:
             "credibility": self.credibility, "url": self.url,
             "meta": self.meta,
             "classification": self.classification,
+            "relevance_override": self.relevance_override,
             "segments": [s.to_dict() for s in self.segments],
         }
 
@@ -136,6 +140,7 @@ class Source:
             credibility=float(d.get("credibility", 0.4)),
             url=str(d.get("url", "")), meta=dict(d.get("meta") or {}),
             classification=str(d.get("classification", "internal")),
+            relevance_override=str(d.get("relevance_override", "")),
             segments=[Segment.from_dict(s) for s in d.get("segments") or []],
         )
 
@@ -252,6 +257,9 @@ class Dossier:
     rejected: list[dict] = field(default_factory=list)
     # 摄取阶段披露：解析失败/空文件/扫描件/含图未解析（输入夹层「标」职能）
     ingest_notes: list[dict] = field(default_factory=list)
+    # 输入分诊账本：每个文件（含压缩包条目）一条 {file, route, reason}——
+    # 哪些进了研判、各自为什么，一页可审计（零相关/重复为派生视图另行披露）
+    triage: list[dict] = field(default_factory=list)
 
     # -- 索引 --
 
@@ -311,6 +319,7 @@ class Dossier:
             "conflicts": self.conflicts,
             "rejected": self.rejected,
             "ingest_notes": self.ingest_notes,
+            "triage": self.triage,
         }
 
     @classmethod
@@ -324,6 +333,7 @@ class Dossier:
             conflicts=list(d.get("conflicts") or []),
             rejected=list(d.get("rejected") or []),
             ingest_notes=list(d.get("ingest_notes") or []),
+            triage=list(d.get("triage") or []),
         )
 
     def to_json(self, path: Path) -> Path:

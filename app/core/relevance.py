@@ -35,7 +35,11 @@ def _coverage(entity: str, text: str) -> float:
 
 
 def classify_sources(dossier: Dossier) -> list[dict]:
-    """每份信源 → {source_id, title, level, score, reason}（原信源序）。"""
+    """每份信源 → {source_id, title, level, score, reason}（原信源序）。
+
+    优先级：人工 override（include/exclude，入链可审计）> 议题实体
+    覆盖 > 兜底升档（议题零重合但与资料内对撞主题/高相关信源标题
+    词汇重合 → low：同义或关联表述不因措辞不同被错杀）。"""
     entities = extract_entities(dossier.question)
     out: list[dict] = []
     if not entities:
@@ -44,7 +48,14 @@ def classify_sources(dossier: Dossier) -> list[dict]:
             out.append({"source_id": src.id, "title": src.title,
                         "level": "high", "score": None, "reason": ""})
         return out
+    base = []
     for src in dossier.sources:
+        if src.relevance_override == "include":
+            base.append((src, 1.0, "high", "人工强制纳入（入链可审计）"))
+            continue
+        if src.relevance_override == "exclude":
+            base.append((src, None, "zero", "人工强制排除（入链可审计）"))
+            continue
         text = normalize("".join(seg.text for seg in src.segments))
         scores = [_coverage(e, text) for e in entities]
         best = max(scores) if scores else 0.0
@@ -55,11 +66,42 @@ def classify_sources(dossier: Dossier) -> list[dict]:
             level = "low"
             reason = f"仅与议题实体「{best_entity}」弱相关（覆盖 {best:.0%}）"
         else:
-            level = "zero"
-            reason = (f"与议题实体（{'、'.join(entities[:4])}"
-                      f"{'…' if len(entities) > 4 else ''}）零重合")
+            level, reason = "zero", None  # 兜底检查后再定
+        base.append((src, best, level, reason))
+    # 兜底升档词汇：对撞主题（实体+指标）与高相关信源标题——议题措辞
+    # 与资料措辞不同（同义/关联）时，靠「资料彼此的词汇」机械桥接
+    bridge_vocab: list[str] = []
+    try:
+        from app.core.fact_ledger import find_collisions
+
+        for c in find_collisions(dossier):
+            # 实体与指标各自成词（拼接整串过严：「回款率」应独立桥接）
+            if c.entity:
+                bridge_vocab.append(c.entity)
+            if c.metric:
+                bridge_vocab.append(c.metric)
+    except Exception:
+        pass
+    bridge_vocab += [t for (_s, _b, lv, _r), t in
+                     zip(base, (s.title for s in dossier.sources)) if lv == "high"
+                     and t and len(t) >= 2]
+    for i, (src, best, level, reason) in enumerate(base):
+        if level != "zero" or reason is not None:
+            continue  # 已定（含人工排除）
+        text = normalize("".join(seg.text for seg in src.segments))
+        hit = next((tok for tok in bridge_vocab
+                    if _coverage(tok, text) >= _SHINGLE_COVER), None)
+        if hit is not None:
+            base[i] = (src, best, "low",
+                       f"议题实体零重合，但与资料内主题「{hit}」词汇重合"
+                       "（疑似同义/关联表述）——兜底降权纳入")
+    for src, best, level, reason in base:
         out.append({"source_id": src.id, "title": src.title,
-                    "level": level, "score": round(best, 3), "reason": reason})
+                    "level": level, "score": (round(best, 3)
+                                              if best is not None else None),
+                    "reason": reason or (f"与议题实体（{'、'.join(entities[:4])}"
+                                         f"{'…' if len(entities) > 4 else ''}）零重合"
+                                         if level == "zero" else "")})
     return out
 
 
