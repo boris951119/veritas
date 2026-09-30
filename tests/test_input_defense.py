@@ -41,11 +41,13 @@ def test_corrupt_and_empty_files_degrade_not_crash(tmp_path):
     from app.ingest.case_loader import load_case
 
     case_dir = _case_with_bad_file(tmp_path)
+    (case_dir / "回款凭证.png").write_bytes(b"\x89PNG\r\n\x1a\n" + b"\x00" * 64)
     dossier = load_case(case_dir)  # 不抛异常即通过
     kinds = sorted(n["kind"] for n in dossier.ingest_notes)
-    assert kinds == ["empty", "parse_error"]
+    assert kinds == ["empty", "image_file", "parse_error"]
     assert any("broken.pdf" in n["file"] for n in dossier.ingest_notes)
-    assert len(dossier.sources) == 1  # 好文件照常入卷
+    assert any("未做 OCR" in n["detail"] for n in dossier.ingest_notes)
+    assert len(dossier.sources) == 1  # 好文件照常入卷，图片/坏文件不入卷
 
 
 def test_corrupt_file_survives_full_pipeline(tmp_path):

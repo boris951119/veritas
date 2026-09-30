@@ -54,6 +54,10 @@ _EXT_HINTS = {
 
 _YEAR_RE = re.compile(r"(19|20)\d{2}\s*年")
 
+# 纯图片文件：无可靠文字层信号，按扩展名识别——专用披露，不入卷
+_IMAGE_EXTS = {".png", ".jpg", ".jpeg", ".gif", ".bmp", ".webp",
+               ".tiff", ".tif", ".heic", ".heif"}
+
 
 def infer_source_type(path: Path) -> SourceType:
     name = path.name.lower()
@@ -143,6 +147,13 @@ def load_case(case_dir: Path) -> Dossier:
     )
     for i, path in enumerate(files):
         spec = declared.get(path.name, {})
+        if path.suffix.lower() in _IMAGE_EXTS:
+            dossier.ingest_notes.append({
+                "file": path.name, "kind": "image_file",
+                "detail": "纯图片文件，未做 OCR——图中文字、数字与图表"
+                          "信息未进入研判（如有需要请人工整理为文字材料）",
+            })
+            continue
         try:
             source_type = SourceType(spec.get("type", infer_source_type(path)))
             cred = spec.get("credibility")
