@@ -13,15 +13,26 @@
 from __future__ import annotations
 
 import copy
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
-from app.agents.base import Analyst, extract_json
+from app.agents.base import Agent, Analyst, extract_json
 from app.core.citation_check import check_evidence
 from app.core.evidence import Conclusion, Dossier, EvidenceLevel, EvidenceNode, RelationKind
 from app.core.numeric_check import audit_counting, audit_numeric
 from app.llm.model_client import ModelClient
 
 _REPAIR_KINDS = {"calc", "provenance"}
+
+
+@dataclass
+class RepairCtx:
+    """修复环执行资源（重构 T0：7 参收拢为 ctx）。max_repairs 为单次
+    研判修复上限（成本护栏）。"""
+
+    client: ModelClient
+    model: str
+    analysts: list[Analyst] = field(default_factory=list)
+    max_repairs: int = 6
 
 
 @dataclass
@@ -67,12 +78,12 @@ def _directive(con: Conclusion, flags: list[dict]) -> str:
 
 
 def run_repair_round(dossier: Dossier, flags: list[dict],
-                     client: ModelClient, model: str,
-                     analysts: list[Analyst],
-                     max_repairs: int = 6,
-                     render_segments_block=None) -> dict:
+                     ctx: RepairCtx) -> dict:
     """对被数字闸打回的结论做一轮定向重写；返回 {attempted, accepted}。"""
     from app.core.skills import render_skills_rules
+
+    client, model = ctx.client, ctx.model
+    max_repairs = ctx.max_repairs
 
     by_con: dict[str, list[dict]] = {}
     for f in flags:
@@ -87,13 +98,11 @@ def run_repair_round(dossier: Dossier, flags: list[dict],
         if con is None:
             continue
         attempted += 1
-        persona = next((a.persona for a in analysts if a.name == con.author),
+        persona = next((a.persona for a in ctx.analysts if a.name == con.author),
                        "独立分析师")
         system = ("你是研判分析师。"
                   + render_skills_rules(dossier, "noncompliant").strip())
-        user = (_directive(con, con_flags) + "\n\n"
-                + (render_segments_block(dossier) if render_segments_block
-                   else _segments_of(dossier, con)))
+        user = _directive(con, con_flags) + "\n\n" + _segments_of(dossier, con)
         try:
             data = extract_json(
                 client.chat(model, [

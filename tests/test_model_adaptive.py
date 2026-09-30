@@ -11,7 +11,7 @@ from pathlib import Path
 from types import SimpleNamespace
 
 from app.agents.base import Analyst
-from app.agents.repair import run_repair_round
+from app.agents.repair import RepairCtx, run_repair_round
 from app.core.audit import audit_all
 from app.core.evidence import Conclusion, Dossier, EvidenceNode, Segment, Source, SourceType
 from app.core.skills import detect_skills, render_skills_rules
@@ -183,7 +183,7 @@ def test_repair_accepts_improved_rewrite():
         "evidence": [{"quote": "合同金额1,280万元，累计回款512万元",
                       "segment_id": "SRC1#s1", "relation": "correlation",
                       "level": "B", "note": "回款率"}]}]}, ensure_ascii=False)
-    result = run_repair_round(d, before, Fixed(fixed), "m", [], 6)
+    result = run_repair_round(d, before, RepairCtx(Fixed(fixed), "m", [], 6))
     assert result == {"attempted": 1, "accepted": 1}
     after = [f for f in audit_all(d) if f.get("conclusion_id") == "CON1"]
     assert not after
@@ -203,7 +203,7 @@ def test_repair_rolls_back_when_not_improved():
                       "segment_id": "SRC1#s1", "relation": "correlation",
                       "level": "B", "note": "计算:512/1280=45%"}]}]},
         ensure_ascii=False)
-    result = run_repair_round(d, before, Fixed(same), "m", [], 6)
+    result = run_repair_round(d, before, RepairCtx(Fixed(same), "m", [], 6))
     assert result["accepted"] == 0
     assert d.conclusion("CON1").statement == "客户B回款率为45%"  # 原状回滚
     assert len(d.evidences_of("CON1")) == n_ev_before
@@ -218,7 +218,7 @@ def test_repair_rolls_back_when_all_new_quotes_fail():
         "evidence": [{"quote": "编造的引文不命中", "segment_id": "SRC1#s1",
                       "relation": "correlation", "level": "B", "note": "x"}]}]},
         ensure_ascii=False)
-    result = run_repair_round(d, before, Fixed(bad), "m", [], 6)
+    result = run_repair_round(d, before, RepairCtx(Fixed(bad), "m", [], 6))
     assert result["accepted"] == 0
     assert d.evidences_of("CON1")  # 原证据完整回滚
 
@@ -245,7 +245,7 @@ PANEL_BAD_CALC = json.dumps({"conclusions": [{
 
 
 def test_pipeline_probe_and_repair_round_in_chain(tmp_path):
-    from app.pipeline import run_case
+    from app.pipeline import RunDeps, RunSpec, run_case
 
     case_dir = _case(tmp_path)
     client = Scripted([
@@ -258,9 +258,9 @@ def test_pipeline_probe_and_repair_round_in_chain(tmp_path):
                           "segment_id": "SRC1#s1", "relation": "correlation",
                           "level": "B", "note": "回款率"}]}]}, ensure_ascii=False),
     ])
-    result = run_case(case_dir, out_dir=case_dir / "out", client=client,
-                      analysts=[Analyst("mainstream", "测", client, "m")],
-                      probe=True)
+    result = run_case(RunSpec(case_dir=case_dir, out_dir=case_dir / "out", probe=True),
+                      RunDeps(client=client,
+                              analysts=[Analyst("mainstream", "测", client, "m")]))
     events = {r.event for r in result.chain.records}
     assert "model_profile" in events and "repair_round" in events
     # 修复后错算红牌消失

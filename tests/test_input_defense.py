@@ -17,6 +17,7 @@ from app.core.evidence import (
 from app.core.untrusted import scan_injections, wrap_untrusted
 from app.core.view_filter import redact_dossier
 from app.pipeline import run_case
+from app.pipeline import RunDeps, RunSpec
 
 
 # -- 摄取隔离 --------------------------------------------------------------------
@@ -64,8 +65,8 @@ def test_corrupt_file_survives_full_pipeline(tmp_path):
         def chat(self, model, messages, json_mode=False):
             return SimpleNamespace(content=PANEL_JSON)
 
-    result = run_case(case_dir, out_dir=case_dir / "out", client=Fake(),
-                      analysts=[])
+    result = run_case(RunSpec(case_dir=case_dir, out_dir=case_dir / "out"),
+                      RunDeps(client=Fake(), analysts=[]))
     assert result.dossier.ingest_notes  # 披露在案
     assert "摄取披露" in result.report_md
     assert result.chain.verify_chain().ok
@@ -309,12 +310,17 @@ def test_reasoning_graph_respects_clearance(tmp_path):
         def chat(self, model, messages, json_mode=False):
             return SimpleNamespace(content=PANEL)
 
-    run_case(case_dir, out_dir=case_dir / "out", client=Fake(), probe=False)
+    run_case(RunSpec(case_dir=case_dir, out_dir=case_dir / "out", probe=False),
+             RunDeps(client=Fake()))
     # 注入一条涉密侧冲突，验证冲突记录脱敏
     d = Dossier.from_json(case_dir / "out" / "report.json")
+    # 显式按语句挑选（结论列表已按 (statement,author) 固化排序，取前两条
+    # 可能撞到同一句话的不同作者——排序固化暴露的测试脆弱点）
     cons = [c for c in d.conclusions if c.status == "majority"]
-    pair = ConflictPair(a_id=cons[0].id, b_id=cons[1].id, topic="款项规模")
-    pair.resolution = Resolution(winner_id=cons[1].id,
+    con_pub = next(c for c in cons if "回款" in c.statement)
+    con_sec = next(c for c in cons if "涉外" in c.statement)
+    pair = ConflictPair(a_id=con_pub.id, b_id=con_sec.id, topic="款项规模")
+    pair.resolution = Resolution(winner_id=con_sec.id,
                                  rationale="涉密账目显示款项800万元")
     apply_resolution(pair, d)
     d.conflicts.append(pair.to_dict())

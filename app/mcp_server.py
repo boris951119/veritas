@@ -177,8 +177,9 @@ def _make_server():
         settings = Settings.from_env()
         client = ModelClientFactory(settings).create()
         dossier = build_dossier_from_sources(question, sources)
-        result = run_case(None, out_dir=None, client=client, settings=settings,
-                          dossier=dossier, roster=roster)
+        result = run_case(RunSpec(settings=settings, dossier=dossier,
+                                  roster=roster),
+                          RunDeps(client=client))
         summary = _judgment_summary(result.dossier, len(result.dossier.panel))
         summary["n_chain_records"] = len(result.chain.records)
         summary["chain_ok"] = result.chain.verify_chain().ok

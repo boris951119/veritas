@@ -25,6 +25,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from app.core.evidence import Dossier
 from app.ingest.case_loader import load_case
 from app.pipeline import run_case
+from app.pipeline import RunDeps, RunSpec
 
 _REPO = Path(__file__).resolve().parent.parent
 
@@ -274,8 +275,8 @@ def _resp(content: str):
 
 def _run_offline(case_dir: Path, stub_cls) -> None:
     dossier = load_case(case_dir)
-    result = run_case(case_dir, out_dir=case_dir / "out_offline",
-                      client=stub_cls(dossier))
+    result = run_case(RunSpec(case_dir=case_dir, out_dir=case_dir / "out_offline"),
+                      RunDeps(client=stub_cls(dossier)))
     print(result.report_md)
     print(f"[离线演示] {case_dir.name} 报告与日志已写入 {result.out_dir}")
 

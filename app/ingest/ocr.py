@@ -19,6 +19,7 @@
 from __future__ import annotations
 
 import base64
+from dataclasses import dataclass
 from pathlib import Path
 
 from app.core.evidence import Segment, Source, SourceType
@@ -35,12 +36,20 @@ _TRANSCRIBE_SYSTEM = (
     "补全或翻译。只输出转写文本，不要任何解释。")
 
 
-def _vision_user(image_bytes: bytes, mime: str = "image/png") -> dict:
-    b64 = base64.b64encode(image_bytes).decode("ascii")
+@dataclass
+class ImagePayload:
+    """待转码图片（重构 T0：transcribe_image 4 参收拢）。"""
+
+    data: bytes
+    mime: str = "image/png"
+
+
+def _vision_user(image: ImagePayload) -> dict:
+    b64 = base64.b64encode(image.data).decode("ascii")
     return {"role": "user", "content": [
         {"type": "text", "text": "请转写这张图片。"},
         {"type": "image_url",
-         "image_url": {"url": f"data:{mime};base64,{b64}"}},
+         "image_url": {"url": f"data:{image.mime};base64,{b64}"}},
     ]}
 
 
@@ -49,18 +58,17 @@ def probe_vision(client, model: str) -> bool:
     try:
         resp = client.chat(model, [
             {"role": "system", "content": _TRANSCRIBE_SYSTEM},
-            _vision_user(_TINY_PNG)], json_mode=False)
+            _vision_user(ImagePayload(_TINY_PNG))], json_mode=False)
         return bool(resp and getattr(resp, "content", "") is not None)
     except Exception:
         return False
 
 
-def transcribe_image(client, model: str, image_bytes: bytes,
-                     mime: str = "image/png") -> str:
+def transcribe_image(client, model: str, image: ImagePayload) -> str:
     """单图 → 逐字转写文本；失败抛异常（调用方降级）。"""
     resp = client.chat(model, [
         {"role": "system", "content": _TRANSCRIBE_SYSTEM},
-        _vision_user(image_bytes, mime)], json_mode=False)
+        _vision_user(image)], json_mode=False)
     return (getattr(resp, "content", "") or "").strip()
 
 
@@ -82,8 +90,8 @@ def transcode_images(dossier, client, model: str) -> dict:
     for note in pending:
         path = Path(note["path"])
         try:
-            image_bytes = path.read_bytes()
-            text = transcribe_image(client, model, image_bytes)
+            image = ImagePayload(path.read_bytes())
+            text = transcribe_image(client, model, image)
         except Exception as exc:
             dossier.ingest_notes.append({
                 "file": note["file"], "kind": "image_ocr_failed",

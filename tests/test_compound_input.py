@@ -268,3 +268,17 @@ def test_full_mixed_bundle_zip(tmp_path, monkeypatch):
     assert len(d.sources) == 10
     from app.core.dup_check import duplicate_map
     assert duplicate_map(d)  # 副本被识别为精确重复，不进分析师提示词
+
+
+def test_artifact_dirs_never_reingested(tmp_path):
+    """自产文件环路回归守护：产物目录（out/out_offline/out_ab_*）绝不
+    被输入遍历吃回——归一化 diff 验收抓到的真实回归（滚雪球膨胀）。"""
+    case_dir = _case(tmp_path)
+    (case_dir / "正常.md").write_text("客户B回款率40%。", encoding="utf-8")
+    for sub in ("out", "out_offline", "out_ab_a_1"):
+        art = case_dir / sub
+        art.mkdir()
+        (art / "report.json").write_text('{"conclusions": []}', encoding="utf-8")
+    d = load_case(case_dir)
+    assert [s.title for s in d.sources] == ["正常"]
+    assert all("out" not in r["file"] for r in d.triage)

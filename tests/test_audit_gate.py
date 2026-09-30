@@ -13,6 +13,7 @@ from fastapi.testclient import TestClient
 
 from app.agents.base import Analyst
 from app.pipeline import run_case
+from app.pipeline import RunDeps, RunSpec
 from app.server import create_app
 
 PANEL_JSON = """{"conclusions": [
@@ -42,9 +43,9 @@ def case_dir(tmp_path):
 
 
 def test_pipeline_audits_in_chain_and_report(case_dir):
-    result = run_case(case_dir, out_dir=case_dir / "out",
-                      client=FakeClient(),
-                      analysts=[Analyst("mainstream", "测", FakeClient(), "m")])
+    result = run_case(RunSpec(case_dir=case_dir, out_dir=case_dir / "out"),
+                      RunDeps(client=FakeClient(),
+                              analysts=[Analyst("mainstream", "测", FakeClient(), "m")]))
     events = {r.event for r in result.chain.records}
     assert {"premise_check", "numeric_audit", "discourse_audit"} <= events
     # 正确算式 + 数字全部可溯源 → 报告警示段亮绿灯
@@ -61,9 +62,9 @@ def test_pipeline_flags_wrong_calculation(case_dir):
         def chat(self, model, messages, json_mode=False):
             return SimpleNamespace(content=bad)
 
-    result = run_case(case_dir, out_dir=case_dir / "out",
-                      client=BadClient(),
-                      analysts=[Analyst("mainstream", "测", BadClient(), "m")])
+    result = run_case(RunSpec(case_dir=case_dir, out_dir=case_dir / "out"),
+                      RunDeps(client=BadClient(),
+                              analysts=[Analyst("mainstream", "测", BadClient(), "m")]))
     md = result.report_md
     assert "🔴" in md and "复算不符" in md
     audit = [f for f in _audit_of(result) if f["kind"] == "calc"]
@@ -79,8 +80,8 @@ def _audit_of(result) -> list[dict]:
 @pytest.fixture
 def client(case_dir):
     single = [Analyst("mainstream", "测", FakeClient(), "m")]
-    run_case(case_dir, out_dir=case_dir / "out", client=FakeClient(),
-             analysts=single)
+    run_case(RunSpec(case_dir=case_dir, out_dir=case_dir / "out"),
+             RunDeps(client=FakeClient(), analysts=single))
     app = create_app(cases_root=case_dir.parent)
     return TestClient(app), case_dir
 

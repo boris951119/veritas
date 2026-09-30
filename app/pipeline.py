@@ -77,27 +77,44 @@ class PipelineResult:
         return render_report_md(self.dossier, self.chain, self.rejected)
 
 
-def run_case(
-    case_dir: Path | None = None,
-    out_dir: Path | None = None,
-    client: ModelClient | None = None,
-    settings: Settings | None = None,
-    analysts: list[Analyst] | None = None,
-    coordinator: Coordinator | None = None,
-    roster: list[tuple[str, str]] | None = None,
-    dossier: Dossier | None = None,
-    probe: bool | None = None,
-) -> PipelineResult:
-    """跑一次完整研判。client/analysts/coordinator 均可注入桩（测试零 key）。
+@dataclass
+class RunSpec:
+    """编排输入（重构 T0：run_case 9 参收拢为 spec+deps 两参）。
 
-    roster：自定义编队（CLI --roster / MCP 工具传入），None 走默认三视角；
-    dossier：直接注入案卷（MCP 外部信源路径），此时可不带 case_dir。
-    probe：模型画像自适应开关——None 时仅生产路径（未注入 client）启用；
-    注入桩的测试/离线演示路径固定关闭，保证确定性与零额外调用。"""
-    settings = settings or Settings.from_env()
+    case_dir/out_dir：案例与产物目录；settings：配置（None 走环境）；
+    dossier：直接注入案卷（MCP 外部信源路径，此时可不带 case_dir）；
+    roster：自定义编队（CLI --roster / MCP）；probe：模型画像自适应
+    开关——None 时仅生产路径（未注入 client）启用，注入桩的测试/
+    离线演示路径固定关闭（确定性与零额外调用）。"""
+
+    case_dir: Path | None = None
+    out_dir: Path | None = None
+    settings: Settings | None = None
+    dossier: Dossier | None = None
+    roster: list | None = None
+    probe: bool | None = None
+
+
+@dataclass
+class RunDeps:
+    """测试/调用方注入面：桩 client、预构建 analysts、coordinator。"""
+
+    client: ModelClient | None = None
+    analysts: list[Analyst] | None = None
+    coordinator: Coordinator | None = None
+
+
+def run_case(spec: RunSpec | None = None,
+             deps: RunDeps | None = None) -> PipelineResult:
+    """跑一次完整研判。deps 可注入桩（测试零 key）。"""
+    spec = spec or RunSpec()
+    deps = deps or RunDeps()
+    settings = spec.settings or Settings.from_env()
+    client = deps.client
+    analysts = deps.analysts
     injected_client = client is not None
-    dossier = dossier or load_case(Path(case_dir),
-                                   fetch_links=settings.fetch_links_enabled)
+    dossier = spec.dossier or load_case(
+        Path(spec.case_dir), fetch_links=settings.fetch_links_enabled)
     chain = HashChain()
     chain.append("case_loaded", "pipeline", {
         "question": dossier.question,
@@ -169,10 +186,10 @@ def run_case(
     set_active_budget_guard(guard)
 
     if analysts is None:
-        analysts = build_panel(client, settings.models[0], roster=roster)
+        analysts = build_panel(client, settings.models[0], roster=spec.roster)
 
     # 0.8) 模型画像自适应：探测档位 → 回填分析师（决定建议版/强化版规则）
-    adaptive = bool(probe) if probe is not None else not injected_client
+    adaptive = bool(spec.probe) if spec.probe is not None else not injected_client
     tier = "standard"
     if adaptive and settings.model_probe_enabled and settings.models:
         try:
@@ -190,6 +207,14 @@ def run_case(
         "analyst_done", name, {"n_conclusions": len(cons)}))
     for name, err in results.get("_failures", {}).items():
         chain.append("analyst_failed", name, {"error": err})
+    # 并行完成次序不定 → 物化次序随机：统一排序固化产物确定性
+    # （内容全同仅次序不同的两跑差异，归一化 diff 验收逼出来的收口）
+    dossier.conclusions.sort(key=lambda c: (c.statement, c.author))
+    # 键不以 conclusion_id 打头（组 id 是 uuid，跨跑随机）——语义字段
+    # 定序、id 只做全同兜底：组内/组间次序与随机 id 无关
+    _ev_key = lambda e: (e.quote, tuple(e.segment_ids), e.level.value,
+                          e.relation.value, e.author, e.note, e.conclusion_id)
+    dossier.evidences.sort(key=_ev_key)
     if results.get("_failures") and not majority_conclusions(dossier):
         raise RuntimeError(f"全部分析师研判失败: {results['_failures']}")
 
@@ -201,10 +226,10 @@ def run_case(
     # 2.6) 打回修复环（自适应档）：把违规明细定向发回原分析师重写一次，
     #      变好才接受；仅生产路径启用，桩/离线演示保持确定不变
     if adaptive and numeric:
-        from app.agents.repair import run_repair_round
+        from app.agents.repair import RepairCtx, run_repair_round
 
-        repair = run_repair_round(dossier, numeric, client,
-                                  settings.models[0], analysts)
+        repair = run_repair_round(dossier, numeric, RepairCtx(
+            client=client, model=settings.models[0], analysts=analysts))
         numeric = audit_numeric(dossier) + audit_counting(dossier)
         chain.append("repair_round", "pipeline",
                      {**repair, "flags_after": summarize(numeric)})
@@ -212,7 +237,16 @@ def run_case(
 
     # 3) 协同段：归并 → 冲突 → 质证 → 仲裁（≥2 分析师才走；逐步降级）
     if len(analysts) >= 2:
-        _run_collaboration(dossier, chain, analysts, coordinator, client, settings)
+        _run_collaboration(dossier, CollabCtx(
+            chain=chain, client=client, model=settings.models[0],
+            analysts=analysts, coordinator=deps.coordinator))
+
+    # 3.45) 归并改写了证据归属 → 再排序固化组内次序（确定性收口之二）
+    # 键不以 conclusion_id 打头（组 id 是 uuid，跨跑随机）——语义字段
+    # 定序、id 只做全同兜底：组内/组间次序与随机 id 无关
+    _ev_key = lambda e: (e.quote, tuple(e.segment_ids), e.level.value,
+                          e.relation.value, e.author, e.note, e.conclusion_id)
+    dossier.evidences.sort(key=_ev_key)
 
     # 3.5) 协同段话语机械核对：归并守恒 + 质证/仲裁引用 + 措辞匹配（零 LLM）
     discourse = (audit_conservation(dossier) + audit_discourse(dossier)
@@ -245,8 +279,8 @@ def run_case(
 
     result = PipelineResult(dossier=dossier, chain=chain, rejected=rejected)
 
-    if out_dir is not None:
-        out_dir = Path(out_dir)
+    if spec.out_dir is not None:
+        out_dir = Path(spec.out_dir)
         out_dir.mkdir(parents=True, exist_ok=True)
         dossier.to_json(out_dir / "report.json")
         (out_dir / "report.md").write_text(result.report_md, encoding="utf-8")
@@ -285,14 +319,25 @@ def _reject_failed_citations(dossier: Dossier, chain: HashChain) -> list[dict]:
     return rejected
 
 
-def _run_collaboration(dossier: Dossier, chain: HashChain,
-                       analysts: list[Analyst], coordinator: Coordinator | None,
-                       client: ModelClient, settings: Settings) -> None:
+@dataclass
+class CollabCtx:
+    """协同段执行资源（重构 T1 提前：6 参收拢）。"""
+
+    chain: HashChain
+    client: ModelClient
+    model: str
+    analysts: list[Analyst]
+    coordinator: Coordinator | None = None
+
+
+def _run_collaboration(dossier: Dossier, ctx: CollabCtx) -> None:
     """归并 → 冲突检测 → 质证 → 仲裁。任一步失败降级继续。"""
+    coordinator = ctx.coordinator
     if coordinator is None:
         coordinator = Coordinator(
-            client, settings.models[0], personas=dict(DEFAULT_ROSTER))
+            ctx.client, ctx.model, personas=dict(DEFAULT_ROSTER))
 
+    chain = ctx.chain
     active = [c.id for c in majority_conclusions(dossier)]
     active = coordinator.merge_conclusions(dossier, active)
     chain.append("merged", "coordinator", {"n_active": len(active)})
@@ -641,9 +686,10 @@ def main() -> int:
         except (ValueError, OSError) as exc:
             raise SystemExit(f"编队配置加载失败: {exc}")
 
-    result = run_case(Path(args.case_dir),
-                      Path(args.out or (Path(args.case_dir) / "out")),
-                      roster=roster)
+    result = run_case(RunSpec(
+        case_dir=Path(args.case_dir),
+        out_dir=Path(args.out or (Path(args.case_dir) / "out")),
+        roster=roster))
     print(result.report_md)
     print(f"报告与日志已写入 {result.out_dir}")
     return 0

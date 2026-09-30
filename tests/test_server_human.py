@@ -11,6 +11,7 @@ from app.agents.base import Analyst
 from app.core.conflicts import ConflictPair, Resolution, apply_resolution
 from app.core.evidence import Dossier
 from app.pipeline import run_case
+from app.pipeline import RunDeps, RunSpec
 from app.server import create_app
 
 PANEL_JSON = """{"conclusions": [
@@ -42,8 +43,8 @@ def case_app(tmp_path):
         "# 摘要\n\n全固态电芯的中试良率尚不足百分之四十。"
         "能量密度显著高于传统液态锂离子电池。\n", encoding="utf-8")
     single = [Analyst("mainstream", "测", FakeClient(), "m")]
-    run_case(case_dir, out_dir=case_dir / "out", client=FakeClient(),
-             analysts=single)
+    run_case(RunSpec(case_dir=case_dir, out_dir=case_dir / "out"),
+             RunDeps(client=FakeClient(), analysts=single))
     # 人工注入一条已消解冲突，供 override 测
     dossier = Dossier.from_json(case_dir / "out" / "report.json")
     maj = [c for c in dossier.conclusions if c.status == "majority"

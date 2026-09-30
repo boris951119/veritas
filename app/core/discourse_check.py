@@ -16,6 +16,7 @@
 from __future__ import annotations
 
 import re
+from dataclasses import dataclass
 
 from app.core.citation_check import check_quote
 from app.core.evidence import Dossier
@@ -39,16 +40,26 @@ def _id_exists(dossier: Dossier, token: str) -> bool:
     return True  # 未知前缀不武断
 
 
-def _check_refs(dossier: Dossier, text: str, kind: str,
-                conclusion_id: str, conflict_id: str, side: str) -> list[dict]:
+@dataclass
+class RefContext:
+    """引用位置与类别（重构 T0：_check_refs 6 参收拢）。"""
+
+    kind: str                 # rebut_ref / arbiter_ref
+    conflict_id: str
+    side: str
+    conclusion_id: str = ""
+
+
+def _check_refs(dossier: Dossier, text: str, ctx: RefContext) -> list[dict]:
     flags = []
     for m in _ID_TOKEN.finditer(text):
         token = m.group(0)
         if not _id_exists(dossier, token):
             flags.append({
-                "kind": kind, "severity": "medium",
-                "conclusion_id": conclusion_id, "conflict_id": conflict_id,
-                "side": side, "value": token,
+                "kind": ctx.kind, "severity": "medium",
+                "conclusion_id": ctx.conclusion_id,
+                "conflict_id": ctx.conflict_id,
+                "side": ctx.side, "value": token,
                 "detail": f"引用了案卷中不存在的编号 {token}",
             })
     return flags
@@ -75,11 +86,11 @@ def audit_discourse(dossier: Dossier) -> list[dict]:
                         "detail": f"{side}方质证中的引文「{quote[:40]}…」"
                                   "未在任何来源段落中逐字命中（疑似歪曲对方）",
                     })
-            flags.extend(_check_refs(dossier, text, "rebut_ref", "",
-                                     conflict_id, str(side)))
+            flags.extend(_check_refs(dossier, text, RefContext(
+                "rebut_ref", conflict_id, str(side))))
         rationale = str(resolution.get("rationale") or "")
-        flags.extend(_check_refs(dossier, rationale, "arbiter_ref", "",
-                                 conflict_id, "arbiter"))
+        flags.extend(_check_refs(dossier, rationale, RefContext(
+            "arbiter_ref", conflict_id, "arbiter")))
     return flags
 
 

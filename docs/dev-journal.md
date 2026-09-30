@@ -53,7 +53,7 @@ budget）· `app/server.py` · `app/mcp_server.py` · `app/pipeline.py`。
 ③确定性优先（同输入同输出；skill/预算/权限全部可复算）；④人的介入
 点预埋且入链（人是最高权限，但动作可审计）；⑤每步降级不炸 run。
 
-测试基线：**247 passed**（零 key、零网络；`pytest tests -q`）。
+测试基线：**249 passed**（零 key、零网络；`pytest tests -q`）。
 
 ---
 
@@ -529,7 +529,52 @@ statement/why 红章；③`ingress.audit_ingested(dossier, ids)`——
 
 **仍开放**：A3 缓存投毒（.fetched 完整性校验）未做——按计划第三批。
 
-## 14. 建议攻击面清单（给审查 agent 的入手点）
+## 14. 结构批：Agent 形式化 + per-agent model + 签名收拢 T0（本批）
+
+**问题怎么产生**：用户质疑「是不是单智能体多模型」→三加强动作；再加
+「一个工具只做一件事、参数≤3」重构诉求——合并为结构批。
+
+**改动（按序）**：
+- `agents/base.py`：`Agent` 基类（name/persona/client/model/role/
+  profile_tier），`Analyst(Agent)` 继承——「按功能划分智能体」的类级
+  形式化，既有构造签名兼容零波及；
+- **per-agent model**：roster 三元组 (name, persona, model|None)，
+  `load_roster` 解析 manifest 的 model 字段，`build_panel` 按角色分模型
+  ——模型异构成为配置项（当前网关单模型，答辩口径见
+  docs/agents-overview.md）；
+- **签名收拢 T0+CollabCtx（T1 提前）**：run_case 9参→(RunSpec,
+  RunDeps)；run_repair_round 7参→RepairCtx；ingest_file 7参→
+  SourceSpec(from_manifest)；_check_refs 6参→RefContext；
+  transcribe_image 4参→ImagePayload；_run_collaboration 6参→CollabCtx。
+  26 处调用点全迁移。签名审计 18→10，**剩余全部在 T2 冻结清单**；
+- `agents/registry.py` + `docs/agents-overview.md`：智能体清单
+  （10+ 角色：职责/独立性/过闸/模型）动态生成 + 协议图 + 答辩口径。
+
+**验收工具逼出的两个真 bug（本批最有价值的产出）**：
+1. **自产文件环路**（攻击面清单第 7 条成真）：`_collect_files` 子目录
+   遍历把 `out_offline/`、`out_ab_*` 产物吃回输入——离线案例从
+   6 信源滚雪球到 72 信源/73218 段，每跑一次膨胀一轮（已存在多个
+   批次，此前的「离线OK」只查退出码没查内容）。修复：产物目录
+   （out/out_*）不入卷 + 回归守护测试；
+2. **并行不确定性**：analyst_done 链事件按线程完成序、证据/结论列表
+   按物化序——两跑产物不同。源头固化：run_panel 后与协同段后两次
+   `evidences.sort`（语义键打头：quote/segments/level/relation/
+   author/note，**id 只垫底**——以 uuid 打头组间次序仍随机，是中间
+   版本踩过的坑）+ conclusions 按 (statement,author) 排序；比对工具
+   对链文件按行排序吸收并行事件次序。暴露两处测试的次序耦合
+   （「前两条结论」/「evidences[0] 属于 conclusions[0]」），均已改为
+   显式语义挑选。
+
+**验收判据全部达成**：249 测试全绿；`scripts/diff_artifacts.py
+save/check` 两跑归一化全一致；`scripts/audit_signatures.py` 清单外
+超标=0。
+
+**开放问题**：diff 工具的归一化规则（id/哈希/时间掩码+链行排序）
+本身是审计点——掩盖了什么必须可解释；确定性排序改变了证据展示
+次序（语义序替代产出序），展示语义变化已知可接受；agents-overview
+的清单表是快照，roster 变更后需重新生成（registry 可动态出）。
+
+## 15. 建议攻击面清单（给审查 agent 的入手点）
 
 按「出事代价」排序：
 
@@ -568,7 +613,7 @@ statement/why 红章；③`ingress.audit_ingested(dossier, ids)`——
    计数临界/指代词+实体齐全/功能词表外的问句尾巴）；_FUNCTION_TOKENS
    遗漏词造成的误判 clear；clarify 建议与 skill 触发是否同档一致。
 
-## 15. 环境事实（审查时需要知道的）
+## 16. 环境事实（审查时需要知道的）
 
 - 网关：阿里云百炼 token-plan 专属端点
   `token-plan.cn-beijing.maas.aliyuncs.com/compatible-mode/v1`，

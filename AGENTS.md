@@ -58,7 +58,7 @@ python3 -m venv .venv
 .venv/bin/python -m pytest tests -q
 ```
 
-**通过判据**：`247 passed`（或更多，零 failed；未装 mcp 时少 1 条属正常）。测试全 stub，无需密钥。
+**通过判据**：`249 passed`（或更多，零 failed；未装 mcp 时少 1 条属正常）。测试全 stub，无需密钥。
 
 ## 第 3 步：离线演示（断网/无 key 时的完整演示兜底）
 
@@ -134,7 +134,7 @@ python3 -m venv .venv
 | pip 装不上 litellm | 加镜像参数重试；仍失败可暂时跳过——`pytest` 与 `demo_offline` 不依赖 litellm（懒加载），仅第 4 步在线研判需要 |
 | PDF 信源摄取报 pypdf 缺失 | `pip install pypdf`（PDF 是可选格式，demo 案例不含 PDF 不影响演示） |
 | venv 激活后命令找不到 | 直接用绝对路径调 python：`.venv\Scripts\python`（Win）/ `.venv/bin/python`（Mac） |
-| 测试出现 failed | 把失败摘要原样反馈给开发者；在修好前用第 3 步离线演示兜底（未装 mcp 时 MCP 协议测试自动跳过，247 passed ± 1 skipped 属正常） |
+| 测试出现 failed | 把失败摘要原样反馈给开发者；在修好前用第 3 步离线演示兜底（未装 mcp 时 MCP 协议测试自动跳过，249 passed ± 1 skipped 属正常） |
 
 ## 仓库速览（供智能体理解上下文）
 
@@ -164,8 +164,11 @@ python3 -m venv .venv
   相关性人工裁决（`POST /api/source/relevance`，入链）
 - 开发日志：`docs/dev-journal.md` ——全部批次的问题来源/方案决策/
   改动/验证/**已知开放问题**，供外部 AI 审查代码用（附攻击面清单）
-- 智能体：`app/agents/`（panel 三视角编队、arbiter 归并/冲突/质证/仲裁、
-  chair 主席汇总层——正面回答议题，四道闸+零 LLM 模板兜底、repair 修复环）
+- 智能体：`app/agents/`（base=Agent 基类+Analyst、panel 三视角编队
+  **支持 roster per-agent model（多模型异构是配置项）**、arbiter
+  归并/冲突/质证/仲裁、chair 主席汇总层——正面回答议题，四道闸+零
+  LLM 模板兜底、repair 修复环、registry 智能体清单——答辩架构图
+  数据源，见 docs/agents-overview.md）
 - 演示案例：`cases/demo-solid-state/`（固态电池科研情报）与
   `cases/bi-delivery-risk/`（数据中台交付风险企业情报，信源已脱敏；
   由 `scripts/build_bi_case.py` 从外部语料构建）；manifest.yaml 声明信源类型与可信度

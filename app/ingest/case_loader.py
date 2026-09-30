@@ -28,6 +28,7 @@ manifest.yaml 示例::
 from __future__ import annotations
 
 import re
+from dataclasses import dataclass
 from pathlib import Path
 
 from app.core.evidence import Dossier, Segment, Source, SourceType
@@ -69,25 +70,50 @@ def infer_source_type(path: Path) -> SourceType:
     return _EXT_HINTS.get(path.suffix.lower(), SourceType.OTHER)
 
 
-def ingest_file(path: Path, source_id: str, source_type: SourceType,
-                credibility: float | None = None, title: str | None = None,
-                published_at: str | None = None,
-                preloaded: tuple[str, str] | None = None) -> Source:
-    """单文件 → Source（切段并编号，locator 记段序）。
+@dataclass
+class SourceSpec:
+    """单文件的入卷规格（重构 T0：ingest_file 7 参收拢）。
 
-    preloaded：(title, text) 已读内容直用（链接清单检测后复用，免双读）。"""
-    real_title, text = preloaded or read_any(path)
+    source_type=None → 按扩展名/文件名推断；preloaded=(title, text)
+    已读内容直用（链接清单检测后复用，免双读）；classification 为
+    manifest 声明的密级。"""
+
+    source_type: SourceType | None = None
+    credibility: float | None = None
+    title: str | None = None
+    published_at: str | None = None
+    classification: str = "internal"
+    preloaded: tuple[str, str] | None = None
+
+    @classmethod
+    def from_manifest(cls, item: dict) -> "SourceSpec":
+        return cls(
+            source_type=(SourceType(item["type"])
+                         if item.get("type") else None),
+            credibility=(float(item["credibility"])
+                         if item.get("credibility") is not None else None),
+            title=str(item.get("title") or "") or None,
+            published_at=(str(item["published_at"])
+                          if item.get("published_at") else None),
+            classification=str(item.get("classification") or "internal").lower(),
+        )
+
+
+def ingest_file(path: Path, source_id: str, spec: SourceSpec) -> Source:
+    """单文件 → Source（切段并编号，locator 记段序）。"""
+    real_title, text = spec.preloaded or read_any(path)
     meta: dict = {"file": str(path)}
-    if published_at:
-        meta["published_at"] = published_at
+    if spec.published_at:
+        meta["published_at"] = spec.published_at
     else:
         m = _YEAR_RE.search(text)
         if m:
             meta["year"] = re.sub(r"\D", "", m.group(0))
+    source_type = spec.source_type or infer_source_type(path)
     source = Source.create(
-        title=title or real_title,
+        title=spec.title or real_title,
         source_type=source_type,
-        credibility=credibility,
+        credibility=spec.credibility,
         id=source_id,
         meta=meta,
     )
@@ -133,6 +159,12 @@ def _collect_files(case_dir: Path, max_files: int = 500,
     隐藏目录与 __pycache__ 跳过，数量/深度封顶（假定输入敌意）。"""
     out: list[tuple[Path, str]] = []
 
+    def _is_artifact_dir(name: str) -> bool:
+        # 产物目录（out/out_offline/out_ab_*）与缓存绝不入卷——
+        # 自产文件被输入层吃回会形成滚雪球（归一化 diff 验收抓到的
+        # 真实回归：72 信源/73218 段，每跑一次演示膨胀一轮）
+        return name == "out" or name.startswith("out_")
+
     def walk(d: Path, prefix: str, depth: int) -> None:
         if depth > max_depth or len(out) >= max_files:
             return
@@ -142,7 +174,8 @@ def _collect_files(case_dir: Path, max_files: int = 500,
             if depth == 0 and p.name == "manifest.yaml":
                 continue
             if p.is_dir():
-                if p.name.startswith(".") or p.name == "__pycache__":
+                if p.name.startswith(".") or p.name == "__pycache__" \
+                        or _is_artifact_dir(p.name):
                     continue
                 walk(p, f"{prefix}{p.name}/", depth + 1)
             else:
@@ -186,21 +219,10 @@ def load_case(case_dir: Path, fetch_links: bool = False) -> Dossier:
         counter += 1
         return f"SRC{counter}"
 
-    def _ingest_one(path: Path, spec: dict, rel: str,
-                    preloaded: tuple[str, str] | None = None) -> None:
+    def _ingest_one(path: Path, rel: str, spec: SourceSpec) -> None:
+        declared_type = spec.source_type
         try:
-            source_type = SourceType(spec.get("type", infer_source_type(path)))
-            cred = spec.get("credibility")
-            source = ingest_file(
-                path,
-                source_id=_next_id(),
-                source_type=source_type,
-                credibility=float(cred) if cred is not None else None,
-                title=str(spec.get("title") or "") or None,
-                published_at=(str(spec["published_at"])
-                              if spec.get("published_at") else None),
-                preloaded=preloaded,
-            )
+            source = ingest_file(path, _next_id(), spec)
         except Exception as exc:  # 单文件坏，不炸全场
             dossier.ingest_notes.append({
                 "file": rel, "kind": "parse_error",
@@ -227,15 +249,14 @@ def load_case(case_dir: Path, fetch_links: bool = False) -> Dossier:
                 "detail": f"含 {source.meta['pdf_images']} 张内嵌图片未解析"
                           "——图中的数字与结论可能缺失",
             })
-        classification = str(spec.get("classification") or "internal").lower()
-        if classification in ("public", "internal", "confidential"):
-            source.classification = classification
+        if spec.classification in ("public", "internal", "confidential"):
+            source.classification = spec.classification
         dossier.add_source(source)
         dossier.triage.append({
             "file": rel, "route": "native",
             "reason": f"{len(source.segments)} 段入卷"
             + (f"（类型 {source.source_type.value}）"
-               if not spec.get("type") else ""),
+               if declared_type is None else ""),
         })
 
     def _handle_links(rel: str, text: str, n_links: int) -> None:
@@ -309,9 +330,8 @@ def load_case(case_dir: Path, fetch_links: bool = False) -> Dossier:
     def _triage(rel: str, route: str, reason: str) -> None:
         dossier.triage.append({"file": rel, "route": route, "reason": reason})
 
-    def _process_file(path: Path, rel: str, spec: dict | None = None) -> None:
+    def _process_file(path: Path, rel: str, spec: SourceSpec) -> None:
         """单个文件（顶层或压缩包条目）→ 信源或披露，与来源无关同一待遇。"""
-        spec = spec or {}
         if path.suffix.lower() in _IMAGE_EXTS:
             dossier.ingest_notes.append({
                 "file": rel, "kind": "image_file", "path": str(path),
@@ -336,9 +356,11 @@ def load_case(case_dir: Path, fetch_links: bool = False) -> Dossier:
             _triage(rel, "archive_expanded",
                     f"{len(entries)} 个条目拆封后逐条分诊")
             for entry_path, entry_name in entries:
-                entry_spec = declared_name.get(entry_name.rsplit("/", 1)[-1])
+                entry_item = (declared_name.get(
+                    entry_name.rsplit("/", 1)[-1]) or {})
                 # 溯源：信源来自哪个包的哪个条目
-                _process_file(entry_path, f"{rel}::{entry_name}", entry_spec)
+                _process_file(entry_path, f"{rel}::{entry_name}",
+                              SourceSpec.from_manifest(entry_item))
             return
         try:
             title, text = read_any(path)
@@ -354,9 +376,11 @@ def load_case(case_dir: Path, fetch_links: bool = False) -> Dossier:
         if is_links:
             _handle_links(rel, text, n_links)
             return
-        _ingest_one(path, spec, rel, preloaded=(title, text))
+        from dataclasses import replace as _dc_replace
+
+        _ingest_one(path, rel, _dc_replace(spec, preloaded=(title, text)))
 
     for path, rel in _collect_files(case_dir):
-        _process_file(path, rel,
-                      declared_rel.get(rel) or declared_name.get(path.name))
+        item = declared_rel.get(rel) or declared_name.get(path.name) or {}
+        _process_file(path, rel, SourceSpec.from_manifest(item))
     return dossier

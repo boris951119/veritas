@@ -5,6 +5,7 @@ from types import SimpleNamespace
 from app.agents.base import Analyst, extract_json
 from app.core.hashchain import HashChain
 from app.pipeline import PipelineResult, run_case
+from app.pipeline import RunDeps, RunSpec
 
 
 GOOD_BAD_JSON = """```json
@@ -69,8 +70,8 @@ def test_run_case_end_to_end_with_rejection(tmp_path):
     fake = FakeClient(GOOD_BAD_JSON)
     # 注入单分析师：周 1 最小闭环口径（协同段仅 ≥2 分析师才走）
     single = [Analyst("mainstream", "测试角色", fake, "test-model")]
-    result = run_case(tmp_path, out_dir=tmp_path / "out", client=fake,
-                      analysts=single)
+    result = run_case(RunSpec(case_dir=tmp_path, out_dir=tmp_path / "out"),
+                      RunDeps(client=fake, analysts=single))
     assert isinstance(result, PipelineResult)
 
     # 好证据存活、编造引文被打回
@@ -101,8 +102,8 @@ def test_run_case_without_analyst_output_still_writes_report(tmp_path):
     _make_case(tmp_path)
     fake = FakeClient('{"conclusions": []}')
     single = [Analyst("mainstream", "测试角色", fake, "test-model")]
-    result = run_case(tmp_path, out_dir=tmp_path / "out", client=fake,
-                      analysts=single)
+    result = run_case(RunSpec(case_dir=tmp_path, out_dir=tmp_path / "out"),
+                      RunDeps(client=fake, analysts=single))
     assert result.dossier.conclusions == []
     assert result.chain.verify_chain().ok
     assert "无结论" in result.report_md
@@ -116,8 +117,8 @@ def test_conclusions_with_all_evidence_rejected_are_dropped(tmp_path):
                       '"segment_id": "SRC1#s1", "relation": "causation", '
                       '"level": "A", "note": "编造"}]}]}')
     single = [Analyst("mainstream", "测试角色", fake, "test-model")]
-    result = run_case(tmp_path, out_dir=tmp_path / "out", client=fake,
-                      analysts=single)
+    result = run_case(RunSpec(case_dir=tmp_path, out_dir=tmp_path / "out"),
+                      RunDeps(client=fake, analysts=single))
     assert result.dossier.conclusions == []
     assert result.rejected and "未命中" in result.rejected[0]["problems"][0]
     audit = next(r for r in result.chain.records if r.event == "citation_audit")

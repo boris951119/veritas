@@ -1,7 +1,9 @@
 """摄取层：切段、阅读器、案例装载（全部用临时文件，零外部依赖）。"""
 
 from app.core.evidence import SourceType
-from app.ingest.case_loader import ingest_file, infer_source_type, load_case
+from app.ingest.case_loader import (
+    SourceSpec, ingest_file, infer_source_type, load_case,
+)
 from app.ingest.readers import read_html
 from app.ingest.segment import split_segments
 
@@ -47,7 +49,7 @@ def test_ingest_file_segments_with_locator(tmp_path):
     p = tmp_path / "note_x.md"
     p.write_text("# 报告\n\n" + "第一段内容。" * 120 + "\n\n" + "第二段内容。" * 120,
                  encoding="utf-8")
-    src = ingest_file(p, "SRC1", SourceType.NOTE)
+    src = ingest_file(p, "SRC1", SourceSpec(source_type=SourceType.NOTE))
     assert len(src.segments) >= 2
     assert src.segments[0].id == "SRC1#s1"
     assert src.segments[0].locator

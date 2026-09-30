@@ -14,6 +14,7 @@ import pytest
 
 from app.agents.base import Analyst
 from app.pipeline import run_case
+from app.pipeline import RunDeps, RunSpec
 from app.server import create_app
 
 PANEL_JSON = """{"conclusions": [
@@ -46,8 +47,8 @@ def api(tmp_path_factory):
         "液态锂离子电池。产线良率是当前最大瓶颈，全固态电芯的中试良率尚不足"
         "百分之四十。\n", encoding="utf-8")
     single = [Analyst("mainstream", "测试角色", FakeClient(), "test-model")]
-    run_case(case_dir, out_dir=case_dir / "out", client=FakeClient(),
-             analysts=single)
+    run_case(RunSpec(case_dir=case_dir, out_dir=case_dir / "out"),
+             RunDeps(client=FakeClient(), analysts=single))
 
     import uvicorn
 
@@ -98,8 +99,11 @@ def test_list_and_get_dossier(api):
 
 def test_weight_update_recomputes_and_chains(api):
     before = _get(api + "/api/dossier?case=demo")
-    con_id, n_ev = before["dossier"]["conclusions"][0]["id"], None
-    ev = before["dossier"]["evidences"][0]
+    con_id = before["dossier"]["conclusions"][0]["id"]
+    # 证据列表已按语义键固化排序——显式取该结论自己的证据
+    # （不再假设 evidences[0] 恰属于 conclusions[0]）
+    ev = next(e for e in before["dossier"]["evidences"]
+              if e["conclusion_id"] == con_id)
     old_conf = before["dossier"]["conclusions"][0]["confidence"]
     after = _post(api + "/api/evidence/weight",
                   {"case": "demo", "evidence_id": ev["id"], "weight": 0.1})

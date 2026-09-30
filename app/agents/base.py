@@ -1,14 +1,20 @@
-"""分析师智能体基座：独立研判 → 结构化结论 + 证据节点。
+"""智能体基座：Agent 抽象 + 分析师（独立研判 → 结构化结论 + 证据节点）。
 
 独立研判硬隔离（榜单硬需求 1）：每个分析师只拿到「议题 + 资料清单 +
 自己的角色」，拿不到其他分析师的任何输出——隔离由提示词构造保证，
 不在模型侧依赖自觉。
+
+Agent 基类是智能体的形式化锚点（答辩口径「每个智能体一个类、一个
+职责」）：名字/角色/模型/客户端 + 画像档位。per-agent model：实例各
+持自己的 model 字段（每次调用按实例传入）——多模型异构是配置项，
+网关给几个模型就能异构几个。
 """
 
 from __future__ import annotations
 
 import json
 import re
+from dataclasses import dataclass, field
 
 from app.core.evidence import (
     Conclusion,
@@ -18,6 +24,23 @@ from app.core.evidence import (
     RelationKind,
 )
 from app.llm.model_client import ModelClient
+
+AGENT_ROLE_ANALYST = "analyst"
+
+
+@dataclass
+class Agent:
+    """智能体基类：身份（名字/角色设定）+ 执行资源（客户端/模型）。
+
+    子类实现自己的职责方法（分析师=analyze，协调者=归并/冲突/质证/
+    仲裁，主席=汇总…）——「按功能划分智能体」的类级形式化。"""
+
+    name: str
+    persona: str
+    client: ModelClient
+    model: str
+    role: str = AGENT_ROLE_ANALYST
+    profile_tier: str = "standard"  # 模型画像档位（probe 后由管线回填）
 
 
 def extract_json(text: str) -> dict:
@@ -31,15 +54,8 @@ def extract_json(text: str) -> dict:
     return json.loads(candidate[start:end + 1])
 
 
-class Analyst:
-    """一个分析师 = 角色 persona + 模型客户端 + 结构化输出契约。"""
-
-    def __init__(self, name: str, persona: str, client: ModelClient, model: str):
-        self.name = name
-        self.persona = persona
-        self.client = client
-        self.model = model
-        self.profile_tier = "standard"  # 模型画像档位（probe 后由管线回填）
+class Analyst(Agent):
+    """分析师智能体：独立研判，产出结构化结论 + 逐字引文证据。"""
 
     def analyze(self, dossier: Dossier) -> list[Conclusion]:
         from app.agents.prompts import render_segments_block, render_system_prompt
@@ -62,8 +78,7 @@ class Analyst:
         """模型 JSON → Conclusion + EvidenceNode（登记进案卷）。
 
         证据所指段落存在性在这里做第一道软校验（不存在的段落直接丢弃，
-        引文逐字核对留给 citation_check 机械闸）。
-        """
+        引文逐字核对留给 citation_check 机械闸）。"""
         conclusions: list[Conclusion] = []
         for item in data.get("conclusions") or []:
             if not isinstance(item, dict) or not str(item.get("statement", "")).strip():

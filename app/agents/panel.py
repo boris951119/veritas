@@ -31,10 +31,12 @@ DEFAULT_ROSTER: list[tuple[str, str]] = [
 ]
 
 
-def load_roster(data: dict | str | Path) -> list[tuple[str, str]]:
+def load_roster(data: dict | str | Path) -> list[tuple[str, str, str | None]]:
     """从 dict 或 YAML 路径加载编队；至少 2 人，否则 ValueError。
 
-    形态：{"roster":[{"name":"...","persona":"..."}, ...]}
+    形态：{"roster":[{"name":"...","persona":"...","model":"可选"}, ...]}
+    返回 (name, persona, model|None) 三元组——model 省略时由
+    build_panel 落默认模型（per-agent 异构是配置项）。
     """
     if isinstance(data, (str, Path)):
         raw: Any = load_yaml_robust(Path(data))
@@ -45,7 +47,7 @@ def load_roster(data: dict | str | Path) -> list[tuple[str, str]]:
     items = raw.get("roster")
     if not isinstance(items, list):
         raise ValueError("roster 须为列表")
-    out: list[tuple[str, str]] = []
+    out: list[tuple[str, str, str | None]] = []
     for item in items:
         if not isinstance(item, dict):
             raise ValueError("roster 项须为对象")
@@ -55,17 +57,26 @@ def load_roster(data: dict | str | Path) -> list[tuple[str, str]]:
             raise ValueError("roster 项缺少 name")
         if not persona:
             raise ValueError(f"roster 项 {name!r} 缺少 persona")
-        out.append((name, persona))
+        model = str(item.get("model") or "").strip() or None
+        out.append((name, persona, model))
     if len(out) < 2:
         raise ValueError("编队至少需要 2 个不同角色")
     return out
 
 
 def build_panel(client: ModelClient, model: str,
-                roster: list[tuple[str, str]] | None = None) -> list[Analyst]:
-    """按编队名册构建分析师（默认三视角；测试可注入桩 client）。"""
-    return [Analyst(name, persona, client, model)
-            for name, persona in (roster or DEFAULT_ROSTER)]
+                roster: list | None = None) -> list[Analyst]:
+    """按编队名册构建分析师（默认三视角；测试可注入桩 client）。
+
+    roster 项兼容 2 元组/3 元组（含 per-agent model）；缺省模型用
+    传入的默认模型——网关给几个模型即可异构几个分析师。"""
+    entries = roster or DEFAULT_ROSTER
+    analysts: list[Analyst] = []
+    for entry in entries:
+        name, persona = entry[0], entry[1]
+        entry_model = entry[2] if len(entry) > 2 and entry[2] else model
+        analysts.append(Analyst(name, persona, client, entry_model))
+    return analysts
 
 
 def run_panel(dossier: Dossier, analysts: list[Analyst],

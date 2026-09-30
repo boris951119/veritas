@@ -16,6 +16,7 @@ from app.core.conflicts import (
 )
 from app.core.evidence import Conclusion, Dossier, EvidenceNode, Segment, Source, SourceType
 from app.pipeline import run_case
+from app.pipeline import RunDeps, RunSpec
 
 PANEL_JSON = """{"conclusions": [
   {"statement": "固态电池2030年前难以在乘用车上规模量产",
@@ -117,7 +118,8 @@ def test_run_case_all_analysts_fail_raises(tmp_path):
     _case(tmp_path)
     client = ScriptedClient([RuntimeError("网关全挂")] * 3)
     with pytest.raises(RuntimeError, match="全部分析师研判失败"):
-        run_case(tmp_path, out_dir=tmp_path / "out", client=client)
+        run_case(RunSpec(case_dir=tmp_path, out_dir=tmp_path / "out"),
+             RunDeps(client=client))
 
 
 # -- 归并 ---------------------------------------------------------------------
@@ -250,7 +252,8 @@ def test_run_case_full_collaboration_pipeline(tmp_path):
 
     client = ScriptedClient(
         [PANEL_JSON] * 3 + [merge, conflict, "甲方质证文本", "乙方质证文本", arbitrate])
-    result = run_case(tmp_path, out_dir=tmp_path / "out", client=client)
+    result = run_case(RunSpec(case_dir=tmp_path, out_dir=tmp_path / "out"),
+             RunDeps(client=client))
 
     # 归并：6 条 → 2 组（每组 3 分析师署名）
     assert len(result.dossier.conflicts) == 1

@@ -7,6 +7,7 @@ from types import SimpleNamespace
 import pytest
 
 from app.pipeline import run_case
+from app.pipeline import RunDeps, RunSpec
 
 PANEL_JSON = """{"conclusions": [
   {"statement": "良率是瓶颈",
@@ -39,7 +40,7 @@ def test_load_roster_accepts_two_roles():
             {"name": "dove", "persona": "鸽派"},
         ],
     })
-    assert roster == [("hawk", "鹰派"), ("dove", "鸽派")]
+    assert roster == [("hawk", "鹰派", None), ("dove", "鸽派", None)]
 
 
 def test_load_roster_rejects_fewer_than_two():
@@ -64,8 +65,8 @@ def test_custom_roster_enters_dossier_panel(tmp_path):
     client = FakeClient()
     analysts = build_panel(client, "m", roster=roster)
     assert [a.name for a in analysts] == ["hawk", "dove"]
-    result = run_case(tmp_path, out_dir=tmp_path / "out",
-                      client=client, analysts=analysts)
+    result = run_case(RunSpec(case_dir=tmp_path, out_dir=tmp_path / "out"),
+                      RunDeps(client=client, analysts=analysts))
     assert result.dossier.panel == ["hawk", "dove"]
 
 
@@ -78,7 +79,23 @@ def test_run_case_roster_param_and_yaml_path(tmp_path):
     roster_yaml.write_text(
         "roster:\n  - name: bull\n    persona: 乐观派\n"
         "  - name: bear\n    persona: 悲观派\n", encoding="utf-8")
-    result = run_case(tmp_path, out_dir=tmp_path / "out2",
-                      client=FakeClient(), roster=load_roster(roster_yaml))
+    result = run_case(RunSpec(case_dir=tmp_path, out_dir=tmp_path / "out2",
+                      roster=load_roster(roster_yaml)),
+                      RunDeps(client=FakeClient()))
     assert result.dossier.panel == ["bull", "bear"]
     assert result.chain.verify_chain().ok
+
+
+def test_roster_per_agent_model():
+    """per-agent model：roster 声明模型的 analysts 用自己的模型，
+    省略者用默认——多模型异构是配置项。"""
+    from app.agents.panel import build_panel, load_roster
+
+    roster = load_roster({"roster": [
+        {"name": "hawk", "persona": "鹰派", "model": "openai/big-model"},
+        {"name": "dove", "persona": "鸽派"},
+    ]})
+    client = FakeClient()
+    analysts = build_panel(client, "openai/default", roster=roster)
+    assert analysts[0].model == "openai/big-model"
+    assert analysts[1].model == "openai/default"

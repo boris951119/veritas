@@ -162,7 +162,7 @@ def test_chair_llm_failure_falls_back_to_template():
 
 
 def test_pipeline_synthesis_in_chain_report_and_json(tmp_path):
-    from app.pipeline import run_case
+    from app.pipeline import RunDeps, RunSpec, run_case
 
     case_dir = tmp_path / "cases" / "demo"
     case_dir.mkdir(parents=True)
@@ -181,8 +181,8 @@ def test_pipeline_synthesis_in_chain_report_and_json(tmp_path):
         def chat(self, model, messages, json_mode=False):
             return SimpleNamespace(content=PANEL)
 
-    result = run_case(case_dir, out_dir=case_dir / "out", client=Fake(),
-                      probe=False)  # 桩客户端 → 注入路径 → 模板主席
+    result = run_case(RunSpec(case_dir=case_dir, out_dir=case_dir / "out", probe=False),
+                      RunDeps(client=Fake()))  # 桩客户端 → 注入路径 → 模板主席
     # analysts 未注入时 build_panel 会用 Fake → 注入 client 判定成立？
     # injected_client 为 True（client 非 None）→ chair 模板
     assert result.dossier.synthesis["mode"] == "template"

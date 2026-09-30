@@ -11,6 +11,7 @@ from app.core.evidence import (
 )
 from app.core.material import pack_material, set_material_budget
 from app.pipeline import run_case
+from app.pipeline import RunDeps, RunSpec
 
 
 def _dossier(question: str, texts: list[str]) -> Dossier:
@@ -160,8 +161,9 @@ def test_pipeline_material_pack_event(tmp_path):
     from app.config import Settings
 
     settings = Settings(material_char_budget=10)
-    result = run_case(case_dir, out_dir=case_dir / "out", client=Fake(),
-                      analysts=[], settings=settings, probe=False)
+    result = run_case(RunSpec(case_dir=case_dir, out_dir=case_dir / "out",
+                      settings=settings, probe=False),
+                      RunDeps(client=Fake(), analysts=[]))
     events = {r.event: r.payload for r in result.chain.records}
     assert events["material_pack"]["n_excluded"] >= 0
     assert events["material_pack"]["budget"] == 10

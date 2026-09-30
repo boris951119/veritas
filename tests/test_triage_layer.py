@@ -130,7 +130,7 @@ def test_human_override_beats_automatic():
 
 def test_override_endpoint_persists_and_chains(tmp_path):
     from app.agents.base import Analyst
-    from app.pipeline import run_case
+    from app.pipeline import RunDeps, RunSpec, run_case
     from app.server import create_app
 
     case_dir = _case(tmp_path)
@@ -140,8 +140,8 @@ def test_override_endpoint_persists_and_chains(tmp_path):
         def chat(self, model, messages, json_mode=False):
             return SimpleNamespace(content='{"conclusions": []}')
 
-    run_case(case_dir, out_dir=case_dir / "out", client=Fake(),
-             analysts=[Analyst("m", "测", Fake(), "mod")], probe=False)
+    run_case(RunSpec(case_dir=case_dir, out_dir=case_dir / "out", probe=False),
+             RunDeps(client=Fake(), analysts=[Analyst("m", "测", Fake(), "mod")]))
     api = TestClient(create_app(cases_root=case_dir.parent))
     sid = api.get("/api/dossier", params={"case": "demo"}).json()[
         "dossier"]["sources"][0]["id"]
@@ -228,7 +228,7 @@ def test_pipeline_ocr_gated_by_settings(tmp_path, monkeypatch):
     import app.ingest.ocr as ocr_mod
     from app.agents.base import Analyst
     from app.config import Settings
-    from app.pipeline import run_case
+    from app.pipeline import RunDeps, RunSpec, run_case
 
     case_dir = _case(tmp_path)
     (case_dir / "图.png").write_bytes(b"\x89PNG" + b"\x00" * 8)
@@ -242,10 +242,10 @@ def test_pipeline_ocr_gated_by_settings(tmp_path, monkeypatch):
     monkeypatch.setattr(ocr_mod, "transcode_images",
                         lambda *a, **kw: called.append(1) or {"n_pending": 0,
                                                               "n_transcoded": 0})
-    run_case(case_dir, out_dir=case_dir / "o1", client=Fake(),
-             analysts=[Analyst("m", "测", Fake(), "m")], probe=False,
-             settings=Settings(ocr_enabled=False))
+    run_case(RunSpec(case_dir=case_dir, out_dir=case_dir / "o1", probe=False,
+             settings=Settings(ocr_enabled=False)),
+             RunDeps(client=Fake(), analysts=[Analyst("m", "测", Fake(), "m")]))
     assert not called
-    run_case(case_dir, out_dir=case_dir / "o2", client=Fake(),
-             analysts=[Analyst("m", "测", Fake(), "m")], probe=False)
+    run_case(RunSpec(case_dir=case_dir, out_dir=case_dir / "o2", probe=False),
+             RunDeps(client=Fake(), analysts=[Analyst("m", "测", Fake(), "m")]))
     assert called  # 默认开启即触发（真实路径内自动探测降级）
