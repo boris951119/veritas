@@ -102,6 +102,9 @@ class Source:
     url: str = ""
     meta: dict = field(default_factory=dict)
     segments: list[Segment] = field(default_factory=list)
+    # 密级（public < internal < confidential）：权限视图按此过滤，
+    # 审计链与原始案卷永远全量保真——过滤只发生在展示视图上
+    classification: str = "internal"
 
     @classmethod
     def create(cls, title: str, source_type: SourceType,
@@ -121,6 +124,7 @@ class Source:
             "source_type": self.source_type.value,
             "credibility": self.credibility, "url": self.url,
             "meta": self.meta,
+            "classification": self.classification,
             "segments": [s.to_dict() for s in self.segments],
         }
 
@@ -131,6 +135,7 @@ class Source:
             source_type=SourceType(d.get("source_type", "other")),
             credibility=float(d.get("credibility", 0.4)),
             url=str(d.get("url", "")), meta=dict(d.get("meta") or {}),
+            classification=str(d.get("classification", "internal")),
             segments=[Segment.from_dict(s) for s in d.get("segments") or []],
         )
 
@@ -245,6 +250,8 @@ class Dossier:
     panel: list[str] = field(default_factory=list)  # 参与研判的分析师名
     # 被引文核对打回的证据清单（EvidenceRef dict + problems；持久化供工作台展示）
     rejected: list[dict] = field(default_factory=list)
+    # 摄取阶段披露：解析失败/空文件/扫描件/含图未解析（输入夹层「标」职能）
+    ingest_notes: list[dict] = field(default_factory=list)
 
     # -- 索引 --
 
@@ -303,6 +310,7 @@ class Dossier:
             "conclusions": [c.to_dict() for c in self.conclusions],
             "conflicts": self.conflicts,
             "rejected": self.rejected,
+            "ingest_notes": self.ingest_notes,
         }
 
     @classmethod
@@ -315,6 +323,7 @@ class Dossier:
             conclusions=[Conclusion.from_dict(c) for c in d.get("conclusions") or []],
             conflicts=list(d.get("conflicts") or []),
             rejected=list(d.get("rejected") or []),
+            ingest_notes=list(d.get("ingest_notes") or []),
         )
 
     def to_json(self, path: Path) -> Path:

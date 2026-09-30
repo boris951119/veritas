@@ -62,18 +62,22 @@ def _load_pair(out_dir: Path) -> tuple[Dossier, HashChain]:
     return dossier, chain
 
 
-def _dossier_payload(out_dir: Path) -> dict:
+def _dossier_payload(out_dir: Path, clearance: str = "confidential") -> dict:
+    from app.core.view_filter import redact_dossier
+
     dossier, chain = _load_pair(out_dir)
     verify = chain.verify_chain()
-    # 机械核对警示为派生视图：每次加载即时重算——人工修改与文件篡改
-    # 都逃不过下一次读取（「改数字即红」的工作台侧实现）
-    flags = audit_all(dossier)
+    # 权限视图：过滤只发生在展示层（低权限不借审计泄露涉密内容）；
+    # 机械核对警示在所服务的视图上即时重算——人工修改与文件篡改都
+    # 逃不过下一次读取（「改数字即红」的工作台侧实现）
+    view, _stats = redact_dossier(dossier, clearance)
+    flags = audit_all(view)
     return {
         "case": out_dir.parent.name,
         "out_dir": out_dir.name,
-        "dossier": dossier.to_dict(),
+        "dossier": view.to_dict(),
         "audit": {"flags": flags, **summarize(flags),
-                  "skills": skill_status(dossier)},
+                  "skills": skill_status(view)},
         "chain": {
             "n_records": len(chain.records),
             "ok": verify.ok,
@@ -167,8 +171,10 @@ def create_app(cases_root: Path | None = None) -> FastAPI:
         return {"cases": cases}
 
     @app.get("/api/dossier")
-    def get_dossier(case: str) -> dict:
-        return _dossier_payload(_find_out_dir(cases_root, case))
+    def get_dossier(case: str, clearance: str = "confidential") -> dict:
+        """权限视图：clearance ∈ public/internal/confidential（默认本机
+        操作员全量）。过滤只发生在展示视图，链与原始案卷全量保真。"""
+        return _dossier_payload(_find_out_dir(cases_root, case), clearance)
 
     @app.get("/api/reasoning_graph")
     def get_reasoning_graph(case: str) -> dict:

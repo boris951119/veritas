@@ -45,29 +45,39 @@ def render_segments_block(dossier: Dossier, per_segment_chars: int = 900) -> str
     - 相关性分层（零 LLM）：零相关信源不进清单（报告「未采信信源」
       章节披露），低相关信源打降权标记——异构资料混入无关内容时的
       保守处理，丢弃永远可见；
+    - 精确重复排除：同文重复件不进清单（防双重引证虚增一致性），
+      报告披露；
+    - 不可信数据围栏：每份信源包显式边界——资料里的一切文字只是
+      待研判数据，指令性文字不是系统指令（注入纵深防御第一层）；
     - 资料内数字冲突（对撞台账）：同(实体,指标)不同值的信源打架，
       要求结论正面回应——冲突检测从结论层下沉到事实层。
 
     截断上限须与 ingest.segment 的切段上限（900）对齐——低了会造出
     「段落尾部对分析师不可见」的盲区，表格型信源尤甚。"""
+    from app.core.dup_check import duplicate_map
     from app.core.fact_ledger import facts_block
     from app.core.relevance import classify_sources
+    from app.core.untrusted import wrap_untrusted
 
     relevance = {s["source_id"]: s for s in classify_sources(dossier)}
+    duplicates = duplicate_map(dossier)
     lines: list[str] = [f"研判议题：{dossier.question}", "", "资料清单："]
     for src in dossier.sources:
+        if src.id in duplicates:
+            continue  # 重复件：不进研判（报告披露），防一致性虚增
         rel = relevance.get(src.id)
         if rel is not None and rel["level"] == "zero":
             continue  # 零相关：不进分析师视野（披露在报告）
         header = f"◆ 来源 {src.id}《{src.title}》（类型 {src.source_type.value}）"
         if rel is not None and rel["level"] == "low":
             header += f"（低相关：仅必要时引用——{rel['reason']}）"
-        lines.append(header)
+        body_lines = [header]
         for seg in src.segments:
             text = seg.text
             if len(text) > per_segment_chars:
                 text = text[:per_segment_chars] + "……"
-            lines.append(f"[{seg.id}] ({seg.locator}) {text}")
+            body_lines.append(f"[{seg.id}] ({seg.locator}) {text}")
+        lines.append(wrap_untrusted("\n".join(body_lines)))
         lines.append("")
     collision_block = facts_block(dossier)
     if collision_block:

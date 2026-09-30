@@ -15,7 +15,9 @@ from app.core.discourse_check import (
 from app.core.evidence import Dossier
 from app.core.numeric_check import audit_conservation, audit_counting, audit_numeric
 from app.core.premise_check import premise_flags
+from app.core.dup_check import near_dup_flags
 from app.core.temporal_check import audit_temporal
+from app.core.untrusted import scan_injections
 
 KIND_LABEL: dict[str, str] = {
     "calc": "计算复算不符",
@@ -29,14 +31,19 @@ KIND_LABEL: dict[str, str] = {
     "level_tone": "措辞强度超过证据等级",
     "stale": "引用旧时点资料",
     "as_of": "结论未锚定时点",
+    "injection": "疑似指令注入内容",
+    "near_dup": "疑似同源转述",
     "premise": "议题前提未被资料覆盖",
 }
 
 
 def audit_all(dossier: Dossier) -> list[dict]:
-    """全部零 LLM 机械闸一次扫描：前提 + 计算/溯源/计数 + 守恒 + 话语 + 时序。"""
+    """全部零 LLM 机械闸一次扫描：前提 + 计算/溯源/计数 + 守恒 + 话语
+    + 时序 + 输入防御（注入/同源）。"""
     return [
         *premise_flags(dossier),
+        *scan_injections(dossier),
+        *near_dup_flags(dossier),
         *audit_numeric(dossier),
         *audit_counting(dossier),
         *audit_conservation(dossier),

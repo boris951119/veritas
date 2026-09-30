@@ -93,8 +93,34 @@ def ingest_file(path: Path, source_id: str, source_type: SourceType,
     return source
 
 
+def _pdf_probe(path: Path) -> dict:
+    """PDF 元探测（尽力而为）：页数、内嵌图片数——图片披露用，不炸摄取。"""
+    out: dict = {}
+    try:
+        from pypdf import PdfReader
+
+        reader = PdfReader(str(path))
+        out["pdf_pages"] = len(reader.pages)
+        images = 0
+        for page in reader.pages:
+            try:
+                xo = (page.get("/Resources") or {}).get("/XObject") or {}
+                images += sum(
+                    1 for k in xo
+                    if xo[k].get_object().get("/Subtype") == "/Image")
+            except Exception:
+                continue
+        out["pdf_images"] = images
+    except Exception:
+        pass
+    return out
+
+
 def load_case(case_dir: Path) -> Dossier:
-    """案例目录 → Dossier（manifest.yaml 用缩进自愈加载）。"""
+    """案例目录 → Dossier（manifest.yaml 用缩进自愈加载）。
+
+    摄取按文件隔离：单个损坏/加密文件只降级为 ingest_notes 披露，
+    绝不炸整条 run——「我们假定输入是敌意的」的第一原则。"""
     case_dir = Path(case_dir)
     manifest = {}
     manifest_path = case_dir / "manifest.yaml"
@@ -117,16 +143,42 @@ def load_case(case_dir: Path) -> Dossier:
     )
     for i, path in enumerate(files):
         spec = declared.get(path.name, {})
-        source_type = SourceType(spec.get("type", infer_source_type(path)))
-        cred = spec.get("credibility")
-        source = ingest_file(
-            path,
-            source_id=f"SRC{i + 1}",
-            source_type=source_type,
-            credibility=float(cred) if cred is not None else None,
-            title=str(spec.get("title") or "") or None,
-            published_at=(str(spec["published_at"])
-                          if spec.get("published_at") else None),
-        )
+        try:
+            source_type = SourceType(spec.get("type", infer_source_type(path)))
+            cred = spec.get("credibility")
+            source = ingest_file(
+                path,
+                source_id=f"SRC{i + 1}",
+                source_type=source_type,
+                credibility=float(cred) if cred is not None else None,
+                title=str(spec.get("title") or "") or None,
+                published_at=(str(spec["published_at"])
+                              if spec.get("published_at") else None),
+            )
+        except Exception as exc:  # 单文件坏，不炸全场
+            dossier.ingest_notes.append({
+                "file": path.name, "kind": "parse_error",
+                "detail": f"解析失败（{type(exc).__name__}: {exc}）——"
+                          "该文件内容未进入研判",
+            })
+            continue
+        if not source.segments:
+            detail = "未解析出任何文本"
+            if source.meta.get("pdf_pages"):
+                detail = (f"疑似扫描件/纯图 PDF（{source.meta['pdf_pages']} 页"
+                          f"、{source.meta.get('pdf_images', 0)} 张图）——"
+                          "文字层为空，图中数字可能缺失")
+            dossier.ingest_notes.append(
+                {"file": path.name, "kind": "empty", "detail": detail})
+            continue  # 零段落信源不入卷（已披露），不进提示词噪声
+        elif source.meta.get("pdf_images"):
+            dossier.ingest_notes.append({
+                "file": path.name, "kind": "images",
+                "detail": f"含 {source.meta['pdf_images']} 张内嵌图片未解析"
+                          "——图中的数字与结论可能缺失",
+            })
+        classification = str(spec.get("classification") or "internal").lower()
+        if classification in ("public", "internal", "confidential"):
+            source.classification = classification
         dossier.add_source(source)
     return dossier

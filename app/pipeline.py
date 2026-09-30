@@ -43,6 +43,7 @@ from app.core.discourse_check import (
     audit_hedge,
     audit_level_tone,
 )
+from app.core.dup_check import duplicate_map, near_dup_pairs
 from app.core.evidence import Dossier
 from app.core.fact_ledger import extract_facts, find_collisions
 from app.core.hashchain import HashChain
@@ -50,6 +51,7 @@ from app.core.numeric_check import audit_conservation, audit_counting, audit_num
 from app.core.premise_check import premise_flags
 from app.core.relevance import classify_sources
 from app.core.skills import detect_skills, set_skills_enabled, skills_enabled
+from app.core.untrusted import scan_injections
 from app.ingest.case_loader import load_case
 from app.llm.budget import BudgetGuard, set_active_budget_guard
 from app.llm.model_client import ModelClient, ModelClientFactory
@@ -110,6 +112,17 @@ def run_case(
         "n_collisions": len(collisions),
         "cross_source": sum(1 for c in collisions if c.cross_source),
     })
+    # 0.3) 输入防御：注入扫描 + 重复/同源检测（摄入隔离披露随案卷落盘）
+    chain.append("injection_scan", "pipeline",
+                 {"n_suspects": len(scan_injections(dossier))})
+    chain.append("dup_check", "pipeline", {
+        "n_duplicates": len(duplicate_map(dossier)),
+        "n_near_dup_pairs": len(near_dup_pairs(dossier)),
+    })
+    if dossier.ingest_notes:
+        chain.append("ingest_notes", "pipeline",
+                     {"n_notes": len(dossier.ingest_notes),
+                      "kinds": sorted({n["kind"] for n in dossier.ingest_notes})})
     # 0.4) 相关性分层：零相关信源不进分析师视野（报告披露，绝不静默）
     relevance = classify_sources(dossier)
     chain.append("relevance_layered", "pipeline", {
@@ -290,7 +303,7 @@ def render_report_md(dossier: Dossier, chain: HashChain, rejected: list[dict]) -
     _render_conflicts_section(lines, dossier)
     _render_dissent_section(lines, dossier)
     _render_fact_collisions(lines, dossier)
-    _render_unused_sources(lines, dossier)
+    _render_excluded_sources(lines, dossier)
 
     if rejected:
         lines += ["## 被打回的证据（引文核对未通过）", ""]
@@ -323,6 +336,8 @@ _KIND_LABEL = {
     "level_tone": "措辞强度超过证据等级",
     "stale": "引用旧时点资料",
     "as_of": "结论未锚定时点",
+    "injection": "疑似指令注入内容",
+    "near_dup": "疑似同源转述",
     "premise": "议题前提未覆盖",
 }
 
@@ -422,17 +437,34 @@ def _render_fact_collisions(lines: list[str], dossier: Dossier) -> None:
     lines.append("")
 
 
-def _render_unused_sources(lines: list[str], dossier: Dossier) -> None:
-    """未采信信源披露：零相关不进分析师视野，但丢弃必须可见。"""
+def _render_excluded_sources(lines: list[str], dossier: Dossier) -> None:
+    """未采信信源披露：零相关/精确重复不进分析师视野，丢弃必须可见。"""
+    from app.core.dup_check import duplicate_map
     from app.core.relevance import classify_sources
 
-    unused = [s for s in classify_sources(dossier) if s["level"] == "zero"]
-    if not unused:
+    entries: list[tuple[str, str, str]] = []  # (source_id, title, reason)
+    for s in classify_sources(dossier):
+        if s["level"] == "zero":
+            entries.append((s["source_id"], s["title"], s["reason"]))
+    dups = duplicate_map(dossier)
+    for src in dossier.sources:
+        if src.id in dups:
+            entries.append((src.id, src.title,
+                            f"与 {dups[src.id]} 内容完全重复——不重复进入研判，"
+                            "防止一致性虚增"))
+    if not entries and not dossier.ingest_notes:
         return
-    lines += ["## 未采信信源（与议题零相关，未进入分析师视野）", ""]
-    for s in unused:
-        lines.append(f"- `{s['source_id']}`《{s['title']}》——{s['reason']}")
+    lines += ["## 未采信信源（未进入分析师视野）", ""]
+    for sid, title, reason in entries:
+        lines.append(f"- `{sid}`《{title}》——{reason}")
+    if not entries:
+        lines.append("（无——全部信源均进入研判）")
     lines.append("")
+    if dossier.ingest_notes:
+        lines += ["## 摄取披露（解析失败 / 空文件 / 图像内容）", ""]
+        for n in dossier.ingest_notes:
+            lines.append(f"- `{n['file']}`[{n['kind']}]：{n['detail']}")
+        lines.append("")
 
 
 def main() -> int:

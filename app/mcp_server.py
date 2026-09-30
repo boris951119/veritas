@@ -135,18 +135,21 @@ def _make_server():
         return {"cases": cases}
 
     @mcp.tool()
-    def get_report(case: str) -> dict:
+    def get_report(case: str, clearance: str = "confidential") -> dict:
         """读取某案例的完整研判产物（dossier：信源/证据/结论/冲突/打回），
-        并附零 LLM 机械核对审计（计算复算/数字溯源/前提/话语警示）。"""
+        并附零 LLM 机械核对审计。clearance ∈ public/internal/confidential
+        ——低权限视图自动隐藏无权信源及其证据/结论（涉密处留红章占位）。"""
         try:
             dossier = Dossier.from_json(_out_dir_of(case) / "report.json")
         except KeyError:
             return {"error": f"案例 {case} 无研判产物"}
         from app.core.audit import audit_all, summarize
+        from app.core.view_filter import redact_dossier
 
-        flags = audit_all(dossier)
-        return {**dossier.to_dict(), "audit": {"flags": flags,
-                                               **summarize(flags)}}
+        view, _stats = redact_dossier(dossier, clearance)
+        flags = audit_all(view)
+        return {**view.to_dict(), "audit": {"flags": flags,
+                                            **summarize(flags)}}
 
     @mcp.tool()
     def verify_chain(case: str) -> dict:
