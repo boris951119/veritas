@@ -31,6 +31,8 @@ import re
 from pathlib import Path
 
 from app.core.evidence import Dossier, Segment, Source, SourceType
+from app.ingest.archive import expand_archive, is_archive_file, sniff_format
+from app.ingest.links import classify_link_list
 from app.ingest.readers import read_any
 from app.ingest.segment import split_segments
 from app.llm.yaml_robust import load_yaml_robust
@@ -69,9 +71,12 @@ def infer_source_type(path: Path) -> SourceType:
 
 def ingest_file(path: Path, source_id: str, source_type: SourceType,
                 credibility: float | None = None, title: str | None = None,
-                published_at: str | None = None) -> Source:
-    """单文件 → Source（切段并编号，locator 记段序）。"""
-    real_title, text = read_any(path)
+                published_at: str | None = None,
+                preloaded: tuple[str, str] | None = None) -> Source:
+    """单文件 → Source（切段并编号，locator 记段序）。
+
+    preloaded：(title, text) 已读内容直用（链接清单检测后复用，免双读）。"""
+    real_title, text = preloaded or read_any(path)
     meta: dict = {"file": str(path)}
     if published_at:
         meta["published_at"] = published_at
@@ -120,11 +125,41 @@ def _pdf_probe(path: Path) -> dict:
     return out
 
 
-def load_case(case_dir: Path) -> Dossier:
+def _collect_files(case_dir: Path, max_files: int = 500,
+                   max_depth: int = 3) -> list[tuple[Path, str]]:
+    """有界遍历案例目录 → [(路径, 相对路径)]。
+
+    子目录此前被静默忽略——主办方自己解压成文件夹的场景同样常见；
+    隐藏目录与 __pycache__ 跳过，数量/深度封顶（假定输入敌意）。"""
+    out: list[tuple[Path, str]] = []
+
+    def walk(d: Path, prefix: str, depth: int) -> None:
+        if depth > max_depth or len(out) >= max_files:
+            return
+        for p in sorted(d.iterdir(), key=lambda x: x.name):
+            if len(out) >= max_files:
+                break
+            if depth == 0 and p.name == "manifest.yaml":
+                continue
+            if p.is_dir():
+                if p.name.startswith(".") or p.name == "__pycache__":
+                    continue
+                walk(p, f"{prefix}{p.name}/", depth + 1)
+            else:
+                out.append((p, prefix + p.name))
+
+    walk(case_dir, "", 0)
+    return out
+
+
+def load_case(case_dir: Path, fetch_links: bool = False) -> Dossier:
     """案例目录 → Dossier（manifest.yaml 用缩进自愈加载）。
 
     摄取按文件隔离：单个损坏/加密文件只降级为 ingest_notes 披露，
-    绝不炸整条 run——「我们假定输入是敌意的」的第一原则。"""
+    绝不炸整条 run。目录里的压缩包先安全拆封（slip/炸弹/数量/嵌套
+    四道边界，见 ingest.archive），拆出的文件与本地文件同权走本流程；
+    链接清单文件默认只披露不抓取（fetch_links=True 才逐条抓取并
+    披露成败）。"""
     case_dir = Path(case_dir)
     manifest = {}
     manifest_path = case_dir / "manifest.yaml"
@@ -136,43 +171,43 @@ def load_case(case_dir: Path) -> Dossier:
         title=str(manifest.get("title") or case_dir.name),
     )
 
-    declared: dict[str, dict] = {}
+    declared_rel: dict[str, dict] = {}
+    declared_name: dict[str, dict] = {}
     for item in manifest.get("sources") or []:
         if isinstance(item, dict) and item.get("file"):
-            declared[str(item["file"])] = item
+            name = str(item["file"])
+            declared_rel[name] = item
+            declared_name.setdefault(name.rsplit("/", 1)[-1], item)
 
-    files = sorted(
-        p for p in case_dir.iterdir()
-        if p.is_file() and p.name != "manifest.yaml"
-    )
-    for i, path in enumerate(files):
-        spec = declared.get(path.name, {})
-        if path.suffix.lower() in _IMAGE_EXTS:
-            dossier.ingest_notes.append({
-                "file": path.name, "kind": "image_file",
-                "detail": "纯图片文件，未做 OCR——图中文字、数字与图表"
-                          "信息未进入研判（如有需要请人工整理为文字材料）",
-            })
-            continue
+    counter = 0
+
+    def _next_id() -> str:
+        nonlocal counter
+        counter += 1
+        return f"SRC{counter}"
+
+    def _ingest_one(path: Path, spec: dict, rel: str,
+                    preloaded: tuple[str, str] | None = None) -> None:
         try:
             source_type = SourceType(spec.get("type", infer_source_type(path)))
             cred = spec.get("credibility")
             source = ingest_file(
                 path,
-                source_id=f"SRC{i + 1}",
+                source_id=_next_id(),
                 source_type=source_type,
                 credibility=float(cred) if cred is not None else None,
                 title=str(spec.get("title") or "") or None,
                 published_at=(str(spec["published_at"])
                               if spec.get("published_at") else None),
+                preloaded=preloaded,
             )
         except Exception as exc:  # 单文件坏，不炸全场
             dossier.ingest_notes.append({
-                "file": path.name, "kind": "parse_error",
+                "file": rel, "kind": "parse_error",
                 "detail": f"解析失败（{type(exc).__name__}: {exc}）——"
                           "该文件内容未进入研判",
             })
-            continue
+            return
         if not source.segments:
             detail = "未解析出任何文本"
             if source.meta.get("pdf_pages"):
@@ -180,11 +215,11 @@ def load_case(case_dir: Path) -> Dossier:
                           f"、{source.meta.get('pdf_images', 0)} 张图）——"
                           "文字层为空，图中数字可能缺失")
             dossier.ingest_notes.append(
-                {"file": path.name, "kind": "empty", "detail": detail})
-            continue  # 零段落信源不入卷（已披露），不进提示词噪声
-        elif source.meta.get("pdf_images"):
+                {"file": rel, "kind": "empty", "detail": detail})
+            return  # 零段落信源不入卷（已披露）
+        if source.meta.get("pdf_images"):
             dossier.ingest_notes.append({
-                "file": path.name, "kind": "images",
+                "file": rel, "kind": "images",
                 "detail": f"含 {source.meta['pdf_images']} 张内嵌图片未解析"
                           "——图中的数字与结论可能缺失",
             })
@@ -192,4 +227,81 @@ def load_case(case_dir: Path) -> Dossier:
         if classification in ("public", "internal", "confidential"):
             source.classification = classification
         dossier.add_source(source)
+
+    def _handle_links(rel: str, text: str, n_links: int) -> None:
+        """链接清单：默认只披露；fetch_links=True 才逐条抓取并披露成败。"""
+        if not fetch_links:
+            dossier.ingest_notes.append({
+                "file": rel, "kind": "links",
+                "detail": f"链接清单：含 {n_links} 条网页链接未抓取"
+                          "（网络抓取默认关闭，--fetch-links / "
+                          "VERITAS_FETCH_LINKS=1 开启）",
+            })
+            return
+        from app.ingest.links import LinkFetchError, extract_urls, fetch_link_source
+
+        n_ok = 0
+        failures: list[str] = []
+        for url in extract_urls(text):
+            try:
+                source = fetch_link_source(url)
+                source.id = _next_id()
+                dossier.add_source(source)
+                n_ok += 1
+            except LinkFetchError as exc:
+                failures.append(f"{url}（{exc}）")
+        detail = f"链接清单 {rel}：抓取成功 {n_ok} 条"
+        if failures:
+            sample = "；".join(failures[:3])
+            detail += (f"，失败 {len(failures)} 条：{sample}"
+                       + ("…" if len(failures) > 3 else ""))
+        dossier.ingest_notes.append(
+            {"file": rel, "kind": "links", "detail": detail})
+
+    import tempfile
+
+    def _process_file(path: Path, rel: str, spec: dict | None = None) -> None:
+        """单个文件（顶层或压缩包条目）→ 信源或披露，与来源无关同一待遇。"""
+        spec = spec or {}
+        if path.suffix.lower() in _IMAGE_EXTS:
+            dossier.ingest_notes.append({
+                "file": rel, "kind": "image_file",
+                "detail": "纯图片文件，未做 OCR——图中文字、数字与图表"
+                          "信息未进入研判（如有需要请人工整理为文字材料）",
+            })
+            return
+        fmt = sniff_format(path) if is_archive_file(path) else ""
+        if fmt in ("7z", "rar"):
+            dossier.ingest_notes.append({
+                "file": rel, "kind": "archive",
+                "detail": f"不支持的压缩格式 {fmt}——请解压后提供",
+            })
+            return
+        if fmt in ("zip", "tar"):
+            entries, notes = expand_archive(
+                path, Path(tempfile.mkdtemp(prefix="veritas_unpack_")), label=rel)
+            dossier.ingest_notes.extend(notes)
+            for entry_path, entry_name in entries:
+                entry_spec = declared_name.get(entry_name.rsplit("/", 1)[-1])
+                # 溯源：信源来自哪个包的哪个条目
+                _process_file(entry_path, f"{rel}::{entry_name}", entry_spec)
+            return
+        try:
+            title, text = read_any(path)
+        except Exception as exc:
+            dossier.ingest_notes.append({
+                "file": rel, "kind": "parse_error",
+                "detail": f"解析失败（{type(exc).__name__}: {exc}）——"
+                          "该文件内容未进入研判",
+            })
+            return
+        is_links, n_links = classify_link_list(text)
+        if is_links:
+            _handle_links(rel, text, n_links)
+            return
+        _ingest_one(path, spec, rel, preloaded=(title, text))
+
+    for path, rel in _collect_files(case_dir):
+        _process_file(path, rel,
+                      declared_rel.get(rel) or declared_name.get(path.name))
     return dossier

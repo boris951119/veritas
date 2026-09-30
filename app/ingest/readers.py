@@ -60,14 +60,19 @@ class _TextExtractor(HTMLParser):
             self.chunks.append(data)
 
 
-def read_html(path: Path) -> tuple[str, str]:
-    raw = path.read_text(encoding="utf-8", errors="replace")
+def parse_html(raw: str, fallback_title: str) -> tuple[str, str]:
+    """HTML 原文 → (title, 正文)：网页抓取与本地 .html 共用同一解析。"""
     parser = _TextExtractor()
     parser.feed(raw)
-    title = parser.title or path.stem
+    title = parser.title or fallback_title
     text = "".join(parser.chunks)
     text = "\n".join(line.strip() for line in text.splitlines() if line.strip())
     return title, text
+
+
+def read_html(path: Path) -> tuple[str, str]:
+    raw = path.read_text(encoding="utf-8", errors="replace")
+    return parse_html(raw, path.stem)
 
 
 def read_pdf(path: Path) -> tuple[str, str]:

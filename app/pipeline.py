@@ -96,7 +96,8 @@ def run_case(
     注入桩的测试/离线演示路径固定关闭，保证确定性与零额外调用。"""
     settings = settings or Settings.from_env()
     injected_client = client is not None
-    dossier = dossier or load_case(Path(case_dir))
+    dossier = dossier or load_case(Path(case_dir),
+                                   fetch_links=settings.fetch_links_enabled)
     chain = HashChain()
     chain.append("case_loaded", "pipeline", {
         "question": dossier.question,
@@ -509,9 +510,14 @@ def main() -> int:
     parser.add_argument("--model", default=None, help="覆盖编队模型")
     parser.add_argument("--roster", default=None,
                         help="自定义编队 YAML 路径（{roster:[{name,persona}...]}，至少 2 人）")
+    parser.add_argument("--fetch-links", action="store_true",
+                        help="抓取链接清单文件中的网页为信源（默认关；"
+                             "逐条披露成败，抓回内容过全套机械闸）")
     args = parser.parse_args()
 
     settings = Settings.from_env()
+    if args.fetch_links:
+        settings.fetch_links_enabled = True
     if args.model:
         settings.models = [args.model, *settings.models]
     roster = None

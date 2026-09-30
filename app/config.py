@@ -107,6 +107,11 @@ class Settings:
     # 常态语料（几万字）远低于默认值=零影响；超大输入时保产出。
     material_char_budget: int = 80_000
 
+    # 链接抓取（默认关——离线演示兜底不受影响）：链接清单文件在
+    # 开启时逐条抓取为 web 信源（超时/大小/条数三重上限），逐条披露
+    # 成败。VERITAS_FETCH_LINKS=1 / CLI --fetch-links 开启。
+    fetch_links_enabled: bool = False
+
     # ---- 可选组件（默认关；关闭时不 import 对应模块）----
     embedding_cache_enabled: bool = False
     llm_rate_limit_enabled: bool = False
@@ -153,6 +158,9 @@ class Settings:
         probe_env = (os.environ.get("VERITAS_PROBE") or "").strip().lower()
         if probe_env in ("0", "false", "off", "no"):
             s.model_probe_enabled = False
+        fetch_env = (os.environ.get("VERITAS_FETCH_LINKS") or "").strip().lower()
+        if fetch_env in ("1", "true", "on", "yes"):
+            s.fetch_links_enabled = True
         return s.validate()
 
     @classmethod
