@@ -15,6 +15,7 @@ from app.core.discourse_check import (
 from app.core.evidence import Dossier
 from app.core.numeric_check import audit_conservation, audit_counting, audit_numeric
 from app.core.premise_check import premise_flags
+from app.core.temporal_check import audit_temporal
 
 KIND_LABEL: dict[str, str] = {
     "calc": "计算复算不符",
@@ -26,12 +27,14 @@ KIND_LABEL: dict[str, str] = {
     "arbiter_ref": "仲裁理由引用不存在的编号",
     "hedge": "低可信信源配断言语气",
     "level_tone": "措辞强度超过证据等级",
+    "stale": "引用旧时点资料",
+    "as_of": "结论未锚定时点",
     "premise": "议题前提未被资料覆盖",
 }
 
 
 def audit_all(dossier: Dossier) -> list[dict]:
-    """全部零 LLM 机械闸一次扫描：前提 + 计算/溯源/计数 + 守恒 + 话语。"""
+    """全部零 LLM 机械闸一次扫描：前提 + 计算/溯源/计数 + 守恒 + 话语 + 时序。"""
     return [
         *premise_flags(dossier),
         *audit_numeric(dossier),
@@ -40,6 +43,7 @@ def audit_all(dossier: Dossier) -> list[dict]:
         *audit_discourse(dossier),
         *audit_hedge(dossier),
         *audit_level_tone(dossier),
+        *audit_temporal(dossier),
     ]
 
 

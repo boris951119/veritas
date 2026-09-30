@@ -19,10 +19,11 @@ from typing import Callable
 
 from app.core.evidence import Dossier, SourceType
 
-# 配对闸的合法 kind（闸本体在 numeric_check / discourse_check / citation_check）
+# 配对闸的合法 kind（闸本体在 numeric_check / discourse_check / citation_check /
+# temporal_check）
 KNOWN_GATES = {
     "citation", "calc", "provenance", "counting",
-    "hedge", "level_tone",
+    "hedge", "level_tone", "as_of",
 }
 
 _LOWCRED = {SourceType.NEWS, SourceType.WEB, SourceType.NOTE}
@@ -162,6 +163,17 @@ SKILLS: list[GateSkill] = [
         rule_hard="证据等级为 C/D 时，statement 里禁止出现「必然/肯定/无疑/"
                   "确凿/必将/一定」等断言词，程序逐词扫描，命中即打回；"
                   "把断言改成「可能/或/待证」。",
+    ),
+    GateSkill(
+        name="as_of_discipline",
+        description="时序冲突：旧状态被写成当前事实（快照当永恒）",
+        rule="涉及状态/数值的结论必须锚定时点（「截至2025年报」「2026年3月"
+             "进展」）；资料含多时点版本时，引用最新时点或明示变化。",
+        trigger=lambda d: any(s.meta.get("published_at") or s.meta.get("year")
+                              for s in d.sources),
+        gate="as_of",
+        rule_hard="涉及状态/数值的结论必须含时点词（如「截至2025年报」「2026年"
+                  "3月」）；程序核对所引信源时点与结论时点词，缺锚即打回。",
     ),
     # ---- 注册未启用：等对应语料出现再按 A/B 协议开启 -------------------
     GateSkill(

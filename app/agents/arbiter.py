@@ -165,10 +165,28 @@ class Coordinator:
                   rebuts: dict | None = None) -> Resolution | None:
         """程序证据加权 + LLM 说理 → 裁决；失败返回 None（冲突未消解）。"""
         weight = compute_evidence_weight(pair, dossier)
+
+        def _dates_of(cid: str) -> str:
+            seen: dict[str, str] = {}
+            for ev in dossier.evidences_of(cid):
+                for sid in ev.segment_ids:
+                    src = dossier.source_of_segment(sid)
+                    if src is None or src.id in seen:
+                        continue
+                    date = (str(src.meta.get("published_at") or "")
+                            or str(src.meta.get("year") or ""))
+                    if date:
+                        seen[src.id] = f"{src.id}({date})"
+            return "、".join(seen.values()) or "（信源未声明时点）"
+
         try:
             user = (
                 f"{render_conclusions_block(dossier, [pair.a_id, pair.b_id])}\n\n"
                 f"程序证据强度对比：{weight}\n"
+                f"信源时点对比（证据强度打平时请把新近度纳入考量，"
+                f"但注意新近度不能替代证据质量）：\n"
+                f"- 甲方：{_dates_of(pair.a_id)}\n"
+                f"- 乙方：{_dates_of(pair.b_id)}\n"
                 f"双方质证：\n- 甲方({pair.a_id})：{(rebuts or {}).get('a') or '（未质证）'}\n"
                 f"- 乙方({pair.b_id})：{(rebuts or {}).get('b') or '（未质证）'}\n\n"
                 f"冲突说明：{pair.description or pair.topic or '结论对立'}"

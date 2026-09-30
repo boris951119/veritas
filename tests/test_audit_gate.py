@@ -16,7 +16,7 @@ from app.pipeline import run_case
 from app.server import create_app
 
 PANEL_JSON = """{"conclusions": [
-  {"statement": "客户B回款率为40%，缺口768万元",
+  {"statement": "截至2026年3月，客户B回款率为40%，缺口768万元",
    "evidence": [{"quote": "合同金额1,280万元，累计回款512万元",
                  "segment_id": "SRC1#s1", "relation": "correlation",
                  "level": "B", "note": "计算:512/1280=40%；1280-512=768"}]}

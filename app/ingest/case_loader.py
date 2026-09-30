@@ -15,16 +15,19 @@ manifest.yaml 示例::
       - file: overview.md
         type: report
         credibility: 0.7        # 可选覆盖
+        published_at: 2026-03   # 可选：信源时点（时效闸/仲裁新近度用）
       - file: paper_x.pdf
         type: paper
     # 也可整目录推断：未列出的文件按扩展名/文件名推断类型
 
 类型推断兜底：文件名含 paper/patent/news/web/note/report 关键词，
 否则按扩展名（.pdf→paper、.html→web、.md/.txt→note）。
+未声明 published_at 时回退抽取正文首个「20XX年」落入 meta.year。
 """
 
 from __future__ import annotations
 
+import re
 from pathlib import Path
 
 from app.core.evidence import Dossier, Segment, Source, SourceType
@@ -49,6 +52,8 @@ _EXT_HINTS = {
     ".txt": SourceType.NOTE,
 }
 
+_YEAR_RE = re.compile(r"(19|20)\d{2}\s*年")
+
 
 def infer_source_type(path: Path) -> SourceType:
     name = path.name.lower()
@@ -59,15 +64,23 @@ def infer_source_type(path: Path) -> SourceType:
 
 
 def ingest_file(path: Path, source_id: str, source_type: SourceType,
-                credibility: float | None = None, title: str | None = None) -> Source:
+                credibility: float | None = None, title: str | None = None,
+                published_at: str | None = None) -> Source:
     """单文件 → Source（切段并编号，locator 记段序）。"""
     real_title, text = read_any(path)
+    meta: dict = {"file": str(path)}
+    if published_at:
+        meta["published_at"] = published_at
+    else:
+        m = _YEAR_RE.search(text)
+        if m:
+            meta["year"] = re.sub(r"\D", "", m.group(0))
     source = Source.create(
         title=title or real_title,
         source_type=source_type,
         credibility=credibility,
         id=source_id,
-        meta={"file": str(path)},
+        meta=meta,
     )
     for i, seg_text in enumerate(split_segments(text)):
         source.segments.append(Segment(
@@ -112,6 +125,8 @@ def load_case(case_dir: Path) -> Dossier:
             source_type=source_type,
             credibility=float(cred) if cred is not None else None,
             title=str(spec.get("title") or "") or None,
+            published_at=(str(spec["published_at"])
+                          if spec.get("published_at") else None),
         )
         dossier.add_source(source)
     return dossier

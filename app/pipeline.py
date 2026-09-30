@@ -44,9 +44,11 @@ from app.core.discourse_check import (
     audit_level_tone,
 )
 from app.core.evidence import Dossier
+from app.core.fact_ledger import extract_facts, find_collisions
 from app.core.hashchain import HashChain
 from app.core.numeric_check import audit_conservation, audit_counting, audit_numeric
 from app.core.premise_check import premise_flags
+from app.core.relevance import classify_sources
 from app.core.skills import detect_skills, set_skills_enabled, skills_enabled
 from app.ingest.case_loader import load_case
 from app.llm.budget import BudgetGuard, set_active_budget_guard
@@ -101,6 +103,20 @@ def run_case(
     # 0) 议题前提核对（零 LLM）：问题实体在信源零命中 → 亮灯前置
     premise = premise_flags(dossier)
     chain.append("premise_check", "pipeline", summarize(premise))
+    # 0.2) 事实对撞台账：同(实体,指标)不同值的信源打架（分析师漏看也兜底）
+    collisions = find_collisions(dossier)
+    chain.append("fact_ledger", "pipeline", {
+        "n_facts": len(extract_facts(dossier)),
+        "n_collisions": len(collisions),
+        "cross_source": sum(1 for c in collisions if c.cross_source),
+    })
+    # 0.4) 相关性分层：零相关信源不进分析师视野（报告披露，绝不静默）
+    relevance = classify_sources(dossier)
+    chain.append("relevance_layered", "pipeline", {
+        "high": sum(1 for r in relevance if r["level"] == "high"),
+        "low": sum(1 for r in relevance if r["level"] == "low"),
+        "zero": sum(1 for r in relevance if r["level"] == "zero"),
+    })
     # 0.5) skill 注册表按案卷特征触发（命中才注入分析师提示词，入链留痕；
     #      VERITAS_SKILLS=0 可整体关注入入——A/B 对照组只关「教」不关「验」）
     set_skills_enabled(settings.skills_enabled)
@@ -273,6 +289,8 @@ def render_report_md(dossier: Dossier, chain: HashChain, rejected: list[dict]) -
 
     _render_conflicts_section(lines, dossier)
     _render_dissent_section(lines, dossier)
+    _render_fact_collisions(lines, dossier)
+    _render_unused_sources(lines, dossier)
 
     if rejected:
         lines += ["## 被打回的证据（引文核对未通过）", ""]
@@ -303,6 +321,8 @@ _KIND_LABEL = {
     "arbiter_ref": "仲裁理由引用不存在编号",
     "hedge": "低可信信源配断言语气",
     "level_tone": "措辞强度超过证据等级",
+    "stale": "引用旧时点资料",
+    "as_of": "结论未锚定时点",
     "premise": "议题前提未覆盖",
 }
 
@@ -381,6 +401,37 @@ def _render_dissent_section(lines: list[str], dossier: Dossier) -> None:
         lines.append(f"- 「{con.statement}」（研判方："
                      f"{'、'.join(con.author_names()) or 'N/A'}）——"
                      "经仲裁证据加权后列为少数意见，原始证据保留可查")
+    lines.append("")
+
+
+def _render_fact_collisions(lines: list[str], dossier: Dossier) -> None:
+    """资料内数字冲突（事实层对撞，独立于结论级冲突）：分析师漏看也兜底。"""
+    from app.core.fact_ledger import find_collisions
+
+    collisions = find_collisions(dossier)
+    if not collisions:
+        return
+    lines += ["## 资料内数字冲突（事实层对撞）", ""]
+    for c in collisions:
+        detail = "；".join(
+            f"`{f.source_id}` 说 **{f.entity or '（未指明主体）'}{f.metric}** {f.raw}"
+            + (f"（时点 {f.date}）" if f.date else "")
+            for f in c.facts)
+        tag = "跨信源" if c.cross_source else "同信源前后矛盾"
+        lines.append(f"- [{tag}] {detail}")
+    lines.append("")
+
+
+def _render_unused_sources(lines: list[str], dossier: Dossier) -> None:
+    """未采信信源披露：零相关不进分析师视野，但丢弃必须可见。"""
+    from app.core.relevance import classify_sources
+
+    unused = [s for s in classify_sources(dossier) if s["level"] == "zero"]
+    if not unused:
+        return
+    lines += ["## 未采信信源（与议题零相关，未进入分析师视野）", ""]
+    for s in unused:
+        lines.append(f"- `{s['source_id']}`《{s['title']}》——{s['reason']}")
     lines.append("")
 
 

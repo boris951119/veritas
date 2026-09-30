@@ -40,20 +40,38 @@ def render_system_prompt(persona: str, isolated: bool = True,
 
 
 def render_segments_block(dossier: Dossier, per_segment_chars: int = 900) -> str:
-    """把案卷全部段落渲染为带编号的资料清单（提示词侧截断防爆上下文）。
+    """把案卷段落渲染为带编号的资料清单（提示词侧截断防爆上下文）。
+
+    - 相关性分层（零 LLM）：零相关信源不进清单（报告「未采信信源」
+      章节披露），低相关信源打降权标记——异构资料混入无关内容时的
+      保守处理，丢弃永远可见；
+    - 资料内数字冲突（对撞台账）：同(实体,指标)不同值的信源打架，
+      要求结论正面回应——冲突检测从结论层下沉到事实层。
 
     截断上限须与 ingest.segment 的切段上限（900）对齐——低了会造出
-    「段落尾部对分析师不可见」的盲区，表格型信源尤甚（看不见的原文
-    只能靠模型脑补，诱发编造引文被打回）。"""
+    「段落尾部对分析师不可见」的盲区，表格型信源尤甚。"""
+    from app.core.fact_ledger import facts_block
+    from app.core.relevance import classify_sources
+
+    relevance = {s["source_id"]: s for s in classify_sources(dossier)}
     lines: list[str] = [f"研判议题：{dossier.question}", "", "资料清单："]
     for src in dossier.sources:
-        lines.append(f"◆ 来源 {src.id}《{src.title}》（类型 {src.source_type.value}）")
+        rel = relevance.get(src.id)
+        if rel is not None and rel["level"] == "zero":
+            continue  # 零相关：不进分析师视野（披露在报告）
+        header = f"◆ 来源 {src.id}《{src.title}》（类型 {src.source_type.value}）"
+        if rel is not None and rel["level"] == "low":
+            header += f"（低相关：仅必要时引用——{rel['reason']}）"
+        lines.append(header)
         for seg in src.segments:
             text = seg.text
             if len(text) > per_segment_chars:
                 text = text[:per_segment_chars] + "……"
             lines.append(f"[{seg.id}] ({seg.locator}) {text}")
         lines.append("")
+    collision_block = facts_block(dossier)
+    if collision_block:
+        lines.append(collision_block)
     return "\n".join(lines)
 
 
