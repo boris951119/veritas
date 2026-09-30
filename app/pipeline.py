@@ -47,6 +47,7 @@ from app.core.dup_check import duplicate_map, near_dup_pairs
 from app.core.evidence import Dossier
 from app.core.fact_ledger import extract_facts, find_collisions
 from app.core.hashchain import HashChain
+from app.core.material import pack_material, set_material_budget
 from app.core.numeric_check import audit_conservation, audit_counting, audit_numeric
 from app.core.premise_check import premise_flags
 from app.core.relevance import classify_sources
@@ -133,9 +134,18 @@ def run_case(
     # 0.5) skill 注册表按案卷特征触发（命中才注入分析师提示词，入链留痕；
     #      VERITAS_SKILLS=0 可整体关注入入——A/B 对照组只关「教」不关「验」）
     set_skills_enabled(settings.skills_enabled)
+    set_material_budget(settings.material_char_budget)
     chain.append("skills_triggered", "pipeline",
                  {"skills": [s.name for s in detect_skills(dossier)],
                   "injection": skills_enabled()})
+    # 0.6) 资料预算装箱：BM25 精排 + 跨信源轮转，装不下的全披露
+    pack = pack_material(dossier, settings.material_char_budget)
+    chain.append("material_pack", "pipeline", {
+        "budget": pack["budget"],
+        "n_total": pack["n_total"],
+        "n_selected": len(pack["selected"]),
+        "n_excluded": len(pack["excluded"]),
+    })
 
     guard = BudgetGuard(settings.budget_tokens, settings.budget_throttle_threshold)
     set_active_budget_guard(guard)
@@ -438,9 +448,23 @@ def _render_fact_collisions(lines: list[str], dossier: Dossier) -> None:
 
 
 def _render_excluded_sources(lines: list[str], dossier: Dossier) -> None:
-    """未采信信源披露：零相关/精确重复不进分析师视野，丢弃必须可见。"""
+    """丢弃必须可见：预算裁剪、零相关/重复排除、摄取失败三类披露。"""
     from app.core.dup_check import duplicate_map
+    from app.core.material import pack_material
     from app.core.relevance import classify_sources
+
+    pack = pack_material(dossier)
+    if pack["excluded"]:
+        lines += ["## 因预算未进入研判的段落", ""]
+        by_source: dict[str, list[str]] = {}
+        for e in pack["excluded"]:
+            by_source.setdefault(e["source_id"], []).append(e["seg_id"])
+        for sid in sorted(by_source):
+            segs = sorted(by_source[sid])
+            sample = "、".join(segs[:3]) + (" 等" if len(segs) > 3 else "")
+            lines.append(f"- `{sid}`：{len(segs)} 段（{sample}）"
+                         "——BM25 排序后超出资料预算，未进入分析师视野")
+        lines.append("")
 
     entries: list[tuple[str, str, str]] = []  # (source_id, title, reason)
     for s in classify_sources(dossier):

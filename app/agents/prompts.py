@@ -57,6 +57,7 @@ def render_segments_block(dossier: Dossier,
     低了会造出「段落尾部对分析师不可见」的盲区，表格型信源尤甚。"""
     from app.core.dup_check import duplicate_map
     from app.core.fact_ledger import facts_block
+    from app.core.material import pack_material
     from app.core.relevance import classify_sources
     from app.core.untrusted import wrap_untrusted
     from app.ingest.segment import SEGMENT_MAX
@@ -64,6 +65,8 @@ def render_segments_block(dossier: Dossier,
     if per_segment_chars is None:
         per_segment_chars = SEGMENT_MAX
 
+    pack = pack_material(dossier)
+    selected = pack["selected"]
     relevance = {s["source_id"]: s for s in classify_sources(dossier)}
     duplicates = duplicate_map(dossier)
     lines: list[str] = [f"研判议题：{dossier.question}", "", "资料清单："]
@@ -73,11 +76,14 @@ def render_segments_block(dossier: Dossier,
         rel = relevance.get(src.id)
         if rel is not None and rel["level"] == "zero":
             continue  # 零相关：不进分析师视野（披露在报告）
+        segs = [s for s in src.segments if s.id in selected]
+        if not segs:
+            continue  # 预算裁剪后该信源无入选段（报告披露）
         header = f"◆ 来源 {src.id}《{src.title}》（类型 {src.source_type.value}）"
         if rel is not None and rel["level"] == "low":
             header += f"（低相关：仅必要时引用——{rel['reason']}）"
         body_lines = [header]
-        for seg in src.segments:
+        for seg in segs:
             text = seg.text
             if len(text) > per_segment_chars:
                 text = text[:per_segment_chars] + "……"

@@ -102,6 +102,11 @@ class Settings:
     # 打回修复环。VERITAS_PROBE=0 关闭（A/B 需要固定提示词时用）。
     model_probe_enabled: bool = True
 
+    # 资料预算装箱（字符）：BM25 精排后按预算装入分析师提示词，
+    # 装不下的段落全部披露（报告「因预算未进入研判的段落」）。
+    # 常态语料（几万字）远低于默认值=零影响；超大输入时保产出。
+    material_char_budget: int = 80_000
+
     # ---- 可选组件（默认关；关闭时不 import 对应模块）----
     embedding_cache_enabled: bool = False
     llm_rate_limit_enabled: bool = False
@@ -167,7 +172,7 @@ class Settings:
             s.models = [str(m) for m in data["models"] if str(m).strip()]
         for key in ("budget_tokens", "max_response_tokens",
                     "llm_timeout_seconds", "llm_max_retries",
-                    "llm_wall_clock_seconds"):
+                    "llm_wall_clock_seconds", "material_char_budget"):
             val = data.get(key)
             if isinstance(val, int) and not isinstance(val, bool) and val > 0:
                 setattr(s, key, val)
