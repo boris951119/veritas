@@ -8,8 +8,10 @@ flag 不持久化——每次加载即时重算（derived view）：人工修改
 from __future__ import annotations
 
 from app.core.discourse_check import (
+    audit_causation_support,
     audit_discourse,
     audit_hedge,
+    audit_level_consistency,
     audit_level_tone,
 )
 from app.core.evidence import Dossier
@@ -29,6 +31,8 @@ KIND_LABEL: dict[str, str] = {
     "arbiter_ref": "仲裁理由引用不存在的编号",
     "hedge": "低可信信源配断言语气",
     "level_tone": "措辞强度超过证据等级",
+    "level_consistency": "证据等级与信源类型不符",
+    "causation_support": "因果标注缺乏机制词支撑",
     "stale": "引用旧时点资料",
     "as_of": "结论未锚定时点",
     "injection": "疑似指令注入内容",
@@ -50,6 +54,8 @@ def audit_all(dossier: Dossier) -> list[dict]:
         *audit_discourse(dossier),
         *audit_hedge(dossier),
         *audit_level_tone(dossier),
+        *audit_level_consistency(dossier),
+        *audit_causation_support(dossier),
         *audit_temporal(dossier),
     ]
 

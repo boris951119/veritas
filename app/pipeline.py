@@ -225,6 +225,22 @@ def run_case(
         "n_majority": len(majority_conclusions(dossier)),
         "n_dissent": len(dissent_conclusions(dossier)),
     })
+
+    # 4.5) 主席汇总（仲裁汇总的「汇总」半边）：把已过闸结论组装成面向
+    # 议题的答案。生产路径走 LLM+四道闸（违规点模板顶替），桩/离线
+    # 直接模板——报告永远有综合意见。
+    from app.agents.chair import build_synthesis
+
+    chair_client = None if injected_client else client
+    synthesis = build_synthesis(dossier, chair_client, settings.models[0])
+    chain.append("chair_summary", "pipeline", {
+        "mode": synthesis.get("mode"),
+        "n_points": len(synthesis.get("points") or []),
+        "n_auto_filled": sum(1 for p in synthesis.get("points") or []
+                             if p.get("auto")),
+        "n_open_issues": len(synthesis.get("open_issues") or []),
+        "gate_notes": synthesis.get("gate_notes") or [],
+    })
     chain.append("report_finalized", "pipeline", {"question": dossier.question})
 
     result = PipelineResult(dossier=dossier, chain=chain, rejected=rejected)
@@ -326,6 +342,7 @@ def render_report_md(dossier: Dossier, chain: HashChain, rejected: list[dict]) -
         _render_evidence_table(lines, dossier, con)
         lines.append("")
 
+    _render_synthesis(lines, dossier)
     _render_triage_ledger(lines, dossier)
     _render_conflicts_section(lines, dossier)
     _render_dissent_section(lines, dossier)
@@ -404,6 +421,35 @@ def _render_evidence_table(lines: list[str], dossier: Dossier, con) -> None:
         quote = ev.quote.replace("|", "\\|").replace("\n", " ")
         note = ev.note.replace("|", "\\|")
         lines.append(f"| {quote} | {where} | {ev.level.value} | {ev.relation.value} | {note} |")
+
+
+def _render_synthesis(lines: list[str], dossier: Dossier) -> None:
+    """综合研判意见（主席层）：快照缺失时 live 回退零 LLM 模板。"""
+    from app.agents.chair import render_chair_template
+
+    synthesis = dossier.synthesis or render_chair_template(dossier)
+    lines += ["## 综合研判意见", ""]
+    mode = synthesis.get("mode")
+    if mode == "template":
+        lines.append("> （零 LLM 模板汇总——按置信度逐条渲染，确定性）")
+    lines.append(f"**{synthesis['headline']}**")
+    lines.append("")
+    for p in synthesis.get("points") or []:
+        auto = "（程序自动补全）" if (mode == "llm" and p.get("auto")) else ""
+        lines.append(f"- {p['gloss']}`{p['con_id']}` · 置信度 "
+                     f"{p.get('confidence', 0):.2f}{auto}")
+    issues = synthesis.get("open_issues") or []
+    if issues:
+        lines += ["", "**分歧与缺口（明示，不抹平）**："]
+        kind_cn = {"conflict": "冲突", "dissent": "少数意见",
+                   "gap": "资料缺口", "note": "说明"}
+        for o in issues:
+            lines.append(f"- ⚠ [{kind_cn.get(o.get('kind'), o.get('kind'))}]"
+                         f" {o.get('text')}（{o.get('ref')}）")
+    notes = synthesis.get("gate_notes") or []
+    if notes:
+        lines += ["", f"<!-- 主席层闸记事：{'；'.join(notes)} -->"]
+    lines.append("")
 
 
 def _render_triage_ledger(lines: list[str], dossier: Dossier) -> None:

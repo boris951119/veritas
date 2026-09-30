@@ -31,7 +31,11 @@ _AGREEMENT_FLOOR = 0.5        # 单人结论的一致性因子下限
 
 
 def evidence_score(ev: EvidenceNode, dossier: Dossier) -> float:
-    """单条证据的强度分（0-1）：等级 × 信源可信度 × 因果加成 × 人工权重。"""
+    """单条证据的强度分（0-1）：等级 × 信源可信度 × 因果加成 × 人工权重。
+
+    因果加成须有机制词支撑（引文/说明含「因为/导致/由此…」）——causation
+    有加成即有虚标动机，无机制表述按相关计分（机械侧与 discourse_check
+    的 causation_support 闸同口径，闸亮黄牌、此处压分）。"""
     creds = []
     for sid in ev.segment_ids:
         src = dossier.source_of_segment(sid)
@@ -40,7 +44,10 @@ def evidence_score(ev: EvidenceNode, dossier: Dossier) -> float:
     base = (sum(creds) / len(creds)) if creds else 0.3
     score = LEVEL_WEIGHT.get(ev.level, 0.5) * base * ev.weight
     if ev.relation == RelationKind.CAUSATION:
-        score *= _CAUSATION_BONUS
+        from app.core.discourse_check import has_mechanism_word
+
+        if has_mechanism_word(ev.quote, ev.note):
+            score *= _CAUSATION_BONUS
     return min(1.0, max(0.0, score))
 
 

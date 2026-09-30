@@ -21,11 +21,12 @@ def _dossier(cred: float) -> tuple[Dossier, str]:
     return d, "SRC1#s1"
 
 
-def _add(d, sid, *, level=EvidenceLevel.A, relation=RelationKind.CORRELATION, weight=1.0, cid="CON1"):
+def _add(d, sid, *, level=EvidenceLevel.A, relation=RelationKind.CORRELATION, weight=1.0, cid="CON1", note=""):
     d.conclusions.append(Conclusion.create("S", author="a", id=cid)) \
         if not d.conclusion(cid) else None
     d.add_evidence(EvidenceNode.create(cid, "原文", [sid], level=level,
-                                       relation=relation, weight=weight))
+                                       relation=relation, weight=weight,
+                                       note=note))
 
 
 def test_no_evidence_zero():
@@ -44,11 +45,20 @@ def test_higher_credibility_higher_score():
 
 
 def test_causation_beats_correlation():
+    """因果加成须有机制词支撑：有机制词 > 相关；裸标 causation（无机制
+    表述）不加成——防虚标抬分（与 causation_support 闸同口径）。"""
     d, sid = _dossier(0.8)
     _add(d, sid, relation=RelationKind.CAUSATION)
     d2, sid2 = _dossier(0.8)
     _add(d2, sid2, relation=RelationKind.CORRELATION)
-    assert d.evidences[0] and evidence_score(d.evidences[0], d) > \
+    # 裸标：引文/说明无机制词 → 与相关同分
+    assert evidence_score(d.evidences[0], d) == \
+        evidence_score(d2.evidences[0], d2)
+    # 有机制词支撑：加成生效
+    d3, sid3 = _dossier(0.8)
+    _add(d3, sid3, relation=RelationKind.CAUSATION,
+         note="接口缺失导致进度滞后")
+    assert evidence_score(d3.evidences[0], d3) > \
         evidence_score(d2.evidences[0], d2)
 
 

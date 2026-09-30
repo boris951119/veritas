@@ -147,3 +147,63 @@ def audit_level_tone(dossier: Dossier) -> list[dict]:
                       "——措辞强度应与证据等级匹配",
         })
     return flags
+
+
+# ---------------------------------------------------------------- 标注诚实性闸
+
+# 因果机制词：causation 标注须在引文/说明中有机制性表述支撑
+_MECHANISM_RE = re.compile(
+    r"因为|由于|导致|致使|使得|由此|从而|进而|原因|归因|反映到"
+    r"|caused? by|therefore|hence|so that")
+# 一手/正式信源（有资格支撑 A/B 级证据）
+_FORMAL_SOURCE_TYPES = {"paper", "patent", "report"}
+
+
+def has_mechanism_word(*texts: str) -> bool:
+    return any(_MECHANISM_RE.search(t or "") for t in texts)
+
+
+def audit_level_consistency(dossier: Dossier) -> list[dict]:
+    """等级×信源类型一致性闸：A/B 级证据却全部来自低可信信源
+    （web/note，先验 ≤0.4）→ 黄牌——堵「等级虚标抬置信度」的路。"""
+    flags: list[dict] = []
+    for ev in dossier.evidences:
+        if ev.level.value not in ("A", "B"):
+            continue
+        sources = [dossier.source_of_segment(sid)
+                   for sid in ev.segment_ids]
+        sources = [s for s in sources if s is not None]
+        if not sources:
+            continue
+        if all(s.source_type.value not in _FORMAL_SOURCE_TYPES
+               and s.credibility <= 0.4 for s in sources):
+            types = "、".join(sorted({s.source_type.value for s in sources}))
+            flags.append({
+                "kind": "level_consistency", "severity": "medium",
+                "conclusion_id": ev.conclusion_id,
+                "value": f"{ev.id}:{ev.level.value}",
+                "detail": f"证据标为 {ev.level.value} 级，但所引信源全部为"
+                          f"低可信类型（{types}）——等级虚标嫌疑，"
+                          "置信度按信源侧压制",
+            })
+    return flags
+
+
+def audit_causation_support(dossier: Dossier) -> list[dict]:
+    """causation 机制词闸：因果标注但引文与说明均无机制性表述 → 黄牌
+    （因果有置信度加成，模型有虚标动机；计分侧同步按相关降权——见
+    confidence.evidence_strength_of）。"""
+    flags: list[dict] = []
+    for ev in dossier.evidences:
+        if ev.relation.value != "causation":
+            continue
+        if not has_mechanism_word(ev.quote, ev.note):
+            flags.append({
+                "kind": "causation_support", "severity": "medium",
+                "conclusion_id": ev.conclusion_id,
+                "value": ev.id,
+                "detail": f"证据 {ev.id} 标注 causation，但引文与说明中无"
+                          "机制性表述（因为/导致/由此…）——因果加成取消，"
+                          "按相关计分",
+            })
+    return flags

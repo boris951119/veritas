@@ -93,6 +93,8 @@ h2{font-size:15px;margin:26px 0 12px;color:var(--dim);font-weight:600;letter-spa
   <span class="sub" id="panelInfo"></span>
 </div>
 <div class="wrap">
+  <h2>综合研判意见 <span class="sub">主席汇总层：正面回答议题 · 每点挂结论编号与置信度 · 分歧明示不抹平</span></h2>
+  <div id="synthesis" class="sec"></div>
   <h2>推理轨迹图 <span class="sub">结论 → 证据 → 段落 → 信源；含冲突 / 质证 / 裁决节点</span></h2>
   <div id="graph" class="sec"></div>
   <h2>证据链视图 <span class="sub">结论 → 证据（逐字引文）→ 来源原文　·　点击引文卡下钻原文；滑杆改权重、按钮删证据，改动即重算并入链</span></h2>
@@ -144,13 +146,24 @@ async function load(){
   G=await api("/api/reasoning_graph?case="+encodeURIComponent(CUR)).catch(()=>({nodes:[],edges:[]}));
   render();
 }
+function renderSynth(s){
+  if(!s||!s.headline){$("#synthesis").innerHTML=`<div class="empty">（本产物无综合意见——较早期运行）</div>`;return}
+  const KIND_CN={conflict:"冲突",dissent:"少数意见",gap:"资料缺口",note:"说明"};
+  const pts=(s.points||[]).map(p=>`<div class="kv" style="margin:4px 0">${esc(p.gloss)}
+    <code>${esc(p.con_id)}</code> · 置信度 <b>${p.confidence??"-"}</b>
+    ${(s.mode==="llm"&&p.auto)?`<span class="tag" style="color:var(--warn);border-color:var(--warn)">程序自动补全</span>`:""}</div>`).join("");
+  const issues=(s.open_issues||[]).map(o=>`<div class="dissent-note">⚠ [${KIND_CN[o.kind]||o.kind}] ${esc(o.text)}（${esc(o.ref)}）</div>`).join("");
+  $("#synthesis").innerHTML=`<div style="font-size:15px;font-weight:600;margin-bottom:8px">${esc(s.headline)}</div>
+    ${pts}${issues?`<div style="margin-top:8px">${issues}</div>`:""}
+    <div class="sub" style="margin-top:6px">汇总模式：${s.mode==="template"?"零 LLM 模板（确定性渲染）":"LLM 主席（已过四道机械闸：引用存在/完整性/数字溯源/长度）"}</div>`;
+}
 function render(){
   const d=D.dossier;
   $("#panelInfo").textContent=`编队 ${d.panel.join("、")||"N/A"} · ${d.sources.length} 信源 · ${d.evidences.length} 证据 · ${d.conclusions.length} 结论`;
   const pill=$("#chainPill");
   pill.textContent=D.chain.ok?`防篡改链 ✅ ${D.chain.n_records} 条`:`防篡改链 ❌ #${D.chain.bad_index}`;
   pill.className="pill "+(D.chain.ok?"ok":"bad");
-  renderGraph(G);renderChains(d);renderConflicts(d);renderDissents(d);renderRejected(d);renderFlags(D.audit);renderSources(d);
+  renderSynth(d.synthesis);renderGraph(G);renderChains(d);renderConflicts(d);renderDissents(d);renderRejected(d);renderFlags(D.audit);renderSources(d);
 }
 function renderGraph(g){
   if(!g||!(g.nodes||[]).length){$("#graph").innerHTML=`<div class="empty">无图数据</div>`;return}
