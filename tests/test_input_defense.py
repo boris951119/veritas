@@ -269,3 +269,127 @@ def test_arbiter_prompt_fences_rebuts():
         d, ConflictPair(a_id="CON-0", b_id="CON-1"),
         rebuts={"a": "乙方断章", "b": "甲方样本不足"})
     assert captured["user"].count("分析师产出开始") >= 3  # 结论块 + 两条质证
+
+
+# -- 权限视图补全：图谱/冲突记录/dissent 簿记/入卷数字闸 ------------------------------
+
+
+def test_reasoning_graph_respects_clearance(tmp_path):
+    """A1：图谱端点先 redact 再建图——低权限图中无涉密结论文本。"""
+    import json as _json
+
+    from fastapi.testclient import TestClient
+
+    from app.core.conflicts import ConflictPair, Resolution, apply_resolution
+    from app.core.evidence import Conclusion
+    from app.pipeline import run_case
+    from app.server import create_app
+
+    case_dir = tmp_path / "cases" / "demo"
+    case_dir.mkdir(parents=True)
+    (case_dir / "manifest.yaml").write_text(
+        "question: 客户B的回款情况如何？\n"
+        "sources:\n"
+        "  - file: pub.md\n    type: report\n    classification: public\n"
+        "  - file: sec.md\n    type: report\n    classification: confidential\n",
+        encoding="utf-8")
+    (case_dir / "pub.md").write_text("客户B回款512万元。", encoding="utf-8")
+    (case_dir / "sec.md").write_text("客户B涉外款项800万元。", encoding="utf-8")
+
+    PANEL = _json.dumps({"conclusions": [
+        {"statement": "客户B回款512万元",
+         "evidence": [{"quote": "客户B回款512万元。", "segment_id": "SRC1#s1",
+                       "relation": "correlation", "level": "B"}]},
+        {"statement": "客户B涉外款项800万元",
+         "evidence": [{"quote": "客户B涉外款项800万元。", "segment_id": "SRC2#s1",
+                       "relation": "correlation", "level": "B"}]},
+    ]}, ensure_ascii=False)
+
+    class Fake:
+        def chat(self, model, messages, json_mode=False):
+            return SimpleNamespace(content=PANEL)
+
+    run_case(case_dir, out_dir=case_dir / "out", client=Fake(), probe=False)
+    # 注入一条涉密侧冲突，验证冲突记录脱敏
+    d = Dossier.from_json(case_dir / "out" / "report.json")
+    cons = [c for c in d.conclusions if c.status == "majority"]
+    pair = ConflictPair(a_id=cons[0].id, b_id=cons[1].id, topic="款项规模")
+    pair.resolution = Resolution(winner_id=cons[1].id,
+                                 rationale="涉密账目显示款项800万元")
+    apply_resolution(pair, d)
+    d.conflicts.append(pair.to_dict())
+    d.to_json(case_dir / "out" / "report.json")
+
+    api = TestClient(create_app(cases_root=case_dir.parent))
+    low = api.get("/api/reasoning_graph",
+                  params={"case": "demo", "clearance": "public"}).json()
+    labels = " ".join(n["label"] for n in low["nodes"])
+    assert "涉外款项800万元" not in labels            # 涉密结论不在图中泄露
+    assert "已隐藏" in labels                          # 红章占位节点存在
+    low_d = api.get("/api/dossier",
+                    params={"case": "demo", "clearance": "public"}).json()
+    for c in low_d["dossier"]["conflicts"]:
+        assert "涉密" in c["topic"]                    # 冲突主题脱敏
+        assert c["resolution"]["rationale"].startswith("（")  # 仲裁理由红章
+    hi = api.get("/api/dossier",
+                 params={"case": "demo", "clearance": "confidential"}).json()
+    assert "800万元" in _json.dumps(hi["dossier"]["conflicts"], ensure_ascii=False)
+
+
+def test_dissent_bookkeeping_sanitized_for_hidden_loser():
+    """A2：胜方（可见）结论上的 dissent 记录指向隐藏败方 → 抄录文本红章。"""
+    from app.core.conflicts import ConflictPair, Resolution, apply_resolution
+    from app.core.evidence import Conclusion
+    from app.core.view_filter import redact_dossier
+
+    d = Dossier(question="Q")
+    pub = Source.create("公开", SourceType.REPORT, id="SRC1",
+                        classification="public")
+    pub.segments.append(Segment(id="SRC1#s1", source_id="SRC1",
+                                text="公开内容。"))
+    sec = Source.create("涉密", SourceType.REPORT, id="SRC2",
+                        classification="confidential")
+    sec.segments.append(Segment(id="SRC2#s1", source_id="SRC2",
+                                text="涉密内容。"))
+    d.add_source(pub)
+    d.add_source(sec)
+    winner = Conclusion.create("公开结论", author="a", id="CON-W")
+    loser = Conclusion.create("涉密败方结论原文", author="b", id="CON-L")
+    d.conclusions += [winner, loser]
+    d.add_evidence(EvidenceNode.create("CON-W", "公开内容", ["SRC1#s1"]))
+    d.add_evidence(EvidenceNode.create("CON-L", "涉密内容", ["SRC2#s1"]))
+    pair = ConflictPair(a_id="CON-L", b_id="CON-W", topic="某主题")
+    pair.resolution = Resolution(winner_id="CON-W",
+                                 rationale="败方证据涉密不足")
+    apply_resolution(pair, d)
+    d.conflicts.append(pair.to_dict())
+
+    view, stats = redact_dossier(d, "public")
+    assert stats["hidden_conclusions"] == 1
+    assert stats["hidden_conflicts"] == 1
+    w = view.conclusion("CON-W")
+    assert w.statement == "公开结论"                   # 胜方可见
+    assert w.dissent[0]["statement"].startswith("（")  # 败方抄录已红章
+    assert "涉密败方结论原文" not in str(view.to_dict())
+
+
+def test_audit_ingested_flags_external_numbers():
+    """C4：外部结论过数字闸（与主管线同口径）。"""
+    from app.agents.ingress import audit_ingested, ingest_external_judgment
+
+    d = Dossier(question="客户B的回款情况如何？")
+    src = Source.create("台账", SourceType.REPORT, id="SRC1")
+    src.segments.append(Segment(
+        id="SRC1#s1", source_id="SRC1",
+        text="客户B合同金额1,280万元，累计回款512万元。"))
+    d.add_source(src)
+    ids = ingest_external_judgment(d, {
+        "agent": "ext",
+        "conclusions": [{
+            "statement": "客户B回款率为45%",
+            "evidence": [{"quote": "合同金额1,280万元，累计回款512万元",
+                          "segment_id": "SRC1#s1", "level": "B",
+                          "note": "计算:512/1280=45%"}]},
+        ]})
+    flags = audit_ingested(d, ids)
+    assert any(f["kind"] == "calc" for f in flags)     # 错算被外部闸抓到

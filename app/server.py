@@ -183,10 +183,16 @@ def create_app(cases_root: Path | None = None) -> FastAPI:
         return _dossier_payload(_find_out_dir(cases_root, case), clearance)
 
     @app.get("/api/reasoning_graph")
-    def get_reasoning_graph(case: str) -> dict:
+    def get_reasoning_graph(case: str,
+                            clearance: str = "confidential") -> dict:
+        """推理轨迹图（与 dossier 同一权限口径：先 redact 再建图——
+        涉密结论在图中显示为红章占位节点，绝不泄露原文）。"""
+        from app.core.view_filter import redact_dossier
+
         out_dir = _find_out_dir(cases_root, case)
         dossier, _ = _load_pair(out_dir)
-        return build_reasoning_graph(dossier)
+        view, _stats = redact_dossier(dossier, clearance)
+        return build_reasoning_graph(view)
 
     @app.post("/api/conclusion/edit")
     def edit_conclusion_api(req: ConclusionEditReq) -> dict:

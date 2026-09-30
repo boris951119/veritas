@@ -191,9 +191,10 @@ def _make_server():
 
         sources: [{"title","text","type"?,"credibility"?}]
         conclusions: [{"statement","evidence":[{"quote","segment_id",...}]}]
-        返回入卷后的摘要（含 rejected）。
+        返回入卷后的摘要（含 rejected 与 audit_flags——数字/计数机械
+        核对结果，外部结论与内部结论同权受审）。
         """
-        from app.agents.ingress import ingest_external_judgment
+        from app.agents.ingress import audit_ingested, ingest_external_judgment
         from app.core.confidence import recompute_all
 
         err = _validate_question(question)
@@ -204,9 +205,11 @@ def _make_server():
         ids = ingest_external_judgment(dossier, {
             "agent": agent, "conclusions": conclusions,
         })
+        audit_flags = audit_ingested(dossier, ids)
         recompute_all(dossier, n_panel=1)
         summary = _judgment_summary(dossier, 1)
         summary["ingested_ids"] = ids
+        summary["audit_flags"] = audit_flags
         return summary
 
     @mcp.tool()

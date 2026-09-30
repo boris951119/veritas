@@ -53,7 +53,7 @@ budget）· `app/server.py` · `app/mcp_server.py` · `app/pipeline.py`。
 ③确定性优先（同输入同输出；skill/预算/权限全部可复算）；④人的介入
 点预埋且入链（人是最高权限，但动作可审计）；⑤每步降级不炸 run。
 
-测试基线：**244 passed**（零 key、零网络；`pytest tests -q`）。
+测试基线：**247 passed**（零 key、零网络；`pytest tests -q`）。
 
 ---
 
@@ -508,7 +508,28 @@ RunConfig、repair 收 ctx、ingest_file 收 SourceSpec…）/T1 赛后结构
 **开放问题**：重构未执行——T0 等用户放行（半天，零行为变化）；
 T1 需先写 `scripts/diff_artifacts.sh` 快照对比工具。
 
-## 13. 建议攻击面清单（给审查 agent 的入手点）
+## 13. 权限与入卷一致性修复（A1/A2/C4，本批）
+
+**问题怎么产生**：任务规划盘点时确认的三个已知洞进入修复批——
+A1 `/api/reasoning_graph` 未过 redact（低权限可从图节点 label 读到
+涉密结论文本，权限演示当场翻车级）；A2 冲突记录/仲裁理由/质证文本
+与**胜方结论上的 dissent 簿记**（抄录败方原文）在低权限视图未脱敏；
+C4 MCP `ingest_external` 只过引文闸，外部结论的数字主张不受审。
+
+**改动**：①图谱端点先 `redact_dossier` 再建图（涉密结论在图中为
+红章占位节点）；②`redact_dossier` 扩展——涉密侧参与的冲突，其
+topic/description/rationale/rebuts 全红章（stats 新增
+hidden_conflicts）；可见结论的 dissent 记录指向隐藏败方时
+statement/why 红章；③`ingress.audit_ingested(dossier, ids)`——
+外部结论过 numeric+counting 闸（与主管线黄牌语义一致：随 MCP 摘要
+返回 audit_flags，不入卷剔除）。
+
+**验证**：3 个新测试（低权限图谱无泄露+红章占位；冲突/dissent 脱敏
+正反例；外部错算 512/1280=45% 被抓）；247 全绿。
+
+**仍开放**：A3 缓存投毒（.fetched 完整性校验）未做——按计划第三批。
+
+## 14. 建议攻击面清单（给审查 agent 的入手点）
 
 按「出事代价」排序：
 
@@ -547,7 +568,7 @@ T1 需先写 `scripts/diff_artifacts.sh` 快照对比工具。
    计数临界/指代词+实体齐全/功能词表外的问句尾巴）；_FUNCTION_TOKENS
    遗漏词造成的误判 clear；clarify 建议与 skill 触发是否同档一致。
 
-## 14. 环境事实（审查时需要知道的）
+## 15. 环境事实（审查时需要知道的）
 
 - 网关：阿里云百炼 token-plan 专属端点
   `token-plan.cn-beijing.maas.aliyuncs.com/compatible-mode/v1`，

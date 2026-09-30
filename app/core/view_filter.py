@@ -68,8 +68,38 @@ def redact_dossier(dossier: Dossier, clearance: str | None) -> tuple[Dossier, di
         con.confidence_parts = {}
         hidden_conclusions += 1
 
+    # 冲突记录与 dissent 簿记脱敏：涉密侧参与的冲突，其主题/说明/
+    # 仲裁理由/质证文本一律红章（理由与质证可能复述涉密数字）；
+    # 胜方结论上挂的 dissent 记录若指向隐藏结论，statement/why 同样
+    # 红章（此前是泄露漏洞——记录挂在可见结论上但抄录了败方原文）。
+    hidden_ids = {c.id for c in view.conclusions
+                  if c.statement == REDACTED_CONCLUSION_TEXT}
+    hidden_conflicts = 0
+    for raw in view.conflicts or []:
+        if not isinstance(raw, dict):
+            continue
+        res = raw.get("resolution") or {}
+        involves_hidden = raw.get("a_id") in hidden_ids \
+            or raw.get("b_id") in hidden_ids
+        if involves_hidden:
+            hidden_conflicts += 1
+            raw["topic"] = "（涉密冲突）"
+            raw["description"] = "（冲突详情涉密，您无权限查阅）"
+            if res:
+                res["rationale"] = "（仲裁理由涉密，您无权限查阅）"
+                res["rebuts"] = {k: "（质证文本涉密，您无权限查阅）"
+                                 for k in (res.get("rebuts") or {})}
+        elif res:
+            res["rebuts"] = {k: v for k, v in (res.get("rebuts") or {}).items()}
+    for con in view.conclusions:
+        for rec in con.dissent or []:
+            if rec.get("conclusion_id") in hidden_ids:
+                rec["statement"] = "（少数意见涉密，您无权限查阅）"
+                rec["why"] = "（仲裁记录涉密，您无权限查阅）"
+
     stats = {"hidden_sources": hidden_sources,
              "hidden_evidences": hidden_evidences,
              "hidden_conclusions": hidden_conclusions,
+             "hidden_conflicts": hidden_conflicts,
              "clearance": normalize_clearance(clearance)}
     return view, stats

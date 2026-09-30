@@ -72,3 +72,16 @@ def ingest_external_judgment(dossier: Dossier, payload: dict) -> list[str]:
         })
         dossier.remove_evidence(f.evidence_id)
     return new_ids
+
+
+def audit_ingested(dossier: Dossier, conclusion_ids: list[str]) -> list[dict]:
+    """外部入卷结论的数字/计数机械闸（与主管线同口径）。
+
+    引文核对已在入卷时打回；本函数补齐 numeric 侧（计算复算/溯源/
+    计数）——外部智能体的数字主张与内部结论同权受审，MCP 摘要随
+    返回，不入卷剔除（与主管线的黄牌语义一致）。"""
+    from app.core.numeric_check import audit_counting, audit_numeric
+
+    wanted = set(conclusion_ids)
+    return [f for f in audit_numeric(dossier) + audit_counting(dossier)
+            if f.get("conclusion_id") in wanted]
