@@ -213,8 +213,10 @@ def build_synthesis(dossier: Dossier, client, model: str) -> dict:
                                 dossier.conflicts[:5]))
     dissents = [c for c in dossier.conclusions if c.status == "dissent"]
     if dissents:
+        from app.core.untrusted import wrap_agent_output
+
         user.append("\n少数意见：" + "；".join(
-            f"[{c.id}] {c.statement}" for c in dissents[:5]))
+            wrap_agent_output(f"[{c.id}] {c.statement}") for c in dissents[:5]))
     gaps = template["open_issues"]
     if gaps:
         user.append("\n已知资料缺口：" + "；".join(

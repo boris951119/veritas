@@ -156,7 +156,12 @@ ARBITER_SYSTEM = """你是仲裁者。两个结论对同一问题给出对立判
 
 
 def render_conclusions_block(dossier: Dossier, conclusion_ids: list[str]) -> str:
-    """渲染结论清单（归并与冲突检测共用）：编号 | 署名 | 陈述 | 证据摘要。"""
+    """渲染结论清单（归并与冲突检测共用）：编号 | 署名 | 陈述 | 证据摘要。
+
+    整块包二阶围栏——结论 statement 是模型产出，回流进归并/冲突/仲裁/
+    主席提示词时同样是待处理数据，不是指令（防二阶注入）。"""
+    from app.core.untrusted import wrap_agent_output
+
     lines = ["结论清单："]
     for cid in conclusion_ids:
         con = dossier.conclusion(cid)
@@ -170,5 +175,5 @@ def render_conclusions_block(dossier: Dossier, conclusion_ids: list[str]) -> str
         ev_brief = "；".join(ev_briefs) or "（无证据）"
         authors = "、".join(con.author_names()) or "未知"
         lines.append(f"[{cid}]（{authors}）{con.statement}\n    证据：{ev_brief}")
-    return "\n".join(lines)
+    return wrap_agent_output("\n".join(lines))
 

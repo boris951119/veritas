@@ -180,6 +180,8 @@ class Coordinator:
             return "、".join(seen.values()) or "（信源未声明时点）"
 
         try:
+            from app.core.untrusted import wrap_agent_output
+
             user = (
                 f"{render_conclusions_block(dossier, [pair.a_id, pair.b_id])}\n\n"
                 f"程序证据强度对比：{weight}\n"
@@ -187,8 +189,10 @@ class Coordinator:
                 f"但注意新近度不能替代证据质量）：\n"
                 f"- 甲方：{_dates_of(pair.a_id)}\n"
                 f"- 乙方：{_dates_of(pair.b_id)}\n"
-                f"双方质证：\n- 甲方({pair.a_id})：{(rebuts or {}).get('a') or '（未质证）'}\n"
-                f"- 乙方({pair.b_id})：{(rebuts or {}).get('b') or '（未质证）'}\n\n"
+                f"双方质证：\n- 甲方({pair.a_id})："
+                f"{wrap_agent_output((rebuts or {}).get('a') or '（未质证）')}\n"
+                f"- 乙方({pair.b_id})："
+                f"{wrap_agent_output((rebuts or {}).get('b') or '（未质证）')}\n\n"
                 f"冲突说明：{pair.description or pair.topic or '结论对立'}"
             )
             data = extract_json(self.client.chat(self.model, [
