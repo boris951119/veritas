@@ -275,15 +275,42 @@ def load_case(case_dir: Path, fetch_links: bool = False) -> Dossier:
             dossier.triage.append({"file": rel, "route": "links_disclosed",
                                    "reason": f"{n_links} 条链接未抓取（默认关）"})
             return
+        import hashlib as _hashlib
+        import hmac as _hmac
         import json as _json
 
         from app.ingest.links import LinkFetchError, extract_urls, fetch_link_source
+
+        def _cache_sha256(url: str, body: str) -> str:
+            return _hashlib.sha256(f"{url}\n{body}".encode("utf-8")).hexdigest()
 
         cache_file = case_dir / ".fetched" / "index.json"
         cache: dict[str, dict] = {}
         if cache_file.is_file():
             try:
-                cache = dict(_json.loads(cache_file.read_text(encoding="utf-8")))
+                loaded = _json.loads(cache_file.read_text(encoding="utf-8"))
+                # 投毒防御：每条缓存带内容哈希（url+body），不匹配即弃用
+                # 重抓——.fetched 是可写文件，无校验时篡改 JSON 即可向
+                # 研判注入任意"已抓取"内容（dev-journal 攻击面 §7）
+                for url, rec in (loaded or {}).items():
+                    if not isinstance(rec, dict):
+                        continue
+                    digest = rec.get("_cache_sha256") or ""
+                    # 哈希覆盖「重建信源所用的全部字段」的规范化序列化——
+                    # 攻击者改任何字段（segments 文本/title/credibility）
+                    # 都会使校验失败（只改 _cache_body 不改 segments 无效）
+                    canonical = _json.dumps(
+                        {k: v for k, v in rec.items()
+                         if k != "_cache_sha256"},
+                        ensure_ascii=False, sort_keys=True)
+                    if not digest or not _hmac.compare_digest(
+                            digest, _cache_sha256(url, canonical)):
+                        dossier.ingest_notes.append({
+                            "file": rel, "kind": "links",
+                            "detail": f"缓存条目校验失败，已弃用重抓：{url}",
+                        })
+                        continue
+                    cache[url] = rec
             except (ValueError, OSError):
                 cache = {}
         n_ok = n_cached = 0
@@ -304,7 +331,14 @@ def load_case(case_dir: Path, fetch_links: bool = False) -> Dossier:
                 source.id = _next_id()
                 dossier.add_source(source)
                 n_ok += 1
-                cache[url] = source.to_dict()
+                # 缓存条目 = 信源 dict + 完整性字段（正文全文+_cache_body,
+                # 哈希覆盖 url——防换 url 张冠李戴）
+                rec = source.to_dict()
+                canonical = _json.dumps(
+                    {k: v for k, v in rec.items() if k != "_cache_sha256"},
+                    ensure_ascii=False, sort_keys=True)
+                rec["_cache_sha256"] = _cache_sha256(url, canonical)
+                cache[url] = rec
             except LinkFetchError as exc:
                 failures.append(f"{url}（{exc}）")
         if cache:
