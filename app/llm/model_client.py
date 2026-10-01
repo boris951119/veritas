@@ -15,13 +15,15 @@ completion_fn 可注入桩函数（依赖倒置）。
 
 from __future__ import annotations
 
+import json
 import os
+import re
 import time
 from dataclasses import dataclass
 from typing import Any, Callable
 
 from app.config import MODEL_ENV_KEYS, Settings
-from app.llm.budget import BudgetGuard
+from app.llm.budget import BudgetExceededError, BudgetGuard, TaskCancelledError
 
 # 注入点：调用签名与 litellm.completion / litellm.embedding 一致
 CompletionFn = Callable[..., Any]
@@ -349,18 +351,75 @@ class ModelClient:
                 self._sleep(self.settings.retry_backoff_base * (2 ** attempt))
         raise AssertionError("unreachable")  # pragma: no cover
 
+    @staticmethod
+    def _json_shape_ok(text: str) -> bool:
+        """json_mode 腿校验：容忍 ```json 围栏，整体必须是可解析 JSON。
+        畸形 JSON（被网关截断/不守 response_format）视为腿故障换模型。"""
+        s = (text or "").strip()
+        s = re.sub(r"^```(?:json)?\s*|\s*```$", "", s)
+        start, end = s.find("{"), s.rfind("}")
+        if start < 0 or end <= start:
+            return False
+        try:
+            json.loads(s[start:end + 1])
+            return True
+        except json.JSONDecodeError:
+            return False
+
     def chat(
         self,
         model: str,
         messages: list[dict[str, str]],
         json_mode: bool = False,
     ) -> LLMResponse:
-        """发起一次对话补全。
+        """发起一次对话补全（带模型链回退）。
+
+        腿序 = 主模型 + Settings.models 其余登记模型（去重保序）。
+        主模型失败（超时/网关错误/JSON 畸形/空响应）依次换腿；
+        **不换腿**的异常：BudgetExceededError / TaskCancelledError
+        （预算尽与任务中止是全局终态）、MissingApiKeyError（换腿
+        同样无钥）、ValueError（模型未登记是配置错误）。
+        实际应答模型记录在返回值的 .model 字段。
 
         Args:
-            model: 模型名称（须已在 Settings.models 登记）。
+            model: 首选模型名称（须已在 Settings.models 登记）。
             messages: OpenAI 风格消息列表。
             json_mode: 请求结构化 JSON 输出（15.1 第 4 级）。
+
+        Raises:
+            ValueError: 模型未登记。
+            MissingApiKeyError: 已知供应商密钥缺失。
+            RuntimeError: 全部腿失败（含各自降级重试后）。
+        """
+        legs = [model] + [m for m in self.settings.models if m != model]
+        last_exc: Exception | None = None
+        for i, leg in enumerate(legs):
+            try:
+                result = self._chat_leg(leg, messages, json_mode)
+            except (ValueError, MissingApiKeyError,
+                    BudgetExceededError, TaskCancelledError):
+                raise
+            except Exception as exc:
+                last_exc = exc
+                continue  # 换下一腿
+            if i < len(legs) - 1:
+                if not (result.content or "").strip():
+                    last_exc = RuntimeError(f"模型 {leg} 返回空内容")
+                    continue  # 空响应当腿故障（borrow 清单 #1 语义）
+                if json_mode and not self._json_shape_ok(result.content):
+                    last_exc = RuntimeError(
+                        f"模型 {leg} 返回畸形 JSON（response_format 未守约）")
+                    continue  # JSON 畸形当腿故障：换守约的模型
+            return result
+        raise last_exc or RuntimeError("全部模型腿失败")
+
+    def _chat_leg(
+        self,
+        model: str,
+        messages: list[dict[str, str]],
+        json_mode: bool = False,
+    ) -> LLMResponse:
+        """单腿对话补全（原 chat 本体：重试/降级/扩容/续写均按腿执行）。
 
         Raises:
             ValueError: 模型未登记。

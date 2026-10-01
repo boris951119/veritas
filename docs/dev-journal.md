@@ -53,7 +53,7 @@ budget）· `app/server.py` · `app/mcp_server.py` · `app/pipeline.py`。
 ③确定性优先（同输入同输出；skill/预算/权限全部可复算）；④人的介入
 点预埋且入链（人是最高权限，但动作可审计）；⑤每步降级不炸 run。
 
-测试基线：**250 passed**（零 key、零网络；`pytest tests -q`）。
+测试基线：**250 passed**（另有异构编队真实网关实测：三分析师三模型族全成功）（零 key、零网络；`pytest tests -q`）。
 
 ---
 
@@ -606,7 +606,39 @@ B2 方案文档同步（proposal-formal 停留在早期版本，后期十余机�
 哈希无密钥——本机攻击者可重算哈希再投毒（缓解的是「顺手改 JSON」
 与「换 URL 张冠李戴」，完整防御需签名密钥，产品化项）。
 
-## 16. 建议攻击面清单（给审查 agent 的入手点）
+## 16. 真模型异构落地 + 模型链回退（本批）
+
+**问题怎么产生**：用户提供百炼可用模型清单（10 个）——此前「模型
+异构是配置项但当前网关只有一模型」的口径可升级为实测事实。
+
+**改动**：
+- 全 10 模型冒烟通过（qwen3.8-max/flash、qwen3.7-plus/max、
+  qwen3.6-flash、deepseek-v4.1-flash/pro、deepseek-v4-flash-0731、
+  glm-5.3/5.2）；config.json 登记全量；
+- `config/roster-hetero.yaml`：三分析师分属 qwen3.8-max / glm-5.3 /
+  deepseek-v4-pro 三模型族；
+- 画像探测按 **distinct 模型**各自探测分档（异构正确语义）；
+  `analyst_done` 链事件带 model 字段（异构证据入链）；
+- **模型链回退激活**（借鉴清单 #1，leg_chain 死代码转正）：`chat()`
+  变腿序调度器（主模型+其余登记模型），单腿本体 `_chat_leg`（重试/
+  json 降级/扩容/续写均按腿执行）；不换腿异常=预算尽/任务中止/密钥
+  缺失/未登记；空响应当腿故障；
+- **JSON 腿校验**（异构首跑三分析师全灭逼出）：模型链只包 chat 调用，
+  而 qwen/glm 对 response_format 不守约——畸形 JSON 流到 extract_json
+  才炸，回退链没机会生效。补 `_json_shape_ok`：json_mode 返回必须可
+  解析，畸形即换腿。**修后三分析师三模型族全部研判成功**（5/5/5 条
+  结论），主席 LLM 模式 5 点零自动补全。
+
+**验证**：250 测试全绿 + 异构 run 端到端（链 23 条、信源 6、结论 20、
+打回 3、冲突 0、主席 issues 3）；agents-overview「模型异构」段从
+路线图改为实测记录。
+
+**开放问题**：异构 run 耗时长（qwen3.8-max 单腿超时 300s×重试，回退
+链有效但慢——演示时建议 roster 主腿选快模型或接受长耗时）；JSON 腿
+校验只验「可解析」，不验 schema 符合度（物化器软校验兜底）；模型链
+回退使 token 成本在坏腿时翻倍（预算闸兜底）。
+
+## 17. 建议攻击面清单（给审查 agent 的入手点）
 
 按「出事代价」排序：
 
@@ -645,7 +677,7 @@ B2 方案文档同步（proposal-formal 停留在早期版本，后期十余机�
    计数临界/指代词+实体齐全/功能词表外的问句尾巴）；_FUNCTION_TOKENS
    遗漏词造成的误判 clear；clarify 建议与 skill 触发是否同档一致。
 
-## 17. 环境事实（审查时需要知道的）
+## 18. 环境事实（审查时需要知道的）
 
 - 网关：阿里云百炼 token-plan 专属端点
   `token-plan.cn-beijing.maas.aliyuncs.com/compatible-mode/v1`，

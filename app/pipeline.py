@@ -188,23 +188,29 @@ def run_case(spec: RunSpec | None = None,
     if analysts is None:
         analysts = build_panel(client, settings.models[0], roster=spec.roster)
 
-    # 0.8) 模型画像自适应：探测档位 → 回填分析师（决定建议版/强化版规则）
+    # 0.8) 模型画像自适应：按 distinct 模型各自探测档位 → 回填分析师
+    # （异构编队下每模型一档；探测失败维持 standard 档不炸管线）
     adaptive = bool(spec.probe) if spec.probe is not None else not injected_client
-    tier = "standard"
+    tiers: dict[str, str] = {}
     if adaptive and settings.model_probe_enabled and settings.models:
-        try:
-            profile = probe_model(client, settings.models[0])
-            tier = profile["tier"]
-            chain.append("model_profile", "pipeline", profile)
-        except Exception as exc:  # 探测失败不炸管线：维持 standard 档
-            chain.append("model_profile", "pipeline",
-                         {"tier": "standard", "error": f"{type(exc).__name__}: {exc}"})
+        for m in sorted({a.model for a in analysts}):
+            try:
+                profile = probe_model(client, m)
+                tiers[m] = profile["tier"]
+                chain.append("model_profile", "pipeline", profile)
+            except Exception as exc:
+                tiers[m] = "standard"
+                chain.append("model_profile", "pipeline",
+                             {"model": m, "tier": "standard",
+                              "error": f"{type(exc).__name__}: {exc}"})
     for a in analysts:
-        a.profile_tier = tier
+        a.profile_tier = tiers.get(a.model, "standard")
 
     # 1) 并行独立研判（硬隔离；单分析师失败只降级）
+    model_of = {a.name: a.model for a in analysts}
     results = run_panel(dossier, analysts, on_done=lambda name, cons: chain.append(
-        "analyst_done", name, {"n_conclusions": len(cons)}))
+        "analyst_done", name,
+        {"n_conclusions": len(cons), "model": model_of.get(name, "")}))
     for name, err in results.get("_failures", {}).items():
         chain.append("analyst_failed", name, {"error": err})
     # 并行完成次序不定 → 物化次序随机：统一排序固化产物确定性

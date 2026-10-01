@@ -29,3 +29,4 @@ cases/*/out_offline/
 dist/
 cases/*/out_ab_*/
 cases/*/.fetched/
+cases/*/out_hetero_*/
