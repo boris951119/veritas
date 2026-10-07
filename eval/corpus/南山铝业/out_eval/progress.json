@@ -1,0 +1,1 @@
+{"step": "done", "elapsed_s": 2662.5, "tokens": 104820, "n_calls": 12, "budget": "0 / 800000 token（0.0%）", "confidence_note": "规则融合分（强度×覆盖×一致性），不是命中率"}

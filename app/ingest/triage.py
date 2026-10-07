@@ -9,6 +9,7 @@
 - links_disclosed    链接清单未抓取（默认关，披露）
 - image_disclosed    图片未转码（披露，OCR 关闭/不支持时终态）
 - image_transcoded   图片转写为派生信源（低可信，meta.ocr）
+- layout_parsed      版式引擎入卷（Docling 等，派生低可信，meta.parser）
 - empty              空文件/扫描件（零段落不入卷）
 - invalid_parse      解析失败（披露，不炸 run）
 
@@ -26,6 +27,7 @@ ROUTE_LABEL: dict[str, str] = {
     "links_disclosed": "链接未抓取",
     "image_disclosed": "图片披露",
     "image_transcoded": "图片转写",
+    "layout_parsed": "版式解析入卷",
     "empty": "空文件",
     "invalid_parse": "解析失败",
     "unsupported_format": "格式暂不支持",
@@ -36,9 +38,9 @@ ROUTE_LABEL: dict[str, str] = {
 }
 
 ROUTE_ORDER: dict[str, int] = {
-    "native": 0, "fetched": 1, "image_transcoded": 2,
-    "archive_expanded": 3, "promoted_low": 4,
-    "links_disclosed": 5, "image_disclosed": 6,
-    "zero": 7, "dup": 8, "empty": 9,
-    "invalid_parse": 10, "archive_unsupported": 11, "unsupported_format": 12,
+    "native": 0, "fetched": 1, "image_transcoded": 2, "layout_parsed": 3,
+    "archive_expanded": 4, "promoted_low": 5,
+    "links_disclosed": 6, "image_disclosed": 7,
+    "zero": 8, "dup": 9, "empty": 10,
+    "invalid_parse": 11, "archive_unsupported": 12, "unsupported_format": 13,
 }

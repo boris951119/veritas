@@ -133,6 +133,7 @@ python3 -m venv .venv
 | 控制台中文乱码 | `chcp 65001` 后重跑 |
 | pip 装不上 litellm | 加镜像参数重试；仍失败可暂时跳过——`pytest` 与 `demo_offline` 不依赖 litellm（懒加载），仅第 4 步在线研判需要 |
 | PDF 信源摄取报 pypdf 缺失 | `pip install pypdf`（PDF 是可选格式，demo 案例不含 PDF 不影响演示） |
+| 要开源版式增强（跨页表等） | `pip install -r requirements-docling.txt` 后设 `VERITAS_PDF_BACKEND=docling`；失败自动回退 pypdf；默认 U 盘包不装 Docling |
 | venv 激活后命令找不到 | 直接用绝对路径调 python：`.venv\Scripts\python`（Win）/ `.venv/bin/python`（Mac） |
 | 测试出现 failed | 把失败摘要原样反馈给开发者；在修好前用第 3 步离线演示兜底（未装 mcp 时 MCP 协议测试自动跳过，250 passed ± 1 skipped 属正常） |
 

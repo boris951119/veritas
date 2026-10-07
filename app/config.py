@@ -117,6 +117,11 @@ class Settings:
     # 视觉端点自动降级回「未转写」披露。VERITAS_OCR=0 关闭。
     ocr_enabled: bool = True
 
+    # PDF 抽取后端（默认 pypdf，U 盘/无开发环境友好）：
+    # docling 为可选版式增强（需 requirements-docling，失败回退 pypdf）。
+    # VERITAS_PDF_BACKEND=pypdf|docling
+    pdf_backend: str = "pypdf"
+
     # ---- 可选组件（默认关；关闭时不 import 对应模块）----
     embedding_cache_enabled: bool = False
     llm_rate_limit_enabled: bool = False
@@ -169,6 +174,9 @@ class Settings:
         ocr_env = (os.environ.get("VERITAS_OCR") or "").strip().lower()
         if ocr_env in ("0", "false", "off", "no"):
             s.ocr_enabled = False
+        pdf_backend = (os.environ.get("VERITAS_PDF_BACKEND") or "").strip().lower()
+        if pdf_backend in ("pypdf", "docling"):
+            s.pdf_backend = pdf_backend
         return s.validate()
 
     @classmethod
@@ -196,4 +204,7 @@ class Settings:
         if isinstance(temp, (int, float)) and not isinstance(temp, bool) \
                 and 0.0 <= float(temp) <= 2.0:
             s.llm_temperature = float(temp)
+        pb = str(data.get("pdf_backend") or "").strip().lower()
+        if pb in ("pypdf", "docling"):
+            s.pdf_backend = pb
         return s

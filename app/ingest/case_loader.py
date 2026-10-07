@@ -104,9 +104,30 @@ class SourceSpec:
 
 
 def ingest_file(path: Path, source_id: str, spec: SourceSpec) -> Source:
-    """单文件 → Source（切段并编号，locator 记段序）。"""
-    real_title, text = spec.preloaded or read_any(path)
-    meta: dict = {"file": str(path)}
+    """单文件 → Source（切段并编号，locator 记段序）。
+
+    PDF 走可插拔后端（``pdf_backend.extract_pdf``）：Docling 等版式
+    引擎产物标 ``derived`` 并默认低可信先验 0.3（manifest 显式
+    credibility 仍优先）。
+    """
+    extract_meta: dict = {}
+    if spec.preloaded:
+        real_title, text = spec.preloaded
+    elif path.suffix.lower() == ".pdf":
+        from app.ingest.pdf_backend import extract_pdf
+
+        result = extract_pdf(path)
+        real_title, text = result.title, result.text
+        extract_meta = dict(result.meta or {})
+        extract_meta.setdefault("parser", result.backend)
+        if result.fallback_from:
+            extract_meta["parser_fallback"] = True
+            extract_meta["parser_requested"] = result.fallback_from
+        if result.error:
+            extract_meta["parser_error"] = result.error
+    else:
+        real_title, text = read_any(path)
+    meta: dict = {"file": str(path), **extract_meta}
     if spec.published_at:
         meta["published_at"] = spec.published_at
     else:
@@ -114,10 +135,15 @@ def ingest_file(path: Path, source_id: str, spec: SourceSpec) -> Source:
         if m:
             meta["year"] = re.sub(r"\D", "", m.group(0))
     source_type = spec.source_type or infer_source_type(path)
+    credibility = spec.credibility
+    # 版式引擎 / 回退标注的派生解析：与 OCR 同权低可信（除非 manifest 钉死）
+    if credibility is None and (
+            meta.get("derived") or meta.get("parser") == "docling"):
+        credibility = 0.3
     source = Source.create(
         title=spec.title or real_title,
         source_type=source_type,
-        credibility=spec.credibility,
+        credibility=credibility,
         id=source_id,
         meta=meta,
     )
@@ -258,13 +284,28 @@ def load_case(case_dir: Path, fetch_links: bool = False) -> Dossier:
             })
         if spec.classification in ("public", "internal", "confidential"):
             source.classification = spec.classification
+        if source.meta.get("parser_fallback") and source.meta.get("parser_error"):
+            dossier.ingest_notes.append({
+                "file": rel, "kind": "parser_fallback",
+                "detail": (
+                    f"版式后端失败，已回退 {source.meta.get('parser', 'pypdf')}："
+                    f"{source.meta.get('parser_error', '')}"
+                ),
+            })
         dossier.add_source(source)
-        dossier.triage.append({
-            "file": rel, "route": "native",
-            "reason": f"{len(source.segments)} 段入卷"
-            + (f"（类型 {source.source_type.value}）"
-               if declared_type is None else ""),
-        })
+        parser = str(source.meta.get("parser") or "")
+        if parser == "docling" and not source.meta.get("parser_fallback"):
+            route, reason = "layout_parsed", (
+                f"{len(source.segments)} 段入卷（Docling 版式解析，派生低可信）"
+            )
+        else:
+            route, reason = "native", (
+                f"{len(source.segments)} 段入卷"
+                + (f"（类型 {source.source_type.value}）"
+                   if declared_type is None else "")
+                + (f" · 解析器 {parser}" if parser and parser != "pypdf" else "")
+            )
+        dossier.triage.append({"file": rel, "route": route, "reason": reason})
 
     def _handle_links(rel: str, text: str, n_links: int) -> None:
         """链接清单：默认只披露；fetch_links=True 才逐条抓取并披露成败。
@@ -412,6 +453,11 @@ def load_case(case_dir: Path, fetch_links: bool = False) -> Dossier:
                 # 溯源：信源来自哪个包的哪个条目
                 _process_file(entry_path, f"{rel}::{entry_name}",
                               SourceSpec.from_manifest(entry_item))
+            return
+        # PDF 必须走可插拔后端（保留 parser/derived meta）；不可 preloaded
+        # 旁路——否则 Docling 低可信与 layout_parsed 分诊会丢。
+        if path.suffix.lower() == ".pdf":
+            _ingest_one(path, rel, spec)
             return
         try:
             title, text = read_any(path)

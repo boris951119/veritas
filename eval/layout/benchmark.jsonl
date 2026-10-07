@@ -1,0 +1,8 @@
+{"id": "L01", "file": "L01_simple_table.pdf", "must_contain": ["Revenue", "1280", "Cash", "512"], "expect_disclosed_empty": false}
+{"id": "L02", "file": "L02_cross_page_no_header.pdf", "must_contain": ["Account", "Inventory", "Equity"], "note": "跨页无表头：轻量抽取应仍能抽到续页单元格；表头连续重建不在默认后端保证范围"}
+{"id": "L03", "file": "L03_multi_table.pdf", "must_contain": ["Yield", "40_percent", "Capex", "9800"]}
+{"id": "L04", "file": "L04_wide_row.pdf", "must_contain": ["MARKER_WIDE_99"]}
+{"id": "L05", "file": "L05_sparse_pages.pdf", "must_contain": ["BuriedFigure", "777.7"]}
+{"id": "L06", "file": "L06_receivable_synonym.pdf", "must_contain": ["Accounts Receivable", "Overdue", "88"]}
+{"id": "L07", "file": "L07_footnote_table.pdf", "must_contain": ["Contingent liability", "42m"]}
+{"id": "L08", "file": "L08_two_page_header_repeat.pdf", "must_contain": ["Energy", "TOTAL", "21"]}

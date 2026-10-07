@@ -28,6 +28,7 @@
 - [x] 交件方案 PPT（`dist/veritas-交件方案.pptx`，脚本 `scripts/build_contest_pptx.py`）
 - [x] 现场讲解 PPT（`dist/veritas-现场讲解.pptx`，对齐 demo-script 三动作）
 - [x] 评测集三指标（`eval/benchmark.jsonl` + `scripts/run_eval.py` → BM25 Recall / 冲突召回 / 编造检出）
+- [x] 可插拔 PDF 后端（默认 pypdf；可选 Docling，`requirements-docling.txt` + `VERITAS_PDF_BACKEND`；难例 `eval/layout/`）
 - [ ] 方案文档定稿 + 打包联调，小程序提交流程走通（U 盘自包含包已备，见 AGENTS.md）
 
 ## 待对齐（外部依赖）

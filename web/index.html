@@ -362,6 +362,7 @@ const TRIAGE_CN={
   native:{t:"已读入并切片",k:"ok"},
   fetched:{t:"已抓取网页并切片",k:"ok"},
   image_transcoded:{t:"图片已转成文字（可信度较低）",k:"ok"},
+  layout_parsed:{t:"版式引擎已解析（可信度较低）",k:"ok"},
   archive_expanded:{t:"压缩包已拆开，正在逐份处理",k:"ok"},
   promoted_low:{t:"相关度偏低，仍先纳入",k:"skip"},
   links_disclosed:{t:"发现链接清单，尚未抓取网页",k:"skip"},
@@ -373,6 +374,7 @@ const TRIAGE_CN={
   archive_unsupported:{t:"这种压缩格式暂不支持",k:"bad"},
   unsupported_format:{t:"这种文件格式暂不支持",k:"bad"},
 };
+const PARSER_CN={pypdf:"轻量抽取",docling:"Docling 版式解析"};
 const SKILL_CN={calc_discipline:"计算纪律",number_provenance:"数字溯源",
   counting_discipline:"计数纪律",hedged_claim:"转述语气",table_citation:"表格引文",
   level_tone:"措辞等级",as_of_discipline:"时点锚定",question_focus:"议题聚焦",
@@ -979,8 +981,16 @@ function renderFlags(audit){
     ||`<div class="empty">质控全部通过：算式能复算，数字有出处。</div>`);
 }
 function renderSources(d){
-  $("#sources").innerHTML=d.sources.map(s=>`<div class="card" style="margin-bottom:8px">
+  $("#sources").innerHTML=d.sources.map(s=>{
+    const parser=s.meta&&s.meta.parser;
+    const parserLabel=parser?(PARSER_CN[parser]||parser):"";
+    const derived=s.meta&&(s.meta.derived||parser==="docling"||s.meta.ocr);
+    const fallback=s.meta&&s.meta.parser_fallback;
+    return `<div class="card" style="margin-bottom:8px">
     <b>${esc(s.title||"未命名信源")}</b>　<span class="tag">${TYPE_CN[s.source_type]||"资料"}</span>
+    ${parserLabel?`<span class="chip">解析器 ${esc(parserLabel)}</span>`:""}
+    ${derived?`<span class="tag" style="color:var(--warn);border-color:var(--warn)">派生</span>`:""}
+    ${fallback?`<span class="tag" style="color:var(--warn);border-color:var(--warn)">已回退轻量抽取</span>`:""}
     ${s.relevance_override==="include"?`<span class="tag" style="color:var(--accent);border-color:var(--accent)">已强制纳入</span>`:""}
     ${s.relevance_override==="exclude"?`<span class="tag" style="color:var(--bad);border-color:var(--bad)">已强制排除</span>`:""}
     <div class="cred"><span class="sub">可信度</span>
@@ -993,7 +1003,7 @@ function renderSources(d){
       <button class="mini danger" onclick="setRel('${esc(s.id)}','exclude')">强制排除</button>
       <button class="mini" onclick="setRel('${esc(s.id)}','')">恢复自动分层</button>
     </div>
-  </div>`).join("")||`<div class="sec empty">案卷中没有信源。</div>`;
+  </div>`}).join("")||`<div class="sec empty">案卷中没有信源。</div>`;
 }
 function histWriteGuard(){
   if(PAGE==="hist"){toast("历史记录只读。要改判断，请点「拿到工作台再问」。");return true}

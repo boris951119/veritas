@@ -76,8 +76,11 @@ def read_html(path: Path) -> tuple[str, str]:
 
 
 def read_pdf(path: Path) -> tuple[str, str]:
-    """PDF：逐页抽取（页间以空行分隔，切段后 locator 记页码——
-    页码级 locator 在 case_loader 侧由 page_hint 承载）。"""
+    """PDF 轻量抽取（pypdf）：逐页文本，页间空行分隔。
+
+    版式增强请走 ``pdf_backend.extract_pdf`` / ``VERITAS_PDF_BACKEND``；
+    本函数保持为确定性默认后端，供回退与测试直接调用。
+    """
     try:
         from pypdf import PdfReader
     except ImportError as exc:
@@ -95,6 +98,14 @@ def read_pdf(path: Path) -> tuple[str, str]:
     except Exception:
         pass
     return title, "\n\n".join(pages)
+
+
+def read_pdf_routed(path: Path) -> tuple[str, str]:
+    """经可插拔后端抽 PDF（默认 pypdf；可选 Docling）。"""
+    from app.ingest.pdf_backend import extract_pdf
+
+    result = extract_pdf(path)
+    return result.title, result.text
 
 
 def _zip_xml_text(path: Path, inner_prefix: str) -> str:
@@ -135,7 +146,7 @@ READERS = {
     ".markdown": read_markdown,
     ".html": read_html,
     ".htm": read_html,
-    ".pdf": read_pdf,
+    ".pdf": read_pdf_routed,
     ".docx": read_docx,
     ".xlsx": read_xlsx,
     ".xlsm": read_xlsx,

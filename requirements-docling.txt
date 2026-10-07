@@ -1,0 +1,6 @@
+# 可选：开源版式解析后端（非默认依赖，不进 U 盘最小包）
+# 安装：.venv/bin/python -m pip install -r requirements-docling.txt
+# 启用：export VERITAS_PDF_BACKEND=docling
+#
+# Docling 体积与传递依赖较重；失败时管线自动回退 pypdf。
+docling>=2.0.0

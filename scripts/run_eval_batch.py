@@ -21,7 +21,7 @@ sys.path.insert(0, str(REPO))
 from app.pipeline import RunDeps, RunSpec, run_case
 
 QUESTIONS = REPO / "eval" / "questions.jsonl"
-CORPUS = REPO / "eval" / "corpus"
+CORPUS = Path("/Users/liuboyu/Desktop/veritas-testcases/eval-corpus")
 REPORT = REPO / "eval" / "report.md"
 
 

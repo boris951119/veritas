@@ -127,6 +127,9 @@ def run_case(spec: RunSpec | None = None,
     analysts = deps.analysts
     injected_client = client is not None
     t0 = time.monotonic()
+    from app.ingest.pdf_backend import set_pdf_backend
+
+    set_pdf_backend(settings.pdf_backend)
     dossier = spec.dossier or load_case(
         Path(spec.case_dir), fetch_links=settings.fetch_links_enabled)
     chain = HashChain()

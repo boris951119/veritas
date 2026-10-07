@@ -92,6 +92,8 @@ def archive_run(case_dir: Path, out_dir: Path) -> Path:
 def run_workbench_case(case_dir: Path, question: str | None = None) -> Path:
     """写入 out_offline 并归档。有 key 且未强制演示 → 真模型；否则桩。"""
     apply_to_environ()
+    from app.ingest.pdf_backend import set_pdf_backend
+    set_pdf_backend(Settings.from_env().pdf_backend)
     dossier = load_case(case_dir)
     if question and str(question).strip():
         dossier.question = str(question).strip()

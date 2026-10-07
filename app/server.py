@@ -137,9 +137,12 @@ def _list_history(cases_root: Path | None) -> dict:
 
 
 def _ingest_payload(case_dir: Path) -> dict:
+    from app.config import Settings
     from app.ingest.case_loader import load_case
+    from app.ingest.pdf_backend import set_pdf_backend
     from app.ingest.triage import ROUTE_LABEL
 
+    set_pdf_backend(Settings.from_env().pdf_backend)
     d = load_case(case_dir)
     return {
         "case": case_dir.name,
@@ -328,7 +331,10 @@ def create_app(cases_root: Path | None = None) -> FastAPI:
         case_dir = _cases_root(cases_root) / req.case
         if not case_dir.is_dir() or not (case_dir / "manifest.yaml").is_file():
             raise HTTPException(404, "找不到这套资料")
+        from app.config import Settings
         from app.ingest.case_loader import load_case
+        from app.ingest.pdf_backend import set_pdf_backend
+        set_pdf_backend(Settings.from_env().pdf_backend)
         preview = load_case(case_dir)
         if not preview.sources:
             raise HTTPException(
