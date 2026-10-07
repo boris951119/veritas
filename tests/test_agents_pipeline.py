@@ -109,8 +109,8 @@ def test_run_case_without_analyst_output_still_writes_report(tmp_path):
     assert "无结论" in result.report_md
 
 
-def test_conclusions_with_all_evidence_rejected_are_dropped(tmp_path):
-    """结论的全部引文被机械核对打回 → 结论不进报告，链上留痕。"""
+def test_conclusions_with_all_evidence_rejected_are_kept_as_insufficient(tmp_path):
+    """结论的全部引文被机械核对打回 → 标成证据不足留在案卷，链上留痕。"""
     _make_case(tmp_path)
     fake = FakeClient('{"conclusions": [{"statement": "成本已经低于液态电池", '
                       '"evidence": [{"quote": "成本已降至液态电池一半以下", '
@@ -119,8 +119,8 @@ def test_conclusions_with_all_evidence_rejected_are_dropped(tmp_path):
     single = [Analyst("mainstream", "测试角色", fake, "test-model")]
     result = run_case(RunSpec(case_dir=tmp_path, out_dir=tmp_path / "out"),
                       RunDeps(client=fake, analysts=single))
-    assert result.dossier.conclusions == []
     assert result.rejected and "未命中" in result.rejected[0]["problems"][0]
+    assert [c.status for c in result.dossier.conclusions] == ["insufficient"]
     audit = next(r for r in result.chain.records if r.event == "citation_audit")
     assert audit.payload["n_conclusions_dropped"] == 1
-    assert "无结论" in result.report_md
+    assert "证据不足" in result.report_md

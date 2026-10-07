@@ -43,7 +43,7 @@ load_case（摄取：目录遍历→压缩包安全拆封→图片/链接清单�
 **模块地图**：`app/core/`（evidence/citation_check/numeric_check/
 discourse_check/premise_check/temporal_check/fact_ledger/relevance/
 dup_check/untrusted/bm25/material/view_filter/skills/audit/confidence/
-conflicts/hashchain/human_ops/reasoning_graph）· `app/ingest/`
+conflicts/hashchain/human_ops/reasoning_graph/pii/claim_check/dossier_diff）· `app/ingest/`
 （readers/segment/case_loader/archive/links）· `app/agents/`
 （base/panel/arbiter/repair/prompts）· `app/llm/`（profile/model_client/
 budget）· `app/server.py` · `app/mcp_server.py` · `app/pipeline.py`。
@@ -53,7 +53,7 @@ budget）· `app/server.py` · `app/mcp_server.py` · `app/pipeline.py`。
 ③确定性优先（同输入同输出；skill/预算/权限全部可复算）；④人的介入
 点预埋且入链（人是最高权限，但动作可审计）；⑤每步降级不炸 run。
 
-测试基线：**250 passed**（另有异构编队真实网关实测：三分析师三模型族全成功）（零 key、零网络；`pytest tests -q`）。
+测试基线：**pytest tests -q 全绿**（零 key、零网络；另有异构编队真实网关实测）。
 
 ---
 
@@ -407,9 +407,9 @@ headline 无溯源回退 / 分歧抹平被纠正 / LLM 失败兜底 / 管线入�
 报告 / 两道诚实性闸正反例）；228 全绿；离线演示报告含综合意见。
 
 **开放问题（邀请检验）**：
-- **synthesis 是研判终态快照**：人工修改结论后不自动重算（报告渲染
-  有 live 模板回退，但工作台读的是持久化快照）——主席层重算端点
-  或「快照过期」标记待做；
+- **synthesis 快照过期已关**：工作台人工修改（改结论/改判/调权重等）
+  在重算置信度后调用 `refresh_synthesis_after_human`，用零 LLM 模板
+  重渲染并写入 `gate_notes`（不重跑主席模型）。报告与工作台读同一快照。
 - 主席闸只验**数字与引用**，不验语义保真：gloss 可以微妙曲解结论
   原意而不触闸（防御=每点挂 con_id 可点穿比对原文，属人审通道）；
 - headline 的数字溯源语料是全部多数结论的并集，允许 headline 引
@@ -638,14 +638,54 @@ B2 方案文档同步（proposal-formal 停留在早期版本，后期十余机�
 校验只验「可解析」，不验 schema 符合度（物化器软校验兜底）；模型链
 回退使 token 成本在坏腿时翻倍（预算闸兜底）。
 
-## 17. 建议攻击面清单（给审查 agent 的入手点）
+## 17. 拓尔思考点判断 + 对抗性测试用例集（桌面交付，本批）
+
+**问题怎么产生**：用户揭晓榜单发布方为**拓尔思**（300229，NLP/全文
+检索/内容管理/舆情监测「网察」龙头，客户为政府/媒体/金融），要求
+结合企业目的判断考点，并生成 50+ 桌面测试用例（含 10+ 极端）用于
+调试找 bug——「我没有更好的方案，我想了这么个方案，你看行不行」。
+
+**考点判断**（企业画像→出题意图）：①谣言 vs 官方通告的对抗性研判
+（舆情产品线的日常）；②证据链的「交代力」（政府客户要向上级交代）
+；③中文处理质量（全文检索起家）；④安全合规（注入/PII/审计是硬指标
+非加分项）；⑤暗点=工程可交付（验证范式能否装进其舆情产品线）。
+
+**方案评估**：用户方案正确（正是评估中最弱项「评测体系」的解法），
+但升级一处——**每条用例必须带机器可判定的预期结果**（.expected.json
+），否则只是语料不是测试；fixture 结论模式让结论级闸（计算/溯源/
+计数/时序/卫生闸）全部无需 LLM 即可测。
+
+**交付**（桌面 veritas-testcases/）：56 用例×8 考点组（引文数字/
+冲突时序/注入安全/空畸形/相关性/议题预检/检索装箱/PII 卫生，极端
+≥14：zip-slip/炸弹/嵌套/损坏/7z/深目录/超长/乱码/注入变体/无基数
+统计等）+ run_all.py 统一 runner（PASS/FAIL 即 bug 清单）+ _generate
+.py 生成器 + README（考点映射表）。
+
+**语料首战战果（跑通前抓到的）**：
+1. **真 bug:隐藏文件被摄入**——.DS_Store/.expected.json 会被
+   load_case 当信源（macOS 拖目录真实场景）；已修+守护测试；
+2. **真 bug:claim 卫生闸触发词表缺口**——「提升/达90%」等常用
+   涨跌表述不触发 percent_no_base；已扩词表；
+3. 已知边界确认：对撞台账对口语变体（网传/转发/通报前缀）会拆组；
+   中文数字（四成）不参与溯源；claim 货币口径需双语料并存才触发。
+4. 测试过程自身教训：patch-patch-patch 的文本替换链会连锁误伤
+   （B04/B05 fixture 被搅）——数据文件该整段重写就整段重写。
+
+**验证**：56/56 全 PASS（含 2 个 known_gap 升级为真测试后通过）；
+281 测试全绿（含迭代合并的 25 个新测试）。
+
+**开放问题**：语料覆盖确定性层为主——冲突检测召回、置信度标定需
+真实模型跑批（B3/B4 待办）；runner 的预期判定器与产品同源（同一
+批人写的同一批假设）——审查 agent 应优先攻击 expected.json 的
+预期本身是否合理。
+
+## 18. 建议攻击面清单（给审查 agent 的入手点）
 
 按「出事代价」排序：
 
-1. **权限泄露**：`/api/reasoning_graph` 与 MCP 侧图数据未过
-   `redact_dossier`；`conflicts[]`/`dissent.why`/质证文本在低权限
-   视图中的脱敏完整性；`audit.flags` 是否借警示文案泄露涉密数字
-   （警示在视图上重算，但 detail 含原文数字片段）。
+1. **权限泄露（图谱与冲突脱敏已在第 13 批关闭）**：仍值得查的是
+   `audit.flags` 是否借警示文案泄露涉密数字（警示在视图上重算，
+   但 detail 含原文数字片段）。不要再按「图谱未 redact」去找洞。
 2. **拆封边界**：构造 zip-slip 变体（`C:\`、UNC 路径 `\\host\share`、
    unicode 点、`..` 经过 `./` 混写）、声明大小与实际不符的 tar、
    超深嵌套、同名 entry 覆盖、symlink 成员（tarfile 提取符号链接？——
@@ -667,17 +707,50 @@ B2 方案文档同步（proposal-formal 停留在早期版本，后期十余机�
    恰在 60% 阈值的清单、含链接的正常报告），验证账本与实际行为一致；
    `relevance_override` 与密级/预算/装箱的交互次序。
 9. **主席层保真**：构造「gloss 曲解结论原意但数字全对」的主席输出，
-   验证闸不拦（已知盲区）与 con_id 点穿通道；快照过期路径（人工改
-   结论后 synthesis 与结论不一致）；自动补全与 LLM 点的排序/去重
-   边界（同结论两次出现、confidence 并列）。
+   验证闸不拦（已知盲区）与 con_id 点穿通道；人工改结论后综合意见
+   已改为模板重渲染（不再是过期 LLM 快照）——核对重渲染是否丢掉
+   主席原文里有价值的概括；自动补全与 LLM 点的排序/去重
+  边界（同结论两次出现、confidence 并列）。
 10. **计分联动一致性**：causation_support 闸与 evidence_score 压分
-   是否在所有入口（工作台重算/仲裁加权/MCP）同步生效；机制词在
-   quote vs note 的分布对分数的敏感度。
+  是否在所有入口（工作台重算/仲裁加权/MCP）同步生效；机制词在
+  quote vs note 的分布对分数的敏感度。
 11. **议题预检判定边界**：各档临界样本（恰 4 字/恰 2 问号/连接词
-   计数临界/指代词+实体齐全/功能词表外的问句尾巴）；_FUNCTION_TOKENS
-   遗漏词造成的误判 clear；clarify 建议与 skill 触发是否同档一致。
+  计数临界/指代词+实体齐全/功能词表外的问句尾巴）；_FUNCTION_TOKENS
+  遗漏词造成的误判 clear；clarify 建议与 skill 触发是否同档一致。
 
-## 18. 环境事实（审查时需要知道的）
+---
+
+## 19. 赛前手册缺口一次性迭代
+
+**问题怎么产生**：对照桌面《veritas赛前考点与突发手册》逐条对代码，
+不是猜。手册要的几件现场能演的事，原先要么没有、要么行为相反：
+展示层不脱敏、证据全灭的结论从主表蒸发、仲裁跟票数走、工作台
+看不到耗时/token/过程时间线、没有「多数派错」案例可切。
+
+**方案决策（做了什么 / 明确不做）**：
+- 做：展示层 PII 掩码（手机/身份证/银行卡/邮箱），磁盘案卷与链保真；
+  工作台顶栏耗时·调用次数·token；哈希链时间线；`progress.json` +
+  `GET /api/progress`；证据全灭改 `insufficient` 留台面；
+  `prefer_stronger_side`（强度差 >0.20 才否决 LLM 胜方）；
+  百分比无基数 / 人民币美元混用 / 新闻无 URL 黄灯；
+  `GET /api/case/diff`；`cases/rumor-vs-official` 离线桩故意把票
+  判给谣言，程序翻案进少数意见。
+- 明确不做（用诚实替代，不假装已有）：校准命中率表、真 NLI 蕴含、
+  ES/向量检索、签名哈希链、直播 SSE、同名实体消歧、环形引用检测。
+  置信度文案钉死「规则融合分，不是命中率」。
+
+**改动**：`app/core/{pii,claim_check,dossier_diff}.py`；`conflicts.prefer_stronger_side`；
+`audit`/`pipeline`/`server`/`view_filter`/`chair`/`web/index.html`；
+`scripts/demo_offline.py` 第三案；`tests/test_claim_hygiene.py`。
+
+**验证**：`pytest tests -q`；离线 rumor 报告多数结论为官方通报、
+少数意见为谣言、`resolution.method=evidence_weight`、官方引文来自 SRC1。
+
+**开放问题**：强度边际 0.20 是启发式；同级证据仍跟 LLM 票。PII 正则
+不覆盖护照/微信号。diff 只比 statement 集合，不比证据图。
+progress.json 是批式落盘不是 SSE，评委喊停看到的是「上一完成步」。
+
+## 19. 环境事实（审查时需要知道的）
 
 - 网关：阿里云百炼 token-plan 专属端点
   `token-plan.cn-beijing.maas.aliyuncs.com/compatible-mode/v1`，
@@ -687,6 +760,7 @@ B2 方案文档同步（proposal-formal 停留在早期版本，后期十余机�
   `VERITAS_SKILLS` / `VERITAS_PROBE` / `VERITAS_FETCH_LINKS` /
   `VERITAS_SKILLS_ONLY`（A/B 消融白名单）。
 - 离线兜底：`scripts/demo_offline.py` 零网络跑通全流程（桩按角色分流，
-  案例文案微调不打桩）；现场断网演示用它。
+  案例文案微调不打桩）。覆盖固态电池、数据中台、多数派错三案；
+  现场断网演示用它。
 - A/B 产物在 `cases/*/out_ab_*`（gitignore）；协议与全部实测数据在
   `docs/ab-protocol.md` §6。

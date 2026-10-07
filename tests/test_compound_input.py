@@ -282,3 +282,14 @@ def test_artifact_dirs_never_reingested(tmp_path):
     d = load_case(case_dir)
     assert [s.title for s in d.sources] == ["正常"]
     assert all("out" not in r["file"] for r in d.triage)
+
+
+def test_hidden_files_never_ingested(tmp_path):
+    """拓尔思语料首战抓出的真 bug:.DS_Store 等隐藏文件不入卷。"""
+    case_dir = _case(tmp_path)
+    (case_dir / "正常.md").write_text("客户B回款率40%。", encoding="utf-8")
+    (case_dir / ".DS_Store").write_bytes(b"\x00" * 8)
+    (case_dir / ".expected.json").write_text("{}", encoding="utf-8")
+    d = load_case(case_dir)
+    assert len(d.sources) == 1
+    assert all(not r["file"].startswith(".") for r in d.triage)

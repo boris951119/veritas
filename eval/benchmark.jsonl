@@ -1,0 +1,32 @@
+{"id": "ret-ss-01", "kind": "retrieval", "case": "demo-solid-state", "question": "界面阻抗与硫化物空气稳定性有没有工业化解法？", "gold_segments": ["SRC2#s1"], "top_k": 2}
+{"id": "ret-ss-02", "kind": "retrieval", "case": "demo-solid-state", "question": "全固态试点产线点亮与 2027 路测计划", "gold_segments": ["SRC1#s1", "SRC4#s1"], "top_k": 3}
+{"id": "ret-ss-03", "kind": "retrieval", "case": "demo-solid-state", "question": "半固态已小批量装车与头部厂商中试线时间表", "gold_segments": ["SRC3#s1"], "top_k": 2}
+{"id": "ret-ss-04", "kind": "retrieval", "case": "demo-solid-state", "question": "量产时间表是不是融资叙事", "gold_segments": ["SRC2#s1"], "top_k": 2}
+{"id": "ret-ss-05", "kind": "retrieval", "case": "demo-solid-state", "question": "400 Wh/kg 电芯针刺测试进展", "gold_segments": ["SRC4#s1"], "top_k": 2}
+{"id": "ret-bi-01", "kind": "retrieval", "case": "bi-delivery-risk", "question": "客户B项目进度偏差与回款节点风险", "gold_segments": ["SRC2#s4", "SRC2#s5", "SRC2#s6"], "top_k": 8}
+{"id": "ret-bi-02", "kind": "retrieval", "case": "bi-delivery-risk", "question": "应收账款账龄与坏账计提", "gold_segments": ["SRC3#s9", "SRC4#s7"], "top_k": 10}
+{"id": "ret-bi-03", "kind": "retrieval", "case": "bi-delivery-risk", "question": "合同金额 1280 万元与项目周期", "gold_segments": ["SRC6#s2"], "top_k": 8}
+{"id": "ret-bi-04", "kind": "retrieval", "case": "bi-delivery-risk", "question": "人员清单与人力成本核算", "gold_segments": ["SRC5#s11", "SRC5#s2"], "top_k": 10}
+{"id": "ret-bi-05", "kind": "retrieval", "case": "bi-delivery-risk", "question": "技术方案吞吐量与可用性指标", "gold_segments": ["SRC1#s4"], "top_k": 8}
+{"id": "ret-bi-06", "kind": "retrieval", "case": "bi-delivery-risk", "question": "对账差异说明与待收金额", "gold_segments": ["SRC3#s10", "SRC4#s8"], "top_k": 10}
+{"id": "ret-bi-07", "kind": "retrieval", "case": "bi-delivery-risk", "question": "应收账款结清进度", "gold_segments": ["SRC3#s8", "SRC4#s6"], "top_k": 5, "note": "同义盲区探针：问「应收账款」，金标为「回款记录」段落——BM25 2-gram 预期未命中"}
+{"id": "ret-ru-01", "kind": "retrieval", "case": "rumor-vs-official", "question": "监管核查对停工传闻的结论", "gold_segments": ["SRC1#s1"], "top_k": 2}
+{"id": "ret-ru-02", "kind": "retrieval", "case": "rumor-vs-official", "question": "自媒体是否声称资金链断裂全面停工", "gold_segments": ["SRC2#s1", "SRC3#s1", "SRC4#s1"], "top_k": 3}
+{"id": "ret-ru-03", "kind": "retrieval", "case": "rumor-vs-official", "question": "官方通报提醒自媒体不能替代核查", "gold_segments": ["SRC1#s1"], "top_k": 2}
+{"id": "cfl-ru-01", "kind": "conflict", "case": "rumor-vs-official", "a": {"statement": "监管核查确认停工传闻不实，产线仍按计划运转", "seg": "SRC1#s1", "quote": "该传闻不实，产线仍按计划运转"}, "b": {"statement": "某制造公司已因资金链断裂全面停工", "seg": "SRC2#s1", "quote": "某制造公司已因资金链断裂全面停工"}, "should_conflict": true, "prefer_winner": "a"}
+{"id": "cfl-ru-02", "kind": "conflict", "case": "rumor-vs-official", "a": {"statement": "监管核查确认停工传闻不实，产线仍按计划运转", "seg": "SRC1#s1", "quote": "该传闻不实，产线仍按计划运转"}, "b": {"statement": "内部人士称已全面停工且员工收到遣散通知", "seg": "SRC4#s1", "quote": "已因资金链断裂全面停工，员工已收到遣散通知"}, "should_conflict": true, "prefer_winner": "a"}
+{"id": "cfl-ss-01", "kind": "conflict", "case": "demo-solid-state", "a": {"statement": "头部厂商已公布 2027 年全固态中试并推进装车验证", "seg": "SRC3#s1", "quote": "三家头部电池厂商公布了 2027 年全固态电池中试线"}, "b": {"statement": "界面阻抗十年内无根本解法，量产时间表偏融资叙事", "seg": "SRC2#s1", "quote": "界面阻抗问题十年内看不到根本解法"}, "should_conflict": true}
+{"id": "cfl-ss-02", "kind": "conflict", "case": "demo-solid-state", "a": {"statement": "试点产线点亮，2027 年进入装车路测", "seg": "SRC4#s1", "quote": "2027 年进入装车路测阶段"}, "b": {"statement": "实验室秒充数据在车规工况下不可复现", "seg": "SRC2#s1", "quote": "实验室秒速充电数据在车规工况下不可复现"}, "should_conflict": true}
+{"id": "cfl-bi-01", "kind": "conflict", "case": "bi-delivery-risk", "a": {"statement": "客户B 进度汇报显示关键里程碑整体可控并推进验收", "seg": "SRC2#s2", "quote": "关键里程碑状态"}, "b": {"statement": "客户B 存在高风险项与回款节点压力", "seg": "SRC2#s5", "quote": "风险与问题"}, "should_conflict": true}
+{"id": "cfl-bi-02", "kind": "conflict", "case": "bi-delivery-risk", "a": {"statement": "项目总预算为 1280 万元", "seg": "SRC6#s2", "quote": "项目总预算：1280万元"}, "b": {"statement": "预计总人力成本 297.9 万元", "seg": "SRC5#s11", "quote": "总人力成本297.9万元"}, "should_conflict": false, "note": "负例：同案并列事实，非对立主张"}
+{"id": "cfl-ru-03", "kind": "conflict", "case": "rumor-vs-official", "a": {"statement": "监管通报提醒自媒体转发不能替代官方核查", "seg": "SRC1#s1", "quote": "自媒体转发不能替代官方核查"}, "b": {"statement": "博客汇总称已全面停工但未提供可核验链接", "seg": "SRC2#s1", "quote": "文章未提供可核验链接"}, "should_conflict": true, "prefer_winner": "a"}
+{"id": "fab-01", "kind": "fabrication", "case": "demo-solid-state", "seg": "SRC3#s1", "quote": "良率已达 99%", "expect_reject": true}
+{"id": "fab-02", "kind": "fabrication", "case": "demo-solid-state", "seg": "SRC4#s1", "quote": "能量密度达到 400 Wh/kg 的电芯样品通过针刺测试", "expect_reject": false}
+{"id": "fab-03", "kind": "fabrication", "case": "rumor-vs-official", "seg": "SRC1#s1", "quote": "该传闻不实，产线仍按计划运转", "expect_reject": false}
+{"id": "fab-04", "kind": "fabrication", "case": "rumor-vs-official", "seg": "SRC1#s1", "quote": "公司已宣告破产清算", "expect_reject": true}
+{"id": "fab-05", "kind": "fabrication", "case": "bi-delivery-risk", "seg": "SRC6#s2", "quote": "项目总预算：1280万元（硬件采购320万、软件开发780万、运维服务180万）", "expect_reject": false}
+{"id": "fab-06", "kind": "fabrication", "case": "bi-delivery-risk", "seg": "SRC6#s2", "quote": "项目总预算已追加至 9800 万元", "expect_reject": true}
+{"id": "fab-07", "kind": "fabrication", "case": "bi-delivery-risk", "seg": "SRC2#s6", "quote": "确保256万元回款节点按时触发", "expect_reject": false}
+{"id": "fab-08", "kind": "fabrication", "case": "rumor-vs-official", "seg": "SRC4#s1", "quote": "订单同比下降 50%", "expect_reject": false}
+{"id": "fab-09", "kind": "fabrication", "case": "demo-solid-state", "seg": "SRC2#s1", "quote": "界面阻抗问题十年内看不到根本解法", "expect_reject": false}
+{"id": "fab-10", "kind": "fabrication", "case": "demo-solid-state", "seg": "SRC2#s1", "quote": "界面阻抗已在量产线彻底解决", "expect_reject": true}

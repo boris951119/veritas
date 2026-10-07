@@ -18,6 +18,8 @@ Markdown）+ 研判日志 chain.jsonl。
 from __future__ import annotations
 
 import argparse
+import json
+import time
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -104,6 +106,17 @@ class RunDeps:
     coordinator: Coordinator | None = None
 
 
+def _write_progress(out_dir: Path | None, step: str, extra: dict | None = None) -> None:
+    """中间态落盘：评委喊停时盘上已有当前步骤（批式管线的可见性）。"""
+    if out_dir is None:
+        return
+    out_dir = Path(out_dir)
+    out_dir.mkdir(parents=True, exist_ok=True)
+    payload = {"step": step, **(extra or {})}
+    (out_dir / "progress.json").write_text(
+        json.dumps(payload, ensure_ascii=False), encoding="utf-8")
+
+
 def run_case(spec: RunSpec | None = None,
              deps: RunDeps | None = None) -> PipelineResult:
     """跑一次完整研判。deps 可注入桩（测试零 key）。"""
@@ -113,9 +126,11 @@ def run_case(spec: RunSpec | None = None,
     client = deps.client
     analysts = deps.analysts
     injected_client = client is not None
+    t0 = time.monotonic()
     dossier = spec.dossier or load_case(
         Path(spec.case_dir), fetch_links=settings.fetch_links_enabled)
     chain = HashChain()
+    _write_progress(spec.out_dir, "case_loaded")
     chain.append("case_loaded", "pipeline", {
         "question": dossier.question,
         "n_sources": len(dossier.sources),
@@ -223,6 +238,8 @@ def run_case(spec: RunSpec | None = None,
     dossier.evidences.sort(key=_ev_key)
     if results.get("_failures") and not majority_conclusions(dossier):
         raise RuntimeError(f"全部分析师研判失败: {results['_failures']}")
+    _write_progress(spec.out_dir, "panel_done",
+                    {"n_conclusions": len(dossier.conclusions)})
 
     # 2) 引文机械核对（协同段之前：坏证据不进归并与仲裁）
     rejected = _reject_failed_citations(dossier, chain)
@@ -281,15 +298,29 @@ def run_case(spec: RunSpec | None = None,
         "n_open_issues": len(synthesis.get("open_issues") or []),
         "gate_notes": synthesis.get("gate_notes") or [],
     })
-    chain.append("report_finalized", "pipeline", {"question": dossier.question})
+    n_calls = len(getattr(client, "call_log", []) or [])
+    dossier.accounting = {
+        "elapsed_s": round(time.monotonic() - t0, 1),
+        "tokens": int(getattr(client, "total_tokens_used", 0) or 0),
+        "n_calls": n_calls,
+        "budget": guard.summary() if guard else "",
+        "confidence_note": "规则融合分（强度×覆盖×一致性），不是命中率",
+    }
+    chain.append("report_finalized", "pipeline", {
+        "question": dossier.question, **dossier.accounting,
+    })
+    _write_progress(spec.out_dir, "done", dossier.accounting)
 
     result = PipelineResult(dossier=dossier, chain=chain, rejected=rejected)
 
     if spec.out_dir is not None:
+        from app.core.pii import mask_pii
+
         out_dir = Path(spec.out_dir)
         out_dir.mkdir(parents=True, exist_ok=True)
         dossier.to_json(out_dir / "report.json")
-        (out_dir / "report.md").write_text(result.report_md, encoding="utf-8")
+        (out_dir / "report.md").write_text(
+            mask_pii(result.report_md), encoding="utf-8")
         chain.to_jsonl(out_dir / "chain.jsonl")
         result.out_dir = out_dir
     return result
@@ -301,8 +332,9 @@ def run_case(spec: RunSpec | None = None,
 def _reject_failed_citations(dossier: Dossier, chain: HashChain) -> list[dict]:
     """引文打回：不合格证据移除并留痕，返回打回清单。
 
-    证据被全部打回的结论一并移出案卷（不进归并与报告）——零证据结论
-    留在主表只会展示 0 置信度空壳；打回明细在本清单与 chain 中可查。"""
+    证据被全部打回的结论改为 status=insufficient 留在案卷（不进归并
+    与主表置信度）——评委要看「敢报证据不足」，不得从主表蒸发。打回
+    明细在本清单与 chain 中可查。"""
     failures = audit_dossier(dossier)
     rejected: list[dict] = []
     for f in failures:
@@ -314,9 +346,14 @@ def _reject_failed_citations(dossier: Dossier, chain: HashChain) -> list[dict]:
             "problems": f.problems,
         })
         dossier.remove_evidence(f.evidence_id)
-    empties = [c for c in dossier.conclusions if not dossier.evidences_of(c.id)]
+    empties = [c for c in dossier.conclusions if not dossier.evidences_of(c.id)
+               and c.status != "merged"]
     for con in empties:
-        dossier.conclusions.remove(con)
+        con.status = "insufficient"
+        if "资料不足" not in (con.statement or ""):
+            con.statement = f"资料不足：{con.statement}" if con.statement \
+                else "资料不足，无法形成可核验结论"
+        con.confidence = 0.0
     chain.append("citation_audit", "pipeline", {
         "n_verified": sum(1 for e in dossier.evidences if e.verified),
         "n_rejected": len(rejected),
@@ -361,7 +398,10 @@ def _run_collaboration(dossier: Dossier, ctx: CollabCtx) -> None:
                 "pair": pair.to_dict(), "problems": problems or {"reason": "仲裁失败"}})
         else:
             chain.append("conflict_resolved", "coordinator", {
-                "pair_id": pair.id, "winner": pair.resolution.winner_id})
+                "pair_id": pair.id,
+                "winner": pair.resolution.winner_id,
+                "method": pair.resolution.method,
+            })
 
 
 def render_report_md(dossier: Dossier, chain: HashChain, rejected: list[dict]) -> str:
@@ -378,6 +418,16 @@ def render_report_md(dossier: Dossier, chain: HashChain, rejected: list[dict]) -
         f"**资料**：{len(dossier.sources)} 份信源 / "
         f"{sum(len(s.segments) for s in dossier.sources)} 个段落",
         "",
+    ]
+    acc = dossier.accounting or {}
+    if acc:
+        lines += [
+            f"**本次研判**：{acc.get('elapsed_s', '-')} 秒 · "
+            f"{acc.get('n_calls', 0)} 次模型调用 · {acc.get('tokens', 0)} token"
+            f"（{acc.get('confidence_note') or '规则分，不是命中率'}）",
+            "",
+        ]
+    lines += [
         "## 结论",
         "",
     ]
@@ -391,6 +441,14 @@ def render_report_md(dossier: Dossier, chain: HashChain, rejected: list[dict]) -
         lines.append(f"- 置信度：**{con.confidence:.2f}**（{con.confidence_parts}）")
         lines.append(f"- 研判方：{'、'.join(con.author_names()) or 'N/A'}")
         _render_evidence_table(lines, dossier, con)
+        lines.append("")
+
+    insuff = [c for c in dossier.conclusions if c.status == "insufficient"]
+    if insuff:
+        lines += ["## 证据不足（未进入主表）", ""]
+        for con in insuff:
+            lines.append(f"- {con.statement}（研判方："
+                         f"{'、'.join(con.author_names()) or 'N/A'}）")
         lines.append("")
 
     _render_question_preflight(lines, dossier)
@@ -436,6 +494,11 @@ _KIND_LABEL = {
     "near_dup": "疑似同源转述",
     "question": "议题表述待聚焦",
     "premise": "议题前提未覆盖",
+    "percent_no_base": "涨跌百分比未见基数",
+    "unit_mismatch": "人民币与美元口径混用",
+    "source_unverified": "信源出处未核验",
+    "level_consistency": "证据等级与信源类型不符",
+    "causation_support": "因果标注缺乏机制词",
 }
 
 
@@ -571,7 +634,14 @@ def _render_conflicts_section(lines: list[str], dossier: Dossier) -> None:
             winner = res.get("winner_id")
             winner_text = ("未决（tie，双方证据势均力敌）" if winner == "tie"
                            else f"`{winner}` {dossier.statement_of(winner)}")
+            method = res.get("method") or "arbitration"
+            method_cn = {
+                "evidence_weight": "程序按证据强度否决票数",
+                "tie": "证据势均力敌（未决）",
+                "arbitration": "仲裁",
+            }.get(method, method)
             pair_lines += [f"- **裁决**：{winner_text}",
+                           f"- 裁决方式：{method_cn}",
                            f"- 理由：{res.get('rationale', '')}",
                            f"- 证据强度对比：{res.get('evidence_weight')}"]
             rebuts = res.get("rebuts") or {}

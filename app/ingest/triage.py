@@ -28,6 +28,7 @@ ROUTE_LABEL: dict[str, str] = {
     "image_transcoded": "图片转写",
     "empty": "空文件",
     "invalid_parse": "解析失败",
+    "unsupported_format": "格式暂不支持",
     # 派生路由（零相关/重复在渲染期出现，同表统一标签）
     "zero": "零相关排除",
     "dup": "重复排除",
@@ -39,5 +40,5 @@ ROUTE_ORDER: dict[str, int] = {
     "archive_expanded": 3, "promoted_low": 4,
     "links_disclosed": 5, "image_disclosed": 6,
     "zero": 7, "dup": 8, "empty": 9,
-    "invalid_parse": 10, "archive_unsupported": 11,
+    "invalid_parse": 10, "archive_unsupported": 11, "unsupported_format": 12,
 }

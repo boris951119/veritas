@@ -97,6 +97,38 @@ def read_pdf(path: Path) -> tuple[str, str]:
     return title, "\n\n".join(pages)
 
 
+def _zip_xml_text(path: Path, inner_prefix: str) -> str:
+    """Office Open XML（docx/xlsx/pptx 本质是 zip）抽标签间文字。"""
+    import re
+    import zipfile
+    from html import unescape
+
+    tag = re.compile(r"<[^>]+>")
+    chunks: list[str] = []
+    with zipfile.ZipFile(path) as zf:
+        for name in zf.namelist():
+            if not name.startswith(inner_prefix) or not name.endswith(".xml"):
+                continue
+            raw = zf.read(name).decode("utf-8", errors="replace")
+            text = unescape(tag.sub(" ", raw))
+            text = re.sub(r"\s+", " ", text).strip()
+            if text:
+                chunks.append(text)
+    return "\n".join(chunks)
+
+
+def read_docx(path: Path) -> tuple[str, str]:
+    return path.stem, _zip_xml_text(path, "word/")
+
+
+def read_xlsx(path: Path) -> tuple[str, str]:
+    return path.stem, _zip_xml_text(path, "xl/")
+
+
+def read_pptx(path: Path) -> tuple[str, str]:
+    return path.stem, _zip_xml_text(path, "ppt/slides/")
+
+
 READERS = {
     ".txt": read_txt,
     ".md": read_markdown,
@@ -104,7 +136,14 @@ READERS = {
     ".html": read_html,
     ".htm": read_html,
     ".pdf": read_pdf,
+    ".docx": read_docx,
+    ".xlsx": read_xlsx,
+    ".xlsm": read_xlsx,
+    ".pptx": read_pptx,
 }
+
+# 老二进制办公格式：不能当纯文本读，由装载层记「不支持」
+UNSUPPORTED_EXTS = {".doc", ".xls", ".ppt", ".rtf", ".pages", ".numbers"}
 
 
 def read_any(path: Path) -> tuple[str, str]:

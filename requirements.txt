@@ -1,7 +1,7 @@
 # veritas 运行/开发依赖
 pyyaml>=6.0          # manifest / 案例 YAML
 pytest>=8.0          # 测试
-fastapi>=0.110       # 可视化工作台 API
+python-multipart>=0.0.9  # 工作台添加文件夹上传
 uvicorn>=0.29        # 工作台服务
 
 # 可选：

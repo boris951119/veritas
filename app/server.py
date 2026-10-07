@@ -16,13 +16,15 @@ from __future__ import annotations
 
 import argparse
 import copy
+import json
 import shutil
 from pathlib import Path
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 
+from app.agents.chair import refresh_synthesis_after_human
 from app.core.audit import audit_all, summarize
 from app.core.confidence import recompute_all
 from app.core.evidence import Dossier
@@ -54,6 +56,101 @@ def _find_out_dir(cases_root: Path | None, case: str) -> Path:
     raise HTTPException(404, f"案例 {case} 无研判产物（先跑 pipeline 或 demo_offline）")
 
 
+def _safe_out_dir(cases_root: Path | None, case: str,
+                  out: str | None = None) -> Path:
+    """只允许 out / out_offline / history/<id>，拒绝路径穿越。"""
+    if not out:
+        return _find_out_dir(cases_root, case)
+    base = (_cases_root(cases_root) / case).resolve()
+    if not base.is_dir():
+        raise HTTPException(404, f"案例不存在: {case}")
+    rel = str(out).replace("\\", "/").strip("/")
+    parts = [p for p in rel.split("/") if p]
+    if (not parts or any(p in (".", "..") for p in parts)
+            or parts[0] not in ("out", "out_offline", "history")):
+        raise HTTPException(400, "非法产物路径")
+    if parts[0] == "history":
+        if len(parts) != 2:
+            raise HTTPException(400, "非法产物路径")
+    elif len(parts) != 1:
+        raise HTTPException(400, "非法产物路径")
+    path = (base / "/".join(parts)).resolve()
+    try:
+        path.relative_to(base)
+    except ValueError as exc:
+        raise HTTPException(400, "非法产物路径") from exc
+    if not (path / "report.json").is_file():
+        raise HTTPException(404, "该记录没有报告")
+    return path
+
+
+def _peek_question(report: Path) -> str:
+    try:
+        data = json.loads(report.read_text(encoding="utf-8"))
+        return str(data.get("question") or "")
+    except (OSError, json.JSONDecodeError, TypeError):
+        return ""
+
+
+def _list_history(cases_root: Path | None) -> dict:
+    from app.workbench_run import case_question
+
+    examples = []
+    runs = []
+    root = _cases_root(cases_root)
+    if not root.is_dir():
+        return {"examples": examples, "runs": runs}
+    for d in sorted(root.iterdir()):
+        if not d.is_dir() or d.name.startswith("."):
+            continue
+        if not (d / "manifest.yaml").is_file():
+            continue
+        latest = ""
+        for sub in ("out", "out_offline"):
+            if (d / sub / "report.json").is_file():
+                latest = sub
+                break
+        examples.append({
+            "name": d.name,
+            "out": latest,
+            "has_result": bool(latest),
+            "question": case_question(d),
+            "n_files": sum(1 for p in d.iterdir()
+                           if p.is_file() and p.name != "manifest.yaml"),
+        })
+        hist = d / "history"
+        if not hist.is_dir():
+            continue
+        for slot in hist.iterdir():
+            report = slot / "report.json"
+            if not slot.is_dir() or not report.is_file():
+                continue
+            runs.append({
+                "case": d.name,
+                "out": f"history/{slot.name}",
+                "id": slot.name,
+                "question": _peek_question(report),
+                "mtime": report.stat().st_mtime,
+            })
+    runs.sort(key=lambda r: r["mtime"], reverse=True)
+    return {"examples": examples, "runs": runs}
+
+
+def _ingest_payload(case_dir: Path) -> dict:
+    from app.ingest.case_loader import load_case
+    from app.ingest.triage import ROUTE_LABEL
+
+    d = load_case(case_dir)
+    return {
+        "case": case_dir.name,
+        "question": d.question,
+        "n_sources": len(d.sources),
+        "n_segments": sum(len(s.segments) for s in d.sources),
+        "triage": [{**r, "label": ROUTE_LABEL.get(r.get("route"), r.get("route"))}
+                   for r in d.triage],
+    }
+
+
 def _load_pair(out_dir: Path) -> tuple[Dossier, HashChain]:
     dossier = Dossier.from_json(out_dir / "report.json")
     chain_path = out_dir / "chain.jsonl"
@@ -78,6 +175,11 @@ def _dossier_payload(out_dir: Path, clearance: str = "confidential") -> dict:
         "dossier": view.to_dict(),
         "audit": {"flags": flags, **summarize(flags),
                   "skills": skill_status(view)},
+        "accounting": dict(dossier.accounting or {}),
+        "timeline": [
+            {"index": r.index, "ts": r.ts, "actor": r.actor, "event": r.event}
+            for r in chain.records
+        ],
         "chain": {
             "n_records": len(chain.records),
             "ok": verify.ok,
@@ -108,6 +210,7 @@ def _mutate(cases_root: Path | None, case: str, event: str,
     _ensure_pristine(out_dir)
     extra = mutate_fn(dossier)
     recompute_all(dossier, n_panel=max(1, len(dossier.panel)))
+    refresh_synthesis_after_human(dossier)
     chain.append(event, "human", {**payload, **(extra or {})})
     dossier.to_json(out_dir / "report.json")
     chain.to_jsonl(out_dir / "chain.jsonl")
@@ -116,6 +219,11 @@ def _mutate(cases_root: Path | None, case: str, event: str,
         result["op"] = extra
     return result
 
+
+
+class RunReq(BaseModel):
+    case: str
+    question: str = ""
 
 
 class EvidenceWeightReq(BaseModel):
@@ -157,6 +265,20 @@ class CaseResetReq(BaseModel):
     case: str
 
 
+class CaseRenameReq(BaseModel):
+    case: str
+    title: str
+
+
+class LlmSettingsReq(BaseModel):
+    api_key: str | None = None  # None=不改；""=清除
+    base_url: str | None = None
+    model: str | None = None  # 兼容旧字段；可与 models 二选一
+    models: list[str] | str | None = None  # 多模型：列表或换行/逗号文本
+    hetero: bool | None = None  # 多模型时是否按角色轮转
+    force_demo: bool | None = None
+
+
 def create_app(cases_root: Path | None = None) -> FastAPI:
     app = FastAPI(title="veritas 工作台", docs_url=None, redoc_url=None)
 
@@ -166,30 +288,191 @@ def create_app(cases_root: Path | None = None) -> FastAPI:
 
     @app.get("/api/cases")
     def list_cases() -> dict:
+        from app.ingest.case_loader import _collect_files
+        from app.llm.yaml_robust import load_yaml_robust
+        from app.workbench_run import case_question
+
         cases = []
-        for d in sorted(_cases_root(cases_root).iterdir()):
-            if not d.is_dir():
+        root = _cases_root(cases_root)
+        if not root.is_dir():
+            return {"cases": []}
+        for d in sorted(root.iterdir()):
+            if not d.is_dir() or d.name.startswith("."):
                 continue
+            if not (d / "manifest.yaml").is_file():
+                continue
+            out_dir = ""
             for sub in ("out", "out_offline"):
                 if (d / sub / "report.json").is_file():
-                    cases.append({"name": d.name, "out_dir": sub})
+                    out_dir = sub
                     break
+            n_files = len(_collect_files(d))
+            man = load_yaml_robust(d / "manifest.yaml") or {}
+            imported = bool(man.get("imported")) or d.name.startswith("user-")
+            cases.append({
+                "name": d.name,
+                "out_dir": out_dir or "out_offline",
+                "has_result": bool(out_dir),
+                "question": case_question(d),
+                "n_files": n_files,
+                "imported": imported,
+                "title": str(man.get("title") or d.name),
+            })
         return {"cases": cases}
 
+    @app.post("/api/run")
+    def run_now(req: RunReq) -> dict:
+        """工作台主按钮：选好议题后立刻研判（演示桩，秒级，不耗密钥）。"""
+        from app.workbench_run import run_workbench_case
+
+        case_dir = _cases_root(cases_root) / req.case
+        if not case_dir.is_dir() or not (case_dir / "manifest.yaml").is_file():
+            raise HTTPException(404, "找不到这套资料")
+        from app.ingest.case_loader import load_case
+        preview = load_case(case_dir)
+        if not preview.sources:
+            raise HTTPException(
+                422, "分诊后没有可研判的文本。图片和老版 Word 不会当正文入卷，"
+                     "请补充 PDF、docx、xlsx 或文本后再研判。")
+        from app.workbench_llm import llm_status
+
+        out_dir = run_workbench_case(case_dir, question=req.question)
+        payload = _dossier_payload(out_dir)
+        payload["workbench_mode"] = llm_status()["mode"]
+        return payload
+
+    @app.get("/api/ingest")
+    def ingest_preview(case: str) -> dict:
+        """添加资料后立刻看分诊账本（零 LLM）：每份文件怎么入卷、为何跳过。"""
+        case_dir = _cases_root(cases_root) / case
+        if not case_dir.is_dir() or not (case_dir / "manifest.yaml").is_file():
+            raise HTTPException(404, "找不到这套资料")
+        return _ingest_payload(case_dir)
+
+    @app.post("/api/case/import")
+    async def import_case(
+        files: list[UploadFile] = File(...),
+        question: str = Form(""),
+    ) -> dict:
+        """工作台添加文件夹/散文件：落盘后立刻分诊切片，不另生成「整理包」。"""
+        from app.ingest.import_case import CaseImportError, write_imported_case
+
+        blobs: list[tuple[str, bytes]] = []
+        for uf in files:
+            blobs.append((uf.filename or "unnamed", await uf.read()))
+        try:
+            meta = write_imported_case(_cases_root(cases_root), blobs, question)
+        except CaseImportError as exc:
+            raise HTTPException(422, str(exc)) from exc
+        payload = _ingest_payload(_cases_root(cases_root) / meta["case"])
+        return {**meta, **payload}
+
+    @app.get("/api/llm")
+    def get_llm_settings() -> dict:
+        """工作台模型接入状态（key 只回掩码）。"""
+        from app.workbench_llm import apply_to_environ, llm_status
+
+        apply_to_environ()
+        return llm_status()
+
+    @app.post("/api/llm")
+    def save_llm_settings_api(req: LlmSettingsReq) -> dict:
+        """页面接入 API Key / 网关 / 模型；落盘本机且不进 git。"""
+        from app.workbench_llm import save_llm_settings
+
+        return save_llm_settings(
+            api_key=req.api_key,
+            base_url=req.base_url,
+            model=req.model,
+            models=req.models,
+            hetero=req.hetero,
+            force_demo=req.force_demo,
+        )
+
+    @app.post("/api/llm/exit-keep")
+    def llm_exit_keep() -> dict:
+        """退出时「确定」：保留当前 API Key，下次启动无需再填。"""
+        from app.workbench_llm import keep_session_key
+
+        return keep_session_key()
+
+    @app.post("/api/llm/exit-discard")
+    def llm_exit_discard() -> dict:
+        """退出时「不保存」：删除当次使用的 API Key。"""
+        from app.workbench_llm import discard_session_key
+
+        return discard_session_key()
+
+    @app.post("/api/case/rename")
+    def rename_case(req: CaseRenameReq) -> dict:
+        """改案件显示名（只改 manifest.title，不改目录名）。"""
+        import yaml
+        from app.llm.yaml_robust import load_yaml_robust
+
+        title = (req.title or "").strip()
+        if not title:
+            raise HTTPException(422, "案件名不能为空")
+        if len(title) > 80:
+            raise HTTPException(422, "案件名太长")
+        case_dir = _cases_root(cases_root) / req.case
+        man_path = case_dir / "manifest.yaml"
+        if not case_dir.is_dir() or not man_path.is_file():
+            raise HTTPException(404, "找不到这套资料")
+        man = dict(load_yaml_robust(man_path) or {})
+        man["title"] = title
+        man_path.write_text(
+            yaml.safe_dump(man, allow_unicode=True, sort_keys=False),
+            encoding="utf-8",
+        )
+        return {"case": req.case, "title": title}
+
+    @app.get("/api/history")
+    def get_history() -> dict:
+        """示例案卷 + 工作台做过的跑次（history/ 快照）。"""
+        return _list_history(cases_root)
+
     @app.get("/api/dossier")
-    def get_dossier(case: str, clearance: str = "confidential") -> dict:
+    def get_dossier(case: str, clearance: str = "confidential",
+                    out: str | None = None) -> dict:
         """权限视图：clearance ∈ public/internal/confidential（默认本机
-        操作员全量）。过滤只发生在展示视图，链与原始案卷全量保真。"""
-        return _dossier_payload(_find_out_dir(cases_root, case), clearance)
+        操作员全量）。过滤只发生在展示视图，链与原始案卷全量保真。
+        out 可选：out / out_offline / history/<id>。"""
+        return _dossier_payload(_safe_out_dir(cases_root, case, out), clearance)
+
+    @app.get("/api/progress")
+    def get_progress(case: str, out: str | None = None) -> dict:
+        """当前/最后步骤（跑到一半评委喊停可看）。"""
+        out_dir = _safe_out_dir(cases_root, case, out)
+        path = out_dir / "progress.json"
+        if not path.is_file():
+            return {"step": "done" if (out_dir / "report.json").is_file()
+                    else "unknown"}
+        return json.loads(path.read_text(encoding="utf-8"))
+
+    @app.get("/api/case/diff")
+    def case_diff(case: str, against: str = "out_offline") -> dict:
+        """两份产物结论对照（增量重跑后的 diff）。against 为同案例子目录名。"""
+        from app.core.dossier_diff import diff_conclusions
+
+        base = _cases_root(cases_root) / case
+        current = _find_out_dir(cases_root, case)
+        other = base / against
+        if not (other / "report.json").is_file():
+            raise HTTPException(404, f"对照产物不存在: {against}")
+        old = Dossier.from_json(other / "report.json")
+        new = Dossier.from_json(current / "report.json")
+        return {"case": case, "current": current.name, "against": against,
+                **diff_conclusions(old, new)}
 
     @app.get("/api/reasoning_graph")
     def get_reasoning_graph(case: str,
-                            clearance: str = "confidential") -> dict:
+                            clearance: str = "confidential",
+                            out: str | None = None) -> dict:
         """推理轨迹图（与 dossier 同一权限口径：先 redact 再建图——
         涉密结论在图中显示为红章占位节点，绝不泄露原文）。"""
         from app.core.view_filter import redact_dossier
 
-        out_dir = _find_out_dir(cases_root, case)
+        out_dir = _safe_out_dir(cases_root, case, out)
         dossier, _ = _load_pair(out_dir)
         view, _stats = redact_dossier(dossier, clearance)
         return build_reasoning_graph(view)

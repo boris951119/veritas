@@ -4,9 +4,10 @@
 归并/冲突/质证/仲裁桩从提示文本动态解析结论 id，引文从案例文本动态
 摘取——案例文案微调不会打桩。产物写到 out_offline/，与在线产物同构。
 
-覆盖两个案例：
+覆盖三个案例：
 - demo-solid-state（固态电池科研情报）
 - bi-delivery-risk（数据中台交付风险企业情报）
+- rumor-vs-official（多数派错：自媒体票数 vs 官方通报，程序按证据强度翻案）
 
 注意：冲突桩必须匹配【归并后】的组代表语句（「悲观方向结论」等），
 因此正则里要含「悲观/进展」；仅匹配原始结论措辞会让冲突检测永远为空
@@ -112,7 +113,7 @@ class OfflineStubClient:
     def _lines(self, user: str) -> list[tuple[str, str]]:
         out = []
         for line in user.split("\n"):
-            m = re.match(r"\[(CON-[0-9a-f]+)\]（([^）]*)）(.+)", line)
+            m = re.search(r"\[(CON-[0-9a-f]+)\]（([^）]*)）(.+)", line)
             if m:
                 out.append((m.group(1), m.group(3)))
         return out
@@ -268,6 +269,60 @@ class DeliveryRiskStubClient(OfflineStubClient):
                             "技术推进": technologist}
 
 
+class RumorVsOfficialStubClient(OfflineStubClient):
+    """多数派错案例：两条自媒体 vs 一份官方通报。离线桩让 LLM 把票判给
+    谣言侧，由程序证据强度否决票数翻案。"""
+
+    TOPIC = "是否因资金链断裂停工"
+    CONFLICT_DESC = "自媒体多数转述 vs 官方核查通报"
+    RATIONALE = "（桩故意把票判给谣言侧，用以演示程序否决票数）"
+    PESSIM_RE = r"停工|断裂|遣散|悲观"
+    PROG_RE = r"不实|按计划|运转|进展"
+    POLARITY = {
+        "该公司已因资金链断裂全面停工": "悲观",
+        "所谓资金链断裂停工为不实传闻，产线仍按计划运转": "进展",
+    }
+
+    def _conflict_reply(self, user: str) -> str:
+        ids = list(dict.fromkeys(re.findall(r"\[(CON-[0-9a-f]+)\]", user)))
+        if len(ids) < 2:
+            return json.dumps({"conflicts": []}, ensure_ascii=False)
+        return json.dumps({"conflicts": [{
+            "a": ids[0], "b": ids[1], "topic": self.TOPIC,
+            "description": self.CONFLICT_DESC,
+        }]}, ensure_ascii=False)
+
+    def _arbitrate_reply(self, user: str) -> str:
+        lines = self._lines(user)
+        rumor = next((cid for cid, s in lines
+                      if re.search(r"悲观|资金链断裂全面停工", s)
+                      and "不实" not in s), None)
+        winner = rumor or (lines[0][0] if lines else "tie")
+        return json.dumps({"winner": winner, "rationale": self.RATIONALE},
+                          ensure_ascii=False)
+
+    def _panel_payloads(self):
+        q_rumor, seg_rumor = _quote_of(self.dossier, "资金链断裂全面停工")
+        q_off, seg_off = _quote_of(self.dossier, "传闻不实")
+
+        def payload(conclusions):
+            return json.dumps({"conclusions": conclusions}, ensure_ascii=False)
+
+        rumor = payload([
+            {"statement": "该公司已因资金链断裂全面停工",
+             "evidence": [{"quote": q_rumor, "segment_id": seg_rumor,
+                           "relation": "correlation", "level": "D",
+                           "note": "自媒体转述"}]},
+        ])
+        official = payload([
+            {"statement": "所谓资金链断裂停工为不实传闻，产线仍按计划运转",
+             "evidence": [{"quote": q_off, "segment_id": seg_off,
+                           "relation": "correlation", "level": "B",
+                           "note": "监管核查通报"}]},
+        ])
+        return rumor, {"红队": rumor, "怀疑": rumor, "技术推进": official}
+
+
 def _resp(content: str):
     from types import SimpleNamespace
     return SimpleNamespace(content=content)
@@ -289,6 +344,8 @@ def main() -> int:
     _run_offline(_REPO / "cases" / "demo-solid-state", BatteryStubClient)
     print("\n" + "=" * 60 + "\n")
     _run_offline(_REPO / "cases" / "bi-delivery-risk", DeliveryRiskStubClient)
+    print("\n" + "=" * 60 + "\n")
+    _run_offline(_REPO / "cases" / "rumor-vs-official", RumorVsOfficialStubClient)
     return 0
 
 
