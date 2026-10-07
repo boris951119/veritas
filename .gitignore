@@ -33,3 +33,4 @@ cases/*/.fetched/
 cases/*/out_hetero_*/
 cases/*/history/
 cases/user-*/
+eval/corpus/*/pdf/

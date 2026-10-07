@@ -753,9 +753,11 @@ progress.json 是批式落盘不是 SSE，评委喊停看到的是「上一完�
 ## 19. 环境事实（审查时需要知道的）
 
 - 网关：阿里云百炼 token-plan 专属端点
-  `token-plan.cn-beijing.maas.aliyuncs.com/compatible-mode/v1`，
-  当前 plan **只有 deepseek-v4-pro 可用**（flash 被拒）；
-  key 在 `.env`（gitignore），勿入仓库/日志。
+  `token-plan.cn-beijing.maas.aliyuncs.com/compatible-mode/v1`；
+  **10 模型全可用并已实测**（qwen3.8-max/flash、qwen3.7-plus/max、
+  qwen3.6-flash、deepseek-v4.1-flash/pro、deepseek-v4-flash-0731、
+  glm-5.3/5.2），config.json 全量登记；key 在 `.env`（gitignore），
+  勿入仓库/日志。
 - 配置：`config.json`（models/temperature 0.2/超时）；环境开关
   `VERITAS_SKILLS` / `VERITAS_PROBE` / `VERITAS_FETCH_LINKS` /
   `VERITAS_SKILLS_ONLY`（A/B 消融白名单）。
@@ -764,3 +766,20 @@ progress.json 是批式落盘不是 SSE，评委喊停看到的是「上一完�
   现场断网演示用它。
 - A/B 产物在 `cases/*/out_ab_*`（gitignore）；协议与全部实测数据在
   `docs/ab-protocol.md` §6。
+
+
+## 20. 妙想金融数据接入（B4 ground truth 源，本批补记）
+
+用户接入东方财富「妙想」金融技能包（6 个 skill：金融数据/资讯搜索/
+智能选股/自选股/模拟组合/海报）。安全审读通过：全部网络调用仅指向
+官方域 mkapi2.dfcfs.com，无外传/危险命令；6 个 skill 装入
+`~/.zcode/skills/`，MX_APIKEY 写 `~/.zshrc`（永久）+ veritas/.env。
+
+**实测**：mx-data 结构化返回南山铝业 2025 年报营收 346.2 亿/归母
+47.36 亿——**B4 标注的 ground truth 交叉验证源成立**（数字类问题
+不再纯人工核对，官方数据库直接对账）。其余 5 skill（选股/自选/
+组合/海报）面向个人投资场景，与研判主线无关，装而不用。
+
+**边界**：妙想只作为评测标注的外部数据源，不接入研判管线（智能体
+无工具原则不变）；pandas 依赖随 skill 进入 veritas venv（requirements
+未加——技能自带脚本非产品依赖，如需固化再议）。
