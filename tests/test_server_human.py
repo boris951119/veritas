@@ -71,6 +71,10 @@ def test_http_edit_conclusion_and_chain(case_app):
     body = r.json()
     updated = next(c for c in body["dossier"]["conclusions"] if c["id"] == cid)
     assert updated["statement"] == "人工改写结论"
+    synth = body["dossier"]["synthesis"]
+    blob = synth["headline"] + "".join(p["gloss"] for p in synth.get("points") or [])
+    assert "人工改写结论" in blob
+    assert any("人工修改" in n for n in (synth.get("gate_notes") or []))
     chain_path = None
     # 再读 dossier 确认；chain 事件通过再次校验接口旁证：落盘后 verify 仍 ok
     r2 = client.get("/api/dossier", params={"case": case})

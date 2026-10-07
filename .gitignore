@@ -11,6 +11,7 @@ venv/
 # 环境与密钥
 .env
 *.key
+.workbench_llm.json
 
 # 数据与本地产物
 data/
@@ -30,3 +31,5 @@ dist/
 cases/*/out_ab_*/
 cases/*/.fetched/
 cases/*/out_hetero_*/
+cases/*/history/
+cases/user-*/

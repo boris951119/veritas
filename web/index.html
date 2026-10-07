@@ -3,122 +3,346 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>veritas · 多智能体研判工作台</title>
+<title>veritas · 研判工作台</title>
 <style>
 :root{
-  --bg:#0d1117; --panel:#161b22; --panel2:#1c2330; --line:#2d3646;
-  --text:#e6edf3; --dim:#8b97a6; --accent:#4f8cff; --good:#3fb950;
-  --warn:#d29922; --bad:#f85149; --chip:#21293a;
+  --bg:#05080f; --panel:rgba(12,18,32,.92); --panel2:#121a2c; --line:rgba(88,176,255,.16);
+  --text:#eaf2ff; --dim:#8aa0b8; --accent:#3dd6ff; --gold:#d4b15a;
+  --good:#3ee0a2; --warn:#f0b429; --bad:#ff5d6c; --chip:#182236;
 }
 *{box-sizing:border-box;margin:0;padding:0}
-body{background:var(--bg);color:var(--text);font:14px/1.6 -apple-system,"PingFang SC","Microsoft YaHei",sans-serif;padding-bottom:60px}
-.topbar{position:sticky;top:0;z-index:9;display:flex;align-items:center;gap:14px;background:var(--panel);border-bottom:1px solid var(--line);padding:12px 20px}
-.logo{font-weight:700;font-size:16px;letter-spacing:.5px}
-.logo b{color:var(--accent)}
-select,button{background:var(--panel2);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:7px 12px;font-size:13px;cursor:pointer}
-button:hover{border-color:var(--accent)}
-button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
-.pill{padding:4px 10px;border-radius:99px;font-size:12px;border:1px solid var(--line)}
-.pill.ok{color:var(--good);border-color:var(--good)}
-.pill.bad{color:var(--bad);border-color:var(--bad)}
-.wrap{max-width:1280px;margin:0 auto;padding:18px 20px}
-h2{font-size:15px;margin:26px 0 12px;color:var(--dim);font-weight:600;letter-spacing:.5px}
+html,body{height:100%}
+body{
+  background:#09090b;color:var(--text);
+  font:13px/1.55 "PingFang SC","Hiragino Sans GB","Microsoft YaHei","Segoe UI",sans-serif;
+  display:flex;flex-direction:column;overflow:hidden;
+}
+button,select,input{font-family:inherit}
+header{
+  display:flex;align-items:center;gap:14px;flex-shrink:0;
+  padding:12px 20px;background:#101013;border-bottom:1px solid var(--line);
+}
+.brand{display:flex;align-items:center;gap:10px}
+.mark{
+  width:28px;height:28px;border-radius:8px;
+  background:linear-gradient(135deg,#3dd6ff,#1a6bff 55%,#d4b15a);
+}
+.logo{font-weight:700;font-size:18px;letter-spacing:-.02em}
+.logo b{color:var(--accent);font-weight:700}
+.tag{font-size:12px;color:var(--dim)}
+.conn{margin-left:auto;font-size:12px;padding:3px 10px;border:1px solid transparent;border-radius:999px;color:var(--dim);background:transparent}
+.conn.ok,.conn.bad{border-color:var(--line)}
+.conn.ok{color:var(--good);border-color:var(--good)}
+.conn.bad{color:var(--bad);border-color:var(--bad)}
+.nav{display:flex;gap:4px;margin-left:12px}
+.nav button{background:transparent;color:var(--dim);padding:6px 12px}
+.nav button.on{color:#fff;border-color:var(--accent)}
+.addwrap{margin:8px 0}
+.addwrap > button{width:100%;padding:10px 12px}
+.casebar{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.casebar b{flex:1;color:#fff;font-size:13px}
+.casebar button{padding:4px 10px;font-size:12px}
+.demo-tools{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.demo-tools button{padding:6px 12px;font-size:12px}
+.mode-note{font-size:12px;color:var(--warn);margin:8px 0 0;line-height:1.5}
+.mode-note.live{color:var(--good)}
+.modal-bg{
+  position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:80;
+  display:flex;align-items:center;justify-content:center;padding:20px;
+}
+.modal{
+  width:min(440px,100%);background:#101013;border:1px solid var(--line);
+  border-radius:14px;padding:18px 20px;box-shadow:0 20px 60px rgba(0,0,0,.45);
+}
+.modal h3{font-size:16px;margin-bottom:6px}
+.modal .hint{margin:0 0 14px}
+.modal label{display:block;font-size:12px;color:var(--dim);margin:10px 0 4px}
+.modal input[type=text],.modal input[type=password],.modal textarea{
+  width:100%;background:#09090b;color:var(--text);border:1px solid var(--line);
+  border-radius:8px;padding:9px 12px;font:13px inherit;
+}
+.modal textarea{min-height:96px;resize:vertical;line-height:1.55}
+.modal input:focus,.modal textarea:focus{outline:none;border-color:var(--accent)}
+.modal .check{display:flex;align-items:center;gap:8px;margin-top:12px;font-size:13px;color:var(--dim)}
+.modal .assign{margin-top:12px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:#121a2c}
+.modal .assign .row{font-size:12px;color:var(--dim);margin:4px 0}
+.modal .assign .row b{color:#fff;font-weight:600}
+.modal .actions{display:flex;gap:8px;margin-top:16px;justify-content:flex-end;flex-wrap:wrap}
+.modal .actions button{width:auto;padding:8px 14px}
+.modal .actions .primary{width:auto;margin:0}
+.modal .actions .danger{border-color:var(--bad);color:var(--bad)}
+.triage-ok{border-left:3px solid var(--good)}
+.triage-skip{border-left:3px solid var(--warn)}
+.triage-bad{border-left:3px solid var(--bad)}
+#ingestBox{
+  min-height:88px;border:1px dashed var(--line);border-radius:10px;padding:10px;
+  transition:border-color .15s,background .15s;
+}
+#ingestBox.drag{border-color:var(--accent);background:rgba(61,214,255,.06)}
+#ingestBox .item{font-size:12px;padding:7px 8px;border:1px solid var(--line);border-radius:8px;margin-bottom:6px;background:#121a2c}
+#ingestBox .item b{color:#fff}
+details.fold{margin-top:10px;color:var(--dim)}
+details.fold summary{cursor:pointer;margin-bottom:8px;color:var(--dim)}
+header .ghost{margin-left:8px}
+select,button{
+  background:var(--panel2);color:var(--text);border:1px solid var(--line);
+  border-radius:8px;padding:8px 14px;font-size:13px;cursor:pointer;
+}
+button:hover{border-color:var(--accent);color:#fff}
+button.primary{
+  background:var(--accent);border-color:transparent;color:#041018;font-weight:700;
+  width:100%;padding:12px 16px;font-size:15px;margin-top:12px;
+}
+button.ghost{background:transparent}
+button:disabled{opacity:.55;cursor:wait}
+.workspace{
+  flex:1;display:grid;grid-template-columns:380px 1fr;gap:12px;
+  padding:12px 16px 16px;min-height:0;
+}
+#question{
+  width:100%;min-height:128px;flex:1;resize:none;
+  background:#09090b;color:var(--text);border:1px solid var(--line);
+  border-radius:8px;padding:10px 12px;font:14px/1.7 inherit;
+}
+#question:focus{outline:none;border-color:var(--accent)}
+.pick{max-height:38vh;overflow:auto;display:flex;flex-direction:column;gap:8px;flex:none}
+.left,.right-col{
+  background:#101013;border:1px solid var(--line);border-radius:12px;
+  padding:16px;min-height:0;display:flex;flex-direction:column;
+}
+.left h3,.right-col h3{font-size:12px;color:var(--dim);margin-bottom:10px;font-weight:600}
+.pick button{
+  text-align:left;width:100%;background:#121a2c;padding:12px;
+}
+.pick button.on{border-color:var(--accent);box-shadow:inset 3px 0 0 var(--accent)}
+.pick b{display:block;color:#fff;margin-bottom:4px}
+.pick span{color:var(--dim);font-size:12px;display:block}
+.hint{font-size:12px;color:var(--dim);line-height:1.6;margin-top:10px}
+.right-col{overflow:auto}
+.next{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px}
+.next button{text-align:left;padding:10px 12px;background:#121a2c}
+.next button b{display:block;color:#fff;margin-bottom:2px}
+.next button.on{border-color:var(--gold)}
+.tabs{display:flex;gap:6px;margin:12px 0}
+.tabs button{background:transparent;color:var(--dim)}
+.tabs button.active{color:#fff;border-color:var(--accent)}
+.placeholder{
+  flex:1;display:flex;align-items:center;justify-content:center;
+  color:var(--dim);text-align:center;padding:40px 24px;line-height:1.8;
+}
+.hidden{display:none !important}
+.hero h1{font-size:20px;font-weight:650;letter-spacing:.02em;max-width:52rem}
+.hero .meta{color:var(--dim);font-size:13px;margin-top:6px;margin-bottom:12px}
+@media (max-width:980px){
+  .workspace{grid-template-columns:1fr;overflow:auto}
+  .next{grid-template-columns:1fr}
+  .stage{flex-direction:column}
+  .link{display:none}
+}
+.pane{display:none}
+.pane.on{display:block}
+.sec{
+  background:var(--panel);border:1px solid var(--line);border-radius:14px;
+  padding:16px 18px;margin-bottom:14px;
+  box-shadow:0 12px 40px rgba(0,0,0,.22);
+}
+.sec h2{font-size:13px;color:var(--gold);letter-spacing:.14em;margin-bottom:10px;font-weight:650}
 .sub{color:var(--dim);font-size:12px}
-.row{display:flex;flex-direction:column;gap:10px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:12px}
+.row{display:flex;flex-direction:column;gap:10px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px}
 .stage{display:flex;align-items:flex-start;gap:0}
 .stage .lane{flex:1;min-width:0;display:flex;flex-direction:column;gap:8px}
 .link{width:34px;align-self:center;flex:none;border-top:2px dashed var(--line);position:relative}
 .link::after{content:"";position:absolute;right:-1px;top:-5px;border:4px solid transparent;border-left-color:var(--line)}
-.card{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:10px 12px;cursor:default}
+.card{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
 .card.click{cursor:pointer}
 .card.click:hover{border-color:var(--accent)}
-.card .who{color:var(--dim);font-size:11px;margin-top:2px}
+.who{color:var(--dim);font-size:12px;margin-top:4px}
 .conf{display:flex;align-items:center;gap:8px;margin-top:8px}
-.bar{flex:1;height:6px;border-radius:4px;background:#0a0e14;overflow:hidden}
+.bar{flex:1;height:6px;border-radius:4px;background:#070b14;overflow:hidden}
 .bar i{display:block;height:100%;border-radius:4px}
-.conf b{font-size:13px}
 .chips{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
 .chip{background:var(--chip);border-radius:6px;padding:2px 7px;font-size:11px;color:var(--dim)}
-.evquote{font-size:12.5px;border-left:3px solid var(--accent);padding-left:8px;color:#cdd9e5}
+.evquote{font-size:13px;border-left:3px solid var(--accent);padding-left:10px;color:#d7e6f5}
 .evops{display:flex;align-items:center;gap:6px;margin-top:8px;flex-wrap:wrap}
 .evops input[type=range]{width:90px;accent-color:var(--accent)}
-.evops .val{font-size:11px;color:var(--dim);width:26px}
-.mini{font-size:11px;padding:3px 8px;border-radius:6px}
+.evops .val{font-size:11px;color:var(--dim);width:28px}
+.mini{font-size:12px;padding:4px 10px;border-radius:7px}
 .mini.danger:hover{border-color:var(--bad);color:var(--bad)}
-.segtext{display:none;margin-top:6px;background:#0a0e14;border:1px dashed var(--line);border-radius:8px;padding:8px;font-size:12px;color:var(--dim)}
+.segtext{display:none;margin-top:6px;background:#070b14;border:1px dashed var(--line);border-radius:8px;padding:8px;font-size:12px;color:var(--dim)}
 .segtext.open{display:block}
-.src{border-left:3px solid var(--warn)}
+.src{border-left:3px solid var(--gold)}
 .src .cred{display:flex;align-items:center;gap:6px;margin-top:6px}
-.tag{font-size:10px;border-radius:5px;padding:1px 6px;border:1px solid var(--line);color:var(--dim)}
-.tag.A{color:var(--good);border-color:var(--good)}
-.tag.B{color:#58a6ff;border-color:#58a6ff}
-.tag.C{color:var(--warn);border-color:var(--warn)}
-.tag.D{color:var(--bad);border-color:var(--bad)}
-.sec{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:12px}
-.sec h3{font-size:13px;margin-bottom:8px}
-.pair{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:10px;margin-bottom:8px}
-.verdict{margin-top:6px;padding:8px;border-radius:8px;background:#12261a;border:1px solid #1f4630;font-size:12.5px}
+.tag{font-size:11px;border-radius:5px;padding:1px 6px;border:1px solid var(--line);color:var(--dim)}
+.tag.甲{color:var(--good);border-color:var(--good)}
+.tag.乙{color:#58a6ff;border-color:#58a6ff}
+.tag.丙{color:var(--warn);border-color:var(--warn)}
+.tag.丁{color:var(--bad);border-color:var(--bad)}
+.pair{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:8px}
+.verdict{margin-top:8px;padding:10px;border-radius:10px;background:#10261c;border:1px solid #1f4630;font-size:13px}
 .verdict.tie{background:#2a230d;border-color:#57491a}
 .kv{color:var(--dim);font-size:12px}
 .kv b{color:var(--text)}
-.dissent{border-left:3px solid var(--warn);padding:8px 12px;background:var(--panel2);border-radius:8px;margin-bottom:6px;font-size:13px}
-.rejected{color:var(--dim);font-size:12.5px;padding:6px 0;border-bottom:1px dashed var(--line)}
-.rejected code{color:var(--bad)}
-.flagitem{font-size:12.5px;padding:7px 10px;border-radius:8px;margin-bottom:6px;border:1px solid var(--line);background:var(--panel2)}
+.dissent{border-left:3px solid var(--warn);padding:10px 12px;background:var(--panel2);border-radius:10px;margin-bottom:8px}
+.rejected{color:var(--dim);font-size:13px;padding:8px 0;border-bottom:1px dashed var(--line)}
+.flagitem{font-size:13px;padding:9px 12px;border-radius:10px;margin-bottom:6px;border:1px solid var(--line);background:var(--panel2)}
 .flagitem.high{border-color:var(--bad);background:#2a1214}
 .flagitem.medium{border-color:var(--warn);background:#241d0d}
 .flagitem .tag{margin-right:6px}
 .flagitem .tag.high{color:var(--bad);border-color:var(--bad)}
 .flagitem .tag.medium{color:var(--warn);border-color:var(--warn)}
-.toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);background:var(--panel2);border:1px solid var(--accent);border-radius:10px;padding:10px 18px;font-size:13px;display:none;z-index:99;max-width:80vw}
-.empty{color:var(--dim);font-size:12.5px;padding:8px}
-.dissent-note{background:#231d2e;border:1px solid #3d3356;border-radius:8px;padding:6px 10px;margin-top:8px;font-size:12px;color:#c9b8f0}
-.graph{display:flex;flex-wrap:wrap;gap:8px;align-items:flex-start}
-.gnode{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:6px 10px;font-size:11px;max-width:180px}
-.gnode b{display:block;color:var(--dim);font-weight:600;margin-bottom:2px;text-transform:uppercase;font-size:10px}
-.gedges{margin-top:10px;font-size:11px;color:var(--dim);max-height:160px;overflow:auto}
-.gedges code{color:var(--accent)}
+.toast{
+  position:fixed;left:50%;bottom:26px;transform:translateX(-50%);
+  background:#121a2c;border:1px solid var(--accent);border-radius:12px;
+  padding:10px 18px;font-size:13px;display:none;z-index:99;max-width:80vw;
+}
+.empty{color:var(--dim);font-size:13px;padding:8px}
+.dissent-note{background:#1b1730;border:1px solid #3d3356;border-radius:8px;padding:6px 10px;margin-top:8px;font-size:12px;color:#c9b8f0}
+.graph{display:flex;flex-wrap:wrap;gap:8px}
+.gnode{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:8px 10px;font-size:12px;max-width:200px}
+.gnode b{display:block;color:var(--gold);font-weight:600;margin-bottom:2px;font-size:11px}
+.gedges{margin-top:10px;font-size:12px;color:var(--dim);max-height:220px;overflow:auto}
 .editrow{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;align-items:center}
-.editrow input[type=text]{flex:1;min-width:160px;background:#0a0e14;color:var(--text);border:1px solid var(--line);border-radius:6px;padding:5px 8px;font-size:12px}
+.editrow input[type=text]{
+  flex:1;min-width:160px;background:#070b14;color:var(--text);
+  border:1px solid var(--line);border-radius:8px;padding:6px 10px;font-size:13px;
+}
+.flow{display:none}
+@media (max-width:980px){
+  .workspace{grid-template-columns:1fr;overflow:auto}
+  .next{grid-template-columns:1fr}
+  .stage{flex-direction:column}
+  .link{display:none}
+}
 </style>
 </head>
 <body>
-<div class="topbar">
-  <div class="logo"><b>veritas</b> 研判工作台</div>
-  <select id="caseSel"></select>
-  <span id="chainPill" class="pill">…</span>
-  <button class="primary" onclick="verifyChain()">校验防篡改链</button>
-  <button onclick="tamperDemo()">篡改演示（改一字即红）</button>
-  <button onclick="resetCase()">重置案例修改</button>
-  <span class="sub" id="panelInfo"></span>
+<header>
+  <div class="brand"><div class="mark"></div><div class="logo">veri<b>tas</b></div></div>
+  <div class="tag" id="headerTag">写下议题 → 添加资料 → 开始研判</div>
+  <div class="nav">
+    <button type="button" class="on" id="tabWork" onclick="showPage('work')">工作台</button>
+    <button type="button" id="tabHist" onclick="showPage('hist')">历史记录</button>
+  </div>
+  <button class="ghost" type="button" onclick="openLlmSettings()">接入模型</button>
+  <button class="ghost" type="button" onclick="openExitDialog()">退出</button>
+  <div class="conn" id="kpiChain">还未开始</div>
+</header>
+<div class="modal-bg hidden" id="exitModal" onclick="if(event.target===this)closeExitDialog()">
+  <div class="modal" role="dialog" aria-labelledby="exitTitle">
+    <h3 id="exitTitle">是否保存 API Key？</h3>
+    <p class="hint" id="exitHint">确定：下次在本机启动不必再输入。不保存：删除当次使用的密钥。取消：回到工作台。</p>
+    <div class="actions">
+      <button type="button" class="danger" id="exitDiscardBtn" onclick="exitDiscardKey()">不保存</button>
+      <button type="button" class="ghost" onclick="closeExitDialog()">取消</button>
+      <button type="button" class="primary" id="exitKeepBtn" onclick="exitKeepKey()">确定</button>
+    </div>
+  </div>
 </div>
-<div class="wrap">
-  <h2>综合研判意见 <span class="sub">主席汇总层：正面回答议题 · 每点挂结论编号与置信度 · 分歧明示不抹平</span></h2>
-  <div id="synthesis" class="sec"></div>
-  <h2>推理轨迹图 <span class="sub">结论 → 证据 → 段落 → 信源；含冲突 / 质证 / 裁决节点</span></h2>
-  <div id="graph" class="sec"></div>
-  <h2>证据链视图 <span class="sub">结论 → 证据（逐字引文）→ 来源原文　·　点击引文卡下钻原文；滑杆改权重、按钮删证据，改动即重算并入链</span></h2>
-  <div id="chains"></div>
-  <h2>分歧识别与消解 <span class="sub">可人工改写结论文案、推翻裁决（入链）</span></h2>
-  <div id="conflicts"></div>
-  <h2>少数意见（依规保留）</h2>
-  <div id="dissents"></div>
-  <h2>被引文核对打回的证据（机械闸）</h2>
-  <div id="rejected"></div>
-  <h2>机械核对警示 <span class="sub">零 LLM 复算：计算复算 · 数字溯源 · 归并守恒 · 质证/仲裁引用 · 议题前提　·　每次加载即时重算，人工修改与文件篡改都会在此现形</span></h2>
-  <div id="flags" class="sec"></div>
-  <h2>信源清单（可信度可调，调整即重算全链）</h2>
-  <div id="sources"></div>
+<div class="modal-bg hidden" id="llmModal" onclick="if(event.target===this)closeLlmSettings()">
+  <div class="modal" role="dialog" aria-labelledby="llmTitle">
+    <h3 id="llmTitle">接入模型</h3>
+    <p class="hint">一个网关、一个 Key，可填多个模型。密钥只存在本机。密钥框留空表示不改已保存的值。</p>
+    <label for="llmBase">网关地址（Base URL）</label>
+    <input id="llmBase" type="text" placeholder="例如 https://dashscope.aliyuncs.com/compatible-mode/v1" autocomplete="off">
+    <label for="llmKey">API Key</label>
+    <input id="llmKey" type="password" placeholder="sk-… 或 ak_…" autocomplete="off">
+    <div class="sub" id="llmKeyHint" style="margin-top:4px"></div>
+    <label for="llmModels">模型 ID（每行一个，第一个是主模型）</label>
+    <textarea id="llmModels" placeholder="openai/deepseek-v4-flash
+openai/qwen3.8-max
+openai/glm-5.3" oninput="previewAssignment()"></textarea>
+    <div class="sub" style="margin-top:4px">也可逗号分隔。只有一个就写一行即可。</div>
+    <label class="check"><input id="llmHetero" type="checkbox" onchange="previewAssignment()"> 多个模型时，三个分析师自动用不同模型</label>
+    <div class="assign" id="llmAssign"></div>
+    <label class="check"><input id="llmForceDemo" type="checkbox"> 即使有密钥也强制用演示桩</label>
+    <div class="actions">
+      <button type="button" onclick="clearLlmKey()">清除密钥</button>
+      <button type="button" class="ghost" onclick="closeLlmSettings()">取消</button>
+      <button type="button" class="primary" onclick="saveLlmSettings()">保存</button>
+    </div>
+  </div>
 </div>
+<main class="workspace">
+  <section class="left" id="leftWork">
+    <h3>① 你要研判什么</h3>
+    <textarea id="question" placeholder="例如：某制造公司是否已因资金链断裂全面停工？"></textarea>
+    <h3 style="margin-top:14px">② 这个案件的资料</h3>
+    <div class="addwrap">
+      <button type="button" id="btnAdd" onclick="pickMaterials()">添加资料</button>
+    </div>
+    <input id="filePick" type="file" multiple hidden onchange="onFilePick(this)">
+    <div id="caseTitleBar" class="casebar hidden">
+      <b id="caseTitleText">未命名案件</b>
+      <button type="button" onclick="renameCase()">改名</button>
+    </div>
+    <div id="ingestBox"
+      ondragover="onMaterialDrag(event,true)" ondragleave="onMaterialDrag(event,false)"
+      ondrop="onMaterialDrop(event)">
+      <div class="hint">点「添加资料」选文件；<b style="color:#fff">整个文件夹请拖到这里</b>。能读的会切片入卷，读不了的会说明原因。</div>
+    </div>
+    <details class="fold" id="sampleFold">
+      <summary>没有自己的资料时，可用示例试试</summary>
+      <div class="pick" id="caseList"></div>
+    </details>
+    <button class="primary" id="btnStart" type="button" onclick="startRun()">开始研判</button>
+    <p class="mode-note" id="modeNote">正在识别接入状态…</p>
+  </section>
+  <section class="left hidden" id="leftHist">
+    <h3>做过的研判</h3>
+    <div class="pick" id="histRuns"></div>
+    <p class="hint">只放你跑过的记录。点开即可浏览；要接着问，点下面带回工作台。</p>
+    <button class="primary" type="button" id="btnReuse" onclick="reuseToWork()">拿到工作台再问</button>
+  </section>
+  <section class="right-col">
+    <div class="placeholder" id="emptyState">先写下要问的问题。<br>再点「添加资料」，或把整个文件夹拖进左边虚线框。</div>
+    <div id="resultState" class="hidden">
+      <h3>③ 看判断，并做三件事</h3>
+      <div class="next" id="guideBar">
+        <button type="button" id="g1" onclick="goGuide(1)"><b>1 核对原文</b><span class="sub">点开引文，看是不是资料里的原句</span></button>
+        <button type="button" id="g2" onclick="goGuide(2)"><b>2 改一句试试</b><span class="sub">加一个资料里没有的数字，看会不会亮灯</span></button>
+        <button type="button" id="g3" onclick="goGuide(3)"><b>3 核验账本</b><span class="sub">用下面演示工具验防篡改</span></button>
+      </div>
+      <div class="demo-tools" id="demoTools">
+        <button type="button" onclick="verifyChain()">核验账本</button>
+        <button type="button" id="btnTamper" onclick="tamperDemo()">演示篡改</button>
+        <button type="button" id="btnReset" onclick="resetCase()">撤销改动</button>
+      </div>
+      <div class="hero">
+        <h1 id="heroTitle"></h1>
+        <div class="meta" id="heroMeta"></div>
+      </div>
+      <div class="sec"><h2>一句话判断</h2><div id="synthesis"></div>
+        <div class="sub" style="margin-top:8px">置信度是规则分，不是命中率。</div>
+      </div>
+      <div class="tabs">
+        <button class="active" data-go="evidence" onclick="showTab('evidence')">证据与原文</button>
+        <button data-go="more" onclick="showTab('more')">更多细节</button>
+      </div>
+      <section class="pane on" id="tab-evidence"><div id="chains"></div></section>
+      <section class="pane" id="tab-more">
+        <div class="sec"><h2>分歧处置</h2><div id="conflicts"></div></div>
+        <div class="sec"><h2>少数意见（保留不删）</h2><div id="dissents"></div></div>
+        <div class="sec"><h2>证据不足</h2><div id="insufficient"></div></div>
+        <div class="sec"><h2>程序复核</h2><div id="flags"></div></div>
+        <div class="sec"><h2>被打回的引文</h2><div id="rejected"></div></div>
+        <div class="sec"><h2>信源</h2><div id="sources"></div></div>
+        <div class="sec"><h2>研判时间线</h2><div id="timeline"></div></div>
+        <div class="sec"><h2>关系图</h2><div id="graph"></div></div>
+      </section>
+    </div>
+  </section>
+</main>
 <div class="toast" id="toast"></div>
 <script>
 const $=s=>document.querySelector(s);
-let CASES=[],CUR=null,D=null,G=null;
+let CASES=[],CUR=null,CUR_OUT="",PAGE="work",D=null,G=null,TAB="overview",HIST=null,INGEST=null,LLM=null;
+let EXIT_ALLOWED=false;
+const LV_CN={A:"甲",B:"乙",C:"丙",D:"丁"};
 const LV_COLOR={A:"var(--good)",B:"#58a6ff",C:"var(--warn)",D:"var(--bad)"};
 const REL_CN={causation:"因果",correlation:"相关",expert_judgment:"专家判断"};
 const TYPE_CN={paper:"文献",patent:"专利",report:"报告",news:"新闻",note:"笔记",web:"网页",other:"其他"};
 const KIND_CN={conclusion:"结论",evidence:"证据",segment:"段落",source:"信源",
-  conflict:"冲突",rebuttal:"质证",arbitration:"仲裁",analyst:"分析师"};
+  conflict:"冲突",rebuttal:"质证",arbitration:"裁决",analyst:"分析师"};
 const EDGE_CN={supports:"支撑",cites:"引用",from_source:"属信源",authored_by:"署名",
   conflicts_with:"对立",rebuts:"质证",decides:"裁定"};
 const FLAG_CN={calc:"计算复算不符",provenance:"来源外数字",counting:"计数断言无法复核",
@@ -126,245 +350,737 @@ const FLAG_CN={calc:"计算复算不符",provenance:"来源外数字",counting:"
   arbiter_ref:"仲裁理由引用不存在编号",hedge:"低可信信源配断言语气",
   level_tone:"措辞强度超过证据等级",stale:"引用旧时点资料",as_of:"结论未锚定时点",
   injection:"疑似指令注入内容",near_dup:"疑似同源转述",question:"议题表述待聚焦",
-  premise:"议题前提未覆盖"};
-const GATE_CN={citation:"引文核对",calc:"计算复算",provenance:"数字溯源",counting:"计数复核",
-  hedge:"转述语气",level_tone:"措辞等级"};
-function esc(s){return (s||"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
+  premise:"议题前提未覆盖",percent_no_base:"涨跌百分比未见基数",
+  unit_mismatch:"人民币与美元口径混用",source_unverified:"信源出处未核验",
+  level_consistency:"证据等级与信源类型不符",causation_support:"因果标注缺乏机制词"};
+const ROLE_CN={mainstream:"主流视角",redteam:"质疑视角",technologist:"技术视角",
+  coordinator:"协调员",pipeline:"系统",chair:"汇总",human:"人工"};
+const CASE_CN={"demo-solid-state":"固态电池量产前景","bi-delivery-risk":"数据中台交付风险",
+  "rumor-vs-official":"谣言与官方通报"};
+const OUT_CN={out:"正式跑次",out_offline:"离线演示"};
+const TRIAGE_CN={
+  native:{t:"已读入并切片",k:"ok"},
+  fetched:{t:"已抓取网页并切片",k:"ok"},
+  image_transcoded:{t:"图片已转成文字（可信度较低）",k:"ok"},
+  archive_expanded:{t:"压缩包已拆开，正在逐份处理",k:"ok"},
+  promoted_low:{t:"相关度偏低，仍先纳入",k:"skip"},
+  links_disclosed:{t:"发现链接清单，尚未抓取网页",k:"skip"},
+  image_disclosed:{t:"图片暂未转成文字",k:"skip"},
+  zero:{t:"与议题不太相关，未纳入研判",k:"skip"},
+  dup:{t:"与其他资料重复，已跳过",k:"skip"},
+  empty:{t:"没有读出可用文字",k:"bad"},
+  invalid_parse:{t:"打不开或解析失败",k:"bad"},
+  archive_unsupported:{t:"这种压缩格式暂不支持",k:"bad"},
+  unsupported_format:{t:"这种文件格式暂不支持",k:"bad"},
+};
+const SKILL_CN={calc_discipline:"计算纪律",number_provenance:"数字溯源",
+  counting_discipline:"计数纪律",hedged_claim:"转述语气",table_citation:"表格引文",
+  level_tone:"措辞等级",as_of_discipline:"时点锚定",question_focus:"议题聚焦",
+  question_scoped:"议题范围",negation_guard:"否定口径",sic_verbatim:"原文照录"};
+const EVENT_CN={case_loaded:"装载案卷",premise_check:"议题前提核对",fact_ledger:"事实对账",
+  injection_scan:"指令注入扫描",dup_check:"重复件核对",relevance_layered:"相关性分层",
+  skills_triggered:"纪律注入",material_pack:"资料装箱",analyst_done:"视角完成",
+  citation_audit:"引文核对",numeric_audit:"数字复核",merged:"结论归并",
+  conflicts_detected:"检出分歧",conflict_resolved:"分歧裁决",discourse_audit:"表述复核",
+  confidence_computed:"置信度结算",chair_summary:"汇总成文",report_finalized:"报告收口",
+  evidence_weight:"按证据强度翻案"};
+function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+function hideIds(s){
+  return String(s||"").replace(/CON-[0-9a-f]+/gi,"该判断")
+    .replace(/EV-[0-9a-f]+/gi,"该证据")
+    .replace(/CFL-[0-9a-f]+/gi,"该分歧")
+    .replace(/\bSRC\d+\b/gi,"该信源");
+}
+function zhRole(x){return ROLE_CN[x]||x||"未标注"}
+function zhRoles(xs){return (xs||[]).map(zhRole).join("、")||"未标注"}
+function caseLabel(c){
+  const title=CASE_CN[c.name]||c.name;
+  return `${title} · ${OUT_CN[c.out_dir]||"研判产物"}`;
+}
 function toast(msg,ms=2600){const t=$("#toast");t.textContent=msg;t.style.display="block";clearTimeout(t._h);t._h=setTimeout(()=>t.style.display="none",ms)}
 function confColor(c){return c>=.5?"var(--good)":c>=.2?"var(--warn)":"var(--bad)"}
-async function api(path,opts){const r=await fetch(path,opts);const j=await r.json().catch(()=>({}));
-  if(!r.ok){toast(j.detail||r.statusText);throw new Error(j.detail||r.statusText)}return j}
-
+function showTab(id){
+  if(id!=="evidence" && id!=="more") id="more";
+  TAB=id;
+  document.querySelectorAll(".pane").forEach(p=>p.classList.toggle("on", p.id==="tab-"+id));
+  document.querySelectorAll(".tabs button[data-go]").forEach(b=>b.classList.toggle("active", b.dataset.go===id));
+}
+function showResult(on){
+  $("#emptyState").classList.toggle("hidden", on);
+  $("#resultState").classList.toggle("hidden", !on);
+}
+function caseTitleOf(c){
+  if(!c) return "未命名案件";
+  return CASE_CN[c.name]||c.title||c.name;
+}
+function renderCaseList(){
+  const samples=CASES.filter(c=>!c.imported);
+  $("#caseList").innerHTML=samples.map(c=>`<button type="button" class="${c.name===CUR?"on":""}" onclick="selectCase('${esc(c.name)}')">
+    <b>${esc(caseTitleOf(c))}</b>
+    <span>${c.n_files||0} 份资料${c.has_result?" · 已有上次结果":""}</span>
+  </button>`).join("")||"<div class='hint'>还没有示例资料。</div>";
+  $("#btnStart").textContent="开始研判";
+  renderCaseTitle();
+}
+function renderCaseTitle(){
+  const bar=$("#caseTitleBar");
+  if(!CUR){bar.classList.add("hidden");return}
+  const c=CASES.find(x=>x.name===CUR);
+  bar.classList.remove("hidden");
+  $("#caseTitleText").textContent=caseTitleOf(c)||CUR;
+}
+async function selectCase(name){
+  CUR=name;CUR_OUT="";PAGE="work";renderCaseList();
+  const c=CASES.find(x=>x.name===name);
+  if(c&&c.question) $("#question").value=c.question;
+  await loadIngest();
+}
+async function loadIngest(){
+  if(!CUR){INGEST=null;renderIngest();return}
+  try{
+    INGEST=await api("/api/ingest?case="+encodeURIComponent(CUR));
+  }catch(e){INGEST=null}
+  renderIngest();
+}
+function renderIngest(){
+  const box=$("#ingestBox");
+  renderCaseTitle();
+  if(!INGEST){
+    box.innerHTML=`<div class="hint">点「添加资料」选文件；<b style="color:#fff">整个文件夹请拖到这里</b>。能读的会切片入卷，读不了的会说明原因。</div>`;
+    return;
+  }
+  const nOk=INGEST.n_sources||0;
+  const nSeg=INGEST.n_segments||0;
+  const nAll=(INGEST.triage||[]).length;
+  const nSkip=Math.max(0, nAll-nOk);
+  const rows=(INGEST.triage||[]).map(r=>{
+    const m=TRIAGE_CN[r.route]||{t:r.label||r.route||"已处理",k:"skip"};
+    const file=(r.file||"").split(/[\\/]/).pop()||r.file||"";
+    return `<div class="item triage-${m.k}"><b>${esc(m.t)}</b>
+      <span> · ${esc(file)}</span>
+      ${r.reason?`<div class="sub">${esc(r.reason)}</div>`:""}</div>`;
+  }).join("")||`<div class="hint">还没有分诊结果。</div>`;
+  box.innerHTML=`<div class="kv" style="margin-bottom:8px">读入 <b>${nOk}</b> 份 · 切成 <b>${nSeg}</b> 段${nSkip?` · 另有 ${nSkip} 份未按正文入卷`:""}</div>${rows}`;
+  const fold=$("#sampleFold");
+  if(fold) fold.open=false;
+}
+async function renameCase(){
+  if(!CUR){toast("请先添加或选择一套资料");return}
+  const c=CASES.find(x=>x.name===CUR);
+  const cur=caseTitleOf(c);
+  const next=prompt("给这个案件起个好认的名字", cur);
+  if(next==null) return;
+  const title=next.trim();
+  if(!title){toast("案件名不能为空");return}
+  const r=await api("/api/case/rename",{method:"POST",headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({case:CUR,title})});
+  if(c) c.title=r.title;
+  renderCaseTitle();renderCaseList();
+  toast("案件名已更新");
+}
+function pickMaterials(){
+  $("#filePick").click();
+}
+function onFilePick(input){
+  const files=[...input.files||[]];
+  input.value="";
+  importMaterialFiles(files);
+}
+function onMaterialDrag(ev, over){
+  ev.preventDefault();
+  $("#ingestBox").classList.toggle("drag", over);
+}
+async function onMaterialDrop(ev){
+  ev.preventDefault();
+  $("#ingestBox").classList.remove("drag");
+  const files=await filesFromDataTransfer(ev.dataTransfer);
+  importMaterialFiles(files);
+}
+async function filesFromDataTransfer(dt){
+  if(!dt) return [];
+  const items=[...dt.items||[]];
+  if(items.some(it=>it.webkitGetAsEntry)){
+    const out=[];
+    for(const it of items){
+      const entry=it.webkitGetAsEntry&&it.webkitGetAsEntry();
+      if(!entry) continue;
+      await walkEntry(entry, "", out);
+    }
+    if(out.length) return out;
+  }
+  return [...dt.files||[]];
+}
+async function walkEntry(entry, prefix, out){
+  if(entry.isFile){
+    const f=await new Promise((res,rej)=>entry.file(res,rej));
+    Object.defineProperty(f,"webkitRelativePath",{configurable:true,value:prefix+f.name});
+    out.push(f);
+    return;
+  }
+  if(!entry.isDirectory) return;
+  const reader=entry.createReader();
+  const base=prefix+entry.name+"/";
+  const kids=[];
+  for(;;){
+    const ents=await new Promise((res,rej)=>reader.readEntries(res,rej));
+    if(!ents.length) break;
+    kids.push(...ents);
+  }
+  for(const e of kids) await walkEntry(e, base, out);
+}
+async function importMaterialFiles(files){
+  files=[...files||[]].filter(Boolean);
+  if(!files.length){toast("没有选到文件");return}
+  const fd=new FormData();
+  fd.append("question", ($("#question").value||"").trim());
+  for(const f of files){
+    fd.append("files", f, f.webkitRelativePath||f.name);
+  }
+  toast("正在分诊资料…");
+  try{
+    const r=await fetch("/api/case/import",{method:"POST",body:fd});
+    const j=await r.json().catch(()=>({}));
+    if(!r.ok){toast(j.detail||"添加失败");return}
+    INGEST=j;
+    CUR=j.case;CUR_OUT="";
+    if(j.question && !($("#question").value||"").trim()) $("#question").value=j.question;
+    CASES=[{name:j.case,imported:true,n_files:j.n_written,question:j.question,title:j.title||j.case,has_result:false},
+      ...CASES.filter(c=>c.name!==j.case)];
+    renderCaseList();renderIngest();
+    toast(`已读入 ${j.n_sources||0} 份、切成 ${j.n_segments||0} 段。看完清单可点「开始研判」。`,4200);
+  }catch(e){toast("添加失败")}
+}
+function dossierQs(){
+  let q="case="+encodeURIComponent(CUR||"");
+  if(CUR_OUT) q+="&out="+encodeURIComponent(CUR_OUT);
+  return q;
+}
+function showPage(id){
+  PAGE=id;
+  $("#tabWork").classList.toggle("on", id==="work");
+  $("#tabHist").classList.toggle("on", id==="hist");
+  $("#leftWork").classList.toggle("hidden", id!=="work");
+  $("#leftHist").classList.toggle("hidden", id!=="hist");
+  $("#headerTag").textContent=id==="work"
+    ?"写下议题 → 添加资料 → 开始研判"
+    :"点一条即可浏览示例和做过的记录";
+  const gb=$("#guideBar");if(gb) gb.classList.toggle("hidden", id==="hist");
+  const dt=$("#demoTools");if(dt) dt.classList.toggle("hidden", id==="hist");
+  if(id==="hist"){
+    $("#emptyState").innerHTML="左边点一条做过的研判即可浏览。<br>不必再跑一遍。";
+    refreshHistory();
+  }else{
+    $("#emptyState").innerHTML="先写下要问的问题。<br>再点「添加资料」，或把整个文件夹拖进左边虚线框。";
+  }
+  if(D) render();
+}
+async function refreshHistory(){
+  HIST=await api("/api/history");
+  const sel=CUR+"|"+CUR_OUT;
+  const titleOf=name=>{
+    const c=CASES.find(x=>x.name===name);
+    return CASE_CN[name]||(c&&c.title)||name;
+  };
+  const runs=(HIST.runs||[]).map(r=>{
+    const key=r.case+"|"+r.out;
+    const when=fmtHistTime(r.id, r.mtime);
+    return `<button type="button" class="${key===sel?"on":""}" onclick="openHist('${esc(r.case)}','${esc(r.out)}')">
+      <b>${esc((r.question||"（未写议题）").slice(0,48))}</b>
+      <span>${esc(titleOf(r.case))} · ${esc(when)}</span>
+    </button>`;
+  }).join("")||"<div class='hint'>还没有做过的记录。到工作台点一次「开始研判」就会出现在这里。</div>";
+  $("#histRuns").innerHTML=runs;
+}
+function fmtHistTime(id, mtime){
+  const m=String(id||"").match(/^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})/);
+  if(m) return `${m[1]}-${m[2]}-${m[3]} ${m[4]}:${m[5]}`;
+  if(mtime){const d=new Date(mtime*1000); if(!isNaN(d)) return d.toLocaleString("zh-CN",{hour12:false})}
+  return id||"";
+}
+async function openHist(name, outRel){
+  CUR=name;CUR_OUT=outRel;
+  D=await api("/api/dossier?"+dossierQs());
+  G=await api("/api/reasoning_graph?"+dossierQs()).catch(()=>({nodes:[],edges:[]}));
+  render();showResult(true);showTab("evidence");
+  refreshHistory();
+}
+function reuseToWork(){
+  if(!CUR){toast("请先点开一条记录");return}
+  const q=D&&D.dossier&&D.dossier.question;
+  if(q) $("#question").value=q;
+  CUR_OUT="";
+  showPage("work");
+  renderCaseList();
+  toast("议题已带回工作台，改完再点开始研判。");
+}
+async function startRun(){
+  const q=($("#question").value||"").trim();
+  if(!q){toast("请先写下要研判的问题");$("#question").focus();return}
+  if(!CUR){toast("请先添加资料，或点开示例试试");return}
+  const btn=$("#btnStart");btn.disabled=true;btn.textContent="正在研判…";
+  try{
+    D=await api("/api/run",{method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({case:CUR,question:q})});
+    CUR_OUT="out_offline";
+    G=await api("/api/reasoning_graph?"+dossierQs()).catch(()=>({nodes:[],edges:[]}));
+    const c=CASES.find(x=>x.name===CUR);if(c)c.has_result=true;
+    if(D.workbench_mode) {LLM={...(LLM||{}),mode:D.workbench_mode};renderModeNote()}
+    else await refreshLlm();
+    renderCaseList();render();showResult(true);showTab("evidence");
+    toast(D.workbench_mode==="live"
+      ?"真实研判完成。请按右边 1、2、3 核对。"
+      :"研判完成（演示桩）。请按右边 1、2、3 核对。",4200);
+  }finally{btn.disabled=false;renderCaseList()}
+}
+function goGuide(n){
+  document.querySelectorAll(".next button").forEach(b=>b.classList.remove("on"));
+  const g=$("#g"+n);if(g)g.classList.add("on");
+  if(n===1){showTab("evidence");toast("请点下面任意一条「查看原文」。")}
+  if(n===2){showTab("evidence");toast("在判断框里加一个资料没有的数字，例如「良率已达 99%」，再保存。");
+    const inp=document.querySelector("#chains input[type=text]");if(inp)inp.focus()}
+  if(n===3){
+    const tools=$("#demoTools");
+    if(tools) tools.scrollIntoView({behavior:"smooth",block:"nearest"});
+    toast("先点「核验账本」，再点「演示篡改」。");
+  }
+}
+async function api(path,opts){
+  const r=await fetch(path,opts);const j=await r.json().catch(()=>({}));
+  if(!r.ok){toast(j.detail||"请求未完成");throw new Error(j.detail||"请求未完成")}return j;
+}
+function parseModelsLocal(text){
+  return String(text||"").split(/[,;\n]+/).map(s=>s.trim()).filter(s=>s&&!s.startsWith("#"));
+}
+function previewAssignment(){
+  const box=$("#llmAssign");
+  if(!box) return;
+  const models=parseModelsLocal($("#llmModels").value);
+  const hetero=$("#llmHetero").checked && models.length>=2;
+  const roles=[["主流视角","mainstream"],["质疑视角","redteam"],["技术视角","technologist"]];
+  if(!models.length){
+    box.innerHTML=`<div class="sub">先填至少一个模型 ID，这里会预览三个分析师怎么用。</div>`;
+    return;
+  }
+  const rows=roles.map((r,i)=>{
+    const mid=hetero?models[i%models.length]:models[0];
+    return `<div class="row"><b>${r[0]}</b> → ${esc(mid)}</div>`;
+  }).join("");
+  const tip=hetero
+    ?`共 ${models.length} 个模型：按角色轮转（主模型仍是第一个，失败时可回退）。`
+    :`共 ${models.length} 个模型：三个分析师都用主模型「${esc(models[0])}」；其余作故障回退。`;
+  box.innerHTML=`<div class="sub" style="margin-bottom:6px">${tip}</div>${rows}`;
+}
+function renderModeNote(){
+  const el=$("#modeNote");
+  if(!el) return;
+  if(!LLM){el.textContent="正在识别接入状态…";el.className="mode-note";return}
+  const n=(LLM.models&&LLM.models.length)||1;
+  const hetero=LLM.hetero&&n>=2;
+  if(LLM.mode==="live"){
+    el.className="mode-note live";
+    el.textContent=hetero
+      ?`已接入 ${n} 个模型（主：${LLM.model||"—"}），三个分析师将用不同模型。点「开始研判」将调用网关。`
+      :`已接入真实模型（主：${LLM.model||"未指名"}${n>1?`，另有 ${n-1} 个备用`:""}）。点「开始研判」将调用网关。`;
+  }else if(LLM.has_key && LLM.force_demo){
+    el.className="mode-note";
+    el.textContent="已保存密钥，但勾选了强制演示：当前仍走秒级桩，不耗密钥。";
+  }else{
+    el.className="mode-note";
+    el.textContent="当前未接入密钥：走现场演示（秒级桩，不耗密钥）。点顶栏「接入模型」可填网关与 Key。";
+  }
+}
+async function refreshLlm(){
+  try{LLM=await api("/api/llm")}catch(e){LLM=null}
+  renderModeNote();
+}
+async function openLlmSettings(){
+  await refreshLlm();
+  $("#llmBase").value=(LLM&&LLM.base_url)||"";
+  const ms=(LLM&&LLM.models&&LLM.models.length)?LLM.models
+    :[(LLM&&LLM.model)||"openai/deepseek-v4-flash"];
+  $("#llmModels").value=ms.join("\n");
+  $("#llmKey").value="";
+  $("#llmKey").placeholder=(LLM&&LLM.has_key)?"已保存，留空表示不改":"sk-… 或 ak_…";
+  $("#llmKeyHint").textContent=(LLM&&LLM.key_hint)?`当前：${LLM.key_hint}`:"";
+  $("#llmHetero").checked=LLM?!!LLM.hetero:ms.length>=2;
+  $("#llmForceDemo").checked=!!(LLM&&LLM.force_demo);
+  previewAssignment();
+  $("#llmModal").classList.remove("hidden");
+}
+function closeLlmSettings(){$("#llmModal").classList.add("hidden")}
+async function saveLlmSettings(){
+  const models=parseModelsLocal($("#llmModels").value);
+  if(!models.length){toast("请至少填一个模型 ID");return}
+  const body={
+    base_url:$("#llmBase").value.trim(),
+    models,
+    hetero:$("#llmHetero").checked,
+    force_demo:$("#llmForceDemo").checked,
+  };
+  const key=$("#llmKey").value.trim();
+  if(key) body.api_key=key;
+  LLM=await api("/api/llm",{method:"POST",headers:{"Content-Type":"application/json"},
+    body:JSON.stringify(body)});
+  renderModeNote();closeLlmSettings();
+  toast(LLM.mode==="live"
+    ?(LLM.hetero&&LLM.models&&LLM.models.length>1
+      ?`已接入 ${LLM.models.length} 个模型，将按角色轮转`
+      :"已接入，开始研判将走真实模型")
+    :"已保存。当前仍为演示模式");
+}
+async function clearLlmKey(){
+  if(!confirm("清除已保存的 API Key？"))return;
+  LLM=await api("/api/llm",{method:"POST",headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({api_key:"",force_demo:false})});
+  $("#llmKey").value="";
+  $("#llmKeyHint").textContent="";
+  renderModeNote();
+  toast("密钥已清除，将使用演示桩");
+}
+async function openExitDialog(){
+  await refreshLlm();
+  const hint=$("#exitHint");
+  const has=!!(LLM&&LLM.has_key);
+  $("#exitDiscardBtn").classList.toggle("hidden", !has);
+  $("#exitKeepBtn").textContent=has?"确定":"退出";
+  if(has){
+    $("#exitTitle").textContent="是否保存 API Key？";
+    hint.textContent=`当前密钥 ${LLM.key_hint||"已接入"}。确定：下次在本机启动不必再输入。不保存：删除当次使用的密钥。取消：回到工作台。`;
+  }else{
+    $("#exitTitle").textContent="退出工作台？";
+    hint.textContent="当前没有已接入的 API Key。点「退出」离开本页；点「取消」继续使用。";
+  }
+  $("#exitModal").classList.remove("hidden");
+}
+function closeExitDialog(){$("#exitModal").classList.add("hidden")}
+function finishExit(msg){
+  EXIT_ALLOWED=true;
+  closeExitDialog();
+  toast(msg||"可以关闭本页了",4200);
+  // 若由脚本打开的窗口可直接关；否则提示用户关标签
+  try{window.close()}catch(e){}
+  setTimeout(()=>{
+    if(!window.closed){
+      document.body.innerHTML=`<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;background:#09090b;color:#eaf2ff;font:15px/1.7 PingFang SC,Microsoft YaHei,sans-serif;padding:24px;text-align:center">
+        <div><div style="font-size:20px;margin-bottom:10px">veritas 已退出</div>
+        <div style="color:#8aa0b8">${esc(msg||"可以关闭本页标签。")}</div></div></div>`;
+    }
+  },200);
+}
+async function exitKeepKey(){
+  if(LLM&&LLM.has_key){
+    LLM=await api("/api/llm/exit-keep",{method:"POST"});
+    finishExit("API Key 已保存，下次启动无需再输入。可关闭本页。");
+  }else{
+    finishExit("已退出。可关闭本页。");
+  }
+}
+async function exitDiscardKey(){
+  if(LLM&&LLM.has_key){
+    LLM=await api("/api/llm/exit-discard",{method:"POST"});
+    finishExit("已删除当次 API Key，下次需重新输入。可关闭本页。");
+  }else{
+    finishExit("已退出。可关闭本页。");
+  }
+}
+window.addEventListener("beforeunload",ev=>{
+  if(EXIT_ALLOWED) return;
+  if(LLM&&LLM.has_key){
+    ev.preventDefault();
+    ev.returnValue="请先点顶栏「退出」，选择是否保存 API Key";
+  }
+});
 async function boot(){
   CASES=(await api("/api/cases")).cases;
-  $("#caseSel").innerHTML=CASES.map(c=>`<option value="${esc(c.name)}">${esc(c.name)}（${c.out_dir}）</option>`).join("")||"<option value=''>（无产物：先跑 pipeline）</option>";
-  if(CASES.length){$("#caseSel").value=CASES[0].name;await load()}
+  CUR=null;
+  renderCaseList();
+  showResult(false);
+  await refreshLlm();
 }
 async function load(){
-  CUR=$("#caseSel").value;if(!CUR)return;
-  D=await api("/api/dossier?case="+encodeURIComponent(CUR));
-  G=await api("/api/reasoning_graph?case="+encodeURIComponent(CUR)).catch(()=>({nodes:[],edges:[]}));
-  render();
+  if(!CUR)return;
+  try{
+    D=await api("/api/dossier?"+dossierQs());
+    G=await api("/api/reasoning_graph?"+dossierQs()).catch(()=>({nodes:[],edges:[]}));
+    render();showResult(true);showTab(TAB==="overview"?"evidence":TAB);
+  }catch(e){showResult(false)}
 }
-function renderSynth(s){
-  if(!s||!s.headline){$("#synthesis").innerHTML=`<div class="empty">（本产物无综合意见——较早期运行）</div>`;return}
-  const KIND_CN={conflict:"冲突",dissent:"少数意见",gap:"资料缺口",note:"说明"};
-  const pts=(s.points||[]).map(p=>`<div class="kv" style="margin:4px 0">${esc(p.gloss)}
-    <code>${esc(p.con_id)}</code> · 置信度 <b>${p.confidence??"-"}</b>
+function renderSynth(s,d){
+  if(!s||!s.headline){
+    const top=(d.conclusions||[]).filter(c=>c.status==="majority")
+      .sort((a,b)=>b.confidence-a.confidence)[0];
+    if(top){
+      $("#synthesis").innerHTML=`<div style="font-size:18px;font-weight:650;margin-bottom:10px;line-height:1.45">${esc(top.statement)}</div>
+        <div class="kv">置信度 <b>${top.confidence.toFixed(2)}</b> · 本跑次没有单独的汇总句，以上是主表里最靠前的一条。</div>
+        <div class="sub" style="margin-top:8px">请到「结论与证据」核对该判断的原文出处。</div>`;
+      return;
+    }
+    $("#synthesis").innerHTML=`<div class="empty">本跑次尚未形成可展示的判断。</div>`;
+    return;
+  }
+  const ISSUE={conflict:"冲突",dissent:"少数意见",gap:"资料缺口",note:"说明"};
+  const pts=(s.points||[]).map(p=>`<div class="kv" style="margin:6px 0">${esc(p.gloss)}
+    · 置信度 <b>${p.confidence??"—"}</b>
     ${(s.mode==="llm"&&p.auto)?`<span class="tag" style="color:var(--warn);border-color:var(--warn)">程序自动补全</span>`:""}</div>`).join("");
-  const issues=(s.open_issues||[]).map(o=>`<div class="dissent-note">⚠ [${KIND_CN[o.kind]||o.kind}] ${esc(o.text)}（${esc(o.ref)}）</div>`).join("");
-  $("#synthesis").innerHTML=`<div style="font-size:15px;font-weight:600;margin-bottom:8px">${esc(s.headline)}</div>
+  const issues=(s.open_issues||[]).map(o=>`<div class="dissent-note">⚠ [${ISSUE[o.kind]||o.kind}] ${esc(o.text)}</div>`).join("");
+  const notes=(s.gate_notes||[]).map(n=>`<div class="sub">${esc(n)}</div>`).join("");
+  const mode=s.mode==="template"?"规则模板汇总（确定可复现）":"智能汇总（已过引用、完整、数字、篇幅四道核对）";
+  $("#synthesis").innerHTML=`<div style="font-size:18px;font-weight:650;margin-bottom:10px;line-height:1.45">${esc(s.headline)}</div>
     ${pts}${issues?`<div style="margin-top:8px">${issues}</div>`:""}
-    <div class="sub" style="margin-top:6px">汇总模式：${s.mode==="template"?"零 LLM 模板（确定性渲染）":"LLM 主席（已过四道机械闸：引用存在/完整性/数字溯源/长度）"}</div>`;
+    <div class="sub" style="margin-top:8px">汇总方式：${mode}</div>${notes}`;
 }
 function render(){
   const d=D.dossier;
-  $("#panelInfo").textContent=`编队 ${d.panel.join("、")||"N/A"} · ${d.sources.length} 信源 · ${d.evidences.length} 证据 · ${d.conclusions.length} 结论`;
-  const pill=$("#chainPill");
-  pill.textContent=D.chain.ok?`防篡改链 ✅ ${D.chain.n_records} 条`:`防篡改链 ❌ #${D.chain.bad_index}`;
-  pill.className="pill "+(D.chain.ok?"ok":"bad");
-  renderSynth(d.synthesis);renderGraph(G);renderChains(d);renderConflicts(d);renderDissents(d);renderRejected(d);renderFlags(D.audit);renderSources(d);
+  const acc=D.accounting||d.accounting||{};
+  $("#heroTitle").textContent=d.question||"（未写议题）";
+  const modeTag=(D.workbench_mode==="live"||(LLM&&LLM.mode==="live"))?"真实模型":"演示结果";
+  $("#heroMeta").textContent=`${modeTag} · ${zhRoles(d.panel)} · ${d.sources.length} 份资料 · ${acc.elapsed_s==null?"—":acc.elapsed_s+" 秒"} · 置信度是规则分，不是命中率`;
+  const pill=$("#kpiChain");
+  pill.textContent=D.chain.ok?`账本完好 · ${D.chain.n_records} 笔`:`账本异常`;
+  pill.className="conn "+(D.chain.ok?"ok":"bad");
+  renderSynth(d.synthesis,d);renderTimeline(D.timeline);renderGraph(G);renderChains(d);renderConflicts(d);renderDissents(d);renderInsufficient(d);renderRejected(d);renderFlags(D.audit);renderSources(d);
+  const hist=PAGE==="hist";
+  const gb=$("#guideBar");if(gb) gb.classList.toggle("hidden", hist);
+  const dt=$("#demoTools");if(dt) dt.classList.toggle("hidden", hist);
+  document.querySelectorAll(".evops,.editrow,.cred").forEach(el=>el.classList.toggle("hidden", hist));
+}
+function renderTimeline(events){
+  const ev=events||[];
+  if(!ev.length){$("#timeline").innerHTML=`<div class="empty">尚无过程记录。</div>`;return}
+  $("#timeline").innerHTML=`<div class="kv" style="margin-bottom:8px">${esc((D.accounting||{}).confidence_note||"置信度是规则分，不是命中率")}</div>
+    <div class="gedges">${ev.map(e=>`<div>${esc((e.ts||"").replace("T"," ").slice(0,19))}　${esc(EVENT_CN[e.event]||"研判步骤")}　<span class="sub">${esc(zhRole(e.actor))}</span></div>`).join("")}</div>`;
 }
 function renderGraph(g){
-  if(!g||!(g.nodes||[]).length){$("#graph").innerHTML=`<div class="empty">无图数据</div>`;return}
+  if(!g||!(g.nodes||[]).length){$("#graph").innerHTML=`<div class="empty">暂无关系图。</div>`;return}
   const order=["conclusion","conflict","arbitration","rebuttal","evidence","segment","source","analyst"];
   const nodes=[...g.nodes].sort((a,b)=>order.indexOf(a.kind)-order.indexOf(b.kind));
   const shown=nodes.filter(n=>["conclusion","conflict","arbitration","rebuttal","source","analyst"].includes(n.kind));
   const label=id=>{const n=(g.nodes||[]).find(x=>x.id===id);const t=(n&&n.label||"").trim();
-    return t?(t.length>16?t.slice(0,16)+"…":t):id};
-  $("#graph").innerHTML=`<div class="kv">节点 ${g.nodes.length} · 边 ${g.edges.length}</div>
-    <div class="graph" style="margin-top:8px">${shown.map(n=>`<div class="gnode"><b>${KIND_CN[n.kind]||n.kind}</b>${esc(n.label)}</div>`).join("")}</div>
-    <div class="gedges">${(g.edges||[]).slice(0,40).map(e=>`<div><code>${EDGE_CN[e.kind]||e.kind}</code> ${esc(label(e.source))} → ${esc(label(e.target))}</div>`).join("")}
-      ${(g.edges||[]).length>40?`<div class="sub">… 另有 ${(g.edges.length-40)} 条边</div>`:""}</div>`;
+    return t?(t.length>16?t.slice(0,16)+"…":t):"节点"};
+  $("#graph").innerHTML=`<div class="kv">共 ${g.nodes.length} 个节点、${g.edges.length} 条关系</div>
+    <div class="graph" style="margin-top:8px">${shown.map(n=>`<div class="gnode"><b>${KIND_CN[n.kind]||"节点"}</b>${esc(n.label)}</div>`).join("")}</div>
+    <div class="gedges">${(g.edges||[]).slice(0,40).map(e=>`<div>${esc(EDGE_CN[e.kind]||"关联")} ${esc(label(e.source))} → ${esc(label(e.target))}</div>`).join("")}
+      ${(g.edges||[]).length>40?`<div class="sub">… 另有 ${(g.edges.length-40)} 条关系</div>`:""}</div>`;
 }
 function renderChains(d){
   const majors=d.conclusions.filter(c=>c.status==="majority")
     .sort((a,b)=>b.confidence-a.confidence);
-  const mergedCount=id=>d.conclusions.filter(c=>c.status==="merged"&&
-    (c.evidence_ids||[]).length===0).length; // 信息量有限，仅展示计数
   $("#chains").innerHTML=majors.map(con=>{
     const evs=d.evidences.filter(e=>e.conclusion_id===con.id);
     const p=con.confidence_parts||{};
-    const chips=["强度 "+(p.strength??"-"),"覆盖 "+(p.coverage??"-"),"一致性 "+(p.agreement??"-"),
-      `${p.n_evidence??evs.length} 证`].map(t=>`<span class="chip">${esc(t)}</span>`).join("");
+    const chips=["证据强度 "+(p.strength??"—"),"覆盖 "+(p.coverage??"—"),"一致性 "+(p.agreement??"—"),
+      `${p.n_evidence??evs.length} 条证据`].map(t=>`<span class="chip">${esc(t)}</span>`).join("");
     const evHtml=evs.map(ev=>{
       const segs=ev.segment_ids.map(sid=>{
         const seg=findSeg(d,sid);
         if(!seg)return "";
-        return `<div class="card src"><div class="kv"><b>${esc(sid)}</b>（${esc(seg.locator)}）</div>
-          <button class="mini click" style="margin-top:4px" onclick="this.nextElementSibling.classList.toggle('open')">展开原文</button>
+        return `<div class="card src"><div class="kv"><b>${esc(seg.locator||"出处")}</b></div>
+          <button class="mini" style="margin-top:4px" onclick="this.nextElementSibling.classList.toggle('open')">查看原文</button>
           <div class="segtext">${esc(seg.text)}</div></div>`;
       }).join("");
-      return `<div class="card click" data-ev="${esc(ev.id)}">
+      const lv=LV_CN[ev.level]||ev.level;
+      return `<div class="card">
         <div class="evquote">${esc(ev.quote)}</div>
-        <div class="chips"><span class="tag ${esc(ev.level)}">${esc(ev.level)} 级</span>
-          <span class="chip">${REL_CN[ev.relation]||ev.relation}</span>
-          <span class="chip">权重 ${ev.weight}</span>${ev.author?`<span class="chip">${esc(ev.author)}</span>`:""}</div>
+        <div class="chips"><span class="tag ${esc(lv)}">${esc(lv)}级</span>
+          <span class="chip">${REL_CN[ev.relation]||"相关"}</span>
+          <span class="chip">权重 ${ev.weight}</span>${ev.author?`<span class="chip">${esc(zhRole(ev.author))}</span>`:""}</div>
         ${ev.note?`<div class="who">${esc(ev.note)}</div>`:""}
         <div class="evops"><span class="sub">权重</span>
           <input type="range" min="0" max="2" step="0.1" value="${ev.weight}"
             oninput="this.nextElementSibling.textContent=this.value" onchange="setWeight('${esc(ev.id)}',this.value)">
           <span class="val">${ev.weight}</span>
-          <button class="mini danger" onclick="removeEv('${esc(ev.id)}')">删除证据</button></div>
+          <button class="mini danger" onclick="removeEv('${esc(ev.id)}')">删除这条证据</button></div>
         <div style="margin-top:8px" class="lane">${segs}</div>
       </div>`;
-    }).join("")||`<div class="empty">（无存活证据）</div>`;
+    }).join("")||`<div class="empty">（本条结论下没有存活证据）</div>`;
     return `<div class="row"><div class="stage">
       <div class="lane"><div class="card" style="border-left:3px solid ${confColor(con.confidence)}">
         <div>${esc(con.statement)}</div>
         <div class="conf"><b style="color:${confColor(con.confidence)}">${con.confidence.toFixed(2)}</b>
           <div class="bar"><i style="width:${(con.confidence*100).toFixed(0)}%;background:${confColor(con.confidence)}"></i></div></div>
         <div class="chips">${chips}</div>
-        <div class="who">研判方：${esc((con.authors&&con.authors.length?con.authors.join("、"):con.author)||"N/A")}</div>
+        <div class="who">研判视角：${esc(zhRoles(con.authors&&con.authors.length?con.authors:[con.author]))}</div>
         <div class="editrow">
-          <input type="text" id="edit-${esc(con.id)}" value="${esc(con.statement)}" placeholder="改写结论文案">
-          <button class="mini" onclick="editCon('${esc(con.id)}')">保存结论</button>
+          <input type="text" id="edit-${esc(con.id)}" value="${esc(con.statement)}" placeholder="改写这条判断">
+          <button class="mini" onclick="editCon('${esc(con.id)}')">保存改写</button>
         </div>
       </div></div>
       <div class="link"></div>
       <div class="lane">${evHtml}</div>
-      <div class="link"></div>
-      <div class="lane sub" style="justify-content:center;padding:6px">原文段落<br>在证据卡内下钻</div>
     </div></div>`;
-  }).join("")||`<div class="sec empty">无多数结论</div>`;
+  }).join("")||`<div class="sec empty">本跑次没有进入主表的结论。</div>`;
 }
 function findSeg(d,sid){for(const s of d.sources){const seg=(s.segments||[]).find(x=>x.id===sid);if(seg)return seg}return null}
+function weightLine(r,d){
+  const w=r.evidence_weight||{};
+  return Object.entries(w).map(([id,v])=>{
+    const st=statementOf(d,id);
+    const short=st.length>18?st.slice(0,18)+"…":st;
+    return `「${short}」${Number(v).toFixed(2)}`;
+  }).join(" 对比 ");
+}
 function renderConflicts(d){
   $("#conflicts").innerHTML=(d.conflicts||[]).map(c=>{
     const r=c.resolution;
-    let verdict=`<div class="empty">未消解（仲裁不可用，双方并列保留）</div>`;
+    let verdict=`<div class="empty">尚未裁决，双方意见并列保留。</div>`;
     if(r){
-      const winTxt=r.winner_id==="tie"?"未决（tie，证据势均力敌）":
-        `胜方 <b>${esc(r.winner_id)}</b>：${esc(statementOf(d,r.winner_id))}`;
-      verdict=`<div class="verdict ${r.winner_id==="tie"?"tie":""}"><b>裁决</b>：${winTxt}<br>
-        <span class="kv">理由：${esc(r.rationale)}　·　证据强度对比 <b>${esc(JSON.stringify(r.evidence_weight))}</b></span>
-        ${r.rebuts&&Object.keys(r.rebuts).length?`<div class="kv" style="margin-top:4px">质证：${Object.entries(r.rebuts).map(([k,v])=>esc(k)+"方「"+esc(String(v).slice(0,80))+"…」").join("；")}</div>`:""}
+      const winTxt=r.winner_id==="tie"?"暂不判定（双方证据相当）":
+        `采信：${esc(statementOf(d,r.winner_id))}`;
+      const methodCn={evidence_weight:"按证据强度否决票数",tie:"双方相当，暂不判定",arbitration:"综合裁决"}[r.method]||"综合裁决";
+      verdict=`<div class="verdict ${r.winner_id==="tie"?"tie":""}"><b>裁决结果</b>　${winTxt}<br>
+        <span class="kv">方式：${esc(methodCn)}　·　理由：${esc(hideIds(r.rationale))}　·　强度 ${esc(weightLine(r,d)||"未计")}</span>
+        ${r.rebuts&&Object.keys(r.rebuts).length?`<div class="kv" style="margin-top:4px">质证摘要：${Object.entries(r.rebuts).map(([k,v])=>esc(k==="a"?"甲方":k==="b"?"乙方":k)+"「"+esc(String(v).slice(0,80))+"…」").join("；")}</div>`:""}
       </div>`;
     }
-    return `<div class="pair"><b>冲突：${esc(c.topic||"结论对立")}</b>
-      <div class="kv">甲方 ${esc(c.a_id)}：${esc(statementOf(d,c.a_id))}</div>
-      <div class="kv">乙方 ${esc(c.b_id)}：${esc(statementOf(d,c.b_id))}</div>${verdict}
+    return `<div class="pair"><b>${esc(c.topic||"结论对立")}</b>
+      <div class="kv">甲方：${esc(statementOf(d,c.a_id))}</div>
+      <div class="kv">乙方：${esc(statementOf(d,c.b_id))}</div>${verdict}
       <div class="editrow">
-        <button class="mini" onclick="overrideWin('${esc(c.id)}','${esc(c.a_id)}')">判甲方胜</button>
-        <button class="mini" onclick="overrideWin('${esc(c.id)}','${esc(c.b_id)}')">判乙方胜</button>
-        <button class="mini" onclick="overrideWin('${esc(c.id)}','tie')">判未决</button>
+        <button class="mini" onclick="overrideWin('${esc(c.id)}','${esc(c.a_id)}')">改采甲方</button>
+        <button class="mini" onclick="overrideWin('${esc(c.id)}','${esc(c.b_id)}')">改采乙方</button>
+        <button class="mini" onclick="overrideWin('${esc(c.id)}','tie')">改为暂不判定</button>
       </div></div>`;
-  }).join("")||`<div class="sec empty">本轮研判无冲突对</div>`;
+  }).join("")||`<div class="empty">本轮没有需要处置的分歧。</div>`;
 }
-function statementOf(d,id){const c=(d.conclusions||[]).find(x=>x.id===id);return c?c.statement:"（已不存在）"}
+function statementOf(d,id){const c=(d.conclusions||[]).find(x=>x.id===id);return c?c.statement:"（该条已不存在）"}
 function renderDissents(d){
   const ds=d.conclusions.filter(c=>c.status==="dissent");
   $("#dissents").innerHTML=ds.map(c=>`<div class="dissent">「${esc(c.statement)}」
-    <span class="sub">研判方 ${esc((c.authors&&c.authors.length?c.authors.join("、"):c.author)||"N/A")}</span>
-    ${(c.dissent||[]).map(x=>`<div class="dissent-note">仲裁记录：${esc(x.why||"")}</div>`).join("")}
-    </div>`).join("")||`<div class="sec empty">无少数意见（无仲裁落败结论）</div>`;
+    <span class="sub">视角 ${esc(zhRoles(c.authors&&c.authors.length?c.authors:[c.author]))}</span>
+    ${(c.dissent||[]).map(x=>`<div class="dissent-note">裁决记录：${esc(hideIds(x.why||""))}</div>`).join("")}
+    </div>`).join("")||`<div class="empty">没有少数意见。</div>`;
+}
+function renderInsufficient(d){
+  const ds=(d.conclusions||[]).filter(c=>c.status==="insufficient");
+  $("#insufficient").innerHTML=ds.map(c=>`<div class="dissent">「${esc(c.statement)}」
+    <span class="sub">视角 ${esc(zhRoles(c.authors&&c.authors.length?c.authors:[c.author]))} · 置信度记为零</span>
+    </div>`).join("")||`<div class="empty">没有因证据全灭而停在台面上的判断。</div>`;
 }
 function renderRejected(d){
   $("#rejected").innerHTML=(d.rejected||[]).map(r=>`<div class="rejected">
-    <code>${esc(r.evidence_id)}</code>　${esc((r.problems||[]).join("；"))}<br>
-    <span class="sub">引文：${esc(String(r.quote).slice(0,80))}…（结论 ${esc(r.conclusion_id)}）</span></div>`).join("")
-    ||`<div class="sec empty">无打回记录——全部证据通过逐字引文核对</div>`;
+    ${esc((r.problems||[]).join("；"))}<br>
+    <span class="sub">引文：${esc(String(r.quote).slice(0,80))}…</span></div>`).join("")
+    ||`<div class="empty">全部引文通过逐字核对。</div>`;
 }
 function renderFlags(audit){
-  if(!audit){$("#flags").innerHTML=`<div class="empty">（无审计数据）</div>`;return}
+  if(!audit){$("#flags").innerHTML=`<div class="empty">暂无质控数据。</div>`;return}
   const fs=audit.flags||[];
   const skills=(audit.skills||[]);
-  const skillLine=skills.length?`<div class="kv" style="margin-top:6px">skill 注册表：${
-    skills.map(s=>`<span class="chip" style="${s.triggered?"color:var(--good)":""}">${esc(s.name)}${s.enabled?(s.triggered?" ✓触发":" 待命"):" ✗停用"}</span>`).join("")
-  } <span class="sub">触发才注入提示词；每条纪律配一道零 LLM 机械闸（无闸的 skill 是许愿）</span></div>`:"";
-  const head=`<div class="kv">红灯（计算不复现等）<b style="color:${audit.n_high?"var(--bad)":"var(--good)"}">${audit.n_high}</b> ·
-    黄牌（来源外数字等）<b style="color:${audit.n_medium?"var(--warn)":"var(--good)"}">${audit.n_medium}</b>　
-    <span class="sub">警示不剔除内容——语义取舍归分析师与读者，机械侧保证「每个数字都能对账」</span></div>${skillLine}`;
+  const skillLine=skills.length?`<div class="kv" style="margin-top:6px">已启用的研判纪律：${
+    skills.map(s=>`<span class="chip" style="${s.triggered?"color:var(--good)":""}">${esc(SKILL_CN[s.name]||"研判纪律")}${s.enabled?(s.triggered?" · 已触发":" · 待命"):" · 已停用"}</span>`).join("")
+  }</div>`:"";
+  const head=`<div class="kv">红灯 <b style="color:${audit.n_high?"var(--bad)":"var(--good)"}">${audit.n_high}</b> ·
+    黄牌 <b style="color:${audit.n_medium?"var(--warn)":"var(--good)"}">${audit.n_medium}</b>
+    <span class="sub">　告警只提示，不擅自删判断</span></div>${skillLine}`;
   $("#flags").innerHTML=head+(fs.map(f=>`
-    <div class="flagitem ${esc(f.severity)}"><span class="tag ${esc(f.severity)}">${f.severity==="high"?"红":"黄"}</span>
-    <b>${esc(FLAG_CN[f.kind]||f.kind)}</b>　${esc(f.detail)}
-    ${f.human_edit?`<span class="tag high">人工修改引入</span>`:""}</div>`).join("")
-    ||`<div class="empty">全部通过 ✅（结论与说明中的每个算式都复算无误、每个数字都有出处）</div>`);
+    <div class="flagitem ${esc(f.severity)}"><span class="tag ${esc(f.severity)}">${f.severity==="high"?"红灯":"黄牌"}</span>
+    <b>${esc(FLAG_CN[f.kind]||"质控提示")}</b>　${esc(f.detail)}
+    ${f.human_edit?`<span class="tag high">本次人工改写引入</span>`:""}</div>`).join("")
+    ||`<div class="empty">质控全部通过：算式能复算，数字有出处。</div>`);
 }
 function renderSources(d){
   $("#sources").innerHTML=d.sources.map(s=>`<div class="card" style="margin-bottom:8px">
-    <b>${esc(s.title||s.id)}</b>　<span class="tag">${TYPE_CN[s.source_type]||s.source_type}</span>
-    <span class="chip">${esc(s.id)}</span>
-    ${s.relevance_override==="include"?`<span class="tag" style="color:var(--accent);border-color:var(--accent)">人工纳入</span>`:""}
-    ${s.relevance_override==="exclude"?`<span class="tag" style="color:var(--bad);border-color:var(--bad)">人工排除</span>`:""}
+    <b>${esc(s.title||"未命名信源")}</b>　<span class="tag">${TYPE_CN[s.source_type]||"资料"}</span>
+    ${s.relevance_override==="include"?`<span class="tag" style="color:var(--accent);border-color:var(--accent)">已强制纳入</span>`:""}
+    ${s.relevance_override==="exclude"?`<span class="tag" style="color:var(--bad);border-color:var(--bad)">已强制排除</span>`:""}
     <div class="cred"><span class="sub">可信度</span>
       <input type="range" min="0" max="1" step="0.05" value="${s.credibility}"
         oninput="this.nextElementSibling.textContent=this.value" onchange="setCred('${esc(s.id)}',this.value)">
       <span class="val">${s.credibility}</span>
       <span class="sub">（${(s.segments||[]).length} 段）</span></div>
     <div class="evops">
-      <button class="mini" onclick="setRel('${esc(s.id)}','include')">强制纳入</button>
+      <button class="mini" onclick="setRel('${esc(s.id)}','include')">强制纳入研判</button>
       <button class="mini danger" onclick="setRel('${esc(s.id)}','exclude')">强制排除</button>
-      <button class="mini" onclick="setRel('${esc(s.id)}','')">恢复自动</button>
-      <span class="sub">相关性人工裁决（入链可审计）</span>
+      <button class="mini" onclick="setRel('${esc(s.id)}','')">恢复自动分层</button>
     </div>
-  </div>`).join("")||`<div class="sec empty">无信源</div>`;
+  </div>`).join("")||`<div class="sec empty">案卷中没有信源。</div>`;
+}
+function histWriteGuard(){
+  if(PAGE==="hist"){toast("历史记录只读。要改判断，请点「拿到工作台再问」。");return true}
+  return false;
 }
 async function setRel(id,ov){
+  if(histWriteGuard())return;
   D=await api("/api/source/relevance",{method:"POST",headers:{"Content-Type":"application/json"},
     body:JSON.stringify({case:CUR,source_id:id,override:ov})});
-  render();toast(ov?(ov==="include"?"已强制纳入（入链）":"已强制排除（入链）"):"已恢复自动分层（入链）");
+  render();toast(ov?(ov==="include"?"已强制纳入，并记入账本":"已强制排除，并记入账本"):"已恢复自动分层，并记入账本");
 }
 async function setWeight(id,w){
+  if(histWriteGuard())return;
   D=await api("/api/evidence/weight",{method:"POST",headers:{"Content-Type":"application/json"},
     body:JSON.stringify({case:CUR,evidence_id:id,weight:parseFloat(w)})});
-  G=await api("/api/reasoning_graph?case="+encodeURIComponent(CUR)).catch(()=>G);
-  render();toast(`已调整权重并重算（入链 ${D.chain.n_records} 条）`);
+  G=await api("/api/reasoning_graph?"+dossierQs()).catch(()=>G);
+  render();toast(`权重已调整并重算（账本 ${D.chain.n_records} 笔）`);
 }
 async function removeEv(id){
-  if(!confirm("确认删除该证据？结论置信度将即时重算，操作记入防篡改链。"))return;
+  if(histWriteGuard())return;
+  if(!confirm("确认删除这条证据？结论置信度会立刻重算，操作记入防伪账本。"))return;
   D=await api("/api/evidence/remove",{method:"POST",headers:{"Content-Type":"application/json"},
     body:JSON.stringify({case:CUR,evidence_id:id})});
-  G=await api("/api/reasoning_graph?case="+encodeURIComponent(CUR)).catch(()=>G);
-  render();toast("证据已删除并重算（入链）");
+  G=await api("/api/reasoning_graph?"+dossierQs()).catch(()=>G);
+  render();toast("证据已删除并重算，已记入账本");
 }
 async function setCred(id,v){
+  if(histWriteGuard())return;
   D=await api("/api/source/credibility",{method:"POST",headers:{"Content-Type":"application/json"},
     body:JSON.stringify({case:CUR,source_id:id,credibility:parseFloat(v)})});
-  G=await api("/api/reasoning_graph?case="+encodeURIComponent(CUR)).catch(()=>G);
-  render();toast("信源可信度已更新并重算全链（入链）");
+  G=await api("/api/reasoning_graph?"+dossierQs()).catch(()=>G);
+  render();toast("信源可信度已更新并重算全链");
 }
 async function editCon(id){
+  if(histWriteGuard())return;
   const el=document.getElementById("edit-"+id);if(!el)return;
   D=await api("/api/conclusion/edit",{method:"POST",headers:{"Content-Type":"application/json"},
     body:JSON.stringify({case:CUR,conclusion_id:id,statement:el.value})});
-  G=await api("/api/reasoning_graph?case="+encodeURIComponent(CUR)).catch(()=>G);
+  G=await api("/api/reasoning_graph?"+dossierQs()).catch(()=>G);
   render();
   const op=D.op;
   if(op&&op.flags&&op.flags.length){
-    toast(`⚠ 结论已改写入链，但本次修改引入 ${op.flags.length} 项机械核对警示：`+
-      op.flags.map(f=>FLAG_CN[f.kind]||f.kind).join("、"),5200);
-  }else{toast("结论已改写并入链（机械核对通过）")}
+    toast(`判断已改写并入账，但引入 ${op.flags.length} 项质控提示：`+
+      op.flags.map(f=>FLAG_CN[f.kind]||"质控提示").join("、"),5200);
+  }else{toast("判断已改写，质控通过")}
 }
 async function overrideWin(cid,winner){
+  if(histWriteGuard())return;
   D=await api("/api/conflict/override",{method:"POST",headers:{"Content-Type":"application/json"},
     body:JSON.stringify({case:CUR,conflict_id:cid,winner_id:winner})});
-  G=await api("/api/reasoning_graph?case="+encodeURIComponent(CUR)).catch(()=>G);
-  render();toast("人工裁决已落卷并入链");
+  G=await api("/api/reasoning_graph?"+dossierQs()).catch(()=>G);
+  render();toast("人工裁决已落卷并记入账本");
 }
 async function resetCase(){
-  if(!confirm("撤销本案例的全部人工修改，还原到管线产物？重置动作会记入防篡改链。"))return;
+  if(histWriteGuard())return;
+  if(!confirm("撤销本案例的全部人工修改，还原到研判产物？撤销动作仍会记入防伪账本。"))return;
   D=await api("/api/case/reset",{method:"POST",headers:{"Content-Type":"application/json"},
     body:JSON.stringify({case:CUR})});
-  G=await api("/api/reasoning_graph?case="+encodeURIComponent(CUR)).catch(()=>G);
-  render();toast("已还原到管线产物（重置动作入链）");
+  G=await api("/api/reasoning_graph?"+dossierQs()).catch(()=>G);
+  render();toast("已还原到研判产物（撤销动作已入账）");
 }
 async function verifyChain(){
+  if(PAGE==="hist" && D && D.chain){
+    toast(D.chain.ok?`这份记录账本完好（${D.chain.n_records} 笔）`
+      :`这份记录账本异常`);
+    const pill=$("#kpiChain");
+    pill.className="conn "+(D.chain.ok?"ok":"bad");
+    pill.textContent=D.chain.ok?`账本完好 · ${D.chain.n_records} 笔`:"账本异常";
+    return;
+  }
   const r=await api("/api/chain/verify",{method:"POST",headers:{"Content-Type":"application/json"},
     body:JSON.stringify({case:CUR})});
-  toast(r.ok?`哈希链校验通过（${r.n_records} 条记录，改一字即红）`
-    :`校验失败！#${r.bad_index}: ${r.reason}`);
-  $("#chainPill").className="pill "+(r.ok?"ok":"bad");
+  toast(r.ok?`账本核验通过（${r.n_records} 笔，改一字即失效）`
+    :`核验失败：第 ${r.bad_index} 笔异常`);
+  $("#kpiChain").className="conn "+(r.ok?"ok":"bad");
+  $("#kpiChain").textContent=r.ok?`账本完好 · ${r.n_records} 笔`:"账本异常";
 }
 async function tamperDemo(){
+  if(histWriteGuard())return;
   const r=await api("/api/chain/tamper_demo",{method:"POST",headers:{"Content-Type":"application/json"},
     body:JSON.stringify({case:CUR})});
   if(r.honest_ok&&!r.tampered_ok){
-    toast(`演示成功：原链校验 ✅ → 在内存副本把「${r.tampered_record_event}」记录的负载改一个字段 → 校验 ❌ 坏于第 ${r.bad_index} 条（${r.reason}）。磁盘文件未被改动。`,6000);
-  }else{toast("演示异常："+JSON.stringify(r))}
+    toast(`演示成功：原账本核验通过；仅在内存副本改一处后立即失效（坏在第 ${r.bad_index} 笔）。磁盘文件未被改动。`,6000);
+  }else{toast("演示未按预期完成，请重试")}
 }
-$("#caseSel").addEventListener("change",load);
 boot();
 </script>
 </body>
 </html>
+

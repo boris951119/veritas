@@ -36,6 +36,13 @@ class FakeClient:
 
 @pytest.fixture(scope="module")
 def api(tmp_path_factory):
+    import os
+
+    # 本机若已接真实 key，工作台默认会走网关；测试强制演示桩
+    llm_path = tmp_path_factory.mktemp("llm") / "workbench.json"
+    llm_path.write_text('{"force_demo": true}\n', encoding="utf-8")
+    os.environ["VERITAS_WORKBENCH_LLM"] = str(llm_path)
+
     cases_root = tmp_path_factory.mktemp("cases")
     case_dir = cases_root / "demo"
     case_dir.mkdir()
@@ -76,7 +83,7 @@ def _post(url, payload):
     req = urllib.request.Request(
         url, data=json.dumps(payload).encode("utf-8"),
         headers={"Content-Type": "application/json"}, method="POST")
-    with urllib.request.urlopen(req, timeout=5) as r:
+    with urllib.request.urlopen(req, timeout=30) as r:
         return json.loads(r.read().decode("utf-8"))
 
 
@@ -84,17 +91,69 @@ def test_index_serves_workbench_html(api):
     with urllib.request.urlopen(api + "/", timeout=5) as r:
         html = r.read().decode("utf-8")
     assert "veritas" in html and "研判工作台" in html
+    assert "历史记录" in html and "开始研判" in html
+    assert "接入模型" in html
+    assert "是否保存 API Key" in html
+    assert "exit-keep" in html or "exitKeepKey" in html
+    assert "添加资料" in html
+    assert "更多细节" in html
+    assert "添加文件夹" not in html
+    assert 'id="filePick"' in html
+    assert "核验账本" in html
+    # 演示工具在结果区，不在顶栏抢主路径
+    assert html.index("开始研判") < html.index('id="demoTools"')
 
 
 def test_list_and_get_dossier(api):
     cases = _get(api + "/api/cases")["cases"]
-    assert {"name": "demo", "out_dir": "out"} in cases
+    assert any(c["name"] == "demo" and c.get("has_result") for c in cases)
     data = _get(api + "/api/dossier?case=demo")
     d = data["dossier"]
     assert len(d["conclusions"]) == 2
     assert d["panel"] == ["mainstream"]
     assert d["rejected"] == []
     assert data["chain"]["ok"] is True
+    assert data.get("timeline")
+    assert "elapsed_s" in (data.get("accounting") or {})
+    prog = _get(api + "/api/progress?case=demo")
+    assert prog.get("step") == "done"
+
+
+def test_workbench_run_uses_user_question(api):
+    data = _post(api + "/api/run", {
+        "case": "demo",
+        "question": "本次用户亲口问的议题是否成立？",
+    })
+    assert data["dossier"]["question"] == "本次用户亲口问的议题是否成立？"
+    assert data["dossier"]["conclusions"]
+    assert data["chain"]["ok"] is True
+
+
+def test_history_lists_examples_and_archives_runs(api):
+    import urllib.error
+    import urllib.parse
+
+    hist = _get(api + "/api/history")
+    assert any(e["name"] == "demo" and e["has_result"] for e in hist["examples"])
+    q = "历史记录里能看见这次吗？"
+    _post(api + "/api/run", {"case": "demo", "question": q})
+    hist2 = _get(api + "/api/history")
+    assert hist2["runs"]
+    run = next(r for r in hist2["runs"] if r["question"] == q)
+    assert run["out"].startswith("history/")
+    qs = urllib.parse.urlencode({"case": "demo", "out": run["out"]})
+    data = _get(api + "/api/dossier?" + qs)
+    assert data["dossier"]["question"] == q
+    with pytest.raises(urllib.error.HTTPError) as ei:
+        _get(api + "/api/dossier?case=demo&out=../demo")
+    assert ei.value.code == 400
+
+
+def test_case_diff_missing_against_is_404(api):
+    import urllib.error
+    with pytest.raises(urllib.error.HTTPError) as ei:
+        _get(api + "/api/case/diff?case=demo&against=out_missing")
+    assert ei.value.code == 404
 
 
 def test_weight_update_recomputes_and_chains(api):

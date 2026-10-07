@@ -14,8 +14,8 @@
 3. **零 LLM 兜底**：`render_chair_template` 纯程序渲染——LLM 失败/
    桩路径/未启用时，报告永远有综合意见，演示永不空。
 
-synthesis 是研判终态快照：人工修改结论后不自动重算（报告可live回退
-模板渲染），快照过期属已知开放问题（见 dev-journal §10）。
+人工修改走工作台时，综合意见按本模板重渲染（不重跑主席模型），
+避免快照与改后的结论文案不一致。
 """
 
 from __future__ import annotations
@@ -82,6 +82,10 @@ def render_chair_template(dossier: Dossier) -> dict:
             open_issues.append({"kind": "dissent", "ref": c.id,
                                 "text": _trim(f"少数意见保留：{c.statement}",
                                               _ISSUE_MAX)})
+        elif c.status == "insufficient":
+            open_issues.append({"kind": "gap", "ref": c.id,
+                                "text": _trim("证据不足，该判断未进入主表",
+                                              _ISSUE_MAX)})
     from app.core.premise_check import premise_flags
 
     for f in premise_flags(dossier)[:3]:
@@ -108,6 +112,20 @@ def render_chair_template(dossier: Dossier) -> dict:
                                           _ISSUE_MAX)})
     return {"mode": "template", "headline": headline, "points": points,
             "open_issues": open_issues}
+
+
+def refresh_synthesis_after_human(dossier: Dossier) -> dict:
+    """人工修改后用零 LLM 模板重渲染综合意见，并标明原因。
+
+    不重跑主席模型：人改的是已落卷结论，模板按当前案卷确定性重算，
+    工作台与报告读到的快照与结论文案一致。
+    """
+    synthesis = render_chair_template(dossier)
+    synthesis["gate_notes"] = [
+        "人工修改后按模板重渲染综合意见（不重跑主席模型）",
+    ]
+    dossier.synthesis = synthesis
+    return synthesis
 
 
 # ---------------------------------------------------------------- 四道闸

@@ -260,10 +260,10 @@ class Dossier:
     # 输入分诊账本：每个文件（含压缩包条目）一条 {file, route, reason}——
     # 哪些进了研判、各自为什么，一页可审计（零相关/重复为派生视图另行披露）
     triage: list[dict] = field(default_factory=list)
-    # 主席综合意见（agents/chair.py 产出的研判终态快照：headline/points/
-    # open_issues/mode/gate_notes）——人工修改结论后不自动重算，属已知
-    # 开放问题；报告渲染在快照缺失时 live 回退模板
+    # 主席综合意见（agents/chair.py）：生产路径 LLM+闸，人工修改后模板重渲染
     synthesis: dict = field(default_factory=dict)
+    # 本次研判耗时/token（工作台上屏；桩路径为 0）
+    accounting: dict = field(default_factory=dict)
 
     # -- 索引 --
 
@@ -325,6 +325,7 @@ class Dossier:
             "ingest_notes": self.ingest_notes,
             "triage": self.triage,
             "synthesis": self.synthesis,
+            "accounting": self.accounting,
         }
 
     @classmethod
@@ -340,6 +341,7 @@ class Dossier:
             ingest_notes=list(d.get("ingest_notes") or []),
             triage=list(d.get("triage") or []),
             synthesis=dict(d.get("synthesis") or {}),
+            accounting=dict(d.get("accounting") or {}),
         )
 
     def to_json(self, path: Path) -> Path:

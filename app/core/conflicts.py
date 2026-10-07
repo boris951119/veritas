@@ -30,7 +30,7 @@ class Resolution:
     """一次消解：程序算的证据加权对比 + 仲裁说理 + 质证原文。"""
 
     winner_id: str                     # a_id / b_id / "tie"
-    method: str = "arbitration"        # arbitration / tie
+    method: str = "arbitration"        # arbitration / tie / evidence_weight
     rationale: str = ""                # 仲裁理由（LLM 说理，原样保留）
     evidence_weight: dict = field(default_factory=dict)  # {"CON-x": 0.72, ...}
     rebuts: dict = field(default_factory=dict)  # {"a": 质证文本, "b": ...}
@@ -89,6 +89,36 @@ def validate_conflict(pair: ConflictPair, dossier: Dossier) -> list[str]:
         elif not dossier.evidences_of(cid):
             problems.append(f"结论 {cid} 无存活证据，不构成可裁决冲突")
     return problems
+
+
+_WEIGHT_MARGIN = 0.20  # 强度差超过此值才否决 LLM，避免同级证据微调翻案
+
+
+def prefer_stronger_side(pair: ConflictPair, dossier: Dossier,
+                         resolution: Resolution | None) -> Resolution | None:
+    """票数不能压过证据质量：LLM 把明显更弱的一侧判胜时，改判强侧。
+
+    强度打平（差 ≤ 边际）尊重 LLM / tie。只改 resolution，不落卷。
+    """
+    if resolution is None or resolution.winner_id == "tie":
+        return resolution
+    weight = resolution.evidence_weight or compute_evidence_weight(pair, dossier)
+    resolution.evidence_weight = weight
+    winner = resolution.winner_id
+    if winner not in (pair.a_id, pair.b_id):
+        return resolution
+    loser = pair.b_id if winner == pair.a_id else pair.a_id
+    w_win = float(weight.get(winner, 0.0))
+    w_lose = float(weight.get(loser, 0.0))
+    if w_lose > w_win + _WEIGHT_MARGIN:
+        resolution.winner_id = loser
+        resolution.method = "evidence_weight"
+        resolution.rationale = (
+            f"程序按证据强度否决票数：{loser}={w_lose:.2f} > "
+            f"{winner}={w_win:.2f}（多数派引用不能压过更高强度证据）。"
+            + (f" 原仲裁：{resolution.rationale}" if resolution.rationale else "")
+        )
+    return resolution
 
 
 def compute_evidence_weight(pair: ConflictPair, dossier: Dossier) -> dict:

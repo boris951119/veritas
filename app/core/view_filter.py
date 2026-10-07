@@ -18,6 +18,7 @@ from __future__ import annotations
 import copy
 
 from app.core.evidence import Dossier
+from app.core.pii import mask_pii_in_dossier
 
 _CLEARANCE_LEVEL = {"public": 0, "internal": 1, "confidential": 2}
 
@@ -97,6 +98,7 @@ def redact_dossier(dossier: Dossier, clearance: str | None) -> tuple[Dossier, di
                 rec["statement"] = "（少数意见涉密，您无权限查阅）"
                 rec["why"] = "（仲裁记录涉密，您无权限查阅）"
 
+    mask_pii_in_dossier(view)
     stats = {"hidden_sources": hidden_sources,
              "hidden_evidences": hidden_evidences,
              "hidden_conclusions": hidden_conclusions,

@@ -21,6 +21,7 @@ from app.core.conflicts import (
     ConflictPair,
     Resolution,
     compute_evidence_weight,
+    prefer_stronger_side,
     validate_conflict,
 )
 from app.core.evidence import Conclusion, Dossier
@@ -202,13 +203,13 @@ class Coordinator:
             winner = str(data.get("winner", "")).strip()
             if winner not in (pair.a_id, pair.b_id, "tie"):
                 return None  # winner 非法 → 不消解
-            return Resolution(
+            return prefer_stronger_side(pair, dossier, Resolution(
                 winner_id=winner,
                 method=("tie" if winner == "tie" else "arbitration"),
                 rationale=str(data.get("rationale", "")),
                 evidence_weight=weight,
                 rebuts=dict(rebuts or {}),
-            )
+            ))
         except Exception:
             return None
 

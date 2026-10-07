@@ -19,6 +19,11 @@ from app.core.numeric_check import audit_conservation, audit_counting, audit_num
 from app.core.premise_check import premise_flags
 from app.core.dup_check import near_dup_flags
 from app.core.question_check import question_flag
+from app.core.claim_check import (
+    audit_bare_percent,
+    audit_unit_mismatch,
+    audit_unverified_sources,
+)
 from app.core.temporal_check import audit_temporal
 from app.core.untrusted import scan_injections
 
@@ -40,6 +45,9 @@ KIND_LABEL: dict[str, str] = {
     "near_dup": "疑似同源转述",
     "question": "议题表述待聚焦",
     "premise": "议题前提未被资料覆盖",
+    "percent_no_base": "涨跌百分比未见基数",
+    "unit_mismatch": "人民币与美元口径混用",
+    "source_unverified": "信源出处未核验",
 }
 
 
@@ -61,6 +69,9 @@ def audit_all(dossier: Dossier) -> list[dict]:
         *audit_level_consistency(dossier),
         *audit_causation_support(dossier),
         *audit_temporal(dossier),
+        *audit_bare_percent(dossier),
+        *audit_unit_mismatch(dossier),
+        *audit_unverified_sources(dossier),
     ]
 
 

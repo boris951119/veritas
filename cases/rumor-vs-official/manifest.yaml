@@ -1,0 +1,15 @@
+question: 某制造公司是否已因资金链断裂全面停工？
+sources:
+  - file: rumor_weibo.md
+    type: news
+    credibility: 0.35
+  - file: rumor_repost.md
+    type: news
+    credibility: 0.35
+  - file: rumor_blog.md
+    type: web
+    credibility: 0.30
+  - file: official_notice.md
+    type: report
+    credibility: 0.85
+    published_at: "2026-09-28"

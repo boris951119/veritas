@@ -53,6 +53,10 @@ _EXT_HINTS = {
     ".htm": SourceType.WEB,
     ".md": SourceType.NOTE,
     ".txt": SourceType.NOTE,
+    ".docx": SourceType.REPORT,
+    ".xlsx": SourceType.REPORT,
+    ".xlsm": SourceType.REPORT,
+    ".pptx": SourceType.REPORT,
 }
 
 _YEAR_RE = re.compile(r"(19|20)\d{2}\s*年")
@@ -163,7 +167,8 @@ def _collect_files(case_dir: Path, max_files: int = 500,
         # 产物目录（out/out_offline/out_ab_*）与缓存绝不入卷——
         # 自产文件被输入层吃回会形成滚雪球（归一化 diff 验收抓到的
         # 真实回归：72 信源/73218 段，每跑一次演示膨胀一轮）
-        return name == "out" or name.startswith("out_")
+        return name == "out" or name.startswith("out_") \
+            or name in ("history", ".fetched")
 
     def walk(d: Path, prefix: str, depth: int) -> None:
         if depth > max_depth or len(out) >= max_files:
@@ -173,9 +178,11 @@ def _collect_files(case_dir: Path, max_files: int = 500,
                 break
             if depth == 0 and p.name == "manifest.yaml":
                 continue
+            if p.name.startswith("."):
+                continue  # 隐藏文件/目录一律不入卷(.DS_Store/.expected.json 等
+                # 系统或工具元数据不是用户内容——macOS 拖目录的真实场景)
             if p.is_dir():
-                if p.name.startswith(".") or p.name == "__pycache__" \
-                        or _is_artifact_dir(p.name):
+                if p.name == "__pycache__" or _is_artifact_dir(p.name):
                     continue
                 walk(p, f"{prefix}{p.name}/", depth + 1)
             else:
@@ -374,6 +381,16 @@ def load_case(case_dir: Path, fetch_links: bool = False) -> Dossier:
             })
             _triage(rel, "image_disclosed", "图片文件（OCR 开启且网关支持时"
                                             "将转写为低可信派生信源）")
+            return
+        from app.ingest.readers import UNSUPPORTED_EXTS
+
+        if path.suffix.lower() in UNSUPPORTED_EXTS:
+            dossier.ingest_notes.append({
+                "file": rel, "kind": "unsupported",
+                "detail": f"暂不解析 {path.suffix}（老版 Word/Excel/PPT）——"
+                          "请另存为 docx/xlsx/pptx 或导出 PDF/文本后再添加",
+            })
+            _triage(rel, "unsupported_format", f"格式 {path.suffix}")
             return
         fmt = sniff_format(path) if is_archive_file(path) else ""
         if fmt in ("7z", "rar"):
