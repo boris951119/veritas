@@ -32,9 +32,11 @@ def _tokens(text: str) -> list[str]:
     return [t[i:i + 2] for i in range(len(t) - 1)]
 
 
-def rank_segments(dossier: Dossier) -> list[tuple[str, float]]:
-    """全部段落按议题 BM25 分排序 → [(seg_id, score)]，分数降序、
-    同分按 id 稳定排序（确定性，全体分析师同料的前提）。"""
+def rank_segments(dossier: Dossier,
+                  query: str | None = None) -> list[tuple[str, float]]:
+    """全部段落按查询 BM25 分排序 → [(seg_id, score)]，分数降序、
+    同分按 id 稳定排序（确定性，全体分析师同料的前提）。
+    query 缺省用案卷议题；评测场景可传自定义问题。"""
     docs: list[tuple[str, list[str]]] = []
     for src in dossier.sources:
         for seg in src.segments:
@@ -47,7 +49,8 @@ def rank_segments(dossier: Dossier) -> list[tuple[str, float]]:
         for t in set(toks):
             df[t] = df.get(t, 0) + 1
     avgdl = sum(len(toks) for _, toks in docs) / n_docs
-    query = set(_tokens(dossier.question))
+    qtext = query if query is not None else dossier.question
+    query = set(_tokens(qtext))
     out: list[tuple[str, float]] = []
     for seg_id, toks in docs:
         dl = len(toks)
