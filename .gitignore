@@ -33,4 +33,7 @@ cases/*/.fetched/
 cases/*/out_hetero_*/
 cases/*/history/
 cases/user-*/
+# 评测语料 PDF/跑批产物（大文件；主副本在桌面 veritas-testcases/eval-corpus）
 eval/corpus/*/pdf/
+eval/corpus/*/out_eval/
+eval/report.md

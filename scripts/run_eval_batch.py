@@ -40,11 +40,23 @@ def main() -> int:
     for company, qs in by_c.items():
         case_dir = CORPUS / company
         out_dir = case_dir / "out_eval"
+        pdfs = sorted((case_dir / "pdf").glob("*.pdf"))
+        if not pdfs:
+            # 兼容 HTML（如 AOSL）或扁平目录
+            pdfs = sorted(case_dir.glob("*.pdf"))
+            htmls = sorted(case_dir.glob("*.htm*"))
+            src_lines = []
+            for p in pdfs:
+                src_lines.append(f"  - file: {p.name}\n    type: report\n")
+            for p in htmls:
+                src_lines.append(f"  - file: {p.name}\n    type: report\n")
+        else:
+            src_lines = [
+                f"  - file: pdf/{p.name}\n    type: report\n" for p in pdfs]
         (case_dir / "manifest.yaml").write_text(
             f"question: {company}2024-2025年度经营成果与财务状况研判"
-            "(营收、盈利、分红、股东回报与风险)\\n"
-            + "".join(f'sources:\\n  - file: pdf/{p.name}\\n    type: report\\n'
-                      for p in sorted((case_dir / "pdf").glob("*.pdf"))),
+            f"（营收、盈利、分红、股东回报与风险）\n"
+            f"sources:\n{''.join(src_lines)}",
             encoding="utf-8")
         print(f"== {company} 开始 {time.strftime('%H:%M')}", flush=True)
         try:
@@ -85,7 +97,7 @@ def main() -> int:
                f"- M2 数字覆盖率(数值进结论):**{hit2:.0%}**"
                f"({totals['m2']}/{totals['n']})",
                f"- 冲突对检出:{totals['conflicts']};引文打回:{totals['rejected']}"]
-    REPORT.write_text("\\n".join(report) + "\\n", encoding="utf-8")
+    REPORT.write_text("\n".join(report) + "\n", encoding="utf-8")
     print("\n报告:", REPORT)
     return 0
 

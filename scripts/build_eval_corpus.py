@@ -23,6 +23,7 @@ REPO = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO))
 
 OUT_ROOT = Path("/Users/liuboyu/Desktop/veritas-testcases/eval-corpus")
+BASE = "https://www.cninfo.com.cn"
 SE_DATE = "2023-10-01~2025-10-01"
 SLEEP = 0.4
 
@@ -49,15 +50,18 @@ def _post_json(url: str, form: dict) -> dict:
         return json.loads(r.read().decode("utf-8"))
 
 
-def _get(url: str, dest: Path, cap: int = 50 * 1024 * 1024) -> bool:
+def _get(url: str, dest: Path, cap: int = 200 * 1024 * 1024,
+         min_size: int = 10_000) -> bool:
+    """下载到 dest。超过 cap 截断判失败；小于 min_size 视为空包。"""
     try:
         req = urllib.request.Request(url, headers=UA)
-        with urllib.request.urlopen(req, timeout=90) as r:
-            dest.write_bytes(r.read(cap + 1))
-        ok = 10_000 < dest.stat().st_size <= cap
-        if not ok:
+        with urllib.request.urlopen(req, timeout=180) as r:
+            data = r.read(cap + 1)
+        if len(data) > cap or len(data) <= min_size:
             dest.unlink(missing_ok=True)
-        return ok
+            return False
+        dest.write_bytes(data)
+        return True
     except Exception as exc:
         print(f"      ✗ {type(exc).__name__}: {str(exc)[:60]}")
         dest.unlink(missing_ok=True)
@@ -165,27 +169,60 @@ def _edgar(url: str, timeout: int = 90) -> bytes:
         return r.read()
 
 
+def migrate_repo_corpus_to_desktop() -> int:
+    """把仓库 eval/corpus/<公司> 同步到桌面（复制，不删仓库）。
+
+    返回同步的公司目录数。绝不能 rmtree(REPO/eval)——会毁掉
+    questions.jsonl / layout / report 等评测资产。
+    """
+    old = REPO / "eval" / "corpus"
+    if not old.is_dir():
+        return 0
+    OUT_ROOT.mkdir(parents=True, exist_ok=True)
+    n = 0
+    for d in sorted(old.iterdir()):
+        if not d.is_dir():
+            # MANIFEST 等说明文件也拷过去
+            if d.is_file() and d.suffix in (".md", ".txt", ".json"):
+                dest_f = OUT_ROOT / d.name
+                if not dest_f.exists():
+                    shutil.copy2(d, dest_f)
+            continue
+        dest = OUT_ROOT / d.name
+        dest.mkdir(parents=True, exist_ok=True)
+        for f in d.rglob("*"):
+            if not f.is_file():
+                continue
+            rel = f.relative_to(d)
+            # 仓库里 PDF 在 pdf/ 下；若误放根目录，归入 pdf/
+            if rel.parts[0] == "pdf" or f.suffix.lower() in (
+                    ".pdf", ".htm", ".html"):
+                if rel.parts[0] == "pdf":
+                    t = dest / rel
+                else:
+                    t = dest / "pdf" / f.name
+            else:
+                t = dest / rel
+            t.parent.mkdir(parents=True, exist_ok=True)
+            if not t.exists() or t.stat().st_size != f.stat().st_size:
+                shutil.copy2(f, t)
+        n += 1
+    return n
+
+
 def main() -> int:
     max_n = 0
     if "--max" in sys.argv:
         max_n = int(sys.argv[sys.argv.index("--max") + 1])
+    migrate_only = "--migrate-only" in sys.argv
     OUT_ROOT.mkdir(parents=True, exist_ok=True)
-    # 迁移旧语料(仓库 eval/corpus → 桌面)
-    old = REPO / "eval" / "corpus"
-    if old.is_dir():
-        for d in old.iterdir():
-            dest = OUT_ROOT / d.name
-            if not dest.exists():
-                shutil.move(str(d), str(dest))
-            else:
-                for f in d.rglob("*"):
-                    if f.is_file():
-                        t = dest / "pdf" / f.name
-                        t.parent.mkdir(parents=True, exist_ok=True)
-                        if not t.exists():
-                            shutil.copy2(f, t)
-        shutil.rmtree(REPO / "eval", ignore_errors=True)
-        print("旧语料已迁移到桌面")
+    # 迁移旧语料(仓库 eval/corpus/<公司> → 桌面)；绝不可删除整个 eval/
+    # （questions.jsonl / layout / report.md 必须留在仓库）
+    n_mig = migrate_repo_corpus_to_desktop()
+    if n_mig:
+        print(f"旧语料已同步到桌面（{n_mig} 个公司目录，仓库副本保留）")
+    if migrate_only:
+        return 0
     summary = []
     for code, org, name, column in CN_COMPANIES:
         d = OUT_ROOT / name
@@ -202,8 +239,28 @@ def main() -> int:
     print(f"   文件 {st['total']},下载 {st['ok']},失败 {st['fail']}")
     summary.append(("AOSL", st))
     print("\n===== 汇总 =====")
+    lines = [
+        "# 上市公司评测语料（巨潮全量 + SEC AOSL）",
+        "",
+        f"窗口: `{SE_DATE}`",
+        f"路径: `{OUT_ROOT}`",
+        f"生成: {time.strftime('%Y-%m-%d %H:%M')}",
+        "",
+        "| 公司 | 公告条数 | 下载成功 | 失败 |",
+        "|---|---:|---:|---:|",
+    ]
     for name, st in summary:
         print(f"  {name}: {st['total']} 条 / 下载 {st['ok']} / 失败 {st['fail']}")
+        lines.append(
+            f"| {name} | {st['total']} | {st['ok']} | {st['fail']} |")
+    lines += [
+        "",
+        "说明：PDF/HTML 仅存桌面，不入 git；仓库 `eval/corpus/` 保留 B4 启动包。"
+        "断点续传：已存在且 >10KB 的文件跳过。",
+        "",
+    ]
+    (OUT_ROOT / "MANIFEST.md").write_text("\n".join(lines), encoding="utf-8")
+    print("MANIFEST:", OUT_ROOT / "MANIFEST.md")
     return 0
 
 
