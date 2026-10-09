@@ -696,8 +696,26 @@ def _get_content(response: Any) -> str:
         # 空串放行，交给空内容扩容重试通道（翻倍至天花板）。
         if _get_finish_reason(response) == "length":
             return ""
+        reason = _index(message, "reasoning_content")
+        if reason is not None and str(reason).strip():
+            raise RuntimeError(
+                "模型只返回了思考过程（reasoning_content），正文 content 为空。"
+                "请换 deepseek-v4-pro / qwen3.8-max / glm-5.3 等能出正文的模型，"
+                "或增大 max_tokens。")
         raise RuntimeError("LLM 响应缺少 message.content 字段")
-    return str(content)
+    text = str(content)
+    if not text.strip():
+        reason = _index(message, "reasoning_content")
+        if reason is not None and str(reason).strip():
+            # 部分推理模型偶发 content="" 却把可用正文塞进 reasoning——
+            # 若其中含 JSON/结论结构则救急采用，否则给出可操作错误。
+            rtxt = str(reason).strip()
+            if "{" in rtxt or "结论" in rtxt or "statement" in rtxt:
+                return rtxt
+            raise RuntimeError(
+                "模型正文为空，仅有思考过程。请改用 deepseek-v4-pro、"
+                "qwen3.8-max 或 glm-5.3 后再研判。")
+    return text
 
 
 def _get_usage(response: Any) -> tuple[int, int]:

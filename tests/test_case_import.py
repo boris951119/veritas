@@ -137,3 +137,53 @@ def test_rename_case_updates_title(tmp_path):
     listed = client.get("/api/cases").json()["cases"]
     hit = next(c for c in listed if c["name"] == name)
     assert hit["title"] == "现场卷宗甲"
+
+
+def test_remove_and_append_imported_files(tmp_path):
+    cases = tmp_path / "cases"
+    cases.mkdir()
+    client = TestClient(create_app(cases_root=cases))
+    r = client.post(
+        "/api/case/import",
+        data={"question": "议题"},
+        files=[
+            ("files", ("dump/keep.md", "# k\n留下这段。".encode(), "text/markdown")),
+            ("files", ("dump/wrong.md", "# w\n导错了。".encode(), "text/markdown")),
+        ],
+    )
+    assert r.status_code == 200
+    name = r.json()["case"]
+    assert r.json()["n_sources"] == 2
+    gone = client.post("/api/case/files/remove",
+                       json={"case": name, "files": ["dump/wrong.md"]})
+    assert gone.status_code == 200, gone.text
+    body = gone.json()
+    assert body["n_removed"] == 1
+    assert body["n_sources"] == 1
+    assert not (cases / name / "dump/wrong.md").exists()
+    assert (cases / name / "dump/keep.md").is_file()
+    # 追加到本案，不另开 user-*
+    add = client.post(
+        "/api/case/import",
+        data={"question": "议题", "case": name},
+        files=[("files", ("dump/extra.md", "# e\n补一份。".encode(),
+                          "text/markdown"))],
+    )
+    assert add.status_code == 200
+    assert add.json()["case"] == name
+    assert add.json()["appended"] is True
+    assert add.json()["n_sources"] == 2
+    assert (cases / name / "dump/extra.md").is_file()
+
+
+def test_remove_refuses_demo_case(tmp_path):
+    cases = tmp_path / "cases"
+    demo = cases / "demo"
+    demo.mkdir(parents=True)
+    (demo / "manifest.yaml").write_text("question: q\n", encoding="utf-8")
+    (demo / "a.md").write_text("正文。", encoding="utf-8")
+    client = TestClient(create_app(cases_root=cases))
+    r = client.post("/api/case/files/remove",
+                    json={"case": "demo", "files": ["a.md"]})
+    assert r.status_code == 422
+    assert (demo / "a.md").is_file()

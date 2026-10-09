@@ -110,8 +110,12 @@ def render_chair_template(dossier: Dossier) -> dict:
                             "text": _trim(f"资料内数字冲突 {len(collisions)} 处"
                                           "（见对撞台账，结论须正面回应）",
                                           _ISSUE_MAX)})
-    return {"mode": "template", "headline": headline, "points": points,
-            "open_issues": open_issues}
+    from app.core.answer_slots import apply_answer_contract
+
+    return apply_answer_contract(dossier, {
+        "mode": "template", "headline": headline, "points": points,
+        "open_issues": open_issues,
+    })
 
 
 def refresh_synthesis_after_human(dossier: Dossier) -> dict:
@@ -207,8 +211,26 @@ def _validate_llm_output(dossier: Dossier, data: dict) -> tuple[dict, list[str]]
             notes.append("少数意见被略过 → 模板补全")
 
     points.sort(key=lambda p: (-p["confidence"], p["con_id"]))
-    return {"mode": "llm", "headline": headline, "points": points,
-            "open_issues": open_issues, "gate_notes": notes}, notes
+    # 已进 points 的结论，丢掉「不纳入/资料缺失」等自相矛盾说明
+    in_points = {p["con_id"] for p in points}
+    _drop = ("不纳入", "与议题无关", "资料缺失", "不予采纳")
+    before = len(open_issues)
+    open_issues = [
+        o for o in open_issues
+        if not (o.get("ref") in in_points
+                and o.get("kind") in ("note", "gap")
+                and any(k in str(o.get("text") or "") for k in _drop))
+    ]
+    if len(open_issues) < before:
+        notes.append("已纳入主表的结论去掉矛盾的「不纳入/资料缺失」说明")
+
+    from app.core.answer_slots import apply_answer_contract
+
+    synthesis = apply_answer_contract(dossier, {
+        "mode": "llm", "headline": headline, "points": points,
+        "open_issues": open_issues, "gate_notes": notes,
+    })
+    return synthesis, synthesis.get("gate_notes") or notes
 
 
 # ---------------------------------------------------------------- 入口
@@ -239,6 +261,11 @@ def build_synthesis(dossier: Dossier, client, model: str) -> dict:
     if gaps:
         user.append("\n已知资料缺口：" + "；".join(
             g["text"] for g in gaps if g["kind"] == "gap"))
+    from app.core.answer_slots import slot_prompt
+
+    prompt = slot_prompt(dossier)
+    if prompt:
+        user.append(prompt)
     try:
         data = extract_json(client.chat(model, [
             {"role": "system", "content": CHAIR_SYSTEM},

@@ -58,7 +58,11 @@ def check_quote(quote: str, segment_text: str) -> QuoteCheck:
 
 
 def check_evidence(ev: EvidenceNode, dossier: Dossier) -> list[str]:
-    """单条证据的全部机械校验，返回问题清单（空 = 通过）。"""
+    """单条证据的全部机械校验，返回问题清单（空 = 通过）。
+
+    命中窗口：所指段本身；同信源相邻段拼接（表行跨段时数字与标签
+    可能分落两段——拼接后再比，避免误杀已核数字）。
+    """
     if not normalize(ev.quote):
         return ["空引文"]
     problems: list[str] = []
@@ -72,11 +76,34 @@ def check_evidence(ev: EvidenceNode, dossier: Dossier) -> list[str]:
             problems.append(f"来源段落不存在: {sid}")
         else:
             texts.append(seg.text)
+            texts.extend(_adjacent_texts(dossier, sid))
+    if not texts and problems:
+        return problems
     if not texts:
         return problems
     if not any(check_quote(ev.quote, t).ok for t in texts):
         problems.append(f"引文未命中任何所指段落（{','.join(ev.segment_ids)}）")
     return problems
+
+
+def _adjacent_texts(dossier: Dossier, segment_id: str) -> list[str]:
+    """同信源上一段/下一段，及与当前段的正反拼接。"""
+    src = dossier.source_of_segment(segment_id)
+    if src is None:
+        return []
+    segs = src.segments
+    idx = next((i for i, s in enumerate(segs) if s.id == segment_id), -1)
+    if idx < 0:
+        return []
+    out: list[str] = []
+    cur = segs[idx].text
+    if idx > 0:
+        prev = segs[idx - 1].text
+        out.extend([prev, prev + "\n" + cur, cur + "\n" + prev])
+    if idx + 1 < len(segs):
+        nxt = segs[idx + 1].text
+        out.extend([nxt, cur + "\n" + nxt, nxt + "\n" + cur])
+    return out
 
 
 @dataclass

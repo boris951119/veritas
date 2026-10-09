@@ -147,6 +147,9 @@ def ingest_file(path: Path, source_id: str, spec: SourceSpec) -> Source:
         id=source_id,
         meta=meta,
     )
+    from app.ingest.text_heal import heal_extracted_text
+
+    text = heal_extracted_text(text)
     for i, seg_text in enumerate(split_segments(text)):
         source.segments.append(Segment(
             id=f"{source_id}#s{i + 1}",
@@ -218,14 +221,18 @@ def _collect_files(case_dir: Path, max_files: int = 500,
     return out
 
 
-def load_case(case_dir: Path, fetch_links: bool = False) -> Dossier:
+def load_case(case_dir: Path, fetch_links: bool = False,
+              on_file=None) -> Dossier:
     """案例目录 → Dossier（manifest.yaml 用缩进自愈加载）。
 
     摄取按文件隔离：单个损坏/加密文件只降级为 ingest_notes 披露，
     绝不炸整条 run。目录里的压缩包先安全拆封（slip/炸弹/数量/嵌套
     四道边界，见 ingest.archive），拆出的文件与本地文件同权走本流程；
     链接清单文件默认只披露不抓取（fetch_links=True 才逐条抓取并
-    披露成败）。"""
+    披露成败）。
+
+    on_file: 可选回调 ``(rel, index, total)``，供工作台进度条刷新。
+    """
     case_dir = Path(case_dir)
     manifest = {}
     manifest_path = case_dir / "manifest.yaml"
@@ -477,7 +484,14 @@ def load_case(case_dir: Path, fetch_links: bool = False) -> Dossier:
 
         _ingest_one(path, rel, _dc_replace(spec, preloaded=(title, text)))
 
-    for path, rel in _collect_files(case_dir):
+    files = _collect_files(case_dir)
+    total = len(files)
+    for i, (path, rel) in enumerate(files, 1):
+        if on_file is not None:
+            try:
+                on_file(rel, i, total)
+            except Exception:
+                pass
         item = declared_rel.get(rel) or declared_name.get(path.name) or {}
         _process_file(path, rel, SourceSpec.from_manifest(item))
     return dossier

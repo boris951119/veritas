@@ -40,8 +40,12 @@ header{
 .addwrap{margin:8px 0}
 .addwrap > button{width:100%;padding:10px 12px}
 .casebar{display:flex;align-items:center;gap:8px;margin-bottom:8px}
-.casebar b{flex:1;color:#fff;font-size:13px}
-.casebar button{padding:4px 10px;font-size:12px}
+.casebar input{
+  flex:1;min-width:0;background:#09090b;color:#fff;border:1px solid var(--line);
+  border-radius:8px;padding:6px 10px;font:13px inherit;
+}
+.casebar input:focus{outline:none;border-color:var(--accent)}
+.casebar button{padding:4px 10px;font-size:12px;flex-shrink:0}
 .demo-tools{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
 .demo-tools button{padding:6px 12px;font-size:12px}
 .mode-note{font-size:12px;color:var(--warn);margin:8px 0 0;line-height:1.5}
@@ -75,12 +79,27 @@ header{
 .triage-skip{border-left:3px solid var(--warn)}
 .triage-bad{border-left:3px solid var(--bad)}
 #ingestBox{
-  min-height:88px;border:1px dashed var(--line);border-radius:10px;padding:10px;
+  flex:1 1 auto;min-height:160px;max-height:none;
+  overflow-x:hidden;overflow-y:auto;
+  border:1px dashed var(--line);border-radius:10px;padding:8px;
   transition:border-color .15s,background .15s;
+  scrollbar-gutter:stable;
 }
+#leftCol #ingestBox{flex:1 1 auto;min-height:80px;height:auto;max-height:none}
+/* 空闲时议题框吃满中栏；开跑后缩回，进度区占满 */
+#midCol #question{flex:0 0 auto;min-height:110px;height:132px}
+#midCol.running #question{height:110px;min-height:90px}
 #ingestBox.drag{border-color:var(--accent);background:rgba(61,214,255,.06)}
-#ingestBox .item{font-size:12px;padding:7px 8px;border:1px solid var(--line);border-radius:8px;margin-bottom:6px;background:#121a2c}
+#ingestBox .item{font-size:12px;padding:7px 8px;border:1px solid var(--line);border-radius:8px;margin-bottom:6px;background:#121a2c;display:flex;gap:8px;align-items:flex-start}
+#ingestBox .item .body{flex:1;min-width:0}
 #ingestBox .item b{color:#fff}
+#ingestBox .item input[type=checkbox]{margin-top:3px;flex-shrink:0}
+#ingestBox .item .row-del{flex-shrink:0;padding:4px 8px;font-size:11px;border-color:var(--bad);color:var(--bad)}
+#ingestBox .toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:0 0 8px;font-size:12px;color:var(--dim)}
+#ingestBox .toolbar label{display:flex;align-items:center;gap:6px;cursor:pointer}
+#ingestBox .toolbar button{padding:5px 10px;font-size:12px}
+#ingestBox .toolbar button.danger{border-color:var(--bad);color:var(--bad)}
+#ingestBox .path{color:var(--dim);word-break:break-all}
 details.fold{margin-top:10px;color:var(--dim)}
 details.fold summary{cursor:pointer;margin-bottom:8px;color:var(--dim)}
 header .ghost{margin-left:8px}
@@ -93,37 +112,139 @@ button.primary{
   background:var(--accent);border-color:transparent;color:#041018;font-weight:700;
   width:100%;padding:12px 16px;font-size:15px;margin-top:12px;
 }
+button.danger{
+  background:#3a1515;border-color:#a33;color:#f5c2c2;font-weight:700;
+  width:100%;padding:12px 16px;font-size:15px;margin-top:12px;
+}
+button.danger:hover{border-color:#e66;color:#fff}
 button.ghost{background:transparent}
 button:disabled{opacity:.55;cursor:wait}
+.run-actions{display:flex;gap:8px;margin-top:12px}
+.run-actions .primary,.run-actions .danger{margin-top:0;flex:1}
+.run-actions .danger{display:none}
+#midCol.running .run-actions .danger{display:block}
+#midCol.running .run-actions .primary{flex:1.4}
 .workspace{
-  flex:1;display:grid;grid-template-columns:380px 1fr;gap:12px;
-  padding:12px 16px 16px;min-height:0;
+  flex:1;display:grid;
+  grid-template-columns:minmax(250px,300px) minmax(300px,360px) minmax(0,1fr);
+  gap:10px;padding:10px 12px 12px;min-height:0;
 }
 #question{
-  width:100%;min-height:128px;flex:1;resize:none;
+  width:100%;height:96px;min-height:72px;max-height:none;flex:0 0 auto;resize:none;
   background:#09090b;color:var(--text);border:1px solid var(--line);
   border-radius:8px;padding:10px 12px;font:14px/1.7 inherit;
 }
+.vresize{
+  flex:0 0 auto;height:8px;margin:2px 0 0;cursor:ns-resize;
+  touch-action:none;position:relative;
+}
+.vresize::after{
+  content:"";position:absolute;left:50%;top:3px;width:42px;height:4px;
+  margin-left:-21px;border-radius:3px;background:#3a445c;
+}
+.vresize:hover::after,.vresize.dragging::after{background:var(--accent)}
 #question:focus{outline:none;border-color:var(--accent)}
-.pick{max-height:38vh;overflow:auto;display:flex;flex-direction:column;gap:8px;flex:none}
-.left,.right-col{
+.pick{max-height:22vh;overflow:auto;display:flex;flex-direction:column;gap:5px;flex:none}
+#casePane .pick{max-height:none}
+#histRuns.pick{max-height:none;flex:1}
+.col,.left,.right-col{
   background:#101013;border:1px solid var(--line);border-radius:12px;
-  padding:16px;min-height:0;display:flex;flex-direction:column;
+  padding:12px;min-height:0;display:flex;flex-direction:column;overflow:hidden;
 }
-.left h3,.right-col h3{font-size:12px;color:var(--dim);margin-bottom:10px;font-weight:600}
+#leftCol,#midCol{overflow-y:auto}
+#workNav{display:flex;flex-direction:column;flex:1;min-height:0;gap:0}
+#casePane{
+  flex:0 0 auto;min-height:72px;overflow:auto;
+  display:flex;flex-direction:column;gap:2px;
+  scrollbar-gutter:stable;
+}
+#matPane{
+  flex:1 1 auto;min-height:120px;min-width:0;
+  display:flex;flex-direction:column;overflow:hidden;
+}
+#workNav > .vresize{flex:0 0 auto;margin:4px 0}
+#leftCol details.fold{flex:0 0 auto;margin-top:4px}
+#leftHist{display:flex;flex-direction:column;flex:1;min-height:0}
+#midCol{gap:0}
+#midCol .runprog,#midCol .run-actions,#midCol .mode-note{flex-shrink:0}
+#midCol .run-fill{
+  flex:0 0 auto;min-height:0;display:flex;flex-direction:column;justify-content:flex-end;
+  margin-top:8px;
+}
+#midCol.running .run-fill{flex:1 1 auto;min-height:0}
+#midCol.running #question{opacity:.85}
+.runprog{
+  margin-top:0;border:1px solid var(--accent);
+  border-radius:10px;background:#0d1524;padding:10px 12px;
+  box-shadow:0 0 0 1px rgba(61,214,255,.12);
+  flex:1 1 auto;min-height:120px;display:flex;flex-direction:column;
+}
+.runprog-head{display:flex;justify-content:space-between;align-items:center;
+  font-size:12px;color:var(--dim);margin-bottom:6px}
+.runprog-head b{color:#fff;font-size:13px}
+.runprog-now{
+  font-size:12px;color:var(--accent);margin-bottom:8px;min-height:1.4em;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.runprog-steps{
+  display:flex;flex-direction:column;gap:6px;
+  flex:1 1 auto;min-height:0;max-height:none;
+  overflow-y:auto;scroll-behavior:smooth;
+  padding-right:2px;
+}
+.runprog .step{
+  display:grid;grid-template-columns:14px 1fr auto;gap:8px;align-items:start;
+  font-size:12px;line-height:1.45;
+}
+.runprog .step .dot{
+  width:8px;height:8px;border-radius:50%;margin-top:4px;background:var(--line);
+}
+.runprog .step.running .dot{
+  background:var(--accent);box-shadow:0 0 0 3px rgba(61,214,255,.18);
+  animation:progPulse 1.2s ease-in-out infinite;
+}
+@keyframes progPulse{
+  0%,100%{box-shadow:0 0 0 3px rgba(61,214,255,.12)}
+  50%{box-shadow:0 0 0 5px rgba(61,214,255,.28)}
+}
+.runprog .step.done .dot{background:var(--good)}
+.runprog .step .name{color:var(--text)}
+.runprog .step.running .name{color:#fff;font-weight:600}
+.runprog .step .sec{color:var(--dim);font-variant-numeric:tabular-nums;white-space:nowrap}
+.runprog .step .hint{grid-column:2/-1;color:var(--dim);font-size:11px}
+.slot-gaps{
+  margin:0 0 10px;padding:10px 12px;border:1px solid var(--warn);
+  border-radius:10px;background:rgba(240,180,41,.1);
+}
+.slot-gaps b{display:block;color:var(--warn);font-size:13px;margin-bottom:6px}
+.slot-gaps ol{margin:0;padding-left:1.2em}
+.slot-gaps li{margin:4px 0;font-size:13px;line-height:1.5;color:var(--text)}
+.runprog .slot-gaps{margin:0 0 8px}
+.runprog-now.need{color:var(--warn);white-space:normal}
+.col h3,.left h3,.right-col h3{font-size:12px;color:var(--dim);margin:8px 0 6px;font-weight:600}
+.col-label{
+  font-size:11px;letter-spacing:.04em;color:#8b93a7;margin:0 0 8px;font-weight:600;
+  padding-bottom:7px;border-bottom:1px solid rgba(255,255,255,.06);
+}
 .pick button{
-  text-align:left;width:100%;background:#121a2c;padding:12px;
+  text-align:left;width:100%;background:#121a2c;padding:8px 10px;
 }
+#leftCol .pick button{padding:7px 9px}
 .pick button.on{border-color:var(--accent);box-shadow:inset 3px 0 0 var(--accent)}
-.pick b{display:block;color:#fff;margin-bottom:4px}
-.pick span{color:var(--dim);font-size:12px;display:block}
-.hint{font-size:12px;color:var(--dim);line-height:1.6;margin-top:10px}
-.right-col{overflow:auto}
-.next{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px}
-.next button{text-align:left;padding:10px 12px;background:#121a2c}
-.next button b{display:block;color:#fff;margin-bottom:2px}
+.pick b{display:block;color:#fff;margin-bottom:2px;font-size:13px}
+.pick span{color:var(--dim);font-size:11px;display:block;line-height:1.4}
+.hint{font-size:12px;color:var(--dim);line-height:1.55;margin-top:8px}
+.right-col{overflow:hidden}
+#rightCol > .col-label{flex:0 0 auto}
+#rightBody{flex:1 1 auto;min-height:0;overflow:auto;display:flex;flex-direction:column}
+#rightBody > #resultState{flex:0 0 auto}
+.next{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:10px}
+.next button{text-align:left;padding:8px 10px;background:#121a2c}
+.next button b{display:block;color:#fff;margin-bottom:2px;font-size:12px}
+.next button .sub{font-size:11px;line-height:1.35}
 .next button.on{border-color:var(--gold)}
-.tabs{display:flex;gap:6px;margin:12px 0}
+.demo-tools{margin-top:0;margin-bottom:10px}
+.tabs{display:flex;gap:6px;margin:10px 0}
 .tabs button{background:transparent;color:var(--dim)}
 .tabs button.active{color:#fff;border-color:var(--accent)}
 .placeholder{
@@ -131,13 +252,23 @@ button:disabled{opacity:.55;cursor:wait}
   color:var(--dim);text-align:center;padding:40px 24px;line-height:1.8;
 }
 .hidden{display:none !important}
-.hero h1{font-size:20px;font-weight:650;letter-spacing:.02em;max-width:52rem}
-.hero .meta{color:var(--dim);font-size:13px;margin-top:6px;margin-bottom:12px}
+/* 按钮变成「正在研判」时，进度必须出现在按钮正下方（压过 .hidden） */
+#midCol:has(#btnStart:disabled) #runProgress{
+  display:block !important;
+}
+.hero h1{font-size:18px;font-weight:650;letter-spacing:.02em;max-width:52rem;line-height:1.4}
+.hero .meta{color:var(--dim);font-size:12px;margin-top:4px;margin-bottom:10px}
+#rightCol .sec{padding:12px 14px;margin-bottom:10px}
+#rightCol .sec h2{margin-bottom:8px}
+@media (max-width:1200px){
+  .workspace{
+    grid-template-columns:minmax(230px,260px) minmax(280px,320px) minmax(0,1fr);
+  }
+}
 @media (max-width:980px){
   .workspace{grid-template-columns:1fr;overflow:auto}
   .next{grid-template-columns:1fr}
-  .stage{flex-direction:column}
-  .link{display:none}
+  #casePane{max-height:40vh}
 }
 .pane{display:none}
 .pane.on{display:block}
@@ -149,10 +280,18 @@ button:disabled{opacity:.55;cursor:wait}
 .sec h2{font-size:13px;color:var(--gold);letter-spacing:.14em;margin-bottom:10px;font-weight:650}
 .sub{color:var(--dim);font-size:12px}
 .row{display:flex;flex-direction:column;gap:10px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px}
-.stage{display:flex;align-items:flex-start;gap:0}
+/* 三栏下右栏偏窄：结论→证据改为上下叠，避免左右并排挤成串行 */
+.stage{display:flex;flex-direction:column;align-items:stretch;gap:10px}
 .stage .lane{flex:1;min-width:0;display:flex;flex-direction:column;gap:8px}
-.link{width:34px;align-self:center;flex:none;border-top:2px dashed var(--line);position:relative}
-.link::after{content:"";position:absolute;right:-1px;top:-5px;border:4px solid transparent;border-left-color:var(--line)}
+.link{
+  width:auto;align-self:stretch;flex:none;height:14px;
+  border-top:none;border-left:2px dashed var(--line);
+  margin:0 0 0 18px;position:relative;
+}
+.link::after{
+  content:"";position:absolute;left:-5px;bottom:-1px;
+  border:4px solid transparent;border-top-color:var(--line);
+}
 .card{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
 .card.click{cursor:pointer}
 .card.click:hover{border-color:var(--accent)}
@@ -195,6 +334,13 @@ button:disabled{opacity:.55;cursor:wait}
   background:#121a2c;border:1px solid var(--accent);border-radius:12px;
   padding:10px 18px;font-size:13px;display:none;z-index:99;max-width:80vw;
 }
+#alertModal .modal{max-width:520px}
+#alertModal .alert-body{
+  margin:0;padding:12px 14px;border:1px solid var(--line);border-radius:10px;
+  background:#121a2c;color:var(--text);font-size:13px;line-height:1.65;
+  white-space:pre-wrap;word-break:break-word;max-height:40vh;overflow:auto;
+}
+#alertModal .actions{justify-content:flex-end}
 .empty{color:var(--dim);font-size:13px;padding:8px}
 .dissent-note{background:#1b1730;border:1px solid #3d3356;border-radius:8px;padding:6px 10px;margin-top:8px;font-size:12px;color:#c9b8f0}
 .graph{display:flex;flex-wrap:wrap;gap:8px}
@@ -207,18 +353,12 @@ button:disabled{opacity:.55;cursor:wait}
   border:1px solid var(--line);border-radius:8px;padding:6px 10px;font-size:13px;
 }
 .flow{display:none}
-@media (max-width:980px){
-  .workspace{grid-template-columns:1fr;overflow:auto}
-  .next{grid-template-columns:1fr}
-  .stage{flex-direction:column}
-  .link{display:none}
-}
 </style>
 </head>
 <body>
 <header>
   <div class="brand"><div class="mark"></div><div class="logo">veri<b>tas</b></div></div>
-  <div class="tag" id="headerTag">写下议题 → 添加资料 → 开始研判</div>
+  <div class="tag" id="headerTag">左选案件 → 中写议题 → 右看判断</div>
   <div class="nav">
     <button type="button" class="on" id="tabWork" onclick="showPage('work')">工作台</button>
     <button type="button" id="tabHist" onclick="showPage('hist')">历史记录</button>
@@ -238,6 +378,15 @@ button:disabled{opacity:.55;cursor:wait}
     </div>
   </div>
 </div>
+<div class="modal-bg hidden" id="alertModal" onclick="if(event.target===this)closeAlert()">
+  <div class="modal" role="alertdialog" aria-labelledby="alertTitle" aria-describedby="alertBody">
+    <h3 id="alertTitle">提示</h3>
+    <pre class="alert-body" id="alertBody"></pre>
+    <div class="actions">
+      <button type="button" class="primary" id="alertOk" onclick="closeAlert()">知道了</button>
+    </div>
+  </div>
+</div>
 <div class="modal-bg hidden" id="llmModal" onclick="if(event.target===this)closeLlmSettings()">
   <div class="modal" role="dialog" aria-labelledby="llmTitle">
     <h3 id="llmTitle">接入模型</h3>
@@ -251,7 +400,7 @@ button:disabled{opacity:.55;cursor:wait}
     <textarea id="llmModels" placeholder="openai/deepseek-v4-flash
 openai/qwen3.8-max
 openai/glm-5.3" oninput="previewAssignment()"></textarea>
-    <div class="sub" style="margin-top:4px">也可逗号分隔。只有一个就写一行即可。</div>
+    <div class="sub" style="margin-top:4px">也可逗号分隔。走上方网关时请写 <b>openai/模型名</b>（只写裸名会自动补 openai/）。</div>
     <label class="check"><input id="llmHetero" type="checkbox" onchange="previewAssignment()"> 多个模型时，三个分析师自动用不同模型</label>
     <div class="assign" id="llmAssign"></div>
     <label class="check"><input id="llmForceDemo" type="checkbox"> 即使有密钥也强制用演示桩</label>
@@ -263,40 +412,70 @@ openai/glm-5.3" oninput="previewAssignment()"></textarea>
   </div>
 </div>
 <main class="workspace">
-  <section class="left" id="leftWork">
-    <h3>① 你要研判什么</h3>
+  <section class="col" id="leftCol">
+    <div class="col-label">案件与资料</div>
+    <div id="workNav">
+      <div id="casePane">
+        <details class="fold" id="mineFold" open>
+          <summary>我的案件</summary>
+          <div class="pick" id="mineList"></div>
+        </details>
+        <details class="fold" id="sampleFold">
+          <summary>示例案件</summary>
+          <div class="pick" id="caseList"></div>
+        </details>
+        <div id="caseTitleBar" class="casebar hidden">
+          <input id="caseTitleInput" type="text" maxlength="80" placeholder="给案件起个好认的名字"
+            onkeydown="if(event.key==='Enter'){event.preventDefault();saveCaseTitle()}">
+          <button type="button" onclick="saveCaseTitle()">保存名</button>
+        </div>
+      </div>
+      <div class="vresize" data-resize="casePane" data-split="matPane" title="上下拖动，调整案件/资料比例"></div>
+      <div id="matPane">
+        <h3 style="margin-top:0">资料</h3>
+        <div class="addwrap" style="margin:4px 0 6px">
+          <button type="button" id="btnAdd" onclick="pickMaterials()">添加资料</button>
+        </div>
+        <input id="filePick" type="file" multiple hidden onchange="onFilePick(this)">
+        <div id="ingestBox"
+          ondragover="onMaterialDrag(event,true)" ondragleave="onMaterialDrag(event,false)"
+          ondrop="onMaterialDrop(event)">
+          <div class="hint">点「添加资料」或把文件夹拖到这里。</div>
+        </div>
+      </div>
+    </div>
+    <div id="leftHist" class="hidden">
+      <h3 style="margin-top:0">做过的研判</h3>
+      <div class="pick" id="histRuns"></div>
+      <p class="hint">点开即可浏览；要接着问，点下面带回工作台。</p>
+      <button class="primary" type="button" id="btnReuse" onclick="reuseToWork()">拿到工作台再问</button>
+    </div>
+  </section>
+  <section class="col" id="midCol">
+    <div class="col-label">议题与开跑</div>
+    <h3 style="margin-top:0">你要研判什么</h3>
     <textarea id="question" placeholder="例如：某制造公司是否已因资金链断裂全面停工？"></textarea>
-    <h3 style="margin-top:14px">② 这个案件的资料</h3>
-    <div class="addwrap">
-      <button type="button" id="btnAdd" onclick="pickMaterials()">添加资料</button>
+    <div class="vresize" data-resize="question" title="上下拖动，调整议题框高度"></div>
+    <div class="run-actions">
+      <button class="primary" id="btnStart" type="button" onclick="startRun()">开始研判</button>
+      <button class="danger" id="btnCancel" type="button" onclick="cancelRun()">终止</button>
     </div>
-    <input id="filePick" type="file" multiple hidden onchange="onFilePick(this)">
-    <div id="caseTitleBar" class="casebar hidden">
-      <b id="caseTitleText">未命名案件</b>
-      <button type="button" onclick="renameCase()">改名</button>
+    <div class="run-fill">
+      <div id="runProgress" class="runprog hidden" aria-live="polite">
+        <div class="runprog-head"><b>研判进度</b><span id="runProgTotal">0 秒</span></div>
+        <div class="runprog-now" id="runProgNow">等待开始…</div>
+        <div id="runProgGaps"></div>
+        <div id="runProgSteps" class="runprog-steps"></div>
+      </div>
+      <p class="mode-note" id="modeNote">正在识别接入状态…</p>
     </div>
-    <div id="ingestBox"
-      ondragover="onMaterialDrag(event,true)" ondragleave="onMaterialDrag(event,false)"
-      ondrop="onMaterialDrop(event)">
-      <div class="hint">点「添加资料」选文件；<b style="color:#fff">整个文件夹请拖到这里</b>。能读的会切片入卷，读不了的会说明原因。</div>
-    </div>
-    <details class="fold" id="sampleFold">
-      <summary>没有自己的资料时，可用示例试试</summary>
-      <div class="pick" id="caseList"></div>
-    </details>
-    <button class="primary" id="btnStart" type="button" onclick="startRun()">开始研判</button>
-    <p class="mode-note" id="modeNote">正在识别接入状态…</p>
   </section>
-  <section class="left hidden" id="leftHist">
-    <h3>做过的研判</h3>
-    <div class="pick" id="histRuns"></div>
-    <p class="hint">只放你跑过的记录。点开即可浏览；要接着问，点下面带回工作台。</p>
-    <button class="primary" type="button" id="btnReuse" onclick="reuseToWork()">拿到工作台再问</button>
-  </section>
-  <section class="right-col">
-    <div class="placeholder" id="emptyState">先写下要问的问题。<br>再点「添加资料」，或把整个文件夹拖进左边虚线框。</div>
+  <section class="col right-col" id="rightCol">
+    <div class="col-label">判断与核对</div>
+    <div id="rightBody">
+    <div class="placeholder" id="emptyState">左边选案件、中间写问题，再点「开始研判」。</div>
     <div id="resultState" class="hidden">
-      <h3>③ 看判断，并做三件事</h3>
+      <h3>看判断，并做三件事</h3>
       <div class="next" id="guideBar">
         <button type="button" id="g1" onclick="goGuide(1)"><b>1 核对原文</b><span class="sub">点开引文，看是不是资料里的原句</span></button>
         <button type="button" id="g2" onclick="goGuide(2)"><b>2 改一句试试</b><span class="sub">加一个资料里没有的数字，看会不会亮灯</span></button>
@@ -330,12 +509,14 @@ openai/glm-5.3" oninput="previewAssignment()"></textarea>
         <div class="sec"><h2>关系图</h2><div id="graph"></div></div>
       </section>
     </div>
+    </div>
   </section>
 </main>
 <div class="toast" id="toast"></div>
 <script>
 const $=s=>document.querySelector(s);
 let CASES=[],CUR=null,CUR_OUT="",PAGE="work",D=null,G=null,TAB="overview",HIST=null,INGEST=null,LLM=null;
+let _ingestToast=false;
 let EXIT_ALLOWED=false;
 const LV_CN={A:"甲",B:"乙",C:"丙",D:"丁"};
 const LV_COLOR={A:"var(--good)",B:"#58a6ff",C:"var(--warn)",D:"var(--bad)"};
@@ -400,6 +581,25 @@ function caseLabel(c){
   return `${title} · ${OUT_CN[c.out_dir]||"研判产物"}`;
 }
 function toast(msg,ms=2600){const t=$("#toast");t.textContent=msg;t.style.display="block";clearTimeout(t._h);t._h=setTimeout(()=>t.style.display="none",ms)}
+function notice(msg,title="提示"){
+  // 重要/失败信息：弹窗停留，客户点「知道了」才关
+  const box=$("#alertModal");
+  if(!box){toast(msg,8000);return}
+  $("#alertTitle").textContent=title||"提示";
+  $("#alertBody").textContent=String(msg||"");
+  box.classList.remove("hidden");
+  const ok=$("#alertOk");
+  if(ok) setTimeout(()=>ok.focus(),0);
+}
+function closeAlert(){
+  const box=$("#alertModal");
+  if(box) box.classList.add("hidden");
+}
+document.addEventListener("keydown",e=>{
+  if(e.key==="Escape" && $("#alertModal") && !$("#alertModal").classList.contains("hidden")){
+    closeAlert();
+  }
+});
 function confColor(c){return c>=.5?"var(--good)":c>=.2?"var(--warn)":"var(--bad)"}
 function showTab(id){
   if(id!=="evidence" && id!=="more") id="more";
@@ -417,68 +617,166 @@ function caseTitleOf(c){
 }
 function renderCaseList(){
   const samples=CASES.filter(c=>!c.imported);
-  $("#caseList").innerHTML=samples.map(c=>`<button type="button" class="${c.name===CUR?"on":""}" onclick="selectCase('${esc(c.name)}')">
+  const mine=CASES.filter(c=>c.imported);
+  const btn=c=>`<button type="button" class="${c.name===CUR?"on":""}" onclick="selectCase('${esc(c.name)}')">
     <b>${esc(caseTitleOf(c))}</b>
     <span>${c.n_files||0} 份资料${c.has_result?" · 已有上次结果":""}</span>
-  </button>`).join("")||"<div class='hint'>还没有示例资料。</div>";
-  $("#btnStart").textContent="开始研判";
+  </button>`;
+  const mineBox=$("#mineList");
+  if(mineBox){
+    mineBox.innerHTML=mine.map(btn).join("")
+      ||"<div class='hint'>还没有导入的案件。用上面「添加资料」新建。</div>";
+  }
+  const mineFold=$("#mineFold");
+  if(mineFold) mineFold.classList.toggle("hidden", !mine.length && !CUR);
+  const sampleFold=$("#sampleFold");
+  // 已有自己的案件时，示例默认收起，少占左栏
+  if(sampleFold && mine.length) sampleFold.open=false;
+  $("#caseList").innerHTML=samples.map(btn).join("")||"<div class='hint'>还没有示例资料。</div>";
+  const startBtn=$("#btnStart");
+  if(startBtn && !startBtn.disabled) startBtn.textContent="开始研判";
   renderCaseTitle();
 }
 function renderCaseTitle(){
   const bar=$("#caseTitleBar");
+  const input=$("#caseTitleInput");
   if(!CUR){bar.classList.add("hidden");return}
   const c=CASES.find(x=>x.name===CUR);
   bar.classList.remove("hidden");
-  $("#caseTitleText").textContent=caseTitleOf(c)||CUR;
+  // 聚焦编辑时不要冲掉正在打的字
+  if(document.activeElement!==input){
+    input.value=caseTitleOf(c)||CUR||"";
+  }
 }
 async function selectCase(name){
-  CUR=name;CUR_OUT="";PAGE="work";renderCaseList();
+  CUR=name;CUR_OUT="";PAGE="work";showPage("work");renderCaseList();
   const c=CASES.find(x=>x.name===name);
-  if(c&&c.question) $("#question").value=c.question;
   await loadIngest();
+  // 有上次产物就拉当前 out*，不要停在「只有资料、没有判断」
+  if(c&&c.has_result){
+    try{
+      await load();
+      const q=D&&D.dossier&&D.dossier.question;
+      if(q) $("#question").value=q;
+      else if(c.question) $("#question").value=c.question;
+      return;
+    }catch(e){/* 无产物则退回议题 */}
+  }
+  if(c&&c.question) $("#question").value=c.question;
+  showResult(false);
+}
+function paintSourcesFallback(){
+  const srcs=(D&&D.dossier&&D.dossier.sources)||[];
+  if(!srcs.length) return false;
+  const box=$("#ingestBox");
+  if(!box) return false;
+  box.innerHTML=`<div class="kv" style="margin-bottom:8px">这套案件有 <b>${srcs.length}</b> 份资料（正在刷新清单…）</div>`
+    +srcs.map(s=>`<div class="item triage-ok"><div class="body"><b>已入卷</b>
+      <span> · ${esc(s.title||s.id||"未命名")}</span>
+      <div class="sub">${(s.segments||[]).length} 段</div></div></div>`).join("");
+  return true;
 }
 async function loadIngest(){
   if(!CUR){INGEST=null;renderIngest();return}
+  paintSourcesFallback();
   try{
     INGEST=await api("/api/ingest?case="+encodeURIComponent(CUR));
-  }catch(e){INGEST=null}
+  }catch(e){
+    if(!paintSourcesFallback()){INGEST=null;renderIngest()}
+    return;
+  }
   renderIngest();
+  if(_ingestToast){
+    _ingestToast=false;
+    const n=(INGEST&&INGEST.n_sources)||0;
+    toast(n
+      ?`议题和 ${n} 份资料已带回工作台，改完再点开始研判。`
+      :"议题已带回。这套案件里没有可列出的资料，请再添加文件。");
+  }
+}
+function canEditIngestFiles(){
+  // user-* 目录名本身即可编辑，不依赖 CASES 是否已带 imported 标记
+  if((CUR||"").startsWith("user-")) return true;
+  const c=CASES.find(x=>x.name===CUR);
+  return !!(c&&c.imported);
 }
 function renderIngest(){
   const box=$("#ingestBox");
   renderCaseTitle();
   if(!INGEST){
-    box.innerHTML=`<div class="hint">点「添加资料」选文件；<b style="color:#fff">整个文件夹请拖到这里</b>。能读的会切片入卷，读不了的会说明原因。</div>`;
+    box.innerHTML=`<div class="hint">点「添加资料」选文件；<b style="color:#fff">整个文件夹请拖到这里</b>。能读的会切片入卷，读不了的会说明原因。导错了点右侧「删除」。</div>`;
     return;
   }
   const nOk=INGEST.n_sources||0;
   const nSeg=INGEST.n_segments||0;
   const nAll=(INGEST.triage||[]).length;
   const nSkip=Math.max(0, nAll-nOk);
-  const rows=(INGEST.triage||[]).map(r=>{
+  const editable=canEditIngestFiles();
+  const rows=(INGEST.triage||[]).map((r,i)=>{
     const m=TRIAGE_CN[r.route]||{t:r.label||r.route||"已处理",k:"skip"};
-    const file=(r.file||"").split(/[\\/]/).pop()||r.file||"";
-    return `<div class="item triage-${m.k}"><b>${esc(m.t)}</b>
+    const rel=r.file||"";
+    const file=rel.split(/[\\/]/).pop()||rel;
+    const cb=editable
+      ?`<input type="checkbox" class="triage-cb" value="${esc(rel)}" aria-label="选中 ${esc(file)}">`
+      :"";
+    const del=editable
+      ?`<button type="button" class="row-del" onclick="removeOneFile(${i})">删除</button>`
+      :"";
+    return `<div class="item triage-${m.k}">${cb}<div class="body"><b>${esc(m.t)}</b>
       <span> · ${esc(file)}</span>
-      ${r.reason?`<div class="sub">${esc(r.reason)}</div>`:""}</div>`;
-  }).join("")||`<div class="hint">还没有分诊结果。</div>`;
-  box.innerHTML=`<div class="kv" style="margin-bottom:8px">读入 <b>${nOk}</b> 份 · 切成 <b>${nSeg}</b> 段${nSkip?` · 另有 ${nSkip} 份未按正文入卷`:""}</div>${rows}`;
+      ${rel&&rel!==file?`<div class="path">${esc(rel)}</div>`:""}
+      ${r.reason?`<div class="sub">${esc(r.reason)}</div>`:""}</div>${del}</div>`;
+  }).join("")||`<div class="hint">还没有分诊结果。可继续添加资料。</div>`;
+  const toolbar=editable?`<div class="toolbar">
+      <label><input type="checkbox" id="triageSelAll" onchange="toggleAllTriage(this.checked)"> 全选</label>
+      <button type="button" class="danger" onclick="removeSelectedFiles()">删除所选</button>
+      <span>导错直接点右侧「删除」，或勾选后批量删</span>
+    </div>`:"";
+  box.innerHTML=`<div class="kv" style="margin-bottom:8px">读入 <b>${nOk}</b> 份 · 切成 <b>${nSeg}</b> 段${nSkip?` · 另有 ${nSkip} 份未按正文入卷`:""}</div>${toolbar}${rows}`;
   const fold=$("#sampleFold");
   if(fold) fold.open=false;
 }
-async function renameCase(){
+function toggleAllTriage(on){
+  document.querySelectorAll("#ingestBox .triage-cb").forEach(cb=>{cb.checked=!!on});
+}
+async function removeCaseFiles(files){
+  if(!CUR||!canEditIngestFiles()){toast("当前案卷不能删文件");return}
+  files=[...files||[]].filter(Boolean);
+  if(!files.length){toast("请先勾选要删除的文件");return}
+  if(!confirm(`确认删除 ${files.length} 个文件？分诊清单会立刻刷新。`))return;
+  try{
+    const j=await api("/api/case/files/remove",{method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({case:CUR,files})});
+    INGEST=j;
+    const c=CASES.find(x=>x.name===CUR);
+    if(c) c.n_files=Math.max(0,(c.n_files||0)-(j.n_removed||0));
+    renderCaseList();renderIngest();
+    toast(`已删除 ${j.n_removed||0} 个文件`);
+  }catch(e){toast(e.message||"删除失败")}
+}
+function removeSelectedFiles(){
+  const files=[...document.querySelectorAll("#ingestBox .triage-cb:checked")]
+    .map(cb=>cb.value);
+  return removeCaseFiles(files);
+}
+function removeOneFile(idx){
+  const rel=((INGEST&&INGEST.triage)||[])[idx];
+  if(!rel||!rel.file){toast("找不到这个文件");return}
+  return removeCaseFiles([rel.file]);
+}
+async function saveCaseTitle(){
   if(!CUR){toast("请先添加或选择一套资料");return}
-  const c=CASES.find(x=>x.name===CUR);
-  const cur=caseTitleOf(c);
-  const next=prompt("给这个案件起个好认的名字", cur);
-  if(next==null) return;
-  const title=next.trim();
+  const input=$("#caseTitleInput");
+  const title=(input.value||"").trim();
   if(!title){toast("案件名不能为空");return}
+  const c=CASES.find(x=>x.name===CUR);
   const r=await api("/api/case/rename",{method:"POST",headers:{"Content-Type":"application/json"},
     body:JSON.stringify({case:CUR,title})});
   if(c) c.title=r.title;
-  renderCaseTitle();renderCaseList();
-  toast("案件名已更新");
+  input.value=r.title;
+  renderCaseList();
+  toast("案件名已保存");
 }
 function pickMaterials(){
   $("#filePick").click();
@@ -535,21 +833,30 @@ async function importMaterialFiles(files){
   if(!files.length){toast("没有选到文件");return}
   const fd=new FormData();
   fd.append("question", ($("#question").value||"").trim());
+  const appendTo=canEditIngestFiles()?CUR:"";
+  if(appendTo) fd.append("case", appendTo);
   for(const f of files){
     fd.append("files", f, f.webkitRelativePath||f.name);
   }
-  toast("正在分诊资料…");
+  toast(appendTo?"正在追加并分诊…":"正在分诊资料…");
   try{
     const r=await fetch("/api/case/import",{method:"POST",body:fd});
     const j=await r.json().catch(()=>({}));
-    if(!r.ok){toast(j.detail||"添加失败");return}
+    if(!r.ok){notice(j.detail||"添加失败","添加未完成");return}
     INGEST=j;
     CUR=j.case;CUR_OUT="";
     if(j.question && !($("#question").value||"").trim()) $("#question").value=j.question;
-    CASES=[{name:j.case,imported:true,n_files:j.n_written,question:j.question,title:j.title||j.case,has_result:false},
+    const prev=CASES.find(c=>c.name===j.case);
+    const nFiles=j.appended
+      ? (prev&&prev.n_files||0)+(j.n_written||0)
+      : (j.n_written||0);
+    CASES=[{name:j.case,imported:true,n_files:nFiles,question:j.question||(prev&&prev.question)||"",
+      title:j.title||(prev&&prev.title)||j.case,has_result:!!(prev&&prev.has_result)},
       ...CASES.filter(c=>c.name!==j.case)];
     renderCaseList();renderIngest();
-    toast(`已读入 ${j.n_sources||0} 份、切成 ${j.n_segments||0} 段。看完清单可点「开始研判」。`,4200);
+    toast(j.appended
+      ?`已追加 ${j.n_written||0} 份；现共 ${j.n_sources||0} 份入卷。`
+      :`已读入 ${j.n_sources||0} 份、切成 ${j.n_segments||0} 段。导错可勾选删除。`,4200);
   }catch(e){toast("添加失败")}
 }
 function dossierQs(){
@@ -558,21 +865,31 @@ function dossierQs(){
   return q;
 }
 function showPage(id){
+  const returning=PAGE==="hist" && id==="work";
   PAGE=id;
   $("#tabWork").classList.toggle("on", id==="work");
   $("#tabHist").classList.toggle("on", id==="hist");
-  $("#leftWork").classList.toggle("hidden", id!=="work");
+  const workNav=$("#workNav");
+  if(workNav) workNav.classList.toggle("hidden", id!=="work");
   $("#leftHist").classList.toggle("hidden", id!=="hist");
+  const mid=$("#midCol");
+  if(mid) mid.classList.toggle("hidden", id!=="work");
   $("#headerTag").textContent=id==="work"
-    ?"写下议题 → 添加资料 → 开始研判"
-    :"点一条即可浏览示例和做过的记录";
+    ?"左选案件 → 中写议题 → 右看判断"
+    :"左边点一条记录即可浏览";
   const gb=$("#guideBar");if(gb) gb.classList.toggle("hidden", id==="hist");
   const dt=$("#demoTools");if(dt) dt.classList.toggle("hidden", id==="hist");
   if(id==="hist"){
     $("#emptyState").innerHTML="左边点一条做过的研判即可浏览。<br>不必再跑一遍。";
     refreshHistory();
   }else{
-    $("#emptyState").innerHTML="先写下要问的问题。<br>再点「添加资料」，或把整个文件夹拖进左边虚线框。";
+    $("#emptyState").innerHTML="左边选案件、中间写问题，再点「开始研判」。";
+    if(returning){
+      const q=D&&D.dossier&&D.dossier.question;
+      if(q) $("#question").value=q;
+      CUR_OUT="";
+    }
+    if(CUR) loadIngest();
   }
   if(D) render();
 }
@@ -608,31 +925,159 @@ async function openHist(name, outRel){
 }
 function reuseToWork(){
   if(!CUR){toast("请先点开一条记录");return}
-  const q=D&&D.dossier&&D.dossier.question;
-  if(q) $("#question").value=q;
-  CUR_OUT="";
+  _ingestToast=true;
   showPage("work");
   renderCaseList();
-  toast("议题已带回工作台，改完再点开始研判。");
+}
+let _progTimer=null;
+let _runAbort=null;
+function stopProgressPoll(){
+  if(_progTimer){clearInterval(_progTimer);_progTimer=null}
+}
+async function cancelRun(){
+  if(!CUR) return;
+  const btn=$("#btnCancel");
+  if(btn){btn.disabled=true;btn.textContent="正在终止…"}
+  try{
+    const r=await fetch("/api/cancel",{method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({case:CUR})});
+    const j=await r.json().catch(()=>({}));
+    toast(j.detail||"已请求终止",2800);
+  }catch(e){toast("终止请求失败",2800)}
+  if(_runAbort){try{_runAbort.abort()}catch(e){}}
+}
+function showRunProgressShell(msg){
+  const box=$("#runProgress");
+  if(!box) return;
+  box.classList.remove("hidden");
+  $("#runProgTotal").textContent="合计 …";
+  $("#runProgNow").textContent=msg||"正在连接进度…";
+  $("#runProgNow").classList.remove("need");
+  const gaps=$("#runProgGaps"); if(gaps) gaps.innerHTML="";
+  if(!($("#runProgSteps").children||[]).length){
+    $("#runProgSteps").innerHTML=`<div class="step running"><span class="dot"></span>
+      <span class="name">准备开跑</span><span class="sec">…</span></div>`;
+  }
+  box.scrollIntoView({behavior:"smooth",block:"nearest"});
+}
+function renderRunProgress(p){
+  const box=$("#runProgress");
+  if(!box) return;
+  // 开跑后始终露出面板；无 steps 时保留占位，不藏回去
+  box.classList.remove("hidden");
+  if(!p||!p.steps||!p.steps.length){
+    $("#runProgNow").textContent="等待管线写入进度…";
+    return;
+  }
+  const total=p.elapsed_s!=null?Number(p.elapsed_s):0;
+  $("#runProgTotal").textContent=`合计 ${total.toFixed(1)} 秒`;
+  const steps=p.steps||[];
+  const gaps=collectClarify(p);
+  const gapBox=$("#runProgGaps");
+  if(gapBox) gapBox.innerHTML=slotGapHtml(gaps);
+  const nowEl=$("#runProgNow");
+  if(nowEl) nowEl.classList.toggle("need", gaps.length>0);
+  const running=steps.find(s=>s.status==="running")||steps[steps.length-1];
+  if(gaps.length){
+    $("#runProgNow").textContent=`议题未齐 · 下面 ${gaps.length} 项补完再研判`;
+  }else{
+  const hint=(running&&running.detail&&(running.detail.hint
+    || (running.detail.n_selected!=null
+        ?`装入 ${running.detail.n_selected}/${running.detail.n_total||"?"} 段`
+        :"")))||"";
+  $("#runProgNow").textContent=running
+    ?`▶ ${running.label||running.id}${hint?" · "+hint:""}${
+        running.elapsed_s!=null?" · "+Number(running.elapsed_s).toFixed(1)+" 秒":""}`
+    :"…";
+  }
+  const list=$("#runProgSteps");
+  const nearBottom=list.scrollHeight-list.scrollTop-list.clientHeight<36;
+  list.innerHTML=steps.map(s=>{
+    const st=s.status==="running"?"running":"done";
+    const sec=s.elapsed_s!=null?`${Number(s.elapsed_s).toFixed(1)} 秒`:(st==="running"?"…":"—");
+    const extra=[];
+    if(s.detail&&s.detail.hint && !(s.detail.clarify&&s.detail.clarify.length)) extra.push(String(s.detail.hint));
+    if(s.detail&&s.detail.n_selected!=null) extra.push(`装入 ${s.detail.n_selected}/${s.detail.n_total||"?"} 段`);
+    if(s.detail&&s.detail.n_conclusions!=null) extra.push(`结论 ${s.detail.n_conclusions}`);
+    if(s.detail&&s.detail.n_rejected!=null) extra.push(`打回 ${s.detail.n_rejected}`);
+    if(s.detail&&s.detail.tier) extra.push(`档位 ${s.detail.tier}`);
+    if(s.detail&&s.detail.n_sources!=null) extra.push(`信源 ${s.detail.n_sources} · 段 ${s.detail.n_segments||0}`);
+    const hint2=extra.length?`<div class="hint">${esc(extra.join(" · "))}</div>`:"";
+    return `<div class="step ${st}"><span class="dot"></span>
+      <span class="name">${esc(s.label||s.id||"")}</span>
+      <span class="sec">${esc(sec)}</span>${hint2}</div>`;
+  }).join("");
+  if(nearBottom||steps.some(s=>s.status==="running")){
+    list.scrollTop=list.scrollHeight;
+  }
+}
+function startProgressPoll(caseName){
+  stopProgressPoll();
+  showRunProgressShell("正在启动研判…");
+  const tick=async()=>{
+    try{
+      const r=await fetch("/api/progress?case="+encodeURIComponent(caseName)
+        +"&out=out_offline",{cache:"no-store"});
+      if(!r.ok) return;
+      renderRunProgress(await r.json());
+    }catch(e){}
+  };
+  tick();
+  _progTimer=setInterval(tick,500);
 }
 async function startRun(){
   const q=($("#question").value||"").trim();
   if(!q){toast("请先写下要研判的问题");$("#question").focus();return}
   if(!CUR){toast("请先添加资料，或点开示例试试");return}
   const btn=$("#btnStart");btn.disabled=true;btn.textContent="正在研判…";
+  const cbtn=$("#btnCancel");if(cbtn){cbtn.disabled=false;cbtn.textContent="终止"}
+  const mid=$("#midCol");if(mid) mid.classList.add("running");
+  _runAbort=new AbortController();
+  startProgressPoll(CUR);
+  let cancelled=false;
   try{
-    D=await api("/api/run",{method:"POST",headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({case:CUR,question:q})});
-    CUR_OUT="out_offline";
-    G=await api("/api/reasoning_graph?"+dossierQs()).catch(()=>({nodes:[],edges:[]}));
-    const c=CASES.find(x=>x.name===CUR);if(c)c.has_result=true;
-    if(D.workbench_mode) {LLM={...(LLM||{}),mode:D.workbench_mode};renderModeNote()}
-    else await refreshLlm();
-    renderCaseList();render();showResult(true);showTab("evidence");
-    toast(D.workbench_mode==="live"
-      ?"真实研判完成。请按右边 1、2、3 核对。"
-      :"研判完成（演示桩）。请按右边 1、2、3 核对。",4200);
-  }finally{btn.disabled=false;renderCaseList()}
+    const r=await fetch("/api/run",{method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({case:CUR,question:q}),
+      signal:_runAbort.signal});
+    const j=await r.json().catch(()=>({}));
+    if(!r.ok){
+      if(r.status===409){cancelled=true;toast("研判已终止",3200)}
+      else throw new Error(j.detail||j.error||("HTTP "+r.status));
+    }else{
+      D=j;
+      CUR_OUT="out_offline";
+      try{
+        const pr=await fetch("/api/progress?case="+encodeURIComponent(CUR)
+          +"&out=out_offline",{cache:"no-store"});
+        if(pr.ok) renderRunProgress(await pr.json());
+      }catch(e){}
+      G=await api("/api/reasoning_graph?"+dossierQs()).catch(()=>({nodes:[],edges:[]}));
+      const c=CASES.find(x=>x.name===CUR);if(c)c.has_result=true;
+      if(D.workbench_mode) {LLM={...(LLM||{}),mode:D.workbench_mode};renderModeNote()}
+      else await refreshLlm();
+      renderCaseList();render();showResult(true);showTab("evidence");
+      const elapsed=((D.dossier&&D.dossier.accounting)||D.accounting||{}).elapsed_s;
+      toast(D.workbench_mode==="live"
+        ?`真实研判完成${elapsed!=null?"（"+elapsed+" 秒）":""}。请按右边 1、2、3 核对。`
+        :`研判完成（演示桩${elapsed!=null?"，"+elapsed+" 秒":""}）。请按右边 1、2、3 核对。`,4200);
+    }
+  }catch(e){
+    if(e&&e.name==="AbortError"){cancelled=true;toast("研判已终止",3200)}
+    else toast(String(e.message||e),4200);
+  }finally{
+    _runAbort=null;
+    stopProgressPoll();
+    if(mid) mid.classList.remove("running");
+    btn.disabled=false;btn.textContent="开始研判";
+    if(cbtn){cbtn.disabled=false;cbtn.textContent="终止"}
+    if(cancelled){
+      const now=$("#runProgNow");
+      if(now) now.textContent="已终止";
+    }
+    renderCaseList();
+  }
 }
 function goGuide(n){
   document.querySelectorAll(".next button").forEach(b=>b.classList.remove("on"));
@@ -648,7 +1093,15 @@ function goGuide(n){
 }
 async function api(path,opts){
   const r=await fetch(path,opts);const j=await r.json().catch(()=>({}));
-  if(!r.ok){toast(j.detail||"请求未完成");throw new Error(j.detail||"请求未完成")}return j;
+  if(!r.ok){
+    let d=j.detail;
+    if(Array.isArray(d)) d=d.map(x=>x.msg||JSON.stringify(x)).join("；");
+    if(d&&typeof d==="object") d=d.msg||JSON.stringify(d);
+    const msg=(typeof d==="string"&&d.trim())?d:"请求未完成";
+    const title=r.status>=500?"研判未完成":"操作未完成";
+    notice(msg,title);throw new Error(msg);
+  }
+  return j;
 }
 function parseModelsLocal(text){
   return String(text||"").split(/[,;\n]+/).map(s=>s.trim()).filter(s=>s&&!s.startsWith("#"));
@@ -792,7 +1245,60 @@ window.addEventListener("beforeunload",ev=>{
     ev.returnValue="请先点顶栏「退出」，选择是否保存 API Key";
   }
 });
+function bindPaneResize(){
+  document.querySelectorAll(".vresize").forEach(handle=>{
+    const el=document.getElementById(handle.dataset.resize);
+    if(!el) return;
+    const key="veritas-h-"+handle.dataset.resize;
+    const min=parseInt(getComputedStyle(el).minHeight,10)||72;
+    const splitId=handle.dataset.split;
+    const applyH=h=>{
+      let hi=Math.max(min, h|0);
+      if(splitId){
+        const sibling=document.getElementById(splitId);
+        const parent=el.parentElement;
+        if(sibling&&parent){
+          const sMin=parseInt(getComputedStyle(sibling).minHeight,10)||120;
+          const gap=handle.getBoundingClientRect().height||8;
+          const max=parent.getBoundingClientRect().height-sMin-gap;
+          hi=Math.min(hi, Math.max(min, max|0));
+        }
+      }
+      el.style.height=hi+"px";
+      el.style.flex="0 0 auto";
+      return hi;
+    };
+    try{
+      const saved=localStorage.getItem(key);
+      if(saved) applyH(+saved);
+      else if(splitId){
+        // 默认案件区约占左栏 32%，其余留给资料
+        const parent=el.parentElement;
+        if(parent) applyH(Math.round(parent.getBoundingClientRect().height*0.32));
+      }
+    }catch(e){}
+    handle.addEventListener("pointerdown",ev=>{
+      ev.preventDefault();
+      handle.setPointerCapture?.(ev.pointerId);
+      handle.classList.add("dragging");
+      const startY=ev.clientY;
+      const startH=el.getBoundingClientRect().height;
+      const move=e2=>{
+        applyH(startH+(e2.clientY-startY));
+      };
+      const up=()=>{
+        handle.classList.remove("dragging");
+        window.removeEventListener("pointermove", move);
+        window.removeEventListener("pointerup", up);
+        try{localStorage.setItem(key, String(Math.round(el.getBoundingClientRect().height)))}catch(e){}
+      };
+      window.addEventListener("pointermove", move);
+      window.addEventListener("pointerup", up);
+    });
+  });
+}
 async function boot(){
+  bindPaneResize();
   CASES=(await api("/api/cases")).cases;
   CUR=null;
   renderCaseList();
@@ -807,6 +1313,24 @@ async function load(){
     render();showResult(true);showTab(TAB==="overview"?"evidence":TAB);
   }catch(e){showResult(false)}
 }
+function collectClarify(p){
+  const tips=[];
+  const push=t=>{
+    const s=String(t||"").trim();
+    if(s && !tips.includes(s)) tips.push(s);
+  };
+  if(p && Array.isArray(p.clarify)) p.clarify.forEach(push);
+  for(const step of ((p&&p.steps)||[])){
+    const c=step.detail&&step.detail.clarify;
+    if(Array.isArray(c)) c.forEach(push);
+  }
+  return tips;
+}
+function slotGapHtml(tips){
+  if(!tips||!tips.length) return "";
+  return `<div class="slot-gaps"><b>还要补这些，补完再点「开始研判」</b><ol>${
+    tips.map(t=>`<li>${esc(t)}</li>`).join("")}</ol></div>`;
+}
 function renderSynth(s,d){
   if(!s||!s.headline){
     const top=(d.conclusions||[]).filter(c=>c.status==="majority")
@@ -820,14 +1344,25 @@ function renderSynth(s,d){
     $("#synthesis").innerHTML=`<div class="empty">本跑次尚未形成可展示的判断。</div>`;
     return;
   }
-  const ISSUE={conflict:"冲突",dissent:"少数意见",gap:"资料缺口",note:"说明"};
+  const ISSUE={conflict:"冲突",dissent:"少数意见",gap:"资料缺口",note:"说明",question:"待确认"};
+  const intent=s.slot_intent||{};
+  const gaps=Array.isArray(intent.clarify)?intent.clarify:[];
   const pts=(s.points||[]).map(p=>`<div class="kv" style="margin:6px 0">${esc(p.gloss)}
     · 置信度 <b>${p.confidence??"—"}</b>
     ${(s.mode==="llm"&&p.auto)?`<span class="tag" style="color:var(--warn);border-color:var(--warn)">程序自动补全</span>`:""}</div>`).join("");
-  const issues=(s.open_issues||[]).map(o=>`<div class="dissent-note">⚠ [${ISSUE[o.kind]||o.kind}] ${esc(o.text)}</div>`).join("");
+  const issues=(s.open_issues||[]).filter(o=>{
+    if(!gaps.length || o.kind!=="question") return true;
+    const t=String(o.text||"");
+    return !gaps.some(g=>t && (g.indexOf(t.slice(0,12))>=0 || t.indexOf(String(g).slice(0,12))>=0));
+  }).map(o=>`<div class="dissent-note">⚠ [${ISSUE[o.kind]||o.kind}] ${esc(o.text)}</div>`).join("");
   const notes=(s.gate_notes||[]).map(n=>`<div class="sub">${esc(n)}</div>`).join("");
-  const mode=s.mode==="template"?"规则模板汇总（确定可复现）":"智能汇总（已过引用、完整、数字、篇幅四道核对）";
-  $("#synthesis").innerHTML=`<div style="font-size:18px;font-weight:650;margin-bottom:10px;line-height:1.45">${esc(s.headline)}</div>
+  const mode=s.mode==="clarify"
+    ?"未发起模型研判（议题未齐，补完再跑）"
+    :(s.mode==="template"?"规则模板汇总（确定可复现）":"智能汇总（已过引用、完整、数字、篇幅四道核对）");
+  const headStyle=gaps.length
+    ?"font-size:18px;font-weight:650;margin-bottom:10px;line-height:1.45;color:var(--warn)"
+    :"font-size:18px;font-weight:650;margin-bottom:10px;line-height:1.45";
+  $("#synthesis").innerHTML=`${slotGapHtml(gaps)}<div style="${headStyle}">${esc(s.headline)}</div>
     ${pts}${issues?`<div style="margin-top:8px">${issues}</div>`:""}
     <div class="sub" style="margin-top:8px">汇总方式：${mode}</div>${notes}`;
 }

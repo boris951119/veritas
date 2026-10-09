@@ -28,10 +28,16 @@ _GENERIC = {
     "资料", "材料", "文档", "报告", "公司",
     "整体", "主要", "当前", "未来", "过去", "时间", "数据", "信息",
     "内容", "方面", "是否", "如何", "为什么", "什么", "哪些", "请",
+    "第一大股东", "大股东", "股东", "持股", "持股比例", "持股数量",
+    "截至", "期末", "报告期末", "半年度报告期末", "报告期",
+    "年半年度报告期末", "半年度报告", "年度报告", "年报", "半年报",
 }
 # 以框架名词收尾的复合词（“交付风险”“回款情况”）不是实体
 _GENERIC_SUFFIX = ("风险", "情况", "问题", "影响", "原因", "趋势",
                    "进展", "现状", "背景")
+# 问句尾巴：实体候选上粘着的「是谁/是多少」不是专有名
+_QUESTION_TAIL = re.compile(
+    r"(是谁|是什么|是多少|有多少|怎么样|如何|为何|为什么)$")
 
 _MAX_FLAGS = 5
 
@@ -43,7 +49,7 @@ def extract_entities(question: str) -> list[str]:
         candidates.append(latin)
     for run in re.findall(r"[\u4e00-\u9fff]+", question):
         for frag in _FRAME.split(run):
-            frag = frag.strip()
+            frag = _QUESTION_TAIL.sub("", frag.strip())
             if not (2 <= len(frag) <= 8) or frag in _GENERIC:
                 continue
             if frag.endswith(_GENERIC_SUFFIX):

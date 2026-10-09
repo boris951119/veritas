@@ -69,8 +69,21 @@ def pack_material(dossier: Dossier,
 
     # 轮转填充：每轮各信源取一段（能装入者），防单源灌满、保跨源覆盖；
     # 一整轮无一段能装入 → 预算尽，剩余统一进披露
+    from app.core.answer_slots import priority_segment_ids
+
     selected: set[str] = set()
     used = 0
+    # 议题槽位命中段优先入箱（问全年归母净利时，带期间口径的段不被无关段挤掉）
+    pinned = [g for g in priority_segment_ids(dossier) if g in lengths]
+    for seg_id in pinned:
+        if used + lengths[seg_id] > budget:
+            continue
+        selected.add(seg_id)
+        used += lengths[seg_id]
+        for queue in by_source.values():
+            if seg_id in queue:
+                queue.remove(seg_id)
+                break
     while used < budget:
         progressed = False
         for src_id in source_order:

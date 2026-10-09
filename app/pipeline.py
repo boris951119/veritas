@@ -55,6 +55,7 @@ from app.core.premise_check import premise_flags
 from app.core.relevance import classify_sources
 from app.core.skills import detect_skills, set_skills_enabled, skills_enabled
 from app.core.untrusted import scan_injections
+from app.core.run_progress import ensure_progress, get_active_progress, set_active_progress
 from app.ingest.case_loader import load_case
 from app.llm.budget import BudgetGuard, set_active_budget_guard
 from app.llm.model_client import ModelClient, ModelClientFactory
@@ -62,9 +63,10 @@ from app.llm.profile import probe_model
 
 
 def touch_progress() -> None:
-    """进展心跳钩子（model_client 每次成功响应后调用；当前 no-op，
-    预留给工作台的看门狗与 SSE 流）。"""
-    return None
+    """LLM 成功响应后的心跳：刷新当前环节瞬时耗时。"""
+    prog = get_active_progress()
+    if prog is not None:
+        prog.note(llm_heartbeat=True)
 
 
 @dataclass
@@ -106,17 +108,6 @@ class RunDeps:
     coordinator: Coordinator | None = None
 
 
-def _write_progress(out_dir: Path | None, step: str, extra: dict | None = None) -> None:
-    """中间态落盘：评委喊停时盘上已有当前步骤（批式管线的可见性）。"""
-    if out_dir is None:
-        return
-    out_dir = Path(out_dir)
-    out_dir.mkdir(parents=True, exist_ok=True)
-    payload = {"step": step, **(extra or {})}
-    (out_dir / "progress.json").write_text(
-        json.dumps(payload, ensure_ascii=False), encoding="utf-8")
-
-
 def run_case(spec: RunSpec | None = None,
              deps: RunDeps | None = None) -> PipelineResult:
     """跑一次完整研判。deps 可注入桩（测试零 key）。"""
@@ -130,53 +121,128 @@ def run_case(spec: RunSpec | None = None,
     from app.ingest.pdf_backend import set_pdf_backend
 
     set_pdf_backend(settings.pdf_backend)
-    dossier = spec.dossier or load_case(
-        Path(spec.case_dir), fetch_links=settings.fetch_links_enabled)
+    created_progress = get_active_progress() is None
+    prog = ensure_progress(spec.out_dir)
+
+    if spec.dossier is None:
+        prog.start("ingest", "读取资料并切片（PDF/文本）")
+
+        def _on_file(rel: str, index: int, total: int) -> None:
+            name = rel.rsplit("/", 1)[-1]
+            prog.note(file=name, index=index, total=total,
+                      hint=f"{index}/{total} {name}")
+
+        dossier = load_case(
+            Path(spec.case_dir), fetch_links=settings.fetch_links_enabled,
+            on_file=_on_file)
+        prog.finish(
+            n_sources=len(dossier.sources),
+            n_segments=sum(len(s.segments) for s in dossier.sources),
+        )
+    else:
+        dossier = spec.dossier
+
     chain = HashChain()
-    _write_progress(spec.out_dir, "case_loaded")
     chain.append("case_loaded", "pipeline", {
         "question": dossier.question,
         "n_sources": len(dossier.sources),
         "n_segments": sum(len(s.segments) for s in dossier.sources),
     })
-    # 0) 议题前提核对（零 LLM）：问题实体在信源零命中 → 亮灯前置
-    premise = premise_flags(dossier)
-    chain.append("premise_check", "pipeline", summarize(premise))
-    # 0.2) 事实对撞台账：同(实体,指标)不同值的信源打架（分析师漏看也兜底）
-    collisions = find_collisions(dossier)
-    chain.append("fact_ledger", "pipeline", {
-        "n_facts": len(extract_facts(dossier)),
-        "n_collisions": len(collisions),
-        "cross_source": sum(1 for c in collisions if c.cross_source),
-    })
-    # 0.3) 输入防御：注入扫描 + 重复/同源检测（摄入隔离披露随案卷落盘）
-    chain.append("injection_scan", "pipeline",
-                 {"n_suspects": len(scan_injections(dossier))})
-    chain.append("dup_check", "pipeline", {
-        "n_duplicates": len(duplicate_map(dossier)),
-        "n_near_dup_pairs": len(near_dup_pairs(dossier)),
-    })
-    if dossier.ingest_notes:
-        chain.append("ingest_notes", "pipeline",
-                     {"n_notes": len(dossier.ingest_notes),
-                      "kinds": sorted({n["kind"] for n in dossier.ingest_notes})})
-    # 0.4) 相关性分层：零相关信源不进分析师视野（报告披露，绝不静默）
-    relevance = classify_sources(dossier)
-    chain.append("relevance_layered", "pipeline", {
-        "high": sum(1 for r in relevance if r["level"] == "high"),
-        "low": sum(1 for r in relevance if r["level"] == "low"),
-        "zero": sum(1 for r in relevance if r["level"] == "zero"),
-    })
-    # 0.5) skill 注册表按案卷特征触发（命中才注入分析师提示词，入链留痕；
-    #      VERITAS_SKILLS=0 可整体关注入入——A/B 对照组只关「教」不关「验」）
+
+    with prog.stage("hygiene", "议题预检·对撞·去重·相关性"):
+        premise = premise_flags(dossier)
+        chain.append("premise_check", "pipeline", summarize(premise))
+        collisions = find_collisions(dossier)
+        chain.append("fact_ledger", "pipeline", {
+            "n_facts": len(extract_facts(dossier)),
+            "n_collisions": len(collisions),
+            "cross_source": sum(1 for c in collisions if c.cross_source),
+        })
+        chain.append("injection_scan", "pipeline",
+                     {"n_suspects": len(scan_injections(dossier))})
+        chain.append("dup_check", "pipeline", {
+            "n_duplicates": len(duplicate_map(dossier)),
+            "n_near_dup_pairs": len(near_dup_pairs(dossier)),
+        })
+        if dossier.ingest_notes:
+            chain.append("ingest_notes", "pipeline",
+                         {"n_notes": len(dossier.ingest_notes),
+                          "kinds": sorted({n["kind"]
+                                           for n in dossier.ingest_notes})})
+        relevance = classify_sources(dossier)
+        chain.append("relevance_layered", "pipeline", {
+            "high": sum(1 for r in relevance if r["level"] == "high"),
+            "low": sum(1 for r in relevance if r["level"] == "low"),
+            "zero": sum(1 for r in relevance if r["level"] == "zero"),
+        })
+        prog.note(n_collisions=len(collisions),
+                  n_zero_rel=sum(1 for r in relevance if r["level"] == "zero"))
+
+    # 口语议题槽位不齐 → 不烧分析师/修复环，直接回读确认
+    from app.core.answer_slots import (
+        apply_answer_contract, clarify_headline, slot_intent,
+    )
+
+    intent = slot_intent(dossier.question, dossier)
+    if intent["clarify"]:
+        set_skills_enabled(settings.skills_enabled)
+        with prog.stage("clarify", "议题回读确认（槽位未齐）"):
+            synthesis = apply_answer_contract(dossier, {
+                "mode": "clarify",
+                "headline": clarify_headline(intent),
+                "points": [],
+                "open_issues": [],
+                "gate_notes": [],
+            })
+            dossier.synthesis = synthesis
+            chain.append("slot_clarify_early_exit", "pipeline", {
+                "metrics": intent["metrics"],
+                "time_kind": intent.get("time_kind"),
+                "clarify": intent["clarify"],
+                "skipped": ["probe", "panel", "repair", "collab", "chair"],
+            })
+            prog.note(n_clarify=len(intent["clarify"]),
+                      n_metrics=len(intent["metrics"]),
+                      clarify=list(intent["clarify"]),
+                      hint="请先补齐下面几项，再开始研判")
+        dossier.accounting = {
+            "elapsed_s": round(time.monotonic() - t0, 1),
+            "tokens": 0,
+            "n_calls": 0,
+            "budget": "",
+            "confidence_note": "议题槽位未齐，未发起模型研判",
+            "steps": [
+                {"id": s.get("id"), "label": s.get("label"),
+                 "elapsed_s": s.get("elapsed_s")}
+                for s in prog.steps if s.get("id") != "done"
+            ],
+        }
+        chain.append("report_finalized", "pipeline", {
+            "question": dossier.question,
+            **{k: v for k, v in dossier.accounting.items() if k != "steps"},
+        })
+        prog.complete(**{k: v for k, v in dossier.accounting.items()
+                         if k != "steps"})
+        if created_progress:
+            set_active_progress(None)
+        result = PipelineResult(dossier=dossier, chain=chain, rejected=[])
+        if spec.out_dir is not None:
+            from app.core.pii import mask_pii
+
+            out_dir = Path(spec.out_dir)
+            out_dir.mkdir(parents=True, exist_ok=True)
+            dossier.to_json(out_dir / "report.json")
+            (out_dir / "report.md").write_text(
+                mask_pii(result.report_md), encoding="utf-8")
+            chain.to_jsonl(out_dir / "chain.jsonl")
+            result.out_dir = out_dir
+        return result
+
     set_skills_enabled(settings.skills_enabled)
     set_material_budget(settings.material_char_budget)
     if client is None:
         client = ModelClientFactory(settings).create()
 
-    # 0.55) 图片转码（模型只当转码器）：网关有视觉端点且开启时，
-    # 已披露图片逐张转写为低可信派生信源；失败逐张降级回披露。
-    # 桩客户端（测试注入）不触发，离线演示不受影响。
     if settings.ocr_enabled and dossier.ingest_notes and client is not None:
         from app.ingest.ocr import transcode_images
 
@@ -184,123 +250,144 @@ def run_case(spec: RunSpec | None = None,
             ocr_result = transcode_images(dossier, client, settings.models[0])
             if ocr_result.get("n_pending"):
                 chain.append("image_ocr", "pipeline", ocr_result)
-        except Exception as exc:  # 转码整体失败：维持披露，不炸 run
+        except Exception as exc:
             chain.append("image_ocr", "pipeline",
                          {"error": f"{type(exc).__name__}: {exc}"})
 
     chain.append("skills_triggered", "pipeline",
                  {"skills": [s.name for s in detect_skills(dossier)],
                   "injection": skills_enabled()})
-    # 0.6) 资料预算装箱：BM25 精排 + 跨信源轮转，装不下的全披露
-    pack = pack_material(dossier, settings.material_char_budget)
-    chain.append("material_pack", "pipeline", {
-        "budget": pack["budget"],
-        "n_total": pack["n_total"],
-        "n_selected": len(pack["selected"]),
-        "n_excluded": len(pack["excluded"]),
-    })
+
+    with prog.stage("material", "BM25 精排与预算装箱"):
+        pack = pack_material(dossier, settings.material_char_budget)
+        chain.append("material_pack", "pipeline", {
+            "budget": pack["budget"],
+            "n_total": pack["n_total"],
+            "n_selected": len(pack["selected"]),
+            "n_excluded": len(pack["excluded"]),
+        })
+        prog.note(n_total=pack["n_total"], n_selected=len(pack["selected"]),
+                  n_excluded=len(pack["excluded"]), budget=pack["budget"])
 
     guard = BudgetGuard(settings.budget_tokens, settings.budget_throttle_threshold)
+    case_key = Path(spec.case_dir).name if spec.case_dir else ""
+    if case_key:
+        from app.core.run_cancel import is_cancelled
+
+        guard.attach_cancel_check(lambda k=case_key: is_cancelled(k))
     set_active_budget_guard(guard)
 
     if analysts is None:
         analysts = build_panel(client, settings.models[0], roster=spec.roster)
 
-    # 0.8) 模型画像自适应：按 distinct 模型各自探测档位 → 回填分析师
-    # （异构编队下每模型一档；探测失败维持 standard 档不炸管线）
     adaptive = bool(spec.probe) if spec.probe is not None else not injected_client
     tiers: dict[str, str] = {}
     if adaptive and settings.model_probe_enabled and settings.models:
-        for m in sorted({a.model for a in analysts}):
-            try:
-                profile = probe_model(client, m)
-                tiers[m] = profile["tier"]
-                chain.append("model_profile", "pipeline", profile)
-            except Exception as exc:
-                tiers[m] = "standard"
-                chain.append("model_profile", "pipeline",
-                             {"model": m, "tier": "standard",
-                              "error": f"{type(exc).__name__}: {exc}"})
+        with prog.stage("probe", "模型纪律画像探测"):
+            for m in sorted({a.model for a in analysts}):
+                try:
+                    profile = probe_model(client, m)
+                    tiers[m] = profile["tier"]
+                    chain.append("model_profile", "pipeline", profile)
+                    prog.note(model=m, tier=profile["tier"])
+                except Exception as exc:
+                    tiers[m] = "standard"
+                    chain.append("model_profile", "pipeline",
+                                 {"model": m, "tier": "standard",
+                                  "error": f"{type(exc).__name__}: {exc}"})
     for a in analysts:
         a.profile_tier = tiers.get(a.model, "standard")
 
-    # 1) 并行独立研判（硬隔离；单分析师失败只降级）
     model_of = {a.name: a.model for a in analysts}
-    results = run_panel(dossier, analysts, on_done=lambda name, cons: chain.append(
-        "analyst_done", name,
-        {"n_conclusions": len(cons), "model": model_of.get(name, "")}))
-    for name, err in results.get("_failures", {}).items():
-        chain.append("analyst_failed", name, {"error": err})
-    # 并行完成次序不定 → 物化次序随机：统一排序固化产物确定性
-    # （内容全同仅次序不同的两跑差异，归一化 diff 验收逼出来的收口）
-    dossier.conclusions.sort(key=lambda c: (c.statement, c.author))
-    # 键不以 conclusion_id 打头（组 id 是 uuid，跨跑随机）——语义字段
-    # 定序、id 只做全同兜底：组内/组间次序与随机 id 无关
-    _ev_key = lambda e: (e.quote, tuple(e.segment_ids), e.level.value,
-                          e.relation.value, e.author, e.note, e.conclusion_id)
-    dossier.evidences.sort(key=_ev_key)
-    if results.get("_failures") and not majority_conclusions(dossier):
-        raise RuntimeError(f"全部分析师研判失败: {results['_failures']}")
-    _write_progress(spec.out_dir, "panel_done",
-                    {"n_conclusions": len(dossier.conclusions)})
 
-    # 2) 引文机械核对（协同段之前：坏证据不进归并与仲裁）
-    rejected = _reject_failed_citations(dossier, chain)
-    dossier.rejected = rejected  # 持久化进 report.json（工作台展示）
-    # 2.5) 数字机械核对（计算复算 + 数字溯源 + 计数，零 LLM；警示不剔除结论）
-    numeric = audit_numeric(dossier) + audit_counting(dossier)
-    # 2.6) 打回修复环（自适应档）：把违规明细定向发回原分析师重写一次，
-    #      变好才接受；仅生产路径启用，桩/离线演示保持确定不变
-    if adaptive and numeric:
-        from app.agents.repair import RepairCtx, run_repair_round
+    def _on_analyst_done(name, cons):
+        chain.append(
+            "analyst_done", name,
+            {"n_conclusions": len(cons), "model": model_of.get(name, "")})
+        prog.note(last_analyst=name, n_conclusions=len(cons))
 
-        repair = run_repair_round(dossier, numeric, RepairCtx(
-            client=client, model=settings.models[0], analysts=analysts))
+    if case_key:
+        from app.core.run_cancel import check_cancel
+        check_cancel(case_key)
+
+    with prog.stage("panel", "三分析师并行研判", n_analysts=len(analysts)):
+        results = run_panel(dossier, analysts, on_done=_on_analyst_done)
+        for name, err in results.get("_failures", {}).items():
+            chain.append("analyst_failed", name, {"error": err})
+        dossier.conclusions.sort(key=lambda c: (c.statement, c.author))
+        _ev_key = lambda e: (e.quote, tuple(e.segment_ids), e.level.value,
+                              e.relation.value, e.author, e.note,
+                              e.conclusion_id)
+        dossier.evidences.sort(key=_ev_key)
+        if results.get("_failures") and not majority_conclusions(dossier):
+            raise RuntimeError(
+                f"全部分析师研判失败: {results['_failures']}")
+        prog.note(n_conclusions=len(dossier.conclusions),
+                  n_failures=len(results.get("_failures") or {}))
+
+    with prog.stage("citation", "引文逐字核对"):
+        rejected = _reject_failed_citations(dossier, chain)
+        dossier.rejected = rejected
         numeric = audit_numeric(dossier) + audit_counting(dossier)
-        chain.append("repair_round", "pipeline",
-                     {**repair, "flags_after": summarize(numeric)})
+        prog.note(n_rejected=len(rejected), n_numeric_flags=len(numeric))
+
+    if adaptive and numeric:
+        with prog.stage("repair", "打回修复环"):
+            from app.agents.repair import RepairCtx, run_repair_round
+
+            repair = run_repair_round(dossier, numeric, RepairCtx(
+                client=client, model=settings.models[0], analysts=analysts))
+            numeric = audit_numeric(dossier) + audit_counting(dossier)
+            chain.append("repair_round", "pipeline",
+                         {**repair, "flags_after": summarize(numeric)})
+            prog.note(attempted=repair.get("attempted"),
+                      accepted=repair.get("accepted"))
     chain.append("numeric_audit", "pipeline", summarize(numeric))
 
-    # 3) 协同段：归并 → 冲突 → 质证 → 仲裁（≥2 分析师才走；逐步降级）
     if len(analysts) >= 2:
-        _run_collaboration(dossier, CollabCtx(
-            chain=chain, client=client, model=settings.models[0],
-            analysts=analysts, coordinator=deps.coordinator))
+        if case_key:
+            from app.core.run_cancel import check_cancel
+            check_cancel(case_key)
+        with prog.stage("collab", "归并·冲突·质证·仲裁"):
+            _run_collaboration(dossier, CollabCtx(
+                chain=chain, client=client, model=settings.models[0],
+                analysts=analysts, coordinator=deps.coordinator))
+            prog.note(n_conflicts=len(dossier.conflicts or []))
 
-    # 3.45) 归并改写了证据归属 → 再排序固化组内次序（确定性收口之二）
-    # 键不以 conclusion_id 打头（组 id 是 uuid，跨跑随机）——语义字段
-    # 定序、id 只做全同兜底：组内/组间次序与随机 id 无关
     _ev_key = lambda e: (e.quote, tuple(e.segment_ids), e.level.value,
                           e.relation.value, e.author, e.note, e.conclusion_id)
     dossier.evidences.sort(key=_ev_key)
 
-    # 3.5) 协同段话语机械核对：归并守恒 + 质证/仲裁引用 + 措辞匹配（零 LLM）
     discourse = (audit_conservation(dossier) + audit_discourse(dossier)
                  + audit_hedge(dossier) + audit_level_tone(dossier))
     chain.append("discourse_audit", "pipeline", summarize(discourse))
 
-    # 4) 置信度融合 + 收口
-    recompute_all(dossier, n_panel=len(analysts))
-    chain.append("confidence_computed", "pipeline", {
-        "n_majority": len(majority_conclusions(dossier)),
-        "n_dissent": len(dissent_conclusions(dossier)),
-    })
+    with prog.stage("finalize", "置信度融合"):
+        recompute_all(dossier, n_panel=len(analysts))
+        chain.append("confidence_computed", "pipeline", {
+            "n_majority": len(majority_conclusions(dossier)),
+            "n_dissent": len(dissent_conclusions(dossier)),
+        })
 
-    # 4.5) 主席汇总（仲裁汇总的「汇总」半边）：把已过闸结论组装成面向
-    # 议题的答案。生产路径走 LLM+四道闸（违规点模板顶替），桩/离线
-    # 直接模板——报告永远有综合意见。
     from app.agents.chair import build_synthesis
 
-    chair_client = None if injected_client else client
-    synthesis = build_synthesis(dossier, chair_client, settings.models[0])
-    chain.append("chair_summary", "pipeline", {
-        "mode": synthesis.get("mode"),
-        "n_points": len(synthesis.get("points") or []),
-        "n_auto_filled": sum(1 for p in synthesis.get("points") or []
-                             if p.get("auto")),
-        "n_open_issues": len(synthesis.get("open_issues") or []),
-        "gate_notes": synthesis.get("gate_notes") or [],
-    })
+    if case_key:
+        from app.core.run_cancel import check_cancel
+        check_cancel(case_key)
+    with prog.stage("chair", "主席汇总"):
+        chair_client = None if injected_client else client
+        synthesis = build_synthesis(dossier, chair_client, settings.models[0])
+        chain.append("chair_summary", "pipeline", {
+            "mode": synthesis.get("mode"),
+            "n_points": len(synthesis.get("points") or []),
+            "n_auto_filled": sum(1 for p in synthesis.get("points") or []
+                                 if p.get("auto")),
+            "n_open_issues": len(synthesis.get("open_issues") or []),
+            "gate_notes": synthesis.get("gate_notes") or [],
+        })
+        prog.note(mode=synthesis.get("mode"),
+                  n_points=len(synthesis.get("points") or []))
+
     n_calls = len(getattr(client, "call_log", []) or [])
     dossier.accounting = {
         "elapsed_s": round(time.monotonic() - t0, 1),
@@ -308,11 +395,20 @@ def run_case(spec: RunSpec | None = None,
         "n_calls": n_calls,
         "budget": guard.summary() if guard else "",
         "confidence_note": "规则融合分（强度×覆盖×一致性），不是命中率",
+        "steps": [
+            {"id": s.get("id"), "label": s.get("label"),
+             "elapsed_s": s.get("elapsed_s")}
+            for s in prog.steps if s.get("id") != "done"
+        ],
     }
     chain.append("report_finalized", "pipeline", {
-        "question": dossier.question, **dossier.accounting,
+        "question": dossier.question,
+        **{k: v for k, v in dossier.accounting.items() if k != "steps"},
     })
-    _write_progress(spec.out_dir, "done", dossier.accounting)
+    prog.complete(**{k: v for k, v in dossier.accounting.items()
+                     if k != "steps"})
+    if created_progress:
+        set_active_progress(None)
 
     result = PipelineResult(dossier=dossier, chain=chain, rejected=rejected)
 

@@ -100,6 +100,9 @@ def test_index_serves_workbench_html(api):
     assert "添加文件夹" not in html
     assert 'id="filePick"' in html
     assert "核验账本" in html
+    assert 'id="runProgress"' in html
+    assert 'id="runProgNow"' in html
+    assert "/api/progress" in html
     # 演示工具在结果区，不在顶栏抢主路径
     assert html.index("开始研判") < html.index('id="demoTools"')
 
@@ -119,6 +122,20 @@ def test_list_and_get_dossier(api):
     assert prog.get("step") == "done"
 
 
+def test_cancel_endpoint_when_running(api):
+    from app.core.run_cancel import begin_run, end_run
+
+    begin_run("demo")
+    try:
+        body = _post(api + "/api/cancel", {"case": "demo"})
+        assert body["accepted"] is True
+        assert body["cancelled"] is True
+    finally:
+        end_run("demo")
+    idle = _post(api + "/api/cancel", {"case": "demo"})
+    assert idle["accepted"] is False
+
+
 def test_workbench_run_uses_user_question(api):
     data = _post(api + "/api/run", {
         "case": "demo",
@@ -127,6 +144,16 @@ def test_workbench_run_uses_user_question(api):
     assert data["dossier"]["question"] == "本次用户亲口问的议题是否成立？"
     assert data["dossier"]["conclusions"]
     assert data["chain"]["ok"] is True
+    prog = _get(api + "/api/progress?case=demo&out=out_offline")
+    assert prog.get("step") == "done"
+    ids = [s["id"] for s in prog.get("steps") or []]
+    assert "material" in ids
+    assert "panel" in ids
+    assert all(
+        s.get("elapsed_s") is not None
+        for s in prog["steps"] if s["id"] != "done")
+    acct = data["dossier"].get("accounting") or {}
+    assert any(s.get("id") == "material" for s in (acct.get("steps") or []))
 
 
 def test_history_lists_examples_and_archives_runs(api):

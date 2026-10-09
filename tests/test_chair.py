@@ -123,6 +123,26 @@ def test_omitted_majority_auto_filled_unknown_dropped():
     assert [p["con_id"] for p in auto] == ["CON-2"]
 
 
+def test_contradictory_exclude_notes_dropped_when_point_filled():
+    """补进 points 后，不得再挂「与议题无关/不纳入」矛盾说明。"""
+    d = _rich_dossier()
+    data = json.dumps({
+        "headline": "只提了一条",
+        "points": [{"con_id": "CON-1", "gloss": "回款率40%"}],
+        "open_issues": [
+            {"kind": "note", "ref": "CON-2",
+             "text": "该结论为营业收入总额，与议题无关，不纳入。"},
+            {"kind": "conflict", "ref": d.conflicts[0]["id"],
+             "text": "风险程度已裁决"},
+        ]}, ensure_ascii=False)
+    synth = _validate_llm_output(d, json.loads(data))[0]
+    assert "CON-2" in {p["con_id"] for p in synth["points"]}
+    assert not any(
+        o.get("ref") == "CON-2" and "不纳入" in str(o.get("text") or "")
+        for o in synth["open_issues"])
+    assert any(o.get("kind") == "conflict" for o in synth["open_issues"])
+
+
 def test_headline_with_untraceable_number_falls_back_to_template():
     d = _rich_dossier()
     data = json.dumps({

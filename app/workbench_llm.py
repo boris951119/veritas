@@ -69,6 +69,27 @@ def parse_models(raw) -> list[str]:
     return out
 
 
+def normalize_model_ids(models: list[str], *, base_url: str = "") -> list[str]:
+    """OpenAI 兼容网关下，裸模型名自动加 openai/ 前缀。
+
+    否则 litellm 会把 deepseek-* 当成官方 DeepSeek，去要
+    DEEPSEEK_API_KEY，而工作台实际走的是 OPENAI_API_KEY + base_url。
+    """
+    compat = bool(str(base_url or "").strip())
+    out: list[str] = []
+    seen: set[str] = set()
+    for m in models:
+        mid = str(m).strip()
+        if not mid:
+            continue
+        if compat and "/" not in mid:
+            mid = f"openai/{mid}"
+        if mid not in seen:
+            seen.add(mid)
+            out.append(mid)
+    return out
+
+
 def models_from_data(data: dict) -> list[str]:
     models = parse_models(data.get("models"))
     if not models:
@@ -79,7 +100,10 @@ def models_from_data(data: dict) -> list[str]:
         models = parse_models(models_env)
     if not models:
         models = ["openai/deepseek-v4-flash"]
-    return models
+    # 只按落盘 base_url 补前缀；勿用进程里残留的 OPENAI_BASE_URL，
+    # 否则单测/换配置会误给裸名加上 openai/
+    return normalize_model_ids(
+        models, base_url=str(data.get("base_url") or ""))
 
 
 def assignment_preview(models: list[str], hetero: bool) -> list[dict]:
@@ -201,6 +225,8 @@ def save_llm_settings(
     if models is not None:
         parsed = parse_models(models)
         if parsed:
+            parsed = normalize_model_ids(
+                parsed, base_url=str(data.get("base_url") or ""))
             data["models"] = parsed
             data["model"] = parsed[0]
         else:
@@ -209,11 +235,21 @@ def save_llm_settings(
     elif model is not None:
         parsed = parse_models(model)
         if parsed:
+            parsed = normalize_model_ids(
+                parsed, base_url=str(data.get("base_url") or ""))
             data["models"] = parsed
             data["model"] = parsed[0]
         else:
             data.pop("models", None)
             data.pop("model", None)
+    elif data.get("models") or data.get("model"):
+        # 已有配置：网关 + 裸名时补前缀（修历史误填）
+        raw = parse_models(data.get("models")) or parse_models(data.get("model"))
+        fixed = normalize_model_ids(
+            raw, base_url=str(data.get("base_url") or ""))
+        if fixed:
+            data["models"] = fixed
+            data["model"] = fixed[0]
     if hetero is not None:
         data["hetero"] = bool(hetero)
     if force_demo is not None:

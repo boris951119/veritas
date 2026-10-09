@@ -12,6 +12,7 @@ from app.workbench_llm import (
     is_live_mode,
     llm_status,
     mask_key,
+    normalize_model_ids,
     parse_models,
     save_llm_settings,
     workbench_roster,
@@ -27,6 +28,26 @@ def test_parse_models_human_input():
     assert parse_models("a\nb\nc") == ["a", "b", "c"]
     assert parse_models("a, b; c") == ["a", "b", "c"]
     assert parse_models("# x\na\na") == ["a"]
+
+
+def test_normalize_bare_model_for_openai_gateway(tmp_path, monkeypatch):
+    assert normalize_model_ids(
+        ["deepseek-v4-flash-0731"],
+        base_url="https://example.com/v1",
+    ) == ["openai/deepseek-v4-flash-0731"]
+    assert normalize_model_ids(
+        ["openai/qwen3.8-max"],
+        base_url="https://example.com/v1",
+    ) == ["openai/qwen3.8-max"]
+    path = tmp_path / "llm.json"
+    monkeypatch.setenv("VERITAS_WORKBENCH_LLM", str(path))
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    st = save_llm_settings(
+        api_key="sk-test-key-123456",
+        base_url="https://example.com/v1",
+        model="deepseek-v4-flash-0731",
+    )
+    assert st["model"] == "openai/deepseek-v4-flash-0731"
 
 
 def test_save_and_status_roundtrip(tmp_path, monkeypatch):
@@ -148,6 +169,7 @@ def test_exit_api(tmp_path, monkeypatch):
 def test_workbench_roster_rotates(tmp_path, monkeypatch):
     path = tmp_path / "roster.json"
     monkeypatch.setenv("VERITAS_WORKBENCH_LLM", str(path))
+    monkeypatch.delenv("OPENAI_BASE_URL", raising=False)
     save_llm_settings(
         models=["m1", "m2", "m3"], hetero=True, force_demo=True)
     roster = workbench_roster()

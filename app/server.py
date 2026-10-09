@@ -229,6 +229,10 @@ class RunReq(BaseModel):
     question: str = ""
 
 
+class CancelReq(BaseModel):
+    case: str
+
+
 class EvidenceWeightReq(BaseModel):
     case: str
     evidence_id: str
@@ -273,6 +277,11 @@ class CaseRenameReq(BaseModel):
     title: str
 
 
+class CaseFilesRemoveReq(BaseModel):
+    case: str
+    files: list[str]
+
+
 class LlmSettingsReq(BaseModel):
     api_key: str | None = None  # None=不改；""=清除
     base_url: str | None = None
@@ -287,7 +296,11 @@ def create_app(cases_root: Path | None = None) -> FastAPI:
 
     @app.get("/")
     def index() -> FileResponse:
-        return FileResponse(_WEB_DIR / "index.html")
+        # 工作台常改 UI，禁止浏览器死缓存旧 JS（否则勾选/删除会「看不见」）
+        return FileResponse(
+            _WEB_DIR / "index.html",
+            headers={"Cache-Control": "no-store, max-age=0"},
+        )
 
     @app.get("/api/cases")
     def list_cases() -> dict:
@@ -342,10 +355,48 @@ def create_app(cases_root: Path | None = None) -> FastAPI:
                      "请补充 PDF、docx、xlsx 或文本后再研判。")
         from app.workbench_llm import llm_status
 
-        out_dir = run_workbench_case(case_dir, question=req.question)
+        try:
+            out_dir = run_workbench_case(case_dir, question=req.question)
+        except Exception as exc:
+            from app.llm.budget import TaskCancelledError
+
+            if isinstance(exc, TaskCancelledError):
+                raise HTTPException(409, "研判已终止") from exc
+            msg = str(exc)
+            # 网关拒模型时别把整段 traceback 甩成「请求未完成」
+            if "Access to model denied" in msg or "model denied" in msg.lower():
+                raise HTTPException(
+                    502,
+                    "当前网关拒绝了所选模型（Access denied）。"
+                    "请点右上角「模型接入」换一个有权限的模型 ID，或勾选"
+                    "「即使有密钥也强制用演示桩」先走通流程。",
+                ) from exc
+            if "全部分析师研判失败" in msg or "LLM 调用失败" in msg:
+                short = msg
+                if len(short) > 220:
+                    short = short[:220] + "…"
+                raise HTTPException(502, f"研判未完成：{short}") from exc
+            raise
         payload = _dossier_payload(out_dir)
         payload["workbench_mode"] = llm_status()["mode"]
         return payload
+
+    @app.post("/api/cancel")
+    def cancel_run(req: CancelReq) -> dict:
+        """终止当前案例正在跑的研判（协作式：下一 LLM 检查点生效）。"""
+        from app.core.run_cancel import is_cancelled, request_cancel
+
+        case_dir = _cases_root(cases_root) / req.case
+        if not case_dir.is_dir():
+            raise HTTPException(404, "找不到这套资料")
+        ok = request_cancel(req.case)
+        return {
+            "ok": True,
+            "accepted": ok,
+            "cancelled": is_cancelled(req.case),
+            "detail": ("已发出终止信号，将在当前模型调用结束后停下"
+                       if ok else "当前没有进行中的研判"),
+        }
 
     @app.get("/api/ingest")
     def ingest_preview(case: str) -> dict:
@@ -359,19 +410,69 @@ def create_app(cases_root: Path | None = None) -> FastAPI:
     async def import_case(
         files: list[UploadFile] = File(...),
         question: str = Form(""),
+        case: str = Form(""),
     ) -> dict:
-        """工作台添加文件夹/散文件：落盘后立刻分诊切片，不另生成「整理包」。"""
-        from app.ingest.import_case import CaseImportError, write_imported_case
+        """工作台添加文件夹/散文件：落盘后立刻分诊切片。
+
+        若带 case=已有导入案，则追加到该案（删错再补）；否则新建 user-*。
+        """
+        from app.ingest.import_case import (
+            CaseImportError, append_imported_files, write_imported_case,
+        )
+        from app.llm.yaml_robust import load_yaml_robust
 
         blobs: list[tuple[str, bytes]] = []
         for uf in files:
             blobs.append((uf.filename or "unnamed", await uf.read()))
+        root = _cases_root(cases_root)
         try:
-            meta = write_imported_case(_cases_root(cases_root), blobs, question)
+            if case:
+                case_dir = root / case
+                man = case_dir / "manifest.yaml"
+                if not case_dir.is_dir() or not man.is_file():
+                    raise HTTPException(404, "找不到这套资料")
+                meta_man = dict(load_yaml_robust(man) or {})
+                if not (meta_man.get("imported") or case.startswith("user-")):
+                    raise HTTPException(422, "示例案卷不能往里加文件，请新建一套")
+                meta = append_imported_files(case_dir, blobs)
+                if question.strip():
+                    # 议题栏有字时同步进 manifest（追加场景）
+                    import yaml
+                    meta_man["question"] = question.strip()
+                    man.write_text(
+                        yaml.safe_dump(meta_man, allow_unicode=True,
+                                       sort_keys=False),
+                        encoding="utf-8",
+                    )
+                    meta["question"] = question.strip()
+            else:
+                meta = write_imported_case(root, blobs, question)
         except CaseImportError as exc:
             raise HTTPException(422, str(exc)) from exc
-        payload = _ingest_payload(_cases_root(cases_root) / meta["case"])
+        payload = _ingest_payload(root / meta["case"])
         return {**meta, **payload}
+
+    @app.post("/api/case/files/remove")
+    def remove_case_files_api(req: CaseFilesRemoveReq) -> dict:
+        """分诊清单勾选删除错导文件；仅导入案（imported / user-*）。"""
+        from app.ingest.import_case import CaseImportError, remove_case_files
+        from app.llm.yaml_robust import load_yaml_robust
+
+        if not req.files:
+            raise HTTPException(422, "请先勾选要删除的文件")
+        case_dir = _cases_root(cases_root) / req.case
+        man = case_dir / "manifest.yaml"
+        if not case_dir.is_dir() or not man.is_file():
+            raise HTTPException(404, "找不到这套资料")
+        meta = dict(load_yaml_robust(man) or {})
+        if not (meta.get("imported") or req.case.startswith("user-")):
+            raise HTTPException(422, "示例案卷不能删文件")
+        try:
+            result = remove_case_files(case_dir, req.files)
+        except CaseImportError as exc:
+            raise HTTPException(422, str(exc)) from exc
+        payload = _ingest_payload(case_dir)
+        return {**result, **payload}
 
     @app.get("/api/llm")
     def get_llm_settings() -> dict:
@@ -447,13 +548,35 @@ def create_app(cases_root: Path | None = None) -> FastAPI:
 
     @app.get("/api/progress")
     def get_progress(case: str, out: str | None = None) -> dict:
-        """当前/最后步骤（跑到一半评委喊停可看）。"""
-        out_dir = _safe_out_dir(cases_root, case, out)
-        path = out_dir / "progress.json"
-        if not path.is_file():
-            return {"step": "done" if (out_dir / "report.json").is_file()
-                    else "unknown"}
-        return json.loads(path.read_text(encoding="utf-8"))
+        """当前/最后步骤（跑到一半评委喊停可看）。
+
+        不要求 report.json 已落盘——开跑瞬间只有 progress.json。
+        """
+        base = _cases_root(cases_root) / case
+        if not base.is_dir():
+            raise HTTPException(404, f"案例不存在: {case}")
+        if out:
+            sub = str(out).replace("\\", "/").strip("/")
+            if sub not in ("out", "out_offline") and not (
+                    sub.startswith("history/") and sub.count("/") == 1
+                    and ".." not in sub):
+                raise HTTPException(400, "非法产物路径")
+            candidates = [base / sub]
+        else:
+            # 与 _find_out_dir 一致：优先 out，再 out_offline
+            candidates = [base / "out", base / "out_offline"]
+        for out_dir in candidates:
+            path = out_dir / "progress.json"
+            if path.is_file():
+                try:
+                    return json.loads(path.read_text(encoding="utf-8"))
+                except (OSError, json.JSONDecodeError):
+                    return {"step": "unknown", "steps": [], "elapsed_s": 0}
+        # 无 progress：有报告则视为已完成
+        for out_dir in candidates:
+            if (out_dir / "report.json").is_file():
+                return {"step": "done", "steps": [], "elapsed_s": 0}
+        return {"step": "unknown", "steps": [], "elapsed_s": 0}
 
     @app.get("/api/case/diff")
     def case_diff(case: str, against: str = "out_offline") -> dict:

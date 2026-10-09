@@ -109,11 +109,29 @@ def question_preflight(question: str) -> dict:
         signals.append(f"对象实体 {'、'.join(entities[:4])}"
                        + (f"，时点 {dates[0]}" if dates else ""))
 
-    readback = {"原文": q, "对象": entities[:4], "时点": dates[:2]}
+    from app.core.answer_slots import slot_intent
+
+    intent = slot_intent(q)
+    period_rb = []
+    if intent["period"]:
+        p = intent["period"]
+        period_rb = [f"{p['year']}年{p['grain_cn']}"]
+    metric_rb = [m["label"] for m in intent["metrics"][:4]]
+    readback = {
+        "原文": q, "对象": entities[:4], "时点": dates[:2],
+        "指标": metric_rb, "期间": period_rb,
+        "时点类型": ([intent["time_kind"]] if intent.get("time_kind") else []),
+    }
+    clarify = list(_CLARIFY.get(tier, []))
+    for tip in intent["clarify"]:
+        if tip not in clarify:
+            clarify.append(tip)
+            signals.append("指标已识别但会计期间未锁定")
     return {
         "tier": tier, "tier_cn": _TIER_CN[tier],
         "entities": entities, "dates": dates, "readback": readback,
-        "clarify": _CLARIFY.get(tier, []), "signals": signals,
+        "clarify": clarify, "signals": signals,
+        "slot_intent": intent,
     }
 
 
@@ -136,6 +154,10 @@ def readback_line(question: str) -> str:
     pf = question_preflight(question)
     rb = pf["readback"]
     parts = [f"对象：{('、'.join(rb['对象']) or '（未识别）')}"]
+    if rb.get("指标"):
+        parts.append(f"指标：{'、'.join(rb['指标'])}")
+    if rb.get("期间"):
+        parts.append(f"期间：{'、'.join(rb['期间'])}")
     if rb["时点"]:
         parts.append(f"时点：{'、'.join(rb['时点'])}")
     return f"研判议题确认——{ '；'.join(parts) }；原文照录：「{rb['原文']}」"

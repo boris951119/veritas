@@ -44,6 +44,16 @@ def test_generic_analysis_words_not_checked():
     assert premise_flags(d) == []
 
 
+def test_shareholder_question_template_not_flagged():
+    """「第一大股东是谁」是问句模板，不是要在原文找的专有名。"""
+    d = _dossier(
+        "截至2024年半年度报告期末，第一大股东是谁？持股数量与持股比例？",
+        "宜兴市中港投资有限公司持股97,500,000股，比例46.95%。",
+    )
+    assert premise_flags(d) == []
+    assert "第一大股东是谁" not in extract_entities(d.question)
+
+
 def test_flag_cap_at_five():
     d = _dossier("甲集团、乙集团、丙集团、丁集团、戊集团、己集团各有什么风险？")
     assert len(premise_flags(d)) <= 5

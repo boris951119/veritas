@@ -91,29 +91,55 @@ def archive_run(case_dir: Path, out_dir: Path) -> Path:
 
 def run_workbench_case(case_dir: Path, question: str | None = None) -> Path:
     """写入 out_offline 并归档。有 key 且未强制演示 → 真模型；否则桩。"""
-    apply_to_environ()
+    from app.core.run_cancel import begin_run, end_run
+    from app.core.run_progress import RunProgress, set_active_progress
     from app.ingest.pdf_backend import set_pdf_backend
+    from app.llm.budget import TaskCancelledError
+
+    apply_to_environ()
     set_pdf_backend(Settings.from_env().pdf_backend)
-    dossier = load_case(case_dir)
-    if question and str(question).strip():
-        dossier.question = str(question).strip()
     out = case_dir / "out_offline"
-    live = is_live_mode()
-    if live:
-        settings = Settings.from_env()
-        status = llm_status()
-        models = list(status.get("models") or [])
-        if models:
-            settings.models = models
-        run_case(
-            RunSpec(case_dir=case_dir, out_dir=out, dossier=dossier,
-                    settings=settings, roster=workbench_roster()),
-            RunDeps(),  # client=None → 工厂建真实 ModelClient
+    prog = RunProgress(out)
+    set_active_progress(prog)
+    begin_run(case_dir.name)
+    try:
+        prog.start("ingest", "读取资料并切片（PDF/文本）")
+
+        def _on_file(rel: str, index: int, total: int) -> None:
+            name = rel.rsplit("/", 1)[-1]
+            prog.note(file=name, index=index, total=total,
+                      hint=f"{index}/{total} {name}")
+
+        dossier = load_case(case_dir, on_file=_on_file)
+        if question and str(question).strip():
+            dossier.question = str(question).strip()
+        prog.finish(
+            n_sources=len(dossier.sources),
+            n_segments=sum(len(s.segments) for s in dossier.sources),
+            n_files=len(dossier.triage),
         )
-    else:
-        run_case(
-            RunSpec(case_dir=case_dir, out_dir=out, dossier=dossier),
-            RunDeps(client=_client_for(case_dir.name, dossier)),
-        )
-    archive_run(case_dir, out)
-    return out
+        live = is_live_mode()
+        if live:
+            settings = Settings.from_env()
+            status = llm_status()
+            models = list(status.get("models") or [])
+            if models:
+                settings.models = models
+            run_case(
+                RunSpec(case_dir=case_dir, out_dir=out, dossier=dossier,
+                        settings=settings, roster=workbench_roster()),
+                RunDeps(),  # client=None → 工厂建真实 ModelClient
+            )
+        else:
+            run_case(
+                RunSpec(case_dir=case_dir, out_dir=out, dossier=dossier),
+                RunDeps(client=_client_for(case_dir.name, dossier)),
+            )
+        archive_run(case_dir, out)
+        return out
+    except TaskCancelledError:
+        prog.mark_cancelled("用户终止")
+        raise
+    finally:
+        end_run(case_dir.name)
+        set_active_progress(None)

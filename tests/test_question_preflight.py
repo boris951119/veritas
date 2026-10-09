@@ -72,6 +72,15 @@ def test_readback_line_shows_elements_not_rewrite():
     assert "原文照录" in line          # 不改写，只确认
 
 
+def test_metric_without_period_enters_clarify_and_readback():
+    pf = question_preflight("公司归母净利润是多少？")
+    assert any("未锁定会计期间" in c for c in pf["clarify"])
+    assert pf["readback"]["指标"]
+    assert not pf["readback"]["期间"]
+    line = readback_line("公司归母净利润是多少？")
+    assert "指标" in line and "归属于上市公司股东的净利润" in line
+
+
 def test_audit_flags_non_clear_question():
     flags = audit_all(_d("对行业整体情况做个分析吧"))
     assert any(f["kind"] == "question" for f in flags)
