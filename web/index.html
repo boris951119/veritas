@@ -347,6 +347,12 @@ button:disabled{opacity:.55;cursor:wait}
 .gnode{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:8px 10px;font-size:12px;max-width:200px}
 .gnode b{display:block;color:var(--gold);font-weight:600;margin-bottom:2px;font-size:11px}
 .gedges{margin-top:10px;font-size:12px;color:var(--dim);max-height:220px;overflow:auto}
+.replay{display:flex;flex-direction:column;gap:0;margin-top:10px}
+.replay-step{position:relative;padding:10px 12px 10px 16px;background:var(--panel2);border:1px solid var(--line);border-radius:10px}
+.replay-step + .replay-step{margin-top:6px}
+.replay-step .n{color:var(--gold);font-weight:600;font-size:12px;margin-bottom:4px}
+.replay-step .samples{color:var(--dim);font-size:12px;line-height:1.5}
+.replay-arrow{text-align:center;color:var(--dim);font-size:11px;line-height:1.2;padding:2px 0}
 .editrow{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;align-items:center}
 .editrow input[type=text]{
   flex:1;min-width:160px;background:#070b14;color:var(--text);
@@ -475,15 +481,18 @@ openai/glm-5.3" oninput="previewAssignment()"></textarea>
     <div id="rightBody">
     <div class="placeholder" id="emptyState">左边选案件、中间写问题，再点「开始研判」。</div>
     <div id="resultState" class="hidden">
-      <h3>看判断，并做三件事</h3>
+      <h3>看判断，并按顺序点四下</h3>
       <div class="next" id="guideBar">
         <button type="button" id="g1" onclick="goGuide(1)"><b>1 核对原文</b><span class="sub">点开引文，看是不是资料里的原句</span></button>
         <button type="button" id="g2" onclick="goGuide(2)"><b>2 改一句试试</b><span class="sub">加一个资料里没有的数字，看会不会亮灯</span></button>
-        <button type="button" id="g3" onclick="goGuide(3)"><b>3 核验账本</b><span class="sub">用下面演示工具验防篡改</span></button>
+        <button type="button" id="g3" onclick="goGuide(3)"><b>3 改成「因果」</b><span class="sub">无机制词的因果会亮黄牌并掉分</span></button>
+        <button type="button" id="g4" onclick="goGuide(4)"><b>4 账本与带走</b><span class="sub">核验 → 篡改演示 → 导出审计包 → 假引文入卷</span></button>
       </div>
       <div class="demo-tools" id="demoTools">
         <button type="button" onclick="verifyChain()">核验账本</button>
         <button type="button" id="btnTamper" onclick="tamperDemo()">演示篡改</button>
+        <button type="button" onclick="exportAudit()">导出审计包</button>
+        <button type="button" onclick="demoExternalReject()">外部假引文入卷</button>
         <button type="button" id="btnReset" onclick="resetCase()">撤销改动</button>
       </div>
       <div class="hero">
@@ -505,8 +514,8 @@ openai/glm-5.3" oninput="previewAssignment()"></textarea>
         <div class="sec"><h2>程序复核</h2><div id="flags"></div></div>
         <div class="sec"><h2>被打回的引文</h2><div id="rejected"></div></div>
         <div class="sec"><h2>信源</h2><div id="sources"></div></div>
+        <div class="sec"><h2>过程回放</h2><div id="graph"></div></div>
         <div class="sec"><h2>研判时间线</h2><div id="timeline"></div></div>
-        <div class="sec"><h2>关系图</h2><div id="graph"></div></div>
       </section>
     </div>
     </div>
@@ -537,7 +546,7 @@ const FLAG_CN={calc:"计算复算不符",provenance:"来源外数字",counting:"
 const ROLE_CN={mainstream:"主流视角",redteam:"质疑视角",technologist:"技术视角",
   coordinator:"协调员",pipeline:"系统",chair:"汇总",human:"人工"};
 const CASE_CN={"demo-solid-state":"固态电池量产前景","bi-delivery-risk":"数据中台交付风险",
-  "rumor-vs-official":"谣言与官方通报"};
+  "rumor-vs-official":"谣言 vs 官方通报（开源情报）"};
 const OUT_CN={out:"正式跑次",out_offline:"离线演示"};
 const TRIAGE_CN={
   native:{t:"已读入并切片",k:"ok"},
@@ -619,8 +628,8 @@ function renderCaseList(){
   const samples=CASES.filter(c=>!c.imported);
   const mine=CASES.filter(c=>c.imported);
   const btn=c=>`<button type="button" class="${c.name===CUR?"on":""}" onclick="selectCase('${esc(c.name)}')">
-    <b>${esc(caseTitleOf(c))}</b>
-    <span>${c.n_files||0} 份资料${c.has_result?" · 已有上次结果":""}</span>
+    <b>${esc(caseTitleOf(c))}${c.featured?` <span class="sub">主演示</span>`:""}</b>
+    <span>${c.blurb?esc(c.blurb):((c.n_files||0)+" 份资料")}${c.has_result?" · 已有结果":""}</span>
   </button>`;
   const mineBox=$("#mineList");
   if(mineBox){
@@ -1086,9 +1095,15 @@ function goGuide(n){
   if(n===2){showTab("evidence");toast("在判断框里加一个资料没有的数字，例如「良率已达 99%」，再保存。");
     const inp=document.querySelector("#chains input[type=text]");if(inp)inp.focus()}
   if(n===3){
+    showTab("evidence");
+    const sel=document.querySelector("#chains select");
+    if(sel){sel.focus();sel.scrollIntoView({behavior:"smooth",block:"center"})}
+    toast("把任意一条证据的关系改成「因果」。若原文没有「因为/导致」，黄牌会亮、加成取消。",5000);
+  }
+  if(n===4){
     const tools=$("#demoTools");
     if(tools) tools.scrollIntoView({behavior:"smooth",block:"nearest"});
-    toast("先点「核验账本」，再点「演示篡改」。");
+    toast("顺序：核验账本 → 演示篡改 → 导出审计包 → 外部假引文入卷。",5000);
   }
 }
 async function api(path,opts){
@@ -1304,6 +1319,10 @@ async function boot(){
   renderCaseList();
   showResult(false);
   await refreshLlm();
+  // 开箱进入主演示案（featured 最高且已有产物）
+  const featured=(CASES||[]).filter(c=>!c.imported&&c.featured&&c.has_result)
+    .sort((a,b)=>(b.featured||0)-(a.featured||0))[0];
+  if(featured) await selectCase(featured.name);
 }
 async function load(){
   if(!CUR)return;
@@ -1388,16 +1407,27 @@ function renderTimeline(events){
     <div class="gedges">${ev.map(e=>`<div>${esc((e.ts||"").replace("T"," ").slice(0,19))}　${esc(EVENT_CN[e.event]||"研判步骤")}　<span class="sub">${esc(zhRole(e.actor))}</span></div>`).join("")}</div>`;
 }
 function renderGraph(g){
-  if(!g||!(g.nodes||[]).length){$("#graph").innerHTML=`<div class="empty">暂无关系图。</div>`;return}
+  if(!g||!(g.nodes||[]).length){$("#graph").innerHTML=`<div class="empty">暂无过程图。</div>`;return}
+  const byId={};(g.nodes||[]).forEach(n=>byId[n.id]=n);
+  const label=id=>{const n=byId[id];const t=(n&&n.label||"").trim();
+    return t?(t.length>16?t.slice(0,16)+"…":t):"节点"};
+  const stages=g.stages&&g.stages.length?g.stages:[];
+  const stageHtml=stages.length?`<div class="replay">${stages.map((s,i)=>{
+    const samples=(s.labels||[]).map(t=>esc((t||"").length>28?(t||"").slice(0,28)+"…":(t||""))).join(" · ");
+    const arrow=i<stages.length-1?`<div class="replay-arrow">↓</div>`:"";
+    return `<div class="replay-step"><div class="n">${esc(s.title)} · ${s.n} 项</div>
+      ${samples?`<div class="samples">${samples}</div>`:""}</div>${arrow}`;
+  }).join("")}</div>`:"";
   const order=["conclusion","conflict","arbitration","rebuttal","evidence","segment","source","analyst"];
   const nodes=[...g.nodes].sort((a,b)=>order.indexOf(a.kind)-order.indexOf(b.kind));
   const shown=nodes.filter(n=>["conclusion","conflict","arbitration","rebuttal","source","analyst"].includes(n.kind));
-  const label=id=>{const n=(g.nodes||[]).find(x=>x.id===id);const t=(n&&n.label||"").trim();
-    return t?(t.length>16?t.slice(0,16)+"…":t):"节点"};
-  $("#graph").innerHTML=`<div class="kv">共 ${g.nodes.length} 个节点、${g.edges.length} 条关系</div>
+  $("#graph").innerHTML=`<div class="kv">谁先说 → 吵什么 → 怎么裁 → 锚到哪　·　${g.nodes.length} 节点</div>
+    ${stageHtml}
+    <details style="margin-top:12px"><summary class="sub" style="cursor:pointer">展开节点与关系明细</summary>
     <div class="graph" style="margin-top:8px">${shown.map(n=>`<div class="gnode"><b>${KIND_CN[n.kind]||"节点"}</b>${esc(n.label)}</div>`).join("")}</div>
     <div class="gedges">${(g.edges||[]).slice(0,40).map(e=>`<div>${esc(EDGE_CN[e.kind]||"关联")} ${esc(label(e.source))} → ${esc(label(e.target))}</div>`).join("")}
-      ${(g.edges||[]).length>40?`<div class="sub">… 另有 ${(g.edges.length-40)} 条关系</div>`:""}</div>`;
+      ${(g.edges||[]).length>40?`<div class="sub">… 另有 ${(g.edges.length-40)} 条关系</div>`:""}</div>
+    </details>`;
 }
 function renderChains(d){
   const majors=d.conclusions.filter(c=>c.status==="majority")
@@ -1422,7 +1452,13 @@ function renderChains(d){
           <span class="chip">${REL_CN[ev.relation]||"相关"}</span>
           <span class="chip">权重 ${ev.weight}</span>${ev.author?`<span class="chip">${esc(zhRole(ev.author))}</span>`:""}</div>
         ${ev.note?`<div class="who">${esc(ev.note)}</div>`:""}
-        <div class="evops"><span class="sub">权重</span>
+        <div class="evops"><span class="sub">关系</span>
+          <select onchange="setRelation('${esc(ev.id)}',this.value)" title="改成因果且原文无机制词会亮黄牌">
+            <option value="correlation"${ev.relation==="correlation"?" selected":""}>相关</option>
+            <option value="causation"${ev.relation==="causation"?" selected":""}>因果</option>
+            <option value="expert_judgment"${ev.relation==="expert_judgment"?" selected":""}>专家判断</option>
+          </select>
+          <span class="sub">权重</span>
           <input type="range" min="0" max="2" step="0.1" value="${ev.weight}"
             oninput="this.nextElementSibling.textContent=this.value" onchange="setWeight('${esc(ev.id)}',this.value)">
           <span class="val">${ev.weight}</span>
@@ -1494,9 +1530,12 @@ function renderInsufficient(d){
     </div>`).join("")||`<div class="empty">没有因证据全灭而停在台面上的判断。</div>`;
 }
 function renderRejected(d){
-  $("#rejected").innerHTML=(d.rejected||[]).map(r=>`<div class="rejected">
+  $("#rejected").innerHTML=(d.rejected||[]).map(r=>{
+    const who=r.agent?`提交方：${esc(r.agent)}${r.agent_id&&r.agent_id!==r.agent?`（${esc(r.agent_id)}）`:""}`:"";
+    return `<div class="rejected">
     ${esc((r.problems||[]).join("；"))}<br>
-    <span class="sub">引文：${esc(String(r.quote).slice(0,80))}…</span></div>`).join("")
+    <span class="sub">引文：${esc(String(r.quote||"").slice(0,80))}…${who?`<br>${who}`:""}</span></div>`;
+  }).join("")
     ||`<div class="empty">全部引文通过逐字核对。</div>`;
 }
 function renderFlags(audit){
@@ -1557,6 +1596,18 @@ async function setWeight(id,w){
   G=await api("/api/reasoning_graph?"+dossierQs()).catch(()=>G);
   render();toast(`权重已调整并重算（账本 ${D.chain.n_records} 笔）`);
 }
+async function setRelation(id,rel){
+  if(histWriteGuard())return;
+  D=await api("/api/evidence/relation",{method:"POST",headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({case:CUR,evidence_id:id,relation:rel})});
+  G=await api("/api/reasoning_graph?"+dossierQs()).catch(()=>G);
+  render();
+  const flags=(D.audit&&D.audit.flags)||[];
+  const hit=flags.some(f=>f.kind==="causation_support");
+  toast(rel==="causation"&&hit
+    ?`已标为因果：原文无机制词，黄牌亮起，加成已取消（账本 ${D.chain.n_records} 笔）`
+    :`关系已改为「${REL_CN[rel]||rel}」并重算（账本 ${D.chain.n_records} 笔）`);
+}
 async function removeEv(id){
   if(histWriteGuard())return;
   if(!confirm("确认删除这条证据？结论置信度会立刻重算，操作记入防伪账本。"))return;
@@ -1611,10 +1662,49 @@ async function verifyChain(){
   }
   const r=await api("/api/chain/verify",{method:"POST",headers:{"Content-Type":"application/json"},
     body:JSON.stringify({case:CUR})});
-  toast(r.ok?`账本核验通过（${r.n_records} 笔，改一字即失效）`
+  toast(r.ok?`账本核验通过（${r.n_records} 笔${r.signed?"，HMAC 已签名":"，仅哈希"}，改一字即失效）`
     :`核验失败：第 ${r.bad_index} 笔异常`);
   $("#kpiChain").className="conn "+(r.ok?"ok":"bad");
-  $("#kpiChain").textContent=r.ok?`账本完好 · ${r.n_records} 笔`:"账本异常";
+  $("#kpiChain").textContent=r.ok
+    ?`账本完好 · ${r.n_records} 笔${r.signed?" · 已签名":""}`
+    :"账本异常";
+}
+async function exportAudit(){
+  if(!CUR){toast("请先选择案例");return}
+  // 用 fetch+blob，避免 location.href：失败时整页跳到 JSON 错误页
+  try{
+    const r=await fetch("/api/export_audit?"+dossierQs());
+    if(!r.ok){
+      const j=await r.json().catch(()=>({}));
+      const msg=(j.detail&&String(j.detail))||"导出失败";
+      toast(msg);return;
+    }
+    const blob=await r.blob();
+    const cd=r.headers.get("Content-Disposition")||"";
+    const m=/filename=\"([^\"]+)\"/.exec(cd);
+    const fname=(m&&m[1])||("veritas-audit-"+CUR+".zip");
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement("a");
+    a.href=url;a.download=fname;
+    document.body.appendChild(a);a.click();a.remove();
+    URL.revokeObjectURL(url);
+    const signed=D&&D.chain&&D.chain.signed;
+    toast("已下载审计包 "+fname+"（报告+核验摘要"
+      +(signed?"，链已 HMAC 签名":"，链为哈希自洽")
+      +"；低密级导出不含链原文）",5600);
+  }catch(e){toast("导出失败：网络或浏览器拦截了下载")}
+}
+async function demoExternalReject(){
+  const r=await api("/api/demo/external_reject",{method:"POST",headers:{"Content-Type":"application/json"},body:"{}"});
+  const a=r.attribution||{};
+  const why=((a.rejected||[])[0]||{}).problems;
+  const agent=a.agent||"智能体";
+  const tip=`外部「${agent}」假引文已打回（${a.n_rejected||0} 条）。`
+    +(why&&why.length?"原因："+why[0]+"。":"")
+    +`提交方 ${a.agent_id||agent}；真引文对照${r.true_quote_kept?"可通过":"异常"}。磁盘案卷未改动。`;
+  toast(tip,8000);
+  notice(tip,"外部入卷演示（未改磁盘）");
+  showTab("more");
 }
 async function tamperDemo(){
   if(histWriteGuard())return;

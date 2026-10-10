@@ -7,13 +7,17 @@
 0.3），与本地文件同权过全套机械闸（围栏/相关性/BM25/引文核对）。
 
 安全边界：每条超时 15s、单页 2MB、每案 ≤30 条、仅接受 text/*；
-404/超时/反爬 → 披露，绝不炸 run。离线环境整组跳过并披露
-（离线演示兜底因此不受影响——这也是默认关的原因）。
+仅 http/https；解析后的 IP 必须是公网（拦 loopback / RFC1918 /
+链路本地 / 云元数据）；重定向目标同样复检。404/超时/反爬 → 披露，
+绝不炸 run。离线环境整组跳过并披露（离线演示兜底因此不受影响——
+这也是默认关的原因）。
 """
 
 from __future__ import annotations
 
+import ipaddress
 import re
+import socket
 import urllib.error
 import urllib.request
 from urllib.parse import urlparse
@@ -27,10 +31,71 @@ FETCH_TIMEOUT_SECONDS = 15
 FETCH_MAX_BYTES = 2 * 1024 * 1024
 MAX_LINKS_PER_CASE = 30
 _FETCHED_TEXT_CAP = 200_000  # 抓回正文的入卷字符上限（防超长页）
+_BLOCKED_HOSTS = frozenset({
+    "localhost", "localhost.localdomain",
+    "metadata", "metadata.google.internal",
+    "metadata.goog", "instance-data",
+})
 
 
 class LinkFetchError(RuntimeError):
     """单条链接抓取失败（原因进披露，不上抛炸流程）。"""
+
+
+def assert_url_fetchable(url: str) -> str:
+    """抓取前 SSRF 闸：scheme / 主机 / DNS 解析后的地址族。
+
+    返回规范化 URL（去掉 fragment）。失败抛 LinkFetchError。
+    """
+    raw = (url or "").strip()
+    if not raw:
+        raise LinkFetchError("空 URL")
+    parsed = urlparse(raw)
+    if parsed.scheme not in ("http", "https"):
+        raise LinkFetchError(f"不允许的协议: {parsed.scheme or '无'}")
+    if parsed.username or parsed.password:
+        raise LinkFetchError("URL 不得携带用户名/密码")
+    host = (parsed.hostname or "").strip().lower().rstrip(".")
+    if not host:
+        raise LinkFetchError("URL 缺少主机名")
+    if host in _BLOCKED_HOSTS or host.endswith(".local"):
+        raise LinkFetchError(f"禁止抓取的主机: {host}")
+    # 字面量 IP：直接判，不依赖 DNS
+    try:
+        literal = ipaddress.ip_address(host)
+    except ValueError:
+        literal = None
+    if literal is not None:
+        if not literal.is_global:
+            raise LinkFetchError(f"禁止抓取非公网地址: {host}")
+    else:
+        port = parsed.port or (443 if parsed.scheme == "https" else 80)
+        try:
+            infos = socket.getaddrinfo(host, port, type=socket.SOCK_STREAM)
+        except socket.gaierror as exc:
+            raise LinkFetchError(f"DNS 解析失败: {exc}") from exc
+        if not infos:
+            raise LinkFetchError(f"DNS 无结果: {host}")
+        for info in infos:
+            ip_str = info[4][0]
+            try:
+                addr = ipaddress.ip_address(ip_str)
+            except ValueError:
+                continue
+            if not addr.is_global:
+                raise LinkFetchError(
+                    f"主机 {host} 解析到非公网地址 {addr}，拒绝抓取")
+    # 去掉 fragment，避免同页锚点当不同请求
+    cleaned = parsed._replace(fragment="").geturl()
+    return cleaned
+
+
+class _SafeRedirectHandler(urllib.request.HTTPRedirectHandler):
+    """重定向目标再过一遍 SSRF 闸（防 302 跳到 169.254/内网）。"""
+
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        assert_url_fetchable(newurl)
+        return super().redirect_request(req, fp, code, msg, headers, newurl)
 
 
 def classify_link_list(text: str) -> tuple[bool, int]:
@@ -63,12 +128,20 @@ def fetch_raw(url: str) -> tuple[str, bytes]:
     """抓单条 → (content_type, body)；任何失败抛 LinkFetchError。
 
     测试通过 monkeypatch 本函数注入桩，零网络。"""
+    safe_url = assert_url_fetchable(url)
     req = urllib.request.Request(
-        url, headers={"User-Agent": "veritas-research/1.0"})
+        safe_url, headers={"User-Agent": "veritas-research/1.0"})
+    opener = urllib.request.build_opener(_SafeRedirectHandler)
     try:
-        with urllib.request.urlopen(req, timeout=FETCH_TIMEOUT_SECONDS) as resp:
+        with opener.open(req, timeout=FETCH_TIMEOUT_SECONDS) as resp:
+            # 最终落地 URL（含重定向后）再闸一次
+            final = getattr(resp, "geturl", lambda: safe_url)()
+            if final and final != safe_url:
+                assert_url_fetchable(final)
             ctype = (resp.headers.get("Content-Type") or "").split(";")[0].strip()
             body = resp.read(FETCH_MAX_BYTES + 1)
+    except LinkFetchError:
+        raise
     except urllib.error.HTTPError as exc:
         raise LinkFetchError(f"HTTP {exc.code}") from exc
     except urllib.error.URLError as exc:

@@ -96,7 +96,10 @@ def run_workbench_case(case_dir: Path, question: str | None = None) -> Path:
     from app.ingest.pdf_backend import set_pdf_backend
     from app.llm.budget import TaskCancelledError
 
+    from app.core.hashchain import ensure_demo_chain_key
+
     apply_to_environ()
+    ensure_demo_chain_key()
     set_pdf_backend(Settings.from_env().pdf_backend)
     out = case_dir / "out_offline"
     prog = RunProgress(out)

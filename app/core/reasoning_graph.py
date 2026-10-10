@@ -104,4 +104,49 @@ def build_reasoning_graph(dossier: Dossier,
             add_node(rid, "rebuttal", str(text))
             edges.append(_edge(rid, pair.id, "rebuts"))
 
-    return {"nodes": list(nodes.values()), "edges": edges}
+    # 过程回放分层：评委可按「谁先说 → 吵什么 → 怎么裁 → 锚到哪」顺着看
+    stages = _replay_stages(nodes)
+    return {"nodes": list(nodes.values()), "edges": edges, "stages": stages}
+
+
+def _replay_stages(nodes: dict[str, dict]) -> list[dict]:
+    """按研判叙事序切五层（空层省略）。"""
+    buckets = {
+        "panel": [],
+        "claims": [],
+        "conflict": [],
+        "decide": [],
+        "sources": [],
+    }
+    for nid, n in nodes.items():
+        kind = n["kind"]
+        if kind == "analyst":
+            buckets["panel"].append(nid)
+        elif kind in ("conclusion", "evidence"):
+            buckets["claims"].append(nid)
+        elif kind in ("conflict", "rebuttal"):
+            buckets["conflict"].append(nid)
+        elif kind == "arbitration":
+            buckets["decide"].append(nid)
+        elif kind in ("source", "segment"):
+            buckets["sources"].append(nid)
+    titles = [
+        ("panel", "1 独立视角"),
+        ("claims", "2 结论与证据"),
+        ("conflict", "3 冲突与质证"),
+        ("decide", "4 裁决"),
+        ("sources", "5 锚定信源"),
+    ]
+    out = []
+    for key, title in titles:
+        ids = buckets[key]
+        if not ids:
+            continue
+        out.append({
+            "id": key,
+            "title": title,
+            "node_ids": ids,
+            "labels": [nodes[i]["label"] for i in ids[:6]],
+            "n": len(ids),
+        })
+    return out

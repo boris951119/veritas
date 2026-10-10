@@ -37,3 +37,11 @@ cases/user-*/
 eval/corpus/*/pdf/
 eval/corpus/*/out_eval/
 eval/report.md
+
+# 比赛离线包（体积大，U 盘带走，不入库）
+vendor/wheels/
+vendor/wheels-docling/
+vendor/python/
+vendor/READY
+.runtime/
+run-server.bat

@@ -83,3 +83,7 @@ def test_adjacent_segment_citation_fallback():
     assert not check_quote(
         "归属于上市公司股东的净利润为31,831,900.82元",
         src.segments[0].text).ok
+    # 只出现在邻段、声明段一字未参与：不得借相邻窗口挂错 id
+    stolen = EvidenceNode.create(
+        "CON1", "31,831,900.82元，同比下降28.05%。", ["SRC1#s1"])
+    assert check_evidence(stolen, d)

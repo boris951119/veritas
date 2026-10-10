@@ -24,6 +24,12 @@ from app.core.evidence import Dossier
 _K1 = 1.2
 _B = 0.75
 
+# 议题过短（仅公司名）时补上财务/情报常用探针，避免 BM25 被噪声段带偏
+_PROBE_TERMS = (
+    "营业收入 归母净利润 净利润 同比 分红 现金红利 占比 增长率 "
+    "营收 扣非 每股 利用小时 装机 改性化率 复合增长"
+)
+
 
 def _tokens(text: str) -> list[str]:
     t = normalize(text)
@@ -32,11 +38,25 @@ def _tokens(text: str) -> list[str]:
     return [t[i:i + 2] for i in range(len(t) - 1)]
 
 
+def expand_query(question: str) -> str:
+    """短议题 / 缺指标词时追加探针词，长议题原样返回。"""
+    q = (question or "").strip()
+    if not q:
+        return _PROBE_TERMS
+    has_metric = any(k in q for k in (
+        "营收", "收入", "净利", "利润", "分红", "同比", "多少", "是否",
+        "占比", "每股", "增长", "小时", "装机", "股利", "红利",
+    ))
+    if len(q) < 16 or not has_metric:
+        return f"{q} {_PROBE_TERMS}"
+    return q
+
+
 def rank_segments(dossier: Dossier,
                   query: str | None = None) -> list[tuple[str, float]]:
     """全部段落按查询 BM25 分排序 → [(seg_id, score)]，分数降序、
     同分按 id 稳定排序（确定性，全体分析师同料的前提）。
-    query 缺省用案卷议题；评测场景可传自定义问题。"""
+    query 缺省用案卷议题（经 expand_query）；评测场景可传自定义问题。"""
     docs: list[tuple[str, list[str]]] = []
     for src in dossier.sources:
         for seg in src.segments:
@@ -49,7 +69,8 @@ def rank_segments(dossier: Dossier,
         for t in set(toks):
             df[t] = df.get(t, 0) + 1
     avgdl = sum(len(toks) for _, toks in docs) / n_docs
-    qtext = query if query is not None else dossier.question
+    raw = query if query is not None else dossier.question
+    qtext = expand_query(raw) if query is None else raw
     query = set(_tokens(qtext))
     out: list[tuple[str, float]] = []
     for seg_id, toks in docs:

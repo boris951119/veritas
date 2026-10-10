@@ -136,6 +136,20 @@ def test_counting_claim_with_wrong_numerator_flagged():
     assert flags and "分子" in flags[0]["detail"]
 
 
+def test_counting_prefix_does_not_match_longer_source_id():
+    """列出 SRC1 时不得借前缀把 SRC10 算成同一条。"""
+    d = Dossier(question="Q")
+    _seg(d, "SRC1", "文档1", seg_no=1)
+    _seg(d, "SRC10", "文档10", seg_no=1)
+    con = Conclusion.create("两份中两份", author="a", id="CON1")
+    d.conclusions.append(con)
+    d.add_evidence(EvidenceNode.create(
+        "CON1", "文档1", ["SRC1#s1"],
+        note="计数:2/2 信源，见 SRC1、SRC1"))
+    flags = audit_counting(d)
+    assert flags and ("重复" in flags[0]["detail"] or "分子" in flags[0]["detail"])
+
+
 def test_counting_claim_without_list_flagged():
     d = Dossier(question="Q")
     for i in (1, 2, 3):

@@ -55,7 +55,17 @@ def pack_material(dossier: Dossier,
             eligible.append((src.id, seg.id))
             lengths[seg.id] = len(seg.text)
 
-    scores = dict(rank_segments(dossier))
+    # 短议题实体名对不上正文时，相关层会把全家打成 zero → 空箱。
+    # 回退：忽略零相关，按 BM25（含探针扩展）装箱，仍排除精确重复件。
+    if not eligible:
+        for src in dossier.sources:
+            if src.id in dups:
+                continue
+            for seg in src.segments:
+                eligible.append((src.id, seg.id))
+                lengths[seg.id] = len(seg.text)
+
+    scores = dict(rank_segments(dossier))  # 短议题自动 expand_query
     by_source: dict[str, list[str]] = {}
     for src_id, seg_id in eligible:
         by_source.setdefault(src_id, []).append(seg_id)
@@ -73,8 +83,14 @@ def pack_material(dossier: Dossier,
 
     selected: set[str] = set()
     used = 0
-    # 议题槽位命中段优先入箱（问全年归母净利时，带期间口径的段不被无关段挤掉）
+    # 议题槽位命中段 + BM25 高分数字段优先入箱
     pinned = [g for g in priority_segment_ids(dossier) if g in lengths]
+    for seg_id, _sc in sorted(
+        ((g, scores.get(g, 0.0)) for g in lengths if scores.get(g, 0.0) > 0),
+        key=lambda x: (-x[1], x[0]),
+    )[:12]:
+        if seg_id not in pinned:
+            pinned.append(seg_id)
     for seg_id in pinned:
         if used + lengths[seg_id] > budget:
             continue

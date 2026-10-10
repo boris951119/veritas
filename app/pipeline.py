@@ -184,7 +184,11 @@ def run_case(spec: RunSpec | None = None,
     )
 
     intent = slot_intent(dossier.question, dossier)
-    if intent["clarify"]:
+    import os
+    force_judgment = (os.environ.get("VERITAS_FORCE_JUDGMENT") or "").strip() in (
+        "1", "true", "TRUE", "yes", "YES",
+    )
+    if intent["clarify"] and not force_judgment:
         set_skills_enabled(settings.skills_enabled)
         with prog.stage("clarify", "议题回读确认（槽位未齐）"):
             synthesis = apply_answer_contract(dossier, {

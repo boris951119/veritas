@@ -130,6 +130,18 @@ def test_empty_conflicts_still_builds_graph():
     assert not any(n["kind"] == "conflict" for n in graph["nodes"])
 
 
+def test_replay_stages_ordered():
+    """过程回放分层：独立视角 → 结论证据 → … → 锚定信源。"""
+    from app.core.reasoning_graph import build_reasoning_graph
+
+    d = _base_dossier()
+    graph = build_reasoning_graph(d)
+    titles = [s["title"] for s in graph["stages"]]
+    assert titles[0].startswith("1")
+    assert any(t.startswith("2") for t in titles)
+    assert titles[-1].startswith("5")
+
+
 def test_rebuttal_nodes_when_resolution_has_rebuts():
     """深化后：resolution.rebuts 非空时图中出现 rebuttal 节点。"""
     from app.core.reasoning_graph import build_reasoning_graph

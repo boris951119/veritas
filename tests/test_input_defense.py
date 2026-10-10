@@ -178,6 +178,27 @@ def _classified_dossier() -> Dossier:
     return d
 
 
+def test_low_clearance_scrubs_synthesis_and_rejected():
+    d = _classified_dossier()
+    d.synthesis = {
+        "mode": "template",
+        "headline": "客户B涉外款项800万元",
+        "points": [{"con_id": "CON2", "gloss": "客户B涉外款项800万元",
+                    "confidence": 0.9}],
+        "open_issues": [{"kind": "note", "text": "涉外款项800万元待核"}],
+    }
+    d.rejected = [{
+        "evidence_id": "EV-x", "conclusion_id": "CON2",
+        "quote": "客户B涉外款项800万元", "problems": ["假"],
+    }]
+    view, stats = redact_dossier(d, "public")
+    blob = json.dumps(view.synthesis, ensure_ascii=False)
+    assert "800万元" not in blob
+    assert "800万元" not in (view.rejected[0].get("quote") or "")
+    assert stats["hidden_rejected"] == 1
+    assert "512万元" in view.synthesis["headline"] or view.synthesis["points"]
+
+
 def test_low_clearance_hides_confidential_chain_intact():
     view, stats = redact_dossier(_classified_dossier(), "public")
     assert stats["hidden_sources"] == ["SRC2"]

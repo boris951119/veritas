@@ -31,7 +31,17 @@ def _cases_root() -> Path:
 
 
 def _out_dir_of(case: str) -> Path:
-    base = _cases_root() / case
+    root = _cases_root().resolve()
+    name = str(case or "").strip()
+    if not name or "/" in name or "\\" in name or name in (".", ".."):
+        raise KeyError(f"非法案例名: {case}")
+    base = (root / name).resolve()
+    try:
+        base.relative_to(root)
+    except ValueError as exc:
+        raise KeyError(f"非法案例名: {case}") from exc
+    if not base.is_dir():
+        raise KeyError(f"案例 {case} 不存在")
     for sub in ("out", "out_offline"):
         if (base / sub / "report.json").is_file():
             return base / sub
@@ -172,7 +182,7 @@ def _make_server():
         与 CLI 完全同一条代码路径——曾因手抄副本漂移过：MCP 侧零证据结论
         不出清、打回记录丢引文、分析师失败不入链）。"""
         from app.llm.model_client import ModelClientFactory
-        from app.pipeline import run_case
+        from app.pipeline import RunDeps, RunSpec, run_case
 
         settings = Settings.from_env()
         client = ModelClientFactory(settings).create()
@@ -187,30 +197,37 @@ def _make_server():
 
     @mcp.tool()
     def ingest_external(question: str, sources: list[dict],
-                        agent: str, conclusions: list[dict]) -> dict:
+                        agent: str, conclusions: list[dict],
+                        agent_id: str = "",
+                        submitted_at: str = "") -> dict:
         """把第三方智能体的结论+证据入卷并做引文机械核对（零 LLM）。
 
         sources: [{"title","text","type"?,"credibility"?}]
         conclusions: [{"statement","evidence":[{"quote","segment_id",...}]}]
-        返回入卷后的摘要（含 rejected 与 audit_flags——数字/计数机械
-        核对结果，外部结论与内部结论同权受审）。
+        agent / agent_id：提交方署名（打回记录会写明是谁被拒）。
+        返回入卷后的摘要（含 attribution、rejected 与 audit_flags）。
         """
-        from app.agents.ingress import audit_ingested, ingest_external_judgment
+        from app.agents.ingress import (
+            attribution_summary, audit_ingested, ingest_external_judgment,
+        )
         from app.core.confidence import recompute_all
 
         err = _validate_question(question)
         if err:
             return err
 
+        payload = {
+            "agent": agent, "agent_id": agent_id,
+            "submitted_at": submitted_at, "conclusions": conclusions,
+        }
         dossier = build_dossier_from_sources(question, sources)
-        ids = ingest_external_judgment(dossier, {
-            "agent": agent, "conclusions": conclusions,
-        })
+        ids = ingest_external_judgment(dossier, payload)
         audit_flags = audit_ingested(dossier, ids)
         recompute_all(dossier, n_panel=1)
         summary = _judgment_summary(dossier, 1)
         summary["ingested_ids"] = ids
         summary["audit_flags"] = audit_flags
+        summary["attribution"] = attribution_summary(dossier, ids, payload)
         return summary
 
     @mcp.tool()

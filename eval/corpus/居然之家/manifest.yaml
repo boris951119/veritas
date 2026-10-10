@@ -1,1 +1,8 @@
-question: 居然之家2024-2025年度经营成果与财务状况研判(营收、盈利、分红、股东回报与风险)\nsources:\n  - file: pdf/2024年年度报告摘要.pdf\n    type: report\nsources:\n  - file: pdf/2025年年度报告摘要.pdf\n    type: report\nsources:\n  - file: pdf/2025年度业绩预告.pdf\n    type: report\n
+question: 居然之家2024年：占公司合并报表归属于母公司股东净利润的多少。；居然之家2025年：动下降约多少元至多少元。
+sources:
+  - file: pdf/2024年年度报告摘要.pdf
+    type: report
+  - file: pdf/2025年年度报告摘要.pdf
+    type: report
+  - file: pdf/2025年度业绩预告.pdf
+    type: report

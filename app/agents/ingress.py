@@ -2,9 +2,14 @@
 
 把外部 agent 的结构化研判物化进案卷，再走与管线相同的引文机械闸：
 假引文进 rejected 并移出存活证据；结论 id 仍返回给调用方。
+
+主张带署名：每条入卷结论/证据/打回都记下提交方（agent / agent_id /
+submitted_at），出事可指认「哪家智能体被拒」。
 """
 
 from __future__ import annotations
+
+from datetime import datetime, timezone
 
 from app.core.citation_check import audit_dossier
 from app.core.evidence import (
@@ -16,12 +21,29 @@ from app.core.evidence import (
 )
 
 
+def _submitter(payload: dict) -> dict:
+    """从 payload 抽出可审计的提交方身份。"""
+    agent = str(payload.get("agent") or "external").strip() or "external"
+    agent_id = str(payload.get("agent_id") or payload.get("submitter_id")
+                   or agent).strip() or agent
+    submitted_at = str(payload.get("submitted_at") or "").strip() or (
+        datetime.now(timezone.utc).isoformat()
+    )
+    return {"agent": agent, "agent_id": agent_id, "submitted_at": submitted_at}
+
+
 def ingest_external_judgment(dossier: Dossier, payload: dict) -> list[str]:
     """外部 payload → 结论/证据入卷；返回新结论 id 列表。
 
-    payload: {"agent": str, "conclusions":[{"statement", "evidence":[...]}]}
+    payload: {
+      "agent": str,                 # 显示名（必填语义）
+      "agent_id"?: str,             # 稳定标识（缺省同 agent）
+      "submitted_at"?: str,         # ISO 时间（缺省此刻）
+      "conclusions":[{"statement", "evidence":[...]}]
+    }
     """
-    agent = str(payload.get("agent") or "external").strip() or "external"
+    who = _submitter(payload)
+    agent = who["agent"]
     new_ids: list[str] = []
     for item in payload.get("conclusions") or []:
         if not isinstance(item, dict):
@@ -69,9 +91,52 @@ def ingest_external_judgment(dossier: Dossier, payload: dict) -> list[str]:
             "conclusion_id": f.conclusion_id,
             "quote": ev.quote if ev else "",
             "problems": f.problems,
+            "agent": who["agent"],
+            "agent_id": who["agent_id"],
+            "submitted_at": who["submitted_at"],
+            "source": "external_ingest",
         })
         dossier.remove_evidence(f.evidence_id)
+    # 与主管线 _reject_failed_citations 同口径：证据全灭的结论标
+    # insufficient，不得以默认 majority 当正式判断交出去。
+    for cid in new_ids:
+        con = dossier.conclusion(cid)
+        if con is None or con.status == "merged":
+            continue
+        if dossier.evidences_of(cid):
+            continue
+        con.status = "insufficient"
+        if "资料不足" not in (con.statement or ""):
+            con.statement = f"资料不足：{con.statement}" if con.statement \
+                else "资料不足，无法形成可核验结论"
+        con.confidence = 0.0
     return new_ids
+
+
+def attribution_summary(dossier: Dossier, conclusion_ids: list[str],
+                        payload: dict) -> dict:
+    """入卷后的责任摘要：谁提交、过了几条、打回几条（MCP/演示用）。"""
+    who = _submitter(payload)
+    wanted = set(conclusion_ids)
+    n_evidence = sum(1 for e in dossier.evidences if e.conclusion_id in wanted)
+    rejected = [r for r in dossier.rejected
+                if r.get("conclusion_id") in wanted
+                and r.get("source") == "external_ingest"]
+    return {
+        **who,
+        "ingested_ids": list(conclusion_ids),
+        "n_conclusions": len(conclusion_ids),
+        "n_evidence_kept": n_evidence,
+        "n_rejected": len(rejected),
+        "rejected": [
+            {
+                "conclusion_id": r.get("conclusion_id"),
+                "quote": (r.get("quote") or "")[:120],
+                "problems": r.get("problems") or [],
+            }
+            for r in rejected
+        ],
+    }
 
 
 def audit_ingested(dossier: Dossier, conclusion_ids: list[str]) -> list[dict]:

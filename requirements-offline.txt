@@ -1,0 +1,11 @@
+# 比赛现场离线安装清单（启动器 pip --no-index 使用）
+# 只含工作台运行；pytest 不进现场包，避免 Windows 额外依赖坑。
+# Docling 见 requirements-docling.txt。
+pyyaml>=6.0
+python-multipart>=0.0.9
+uvicorn>=0.29
+fastapi>=0.110
+pypdf>=5
+litellm
+# Windows 上 click 等会用到；Mac 下载 win 包时也显式带上
+colorama>=0.4

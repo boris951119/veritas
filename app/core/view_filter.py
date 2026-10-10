@@ -10,7 +10,9 @@
 - 引用了无权限信源的**证据行**隐藏；
 - 支持**全部**来自无权限信源的结论 → statement 置为占位（结论文本
   本身带数字，只藏证据等于没藏）；混合支撑的结论保留但涉密证据行
-  显示红章占位——**红章必须可见**，静默过滤比不过滤更糟。
+  显示红章占位——**红章必须可见**，静默过滤比不过滤更糟；
+- 综合意见按过滤后的结论重渲染（headline/points 不得复述已隐藏
+  原文）；打回记录里指向隐藏结论或引用隐藏信源的引文同样红章。
 """
 
 from __future__ import annotations
@@ -19,6 +21,8 @@ import copy
 
 from app.core.evidence import Dossier
 from app.core.pii import mask_pii_in_dossier
+
+REDACTED_REJECTED_QUOTE = "（该打回引文涉密，您无权限查阅）"
 
 _CLEARANCE_LEVEL = {"public": 0, "internal": 1, "confidential": 2}
 
@@ -98,10 +102,35 @@ def redact_dossier(dossier: Dossier, clearance: str | None) -> tuple[Dossier, di
                 rec["statement"] = "（少数意见涉密，您无权限查阅）"
                 rec["why"] = "（仲裁记录涉密，您无权限查阅）"
 
+    # 打回引文可能复述涉密原文：结论已隐藏，或所引段落属于隐藏信源。
+    hidden_rejected = 0
+    for rec in view.rejected or []:
+        if not isinstance(rec, dict):
+            continue
+        seg = str(rec.get("segment_id") or "")
+        seg_src = seg.split("#", 1)[0] if seg else ""
+        if rec.get("conclusion_id") in hidden_ids or (
+                seg_src and seg_src in hidden_sources):
+            rec["quote"] = REDACTED_REJECTED_QUOTE
+            rec["problems"] = ["（打回详情涉密，您无权限查阅）"]
+            hidden_rejected += 1
+
+    # 综合意见在过滤前写成，headline/points 会抄录已隐藏结论。
+    # 按当前视图重渲染（模板只读 majority，隐藏结论已不是原文）。
+    from app.agents.chair import render_chair_template
+
+    if view.synthesis or hidden_ids:
+        fresh = render_chair_template(view)
+        prior = list((view.synthesis or {}).get("gate_notes") or [])
+        if prior:
+            fresh["gate_notes"] = prior + list(fresh.get("gate_notes") or [])
+        view.synthesis = fresh
+
     mask_pii_in_dossier(view)
     stats = {"hidden_sources": hidden_sources,
              "hidden_evidences": hidden_evidences,
              "hidden_conclusions": hidden_conclusions,
              "hidden_conflicts": hidden_conflicts,
+             "hidden_rejected": hidden_rejected,
              "clearance": normalize_clearance(clearance)}
     return view, stats

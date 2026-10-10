@@ -45,8 +45,22 @@ def _cases_root(cases_root: Path | None) -> Path:
     return cases_root or (_REPO_ROOT / "cases")
 
 
+def _case_dir(cases_root: Path | None, case: str) -> Path:
+    """案例目录必须落在 cases/ 下，拒绝 .. / 绝对路径 / 分隔符。"""
+    root = _cases_root(cases_root).resolve()
+    name = str(case or "").strip()
+    if not name or "/" in name or "\\" in name or name in (".", ".."):
+        raise HTTPException(400, "非法案例名")
+    base = (root / name).resolve()
+    try:
+        base.relative_to(root)
+    except ValueError as exc:
+        raise HTTPException(400, "非法案例名") from exc
+    return base
+
+
 def _find_out_dir(cases_root: Path | None, case: str) -> Path:
-    base = _cases_root(cases_root) / case
+    base = _case_dir(cases_root, case)
     if not base.is_dir():
         raise HTTPException(404, f"案例不存在: {case}")
     for sub in ("out", "out_offline"):
@@ -61,7 +75,7 @@ def _safe_out_dir(cases_root: Path | None, case: str,
     """只允许 out / out_offline / history/<id>，拒绝路径穿越。"""
     if not out:
         return _find_out_dir(cases_root, case)
-    base = (_cases_root(cases_root) / case).resolve()
+    base = _case_dir(cases_root, case)
     if not base.is_dir():
         raise HTTPException(404, f"案例不存在: {case}")
     rel = str(out).replace("\\", "/").strip("/")
@@ -188,6 +202,7 @@ def _dossier_payload(out_dir: Path, clearance: str = "confidential") -> dict:
             "ok": verify.ok,
             "bad_index": verify.bad_index,
             "reason": verify.reason,
+            "signed": verify.signed,
         },
     }
 
@@ -242,6 +257,12 @@ class EvidenceWeightReq(BaseModel):
 class EvidenceRemoveReq(BaseModel):
     case: str
     evidence_id: str
+
+
+class EvidenceRelationReq(BaseModel):
+    case: str
+    evidence_id: str
+    relation: str  # causation | correlation | expert_judgment
 
 
 class CredibilityReq(BaseModel):
@@ -325,6 +346,10 @@ def create_app(cases_root: Path | None = None) -> FastAPI:
             n_files = len(_collect_files(d))
             man = load_yaml_robust(d / "manifest.yaml") or {}
             imported = bool(man.get("imported")) or d.name.startswith("user-")
+            try:
+                featured = int(man.get("featured") or 0)
+            except (TypeError, ValueError):
+                featured = 0
             cases.append({
                 "name": d.name,
                 "out_dir": out_dir or "out_offline",
@@ -333,7 +358,11 @@ def create_app(cases_root: Path | None = None) -> FastAPI:
                 "n_files": n_files,
                 "imported": imported,
                 "title": str(man.get("title") or d.name),
+                "featured": featured,
+                "blurb": str(man.get("blurb") or ""),
             })
+        # 主演示（featured 高）置顶，其余按名
+        cases.sort(key=lambda c: (-int(c.get("featured") or 0), c["name"]))
         return {"cases": cases}
 
     @app.post("/api/run")
@@ -386,7 +415,7 @@ def create_app(cases_root: Path | None = None) -> FastAPI:
         """终止当前案例正在跑的研判（协作式：下一 LLM 检查点生效）。"""
         from app.core.run_cancel import is_cancelled, request_cancel
 
-        case_dir = _cases_root(cases_root) / req.case
+        case_dir = _case_dir(cases_root, req.case)
         if not case_dir.is_dir():
             raise HTTPException(404, "找不到这套资料")
         ok = request_cancel(req.case)
@@ -401,7 +430,7 @@ def create_app(cases_root: Path | None = None) -> FastAPI:
     @app.get("/api/ingest")
     def ingest_preview(case: str) -> dict:
         """添加资料后立刻看分诊账本（零 LLM）：每份文件怎么入卷、为何跳过。"""
-        case_dir = _cases_root(cases_root) / case
+        case_dir = _case_dir(cases_root, case)
         if not case_dir.is_dir() or not (case_dir / "manifest.yaml").is_file():
             raise HTTPException(404, "找不到这套资料")
         return _ingest_payload(case_dir)
@@ -552,7 +581,7 @@ def create_app(cases_root: Path | None = None) -> FastAPI:
 
         不要求 report.json 已落盘——开跑瞬间只有 progress.json。
         """
-        base = _cases_root(cases_root) / case
+        base = _case_dir(cases_root, case)
         if not base.is_dir():
             raise HTTPException(404, f"案例不存在: {case}")
         if out:
@@ -583,11 +612,8 @@ def create_app(cases_root: Path | None = None) -> FastAPI:
         """两份产物结论对照（增量重跑后的 diff）。against 为同案例子目录名。"""
         from app.core.dossier_diff import diff_conclusions
 
-        base = _cases_root(cases_root) / case
         current = _find_out_dir(cases_root, case)
-        other = base / against
-        if not (other / "report.json").is_file():
-            raise HTTPException(404, f"对照产物不存在: {against}")
+        other = _safe_out_dir(cases_root, case, against)
         old = Dossier.from_json(other / "report.json")
         new = Dossier.from_json(current / "report.json")
         return {"case": case, "current": current.name, "against": against,
@@ -688,6 +714,31 @@ def create_app(cases_root: Path | None = None) -> FastAPI:
         return _mutate(cases_root, req.case, "evidence_removed",
                        {"evidence_id": req.evidence_id}, apply)
 
+    @app.post("/api/evidence/relation")
+    def set_relation(req: EvidenceRelationReq) -> dict:
+        """改证据关系标注（相关/因果/专家判断）→ 重算置信度 + 因果闸。
+
+        现场演示：把无机制词的证据改成「因果」会亮黄牌并压掉加成。
+        """
+        from app.core.evidence import RelationKind
+
+        try:
+            kind = RelationKind(req.relation)
+        except ValueError as exc:
+            raise HTTPException(
+                422, "relation 须为 causation/correlation/expert_judgment"
+            ) from exc
+
+        def apply(d: Dossier) -> None:
+            ev = d.evidence(req.evidence_id)
+            if ev is None:
+                raise HTTPException(404, f"证据不存在: {req.evidence_id}")
+            ev.relation = kind
+
+        return _mutate(cases_root, req.case, "evidence_relation",
+                       {"evidence_id": req.evidence_id,
+                        "relation": kind.value}, apply)
+
     @app.post("/api/source/relevance")
     def set_relevance(req: RelevanceOverrideReq) -> dict:
         """相关性人工裁决：机械分层可能错杀同义表述——人是最高权限，
@@ -729,7 +780,8 @@ def create_app(cases_root: Path | None = None) -> FastAPI:
         _, chain = _load_pair(out_dir)
         result = chain.verify_chain()
         return {"ok": result.ok, "bad_index": result.bad_index,
-                "reason": result.reason, "n_records": len(chain.records)}
+                "reason": result.reason, "n_records": len(chain.records),
+                "signed": result.signed}
 
     @app.post("/api/chain/tamper_demo")
     def tamper_demo(req: dict) -> dict:
@@ -740,7 +792,7 @@ def create_app(cases_root: Path | None = None) -> FastAPI:
         if len(chain.records) < 2:
             raise HTTPException(422, "链太短，无法演示篡改")
         honest = chain.verify_chain()
-        tampered = HashChain(copy.deepcopy(chain.records))
+        tampered = HashChain(copy.deepcopy(chain.records), key=chain.key)
         target = tampered.records[1]
         target.payload["__tampered__"] = "此处被人为修改"
         red = tampered.verify_chain()
@@ -751,6 +803,41 @@ def create_app(cases_root: Path | None = None) -> FastAPI:
             "reason": red.reason,
             "tampered_record_event": target.event,
         }
+
+    @app.get("/api/export_audit")
+    def export_audit(case: str = "", out: str = "",
+                     clearance: str = "confidential"):
+        """导出可移交的研判审计包（zip：报告 + 链 + 核验摘要）。
+
+        out 可指定 out / out_offline / history/<id>；缺省取最新产物。
+        clearance=public/internal 时导出脱敏报告且不含 chain.jsonl
+        （链是全量真相，不得借导出绕过视图）。
+        """
+        from fastapi.responses import Response
+
+        from app.core.audit_pack import build_audit_pack
+
+        case = str(case or "").strip()
+        if not case:
+            raise HTTPException(422, "缺少 case")
+        out_dir = _safe_out_dir(cases_root, case, out or None)
+        data = build_audit_pack(out_dir, case=case, clearance=clearance)
+        fname = f"veritas-audit-{case}.zip"
+        return Response(
+            content=data,
+            media_type="application/zip",
+            headers={
+                "Content-Disposition": f'attachment; filename="{fname}"',
+                "Cache-Control": "no-store",
+            },
+        )
+
+    @app.post("/api/demo/external_reject")
+    def demo_external_reject() -> dict:
+        """答辩演示：外部智能体假引文入卷 → 打回并署名（不改磁盘案卷）。"""
+        from app.demo_external import run_external_reject_demo
+
+        return run_external_reject_demo()
 
     return app
 
@@ -767,7 +854,31 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="veritas 可视化工作台")
     parser.add_argument("--host", default="127.0.0.1")
     parser.add_argument("--port", type=int, default=8765)
+    parser.add_argument(
+        "--insecure-lan", action="store_true",
+        help="允许绑定非本机地址（工作台无鉴权；局域网暴露有风险）")
     args = parser.parse_args()
+
+    host = (args.host or "127.0.0.1").strip()
+    loopback = {"127.0.0.1", "localhost", "::1"}
+    if host not in loopback and not args.insecure_lan:
+        print(
+            f"拒绝绑定 {host}：工作台接口无鉴权，默认只允本机。"
+            f"确需局域网访问请加 --insecure-lan（示例："
+            f"python -m app.server --host 0.0.0.0 --insecure-lan）。",
+            file=sys.stderr,
+        )
+        return 2
+    if host not in loopback and args.insecure_lan:
+        print(
+            f"⚠ 已启用 --insecure-lan：监听 {host}，任意能连上的主机"
+            f"可改案卷/触发研判/写入模型密钥。仅限受控演示网。",
+            file=sys.stderr,
+        )
+
+    from app.core.hashchain import ensure_demo_chain_key
+
+    ensure_demo_chain_key()
 
     import uvicorn
 

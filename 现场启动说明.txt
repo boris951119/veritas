@@ -1,0 +1,25 @@
+veritas 比赛现场（可以没有外网）
+
+准备（在有网的电脑上做一次，不要等到现场）
+  .venv/bin/python scripts/prepare_offline_bundle.py
+  .venv/bin/python scripts/pack_offline_bundle.py
+  桌面会得到 veritas-现场离线包.zip
+  把这个 zip 拷进 U 盘。不要只拷源码。
+
+现场
+  1. 解压 zip 到新文件夹（不要覆盖半装失败的旧目录；旧的 .runtime 可整夹删掉）
+  2. Windows：双击 start.bat（或「启动工作台.bat」）
+     Mac：双击「启动工作台.command」（若提示无法打开，右键打开一次）
+  3. 第一次会从包内安装，不访问外网；窗口会停住，失败看 launch-log.txt
+  4. 服务起来后浏览器才打开 http://127.0.0.1:8765/
+     不要关掉标题是 veritas-server 的黑窗口（关掉页面就打不开）
+     Windows 若没有 Python，会自动解压包内便携解释器
+     Mac 若没有 Python，会打开包内安装包，装完再双击启动器
+
+可选：增强版式（Docling，难表）
+  基础包能启动之后，再双击「安装增强版式」
+  只用包内 wheel。没下到或装失败，默认轻量抽 PDF，演示照常
+
+不要做
+  不要在现场 pip install（没有外网会失败）
+  不要把别的电脑上的 .venv 拷过来（不能跨机器用）

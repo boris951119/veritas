@@ -15,7 +15,8 @@ from app.ingest import links as links_mod
 from app.ingest.archive import expand_archive, sniff_format
 from app.ingest.case_loader import load_case
 from app.ingest.links import (
-    LinkFetchError, classify_link_list, extract_urls, fetch_link_source,
+    LinkFetchError, assert_url_fetchable, classify_link_list, extract_urls,
+    fetch_link_source,
 )
 
 
@@ -79,6 +80,34 @@ def test_link_fetch_creates_web_sources_with_accounting(tmp_path, monkeypatch):
                for s in d.sources)
     note = next(n for n in d.ingest_notes if n["kind"] == "links")
     assert "成功 7 条" in note["detail"] and "404" in note["detail"]
+
+
+def test_assert_url_blocks_private_and_metadata(monkeypatch):
+    import socket
+
+    with pytest.raises(LinkFetchError):
+        assert_url_fetchable("file:///etc/passwd")
+    with pytest.raises(LinkFetchError):
+        assert_url_fetchable("http://127.0.0.1/admin")
+    with pytest.raises(LinkFetchError):
+        assert_url_fetchable("http://169.254.169.254/latest/meta-data/")
+    with pytest.raises(LinkFetchError):
+        assert_url_fetchable("http://10.0.0.8/internal")
+    with pytest.raises(LinkFetchError):
+        assert_url_fetchable("http://localhost/x")
+
+    def fake_gai(host, port, *a, **kw):
+        return [(socket.AF_INET, socket.SOCK_STREAM, 6, "", ("10.1.2.3", port))]
+
+    monkeypatch.setattr(socket, "getaddrinfo", fake_gai)
+    with pytest.raises(LinkFetchError, match="非公网"):
+        assert_url_fetchable("http://evil.example/path")
+
+    def ok_gai(host, port, *a, **kw):
+        return [(socket.AF_INET, socket.SOCK_STREAM, 6, "", ("93.184.216.34", port))]
+
+    monkeypatch.setattr(socket, "getaddrinfo", ok_gai)
+    assert assert_url_fetchable("https://example.com/a#frag").endswith("/a")
 
 
 def test_fetched_source_overrides_injected_fetcher(monkeypatch):

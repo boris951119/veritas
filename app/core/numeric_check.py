@@ -269,7 +269,7 @@ def audit_numeric(dossier: Dossier) -> list[dict]:
 
 # skill「计数规范」教的格式：note 里写「计数:M/N 信源，见 SRC-…、SRC-…」
 _COUNT_RE = re.compile(r"计数\s*[:：]\s*(\d+)\s*[/／]\s*(\d+)")
-_ID_IN_TEXT = re.compile(r"\b((?:SRC|CON|EV|CFL)-?[0-9a-zA-Z#]+)\b")
+_ID_IN_TEXT = re.compile(r"\b((?:SRC|CON|EV|CFL)-?\d+)\b")
 
 
 def audit_counting(dossier: Dossier) -> list[dict]:
@@ -302,9 +302,9 @@ def audit_counting(dossier: Dossier) -> list[dict]:
             problems = []
             if claimed_n != n_sources:
                 problems.append(f"分母 {claimed_n} 与案卷信源数 {n_sources} 不符")
-            existing = [i for i in listed
-                        if any(s.id == i or s.id.startswith(i)
-                               for s in dossier.sources)]
+            ids = {s.id for s in dossier.sources}
+            # 整段相等：SRC1 不得前缀匹配 SRC10 / SRC11
+            existing = [i for i in listed if i in ids]
             if not listed:
                 problems.append("未列出所数信源编号")
             else:

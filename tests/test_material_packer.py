@@ -39,6 +39,35 @@ def test_relevant_segment_ranks_first():
     assert ranked[2][1] == 0.0
 
 
+def test_expand_query_boosts_short_company_name():
+    from app.core.bm25 import expand_query
+
+    assert "净利润" in expand_query("富恒新材")
+    assert expand_query("南山铝业2024年累计现金分红比例为多少") == (
+        "南山铝业2024年累计现金分红比例为多少"
+    )
+
+
+def test_short_question_pins_metric_segments():
+    """短议题经探针扩展后，含营收数字的段应优先入箱（含相关层全 zero 回退）。"""
+    d = Dossier(question="富恒新材")
+    texts = {
+        "SRC1": [
+            "办公地址在深圳，综合楼一层。",
+            "2023年营业收入12.3亿元，归母净利润1.1亿元，同比增16.98%。",
+        ],
+        "SRC2": ["天气晴朗适合出游。", "公园里有人散步。"],
+    }
+    for sid, segs in texts.items():
+        src = Source.create(sid, SourceType.REPORT, id=sid)
+        for j, t in enumerate(segs, 1):
+            src.segments.append(Segment(
+                id=f"{sid}#s{j}", source_id=sid, text=t))
+        d.add_source(src)
+    pack = pack_material(d, budget_chars=80)
+    assert "SRC1#s2" in pack["selected"]
+
+
 def test_idf_downweights_ubiquitous_terms():
     """每个段落都有的词（如「公司」）被 IDF 压制，独有词决定排序。"""
     d = _dossier("哪家公司出现了回款异常？", [

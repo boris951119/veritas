@@ -1,14 +1,21 @@
+# 开源情报主演示：自媒体多数 vs 官方通报（票数不能压过证据强度）
+title: 谣言 vs 官方通报
+featured: 10
 question: 某制造公司是否已因资金链断裂全面停工？
+blurb: 三份自媒体说停工，一份监管通报说不实。票数站谣言，程序按证据强度翻案，谣言进少数意见。
 sources:
   - file: rumor_weibo.md
     type: news
     credibility: 0.35
+    published_at: "2026-09-25"
   - file: rumor_repost.md
     type: news
     credibility: 0.35
+    published_at: "2026-09-26"
   - file: rumor_blog.md
     type: web
     credibility: 0.30
+    published_at: "2026-09-26"
   - file: official_notice.md
     type: report
     credibility: 0.85

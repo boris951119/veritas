@@ -1,1 +1,8 @@
-question: 国电电力2024-2025年度经营成果与财务状况研判(营收、盈利、分红、股东回报与风险)\nsources:\n  - file: pdf/国电电力2024年年度业绩预告公告.pdf\n    type: report\nsources:\n  - file: pdf/国电电力2024年年度报告摘要.pdf\n    type: report\nsources:\n  - file: pdf/国电电力2025年年度报告摘要.pdf\n    type: report\n
+question: 国电电力2024年： 预计分红金额多少元；国电电力2024年：拟每 多少股派发现金红利多少 （含税） 。；国电电力2024年：与公司多少年中期每多少股派发现金红利多少 （含税） 共派发多少元合并计算；国电电力2024年： 占合并报表归属于上市公司股东的净利润比例为多少。；国电电力2024年：国多少千瓦及以上电厂发电设备利用小时多少小时
+sources:
+  - file: pdf/国电电力2024年年度业绩预告公告.pdf
+    type: report
+  - file: pdf/国电电力2024年年度报告摘要.pdf
+    type: report
+  - file: pdf/国电电力2025年年度报告摘要.pdf
+    type: report

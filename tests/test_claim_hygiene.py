@@ -112,6 +112,7 @@ def test_rumor_offline_flips_to_official_and_keeps_dissent(tmp_path):
     dissents = [c for c in d.conclusions if c.status == "dissent"]
     assert any("不实" in c.statement or "运转" in c.statement for c in majors)
     assert dissents
+    assert any("停工" in c.statement or "断裂" in c.statement for c in dissents)
     res = d.conflicts[0]["resolution"]
     assert res["method"] == "evidence_weight"
     assert any(c.id == res["winner_id"] for c in majors)

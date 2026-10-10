@@ -5,6 +5,7 @@
 """
 
 import json
+import sys
 import threading
 import time
 import urllib.request
@@ -176,11 +177,21 @@ def test_history_lists_examples_and_archives_runs(api):
     assert ei.value.code == 400
 
 
+def test_case_name_rejects_traversal(api):
+    import urllib.error
+    with pytest.raises(urllib.error.HTTPError) as ei:
+        _get(api + "/api/dossier?case=../eval")
+    assert ei.value.code == 400
+    with pytest.raises(urllib.error.HTTPError) as ei2:
+        _get(api + "/api/case/diff?case=demo&against=../../eval")
+    assert ei2.value.code == 400
+
+
 def test_case_diff_missing_against_is_404(api):
     import urllib.error
     with pytest.raises(urllib.error.HTTPError) as ei:
         _get(api + "/api/case/diff?case=demo&against=out_missing")
-    assert ei.value.code == 404
+    assert ei.value.code in (400, 404)
 
 
 def test_weight_update_recomputes_and_chains(api):
@@ -215,6 +226,36 @@ def test_remove_evidence(api):
     assert after["chain"]["ok"]
 
 
+def test_evidence_relation_update_chains(api):
+    before = _get(api + "/api/dossier?case=demo")
+    ev = before["dossier"]["evidences"][0]
+    after = _post(api + "/api/evidence/relation",
+                  {"case": "demo", "evidence_id": ev["id"],
+                   "relation": "causation"})
+    hit = next(e for e in after["dossier"]["evidences"] if e["id"] == ev["id"])
+    assert hit["relation"] == "causation"
+    assert after["chain"]["n_records"] == before["chain"]["n_records"] + 1
+    assert after["chain"]["ok"] is True
+
+
+def test_export_audit_zip(api):
+    import io
+    import zipfile
+    import urllib.request
+
+    req = urllib.request.Request(api + "/api/export_audit?case=demo")
+    with urllib.request.urlopen(req) as resp:
+        raw = resp.read()
+        cd = resp.headers.get("Content-Disposition") or ""
+        assert "attachment" in cd
+        assert "veritas-audit-demo.zip" in cd
+    with zipfile.ZipFile(io.BytesIO(raw)) as zf:
+        names = set(zf.namelist())
+    assert "manifest.json" in names
+    assert "chain.jsonl" in names
+    assert "VERIFY.json" in names
+
+
 def test_credibility_update(api):
     after = _post(api + "/api/source/credibility",
                   {"case": "demo", "source_id": "SRC1", "credibility": 0.55})
@@ -236,6 +277,24 @@ def test_tamper_demo_turns_red_without_touching_disk(api):
 def test_unknown_case_404(api):
     with pytest.raises(Exception):
         _get(api + "/api/dossier?case=nope")
+
+
+def test_non_loopback_bind_requires_insecure_lan(monkeypatch):
+    import app.server as server_mod
+
+    monkeypatch.setattr(sys, "argv", ["app.server", "--host", "0.0.0.0"])
+    assert server_mod.main() == 2
+
+    called = {}
+
+    def fake_run(app, host=None, port=None, log_level=None):
+        called["host"] = host
+
+    monkeypatch.setattr(sys, "argv",
+                        ["app.server", "--host", "0.0.0.0", "--insecure-lan"])
+    monkeypatch.setattr("uvicorn.run", fake_run)
+    assert server_mod.main() == 0
+    assert called["host"] == "0.0.0.0"
 
 
 def test_case_reset_restores_pristine_and_chains(api):

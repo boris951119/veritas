@@ -1,1 +1,8 @@
-question: 浪潮信息2024-2025年度经营成果与财务状况研判(营收、盈利、分红、股东回报与风险)\nsources:\n  - file: pdf/2024年年度报告摘要.pdf\n    type: report\nsources:\n  - file: pdf/2025年年度报告摘要.pdf\n    type: report\nsources:\n  - file: pdf/2026年半年度业绩预告.pdf\n    type: report\n
+question: 浪潮信息2024年：向全体股东每多少股派发现金红利多少（含税）；浪潮信息2024年：浪潮集团有限公司持有浪潮软件科技有限公司多少股权。；浪潮信息2024年：公司前 多少名普通股股东中
+sources:
+  - file: pdf/2024年年度报告摘要.pdf
+    type: report
+  - file: pdf/2025年年度报告摘要.pdf
+    type: report
+  - file: pdf/2026年半年度业绩预告.pdf
+    type: report

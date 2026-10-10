@@ -65,6 +65,8 @@ class OfflineStubClient:
     PESSIM_RE = r"悲观|不确定|难以|风险|叙事|纠纷|延期"
     PROG_RE = r"进展|路径|正常|健康|提前"
     POLARITY: dict[str, str] = {}
+    # 归并组展示名（缺省「{极性}方向结论」）；开源情报案用更可读的原句
+    MERGE_LABELS: dict[str, str] = {}
     TOPIC = ""
     CONFLICT_DESC = ""
     RATIONALE = ""
@@ -127,8 +129,10 @@ class OfflineStubClient:
         groups: dict[str, list[str]] = {}
         for cid, stmt in self._lines(user):
             groups.setdefault(self._group_of(stmt), []).append(cid)
-        payload = [{"statement": f"{k}方向结论", "member_ids": ids}
-                   for k, ids in groups.items() if ids]
+        payload = [{
+            "statement": self.MERGE_LABELS.get(k, f"{k}方向结论"),
+            "member_ids": ids,
+        } for k, ids in groups.items() if ids]
         return json.dumps({"groups": payload}, ensure_ascii=False)
 
     def _conflict_reply(self, user: str) -> str:
@@ -282,6 +286,10 @@ class RumorVsOfficialStubClient(OfflineStubClient):
         "该公司已因资金链断裂全面停工": "悲观",
         "所谓资金链断裂停工为不实传闻，产线仍按计划运转": "进展",
     }
+    MERGE_LABELS = {
+        "悲观": "该公司已因资金链断裂全面停工（自媒体多数转述）",
+        "进展": "所谓资金链断裂停工为不实传闻，产线仍按计划运转",
+    }
 
     def _conflict_reply(self, user: str) -> str:
         ids = list(dict.fromkeys(re.findall(r"\[(CON-[0-9a-f]+)\]", user)))
@@ -341,6 +349,9 @@ def main() -> int:
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     except Exception:
         pass
+    from app.core.hashchain import ensure_demo_chain_key
+
+    ensure_demo_chain_key()  # 离线产物默认带 HMAC，导出审计包可验签
     _run_offline(_REPO / "cases" / "demo-solid-state", BatteryStubClient)
     print("\n" + "=" * 60 + "\n")
     _run_offline(_REPO / "cases" / "bi-delivery-risk", DeliveryRiskStubClient)
