@@ -150,15 +150,18 @@ chat 请求**无前缀缓存、无跨问结果缓存**。
   主体不唯一**不再是澄清项**，降级为披露「本次为多主体整卷研判，未逐一分卷」。
   回归单测覆盖：各客户不早退、「各方面」仍澄清、子公司闸不哑、bi 议题不设 FORCE 也不 slot 早退。
 - **升级版（+1.5 天，比赛后）**：按主体切子卷后分节归并——未做。
-- **成功判据（收口中）**：**不设** `VERITAS_FORCE_JUDGMENT=1`，本地 14B 重跑
-  `cases/bi-delivery-risk`，`report.md` 首行须是正面回答而非「请写明是哪一家」。
+- **成功判据（已过 2026-10-12）**：**不设** `VERITAS_FORCE_JUDGMENT`，本地
+  `openai/veritas-qwen3-14b` 写入 `cases/bi-delivery-risk/out_local14b_knife1/`：
+  报告含「议题披露：多主体整卷研判」，结论首条为正面研判句，无「请写明是哪一家」；
+  全程 1384 s / 26 调用（旧 FORCE 冒烟 1969 s）。
 
 ### 刀二｜修复环止损 —— 1 小时 · **代码已合（2026-10-12）**
 
 - **位置**：`app/agents/repair.py`、`app/pipeline.py`（`repair_accept_rate`）
 - **已做**：`max_repairs` 默认 2；连续 2 条未接受整环停止；账本记
   `repair_accept_rate` / `stopped_early`。单测覆盖连败熔断。
-- **成功判据（随刀一 bi 重跑核对）**：repair 墙钟应明显低于旧产物 509 s。
+- **成功判据（已过）**：同次 bi 重跑 repair 阶段 **38.9 s**（旧 509 s），
+  `attempted=2 / accepted=0 / stopped_early=true`，`repair_accept_rate=0`。
 
 ### 刀三｜砍掉"把同一叠材料念 22 遍" —— 半天 · **本轮搁置**
 
