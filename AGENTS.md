@@ -58,7 +58,7 @@ python3 -m venv .venv
 .venv/bin/python -m pytest tests -q
 ```
 
-**通过判据**：`250 passed`（或更多，零 failed；未装 mcp 时少 1 条属正常）。测试全 stub，无需密钥。
+**通过判据**：`407 passed`（或更多，零 failed；未装 mcp 时少 1 条属正常）。测试全 stub，无需密钥。
 
 ## 第 3 步：离线演示（断网/无 key 时的完整演示兜底）
 
@@ -92,6 +92,23 @@ python3 -m venv .venv
 **通过判据**：打印真实研判报告，产物写入 `cases/<案例>/out/`；
 `chain.jsonl` 为全程哈希链研判日志。案例二由
 `scripts/build_bi_case.py` 从脱敏语料构建（机构名已匿名化，可直接对外演示）。
+
+### 大库选料（默认阈值 50，自动）
+
+不配环境变量时，阈值默认 **50**：这个案例信源数达到 50 才选料；
+演示小案例（几份到十几份）整卷研判，不会出现「选料范围」，也不建
+`.corpus/`。达到阈值后，材料写入 `cases/<案例>/.corpus/` 本机 SQLite，
+再按议题收成小案卷；报告开头、工作台判断区固定写出
+「库内 N 份 / 本次纳入 M 份」，并注明未入选不等于已审完全库。
+
+要强制关掉：`.env` 写 `VERITAS_CORPUS_SELECT_MIN=0`。
+要改阈值：写其他正整数。这是本机索引，不是外接业务库或搜索集群。
+
+检索默认：原问上按词表补同义词（停工/停产、资金链/流动性、应收账款/回款等），
+每次检索都生效。最新一句已经完整，或没有上一句可对照时，不调用模型。
+只有指代或省略了主语/宾语、并且能对照上一句时，才把最新一句补成一条独立问句
+追加进检索；研判议题仍是用户原话。补不上就退回「原问 + 词表」。
+`VERITAS_QUERY_REWRITE=0` 只关这次补全，词表扩展仍在。
 
 ## 第 5 步：可视化工作台（演示主入口）
 
@@ -135,7 +152,7 @@ python3 -m venv .venv
 | PDF 信源摄取报 pypdf 缺失 | `pip install pypdf`（PDF 是可选格式，demo 案例不含 PDF 不影响演示） |
 | 要开源版式增强（跨页表等） | `pip install -r requirements-docling.txt` 后设 `VERITAS_PDF_BACKEND=docling`；失败自动回退 pypdf；默认 U 盘包不装 Docling |
 | venv 激活后命令找不到 | 直接用绝对路径调 python：`.venv\Scripts\python`（Win）/ `.venv/bin/python`（Mac） |
-| 测试出现 failed | 把失败摘要原样反馈给开发者；在修好前用第 3 步离线演示兜底（未装 mcp 时 MCP 协议测试自动跳过，250 passed ± 1 skipped 属正常） |
+| 测试出现 failed | 把失败摘要原样反馈给开发者；在修好前用第 3 步离线演示兜底（未装 mcp 时 MCP 协议测试自动跳过，407 passed ± 1 skipped 属正常） |
 
 ## 仓库速览（供智能体理解上下文）
 

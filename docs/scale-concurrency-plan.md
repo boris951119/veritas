@@ -271,4 +271,6 @@
 
 磁盘索引（本轮）：`app/core/corpus_store.py`。开关打开时逐份写入 `cases/<案>/.corpus/index.sqlite`，案卷不保留全库正文；达到阈值才 hydrate 选中段。未达阈值则从库中取回全部段，口径与全量摄取一致。
 
-未做，答辩不能说成已修好：不是百万段集群倒排；没有金标 Recall@K；并发异步 / 写路径锁 / per-run 上下文还没改。
+已续做：选料金标（`eval/recall_gold.py`）；后台 `background` 跑次写入 `history/<run_id>/`；取消/预算/进度按次隔离；写路径只锁当前指针切换。
+
+未做，答辩不能说成已修好：百万段集群倒排；embedding 粗筛/重排；账号与租户配额。

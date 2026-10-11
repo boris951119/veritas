@@ -62,6 +62,9 @@ veritas/
 #    --roster my_roster.yaml 可换自定义分析师编队，至少 2 人）
 .venv/bin/python -m app.pipeline cases/demo-solid-state
 
+# 选料默认阈值 50（自动）：小案例整卷研判；材料够多才收窄并披露
+# 「库内 N / 本次 M」。强制关：VERITAS_CORPUS_SELECT_MIN=0。见 AGENTS.md。
+
 # 3b) 离线演示兜底（零网络零 key，全流程出产物）
 .venv/bin/python scripts/demo_offline.py
 
