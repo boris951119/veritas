@@ -207,6 +207,81 @@ def test_two_issuers_require_a_named_subject(tmp_path):
     assert result.dossier.accounting.get("n_calls") == 0
 
 
+def test_distributive_each_customer_does_not_clarify_multi_issuer():
+    """各客户 = 分配性提问：多家主体不早退，只披露整卷研判。"""
+    from app.core.answer_slots import slot_intent
+
+    d = _dossier(
+        "各客户项目是否存在延期、回款或人员流失风险？",
+        [
+            "某头部券商股份有限公司数据中台来往账目。",
+            "某国有大行股份有限公司数据中台来往账目。",
+        ],
+    )
+    intent = slot_intent(d.question, d)
+    assert not any("多家股份公司" in t for t in intent["clarify"])
+    assert intent["complete"] is True
+    assert any("多主体整卷研判" in t for t in intent["disclosures"])
+
+
+def test_distributive_does_not_mute_subsidiary_clarify():
+    """分配性量词不能改哑「子公司未给全称」闸。"""
+    from app.core.answer_slots import slot_intent
+
+    intent = slot_intent("各客户子公司的营收分别是多少？")
+    assert any("子公司" in t for t in intent["clarify"])
+
+
+def test_bare_ge_aspect_still_clarifies_multi_issuer():
+    """「各方面」不含分配性主体量词，多家仍要澄清。"""
+    from app.core.answer_slots import slot_intent
+
+    d = _dossier("各方面风险怎么样？", [
+        "甲乙丙丁股份有限公司与戊己庚辛股份有限公司同期披露。",
+    ])
+    intent = slot_intent(d.question, d)
+    assert any("多家股份公司" in t for t in intent["clarify"])
+
+
+def test_bi_distributive_question_no_early_exit(tmp_path, monkeypatch):
+    """bi 议题含各客户：不设 FORCE 也不应 slot 早退。"""
+    from app.pipeline import RunDeps, RunSpec, run_case
+
+    monkeypatch.delenv("VERITAS_FORCE_JUDGMENT", raising=False)
+    case = tmp_path / "bi-dist"
+    case.mkdir()
+    (case / "manifest.yaml").write_text(
+        "question: 各客户项目是否存在延期、回款或人员流失风险？\n"
+        "sources:\n"
+        "  - file: a.txt\n    type: report\n"
+        "  - file: b.txt\n    type: report\n",
+        encoding="utf-8")
+    (case / "a.txt").write_text(
+        "某头部券商股份有限公司项目回款正常。", encoding="utf-8")
+    (case / "b.txt").write_text(
+        "某国有大行股份有限公司项目进度正常。", encoding="utf-8")
+
+    class Fixed:
+        def __init__(self):
+            self.call_log = []
+            self.total_tokens_used = 0
+
+        def chat(self, *a, **k):
+            from types import SimpleNamespace
+            self.call_log.append(1)
+            self.total_tokens_used += 10
+            return SimpleNamespace(content='{"conclusions":[]}')
+
+    result = run_case(
+        RunSpec(case_dir=case, out_dir=case / "out", probe=False),
+        RunDeps(client=Fixed()),  # type: ignore[arg-type]
+    )
+    events = [r.event for r in result.chain.records]
+    assert "slot_clarify_early_exit" not in events
+    assert any("多主体整卷研判" in t
+               for t in (result.dossier.accounting.get("slot_disclosures") or []))
+
+
 def test_two_rounds_phrase_does_not_ask_to_pick_one():
     from app.core.answer_slots import slot_intent
 

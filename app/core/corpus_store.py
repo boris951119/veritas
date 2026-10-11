@@ -2,7 +2,7 @@
 
 和内存版 CorpusIndex 同一套选料规则（类型保底、实体入候选、
 限额父节扩窗）。差别是段文本留在库文件里，案卷里只 hydrate
-选中的段。默认研判不走这里；VERITAS_CORPUS_SELECT_MIN>0 才启用。
+选中的段。信源数达到阈值（默认 50）才收窄；0=强制关。
 
 仍不是百万段集群索引：元数据与倒排在本机 SQLite，查询按词取
 posting，不把全库正文装进研判案卷。
@@ -17,7 +17,7 @@ import sqlite3
 from collections import defaultdict
 from pathlib import Path
 
-from app.core.bm25 import _B, _K1, _tokens, expand_query
+from app.core.bm25 import _B, _K1, _tokens, expand_query, fuse_rankings
 from app.core.corpus_index import (
     EXPAND_FRACTION,
     PROTECTED_TYPES,
@@ -188,13 +188,13 @@ class DiskCorpusIndex:
             "AND id IN (SELECT DISTINCT source_id FROM segments)").fetchone()
         return int(row[0])
 
-    def search(self, question: str) -> list[tuple[str, float]]:
+    def _search_terms(self, qtext: str) -> list[tuple[str, float]]:
         n_docs = self._meta_int("n_docs")
         if n_docs <= 0:
             return []
         avgdl = self._meta_int("dl_sum") / n_docs or 1.0
         scores: dict[str, float] = defaultdict(float)
-        for term in set(_tokens(expand_query(question))):
+        for term in set(_tokens(qtext)):
             df_row = self._conn.execute(
                 "SELECT df FROM term_df WHERE term=?", (term,)).fetchone()
             if not df_row:
@@ -212,15 +212,26 @@ class DiskCorpusIndex:
         ranked.sort(key=lambda x: (-x[1], x[0]))
         return ranked
 
+    def search(self, question: str,
+               queries: list[str] | None = None) -> list[tuple[str, float]]:
+        if queries:
+            cleaned = [str(q).strip() for q in queries if str(q).strip()]
+            if len(cleaned) > 1:
+                return fuse_rankings([self._search_terms(q) for q in cleaned])
+            if len(cleaned) == 1:
+                return self._search_terms(cleaned[0])
+        return self._search_terms(expand_query(question))
+
     def select(self, question: str, *,
                max_sources: int = _MAX_SOURCES,
                material_budget: int = 80_000,
-               protected_slots: int = 8) -> SelectResult:
+               protected_slots: int = 8,
+               queries: list[str] | None = None) -> SelectResult:
         max_sources = max(1, int(max_sources))
         budget = max(1, int(material_budget))
         hit_budget = max(1, int(budget * (1.0 - EXPAND_FRACTION)))
         expand_budget = max(0, budget - hit_budget)
-        scores = dict(self.search(question))
+        scores = dict(self.search(question, queries=queries))
         entities = extract_entities(question)
         live = self._live_sources()
         seg_owner = self._owners(list(scores))
@@ -492,7 +503,8 @@ def dossier_from_case_index(case_dir: Path, *,
                             min_sources: int,
                             material_budget: int,
                             fetch_links: bool = False,
-                            on_file=None) -> Dossier:
+                            on_file=None,
+                            queries: list[str] | None = None) -> Dossier:
     """建磁盘索引后：达到阈值就收窄，否则从库中取回全部段（与全量案卷同口径）。"""
     db_path = Path(case_dir) / ".corpus" / "index.sqlite"
     index, shell = index_case(
@@ -502,7 +514,8 @@ def dossier_from_case_index(case_dir: Path, *,
     try:
         if index.live_source_count() >= min_sources:
             result = index.select(
-                shell.question, material_budget=material_budget)
+                shell.question, material_budget=material_budget,
+                queries=queries)
             out = result.dossier
         else:
             out = _hydrate_all(index, shell.question)
@@ -512,6 +525,7 @@ def dossier_from_case_index(case_dir: Path, *,
             n for n in out.ingest_notes if n.get("kind") == "corpus_select"]
         if "corpus_select" in out.accounting:
             note = out.accounting["corpus_select"]
+            note["db_path"] = str(db_path)
             out.accounting = {"corpus_select": note}
         return out
     finally:

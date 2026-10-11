@@ -1,7 +1,7 @@
 """语料索引与两阶段选料（刀1/刀2/限额扩窗）。
 
-默认研判仍走全量案卷。只有信源数达到 Settings.corpus_select_min_sources
-时，管线才先建索引、再 hydrate 成小案卷。本模块不声称已能扛十万份：
+默认阈值 50：信源数达到才收窄；未达则整卷研判。设为 0 强制关闭。
+达到阈值时管线才建索引并 hydrate 成小案卷。本模块不声称已能扛十万份：
 
 - 本模块是内存索引，段文本在进程里；
 - 磁盘版见 corpus_store：逐份写入 SQLite，研判只读选中段；
@@ -24,7 +24,7 @@ from collections import defaultdict
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from app.core.bm25 import _B, _K1, _tokens, expand_query
+from app.core.bm25 import _B, _K1, _tokens, expand_query, fuse_rankings
 from app.core.dup_check import lsh_near_dup_pairs
 from app.core.evidence import Dossier, Segment, Source, SourceType
 from app.core.premise_check import extract_entities
@@ -135,15 +135,14 @@ class CorpusIndex:
             src.tombstoned = True
             src.content_hash = ""
 
-    def search(self, question: str) -> list[tuple[str, float]]:
-        """BM25 → [(seg_id, score)]，只含本索引活段。同分按 id 稳定。"""
+    def _search_terms(self, qtext: str) -> list[tuple[str, float]]:
         n_docs = len(self.segments)
         if n_docs == 0:
             return []
         avgdl = self._dl_sum / n_docs if n_docs else 1.0
         if avgdl <= 0:
             avgdl = 1.0
-        q_terms = set(_tokens(expand_query(question)))
+        q_terms = set(_tokens(qtext))
         scores: dict[str, float] = defaultdict(float)
         for term in q_terms:
             plist = self._postings.get(term)
@@ -162,16 +161,28 @@ class CorpusIndex:
         ranked.sort(key=lambda x: (-x[1], x[0]))
         return ranked
 
+    def search(self, question: str,
+               queries: list[str] | None = None) -> list[tuple[str, float]]:
+        """BM25 → [(seg_id, score)]。queries 多路时 RRF 融合。"""
+        if queries:
+            cleaned = [str(q).strip() for q in queries if str(q).strip()]
+            if len(cleaned) > 1:
+                return fuse_rankings([self._search_terms(q) for q in cleaned])
+            if len(cleaned) == 1:
+                return self._search_terms(cleaned[0])
+        return self._search_terms(expand_query(question))
+
     def select(self, question: str, *,
                max_sources: int = _MAX_SOURCES,
                material_budget: int = 80_000,
-               protected_slots: int = 8) -> SelectResult:
+               protected_slots: int = 8,
+               queries: list[str] | None = None) -> SelectResult:
         """两阶段选料 → 只含候选段（含限额父节）的案卷。"""
         max_sources = max(1, int(max_sources))
         budget = max(1, int(material_budget))
         hit_budget = max(1, int(budget * (1.0 - EXPAND_FRACTION)))
         expand_budget = max(0, budget - hit_budget)
-        scores = dict(self.search(question))
+        scores = dict(self.search(question, queries=queries))
         entities = extract_entities(question)
         live = [s for s in self.sources.values() if not s.tombstoned
                 and any(seg.source_id == s.id for seg in self.segments.values())]
@@ -434,7 +445,8 @@ class CorpusIndex:
 def narrow_dossier(dossier: Dossier, *,
                    project_id: str = "default",
                    max_sources: int = _MAX_SOURCES,
-                   material_budget: int = 80_000) -> Dossier:
+                   material_budget: int = 80_000,
+                   queries: list[str] | None = None) -> Dossier:
     """把已装入的大案卷收成小案卷。摄取笔记与分诊账本保留。"""
     index = CorpusIndex(project_id=project_id)
     for src in dossier.sources:
@@ -444,9 +456,11 @@ def narrow_dossier(dossier: Dossier, *,
             src, path=str(src.meta.get("file") or ""),
             published_at=published, subjects=subjects,
         )
+    qinfo = (dossier.accounting or {}).get("query_rewrite") or {}
+    use_q = queries or qinfo.get("queries")
     result = index.select(
         dossier.question, max_sources=max_sources,
-        material_budget=material_budget,
+        material_budget=material_budget, queries=use_q,
     )
     out = result.dossier
     out.title = dossier.title

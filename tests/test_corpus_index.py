@@ -117,6 +117,60 @@ def test_lsh_finds_copies_not_unrelated():
     assert "U" not in ids
 
 
+def test_corpus_select_default_threshold_and_force_off(monkeypatch):
+    from app.config import Settings
+
+    monkeypatch.delenv("VERITAS_CORPUS_SELECT_MIN", raising=False)
+    assert Settings.from_env().corpus_select_min_sources == 50
+    monkeypatch.setenv("VERITAS_CORPUS_SELECT_MIN", "0")
+    assert Settings.from_env().corpus_select_min_sources == 0
+    monkeypatch.setenv("VERITAS_CORPUS_SELECT_MIN", "100")
+    assert Settings.from_env().corpus_select_min_sources == 100
+
+
+def test_report_puts_select_scope_up_front_and_small_case_silent():
+    from app.core.hashchain import HashChain
+    from app.pipeline import render_report_md
+
+    plain = Dossier(question="小案例", sources=[
+        _src("A", "简报", SourceType.NEWS, ["没有选料。"]),
+    ])
+    plain_md = render_report_md(plain, HashChain(), [])
+    assert "选料范围" not in plain_md
+
+    note = "库内 40 份 / 80 段，本次纳入 3 份 / 6 段。未入候选不等于已审完全库。"
+    selected = Dossier(question="中国银行净利润", sources=[
+        _src("OFF", "公告", SourceType.REPORT, ["净利润稳健。"]),
+    ])
+    selected.accounting["corpus_select"] = {"note": note}
+    selected.ingest_notes.append(
+        {"file": "", "kind": "corpus_select", "detail": note})
+    md = render_report_md(selected, HashChain(), [])
+    head, _, tail = md.partition("## 结论")
+    assert "选料范围" in head and "库内 40 份" in head and "本次纳入 3 份" in head
+    assert "库内 40 份" not in tail
+
+
+def test_load_case_dossier_skips_index_below_threshold(tmp_path):
+    from app.config import Settings
+    from app.pipeline import _load_case_dossier
+
+    (tmp_path / "manifest.yaml").write_text(
+        "question: 小案\ntitle: 小案\n", encoding="utf-8")
+    for i in range(3):
+        (tmp_path / f"a{i}.txt").write_text(f"材料{i}", encoding="utf-8")
+
+    out = _load_case_dossier(tmp_path, Settings(corpus_select_min_sources=50))
+    assert len(out.sources) == 3
+    assert "corpus_select" not in (out.accounting or {})
+    assert not (tmp_path / ".corpus").exists()
+
+    forced_off = _load_case_dossier(
+        tmp_path, Settings(corpus_select_min_sources=0))
+    assert len(forced_off.sources) == 3
+    assert "corpus_select" not in (forced_off.accounting or {})
+
+
 def test_narrow_keeps_triage_and_disclosure():
     d = Dossier(
         question="中国银行净利润",

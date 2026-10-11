@@ -137,6 +137,29 @@ def test_cancel_endpoint_when_running(api):
     assert idle["accepted"] is False
 
 
+def test_dossier_payload_case_not_history_folder(api):
+    """产物在 history/<run>/ 时，API 的 case 仍是案例名，不是 history。"""
+    import urllib.parse
+
+    body = _post(api + "/api/run", {
+        "case": "demo",
+        "question": "案例名不能变成 history",
+        "background": True,
+    })
+    out = body["out"]
+    for _ in range(50):
+        prog = _get(api + "/api/progress?case=demo&out="
+                    + urllib.parse.quote(out, safe="/"))
+        if (prog.get("step") or prog.get("status")) == "done":
+            break
+        time.sleep(0.2)
+    dossier = _get(api + "/api/dossier?case=demo&out="
+                   + urllib.parse.quote(out, safe="/"))
+    assert dossier["case"] == "demo"
+    assert dossier["out_dir"].startswith("history/")
+    assert dossier["writable"] is False
+
+
 def test_background_run_finishes_in_its_own_history(api):
     import urllib.parse
 
@@ -236,6 +259,34 @@ def test_weight_update_recomputes_and_chains(api):
     assert after["chain"]["n_records"] == before["chain"]["n_records"] + 1
     assert after["chain"]["ok"] is True           # human 事件入链后链仍自洽
     assert _post(api + "/api/chain/verify", {"case": "demo"})["ok"] is True
+
+
+def test_stale_edit_is_rejected(api):
+    import urllib.error
+
+    before = _get(api + "/api/dossier?case=demo")
+    assert before["writable"] is True
+    ev = before["dossier"]["evidences"][0]
+    rev = before["chain"]["n_records"]
+    ok = _post(api + "/api/evidence/weight", {
+        "case": "demo", "evidence_id": ev["id"], "weight": 0.2,
+        "base_rev": rev,
+    })
+    assert ok["chain"]["n_records"] == rev + 1
+    req = urllib.request.Request(
+        api + "/api/evidence/weight",
+        data=json.dumps({
+            "case": "demo", "evidence_id": ev["id"], "weight": 0.3,
+            "base_rev": rev,
+        }).encode("utf-8"),
+        headers={"Content-Type": "application/json"}, method="POST")
+    with pytest.raises(urllib.error.HTTPError) as ei:
+        urllib.request.urlopen(req, timeout=30)
+    assert ei.value.code == 409
+    body = json.loads(ei.value.read().decode("utf-8"))
+    assert "刷新" in str(body.get("detail") or "")
+    again = _get(api + "/api/dossier?case=demo")
+    assert again["chain"]["n_records"] == rev + 1
 
 
 def test_remove_evidence(api):

@@ -197,7 +197,7 @@ def _collect_files(case_dir: Path, max_files: int = 500,
         # 自产文件被输入层吃回会形成滚雪球（归一化 diff 验收抓到的
         # 真实回归：72 信源/73218 段，每跑一次演示膨胀一轮）
         return name == "out" or name.startswith("out_") \
-            or name in ("history", ".fetched")
+            or name in ("history", ".fetched", ".corpus")
 
     def walk(d: Path, prefix: str, depth: int) -> None:
         if depth > max_depth or len(out) >= max_files:
@@ -219,6 +219,24 @@ def _collect_files(case_dir: Path, max_files: int = 500,
 
     walk(case_dir, "", 0)
     return out
+
+
+def count_case_files(case_dir: Path) -> int:
+    """案例目录内可摄取文件数（不含产物目录）。供选料阈值预判。"""
+    return len(_collect_files(Path(case_dir)))
+
+
+def peek_case_question(case_dir: Path) -> str:
+    """只读 manifest 议题，供检索改写在摄取前运行。"""
+    case_dir = Path(case_dir)
+    manifest_path = case_dir / "manifest.yaml"
+    if not manifest_path.is_file():
+        return case_dir.name
+    try:
+        manifest = load_yaml_robust(manifest_path)
+    except Exception:
+        return case_dir.name
+    return str(manifest.get("question") or case_dir.name).strip()
 
 
 def load_case(case_dir: Path, fetch_links: bool = False,

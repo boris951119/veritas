@@ -43,9 +43,10 @@ def test_expand_query_boosts_short_company_name():
     from app.core.bm25 import expand_query
 
     assert "净利润" in expand_query("富恒新材")
-    assert expand_query("南山铝业2024年累计现金分红比例为多少") == (
-        "南山铝业2024年累计现金分红比例为多少"
-    )
+    expanded = expand_query("南山铝业2024年累计现金分红比例为多少")
+    assert expanded.startswith("南山铝业2024年累计现金分红比例为多少")
+    assert "现金红利" in expanded
+    assert "利用小时" not in expanded
 
 
 def test_short_question_pins_metric_segments():

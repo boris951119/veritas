@@ -125,6 +125,7 @@ def slot_intent(question: str, dossier: Dossier | None = None) -> dict:
     time_kind, time_tips = _time_kind_check(q, metrics, period is not None)
     round_tips = _scheme_round_tips(q)
     subject_tips = _subject_tips(q, dossier)
+    disclosures = _subject_disclosures(q, dossier)
 
     clarify: list[str] = []
     clarify.extend(subject_tips)
@@ -143,6 +144,7 @@ def slot_intent(question: str, dossier: Dossier | None = None) -> dict:
         "time_kind": time_kind,
         "slots": parse_slots(q),
         "clarify": clarify,
+        "disclosures": disclosures,
         "complete": not clarify,
     }
 
@@ -483,12 +485,24 @@ _NAMED_ORG = re.compile(
 _ISSUER = re.compile(
     r"[\u4e00-\u9fffA-Za-z0-9]{4,40}?股份有限公司")
 _SUBSIDIARY_ASK = re.compile(r"子公司|参股公司|合营公司|联营公司")
+# 分配性量词：题面已要求「多家都看」，不再因案卷多主体逼用户点名一家。
+# 不裸匹配「各/全部/所有」，避免「各方面」「各项指标」误放行。
+_DISTRIBUTIVE_SUBJECT = re.compile(
+    r"各(?:个)?客户|各(?:个)?项目|各家|每一家|每一客户|"
+    r"每个客户|每个项目|分别|逐一|"
+    r"(?:全部|所有)(?:客户|项目|主体)"
+)
+
+
+def _distributive_subject(question: str) -> bool:
+    return bool(_DISTRIBUTIVE_SUBJECT.search(question or ""))
 
 
 def _subject_tips(question: str, dossier: Dossier | None) -> list[str]:
     """主体未点名：只说「子公司」，或多家上市公司却只说「公司」。
 
     单一发行人公告里的「公司/本公司」不澄清——那就是这家上市公司。
+    题面含分配性量词（各客户/分别/…）时，多家主体改为披露，不进澄清。
     """
     q = question or ""
     tips: list[str] = []
@@ -498,12 +512,24 @@ def _subject_tips(question: str, dossier: Dossier | None) -> list[str]:
             "对象主体未锁定「子公司」：请写出子公司全称，"
             "勿默认合并报表或任意一家")
     issuers = _issuers_in_dossier(dossier)
-    if len(issuers) >= 2 and not _question_locks_issuer(q, issuers):
+    if (len(issuers) >= 2 and not _question_locks_issuer(q, issuers)
+            and not _distributive_subject(q)):
         shown = "、".join(issuers[:3])
         tips.append(
             f"对象主体未锁定：资料中有多家股份公司（{shown}），"
             "请写明是哪一家，勿默认其中一家")
     return tips
+
+
+def _subject_disclosures(question: str, dossier: Dossier | None) -> list[str]:
+    """分配性多主体：不早退，只披露本次是整卷多主体研判。"""
+    q = question or ""
+    if not _distributive_subject(q):
+        return []
+    issuers = _issuers_in_dossier(dossier)
+    if len(issuers) < 2 or _question_locks_issuer(q, issuers):
+        return []
+    return ["本次为多主体整卷研判，未逐一分卷"]
 
 
 def _named_orgs(text: str) -> list[str]:

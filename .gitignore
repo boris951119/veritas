@@ -31,6 +31,8 @@ dist/
 cases/*/out_ab_*/
 cases/*/.fetched/
 cases/*/out_hetero_*/
+cases/*/out_local*/
+cases/*/out_live*/
 cases/*/history/
 cases/user-*/
 # 评测语料 PDF/跑批产物（大文件；主副本在桌面 veritas-testcases/eval-corpus）
@@ -38,6 +40,7 @@ eval/corpus/*/pdf/
 eval/corpus/*/out_eval/
 eval/corpus/*/out_eval_q*/
 eval/report.md
+.tmp/
 
 # 比赛离线包（体积大，U 盘带走，不入库）
 vendor/wheels/

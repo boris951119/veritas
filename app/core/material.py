@@ -65,7 +65,10 @@ def pack_material(dossier: Dossier,
                 eligible.append((src.id, seg.id))
                 lengths[seg.id] = len(seg.text)
 
-    scores = dict(rank_segments(dossier))  # 短议题自动 expand_query
+    qinfo = (dossier.accounting or {}).get("query_rewrite") or {}
+    queries = qinfo.get("queries") if isinstance(qinfo, dict) else None
+    scores = dict(rank_segments(dossier, queries=queries)
+                  if queries else rank_segments(dossier))
     by_source: dict[str, list[str]] = {}
     for src_id, seg_id in eligible:
         by_source.setdefault(src_id, []).append(seg_id)

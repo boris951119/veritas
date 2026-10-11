@@ -183,8 +183,10 @@ def test_repair_accepts_improved_rewrite():
         "evidence": [{"quote": "合同金额1,280万元，累计回款512万元",
                       "segment_id": "SRC1#s1", "relation": "correlation",
                       "level": "B", "note": "回款率"}]}]}, ensure_ascii=False)
-    result = run_repair_round(d, before, RepairCtx(Fixed(fixed), "m", [], 6))
-    assert result == {"attempted": 1, "accepted": 1}
+    result = run_repair_round(d, before, RepairCtx(Fixed(fixed), "m", [], 2))
+    assert result["attempted"] == 1 and result["accepted"] == 1
+    assert result["repair_accept_rate"] == 1.0
+    assert result["stopped_early"] is False
     after = [f for f in audit_all(d) if f.get("conclusion_id") == "CON1"]
     assert not after
     assert d.conclusion("CON1").statement == "客户B回款率为40%"
@@ -203,8 +205,9 @@ def test_repair_rolls_back_when_not_improved():
                       "segment_id": "SRC1#s1", "relation": "correlation",
                       "level": "B", "note": "计算:512/1280=45%"}]}]},
         ensure_ascii=False)
-    result = run_repair_round(d, before, RepairCtx(Fixed(same), "m", [], 6))
+    result = run_repair_round(d, before, RepairCtx(Fixed(same), "m", [], 2))
     assert result["accepted"] == 0
+    assert result["repair_accept_rate"] == 0.0
     assert d.conclusion("CON1").statement == "客户B回款率为45%"  # 原状回滚
     assert len(d.evidences_of("CON1")) == n_ev_before
     assert [f for f in audit_all(d) if f.get("conclusion_id") == "CON1"]
@@ -218,9 +221,47 @@ def test_repair_rolls_back_when_all_new_quotes_fail():
         "evidence": [{"quote": "编造的引文不命中", "segment_id": "SRC1#s1",
                       "relation": "correlation", "level": "B", "note": "x"}]}]},
         ensure_ascii=False)
-    result = run_repair_round(d, before, RepairCtx(Fixed(bad), "m", [], 6))
+    result = run_repair_round(d, before, RepairCtx(Fixed(bad), "m", [], 2))
     assert result["accepted"] == 0
     assert d.evidences_of("CON1")  # 原证据完整回滚
+
+
+def test_repair_stops_after_two_consecutive_rejects():
+    """连败熔断：前两条都未接受则不再修第三条（即使 max_repairs 更大）。"""
+    from app.core.audit import audit_all
+
+    d = Dossier(question="回款？")
+    src = Source.create("台账", SourceType.REPORT, id="SRC1")
+    src.segments.append(Segment(
+        id="SRC1#s1", source_id="SRC1",
+        text="客户B合同金额1,280万元，累计回款512万元。"))
+    d.add_source(src)
+    for i in range(1, 4):
+        cid = f"CON{i}"
+        d.conclusions.append(Conclusion.create(
+            "客户B回款率为45%", author="a0", id=cid))
+        d.add_evidence(EvidenceNode.create(
+            cid, "合同金额1,280万元，累计回款512万元", ["SRC1#s1"],
+            note="计算:512/1280=45%", author="a0"))
+    before = [f for f in audit_all(d)
+              if f.get("kind") in ("calc", "provenance") and f.get("conclusion_id")]
+    assert len({f["conclusion_id"] for f in before}) >= 3
+
+    # 重写仍错算，旗标不会变少 → 不接受
+    same = json.dumps({"conclusions": [{
+        "statement": "客户B回款率为45%",
+        "evidence": [{"quote": "合同金额1,280万元，累计回款512万元",
+                      "segment_id": "SRC1#s1", "relation": "correlation",
+                      "level": "B", "note": "计算:512/1280=45%"}]}]},
+        ensure_ascii=False)
+    client = Fixed(same)
+    result = run_repair_round(
+        d, before, RepairCtx(client, "m", [], max_repairs=6))
+    assert result["attempted"] == 2
+    assert result["accepted"] == 0
+    assert result["repair_accept_rate"] == 0.0
+    assert result["stopped_early"] is True
+    assert len(client.calls) == 2
 
 
 # -- 管线接线（probe=True 显式开启，桩路径仍确定） --------------------------------

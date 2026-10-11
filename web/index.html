@@ -258,6 +258,12 @@ button:disabled{opacity:.55;cursor:wait}
 }
 .hero h1{font-size:18px;font-weight:650;letter-spacing:.02em;max-width:52rem;line-height:1.4}
 .hero .meta{color:var(--dim);font-size:12px;margin-top:4px;margin-bottom:10px}
+.corpus-banner{
+  margin:0 0 12px;padding:10px 12px;border:1px solid rgba(61,214,255,.35);
+  border-radius:10px;background:rgba(61,214,255,.08);
+  font-size:13px;line-height:1.5;color:var(--text);
+}
+.retrieval-bound{color:var(--dim);font-size:12px;line-height:1.5;margin:0 0 8px;max-width:52rem}
 #rightCol .sec{padding:12px 14px;margin-bottom:10px}
 #rightCol .sec h2{margin-bottom:8px}
 @media (max-width:1200px){
@@ -499,6 +505,8 @@ openai/glm-5.3" oninput="previewAssignment()"></textarea>
       <div class="hero">
         <h1 id="heroTitle"></h1>
         <div class="meta" id="heroMeta"></div>
+        <div class="corpus-banner hidden" id="corpusSelect"></div>
+        <div class="retrieval-bound" id="retrievalBound">检索为字面 BM25，命中词表时在原问上补充同义词。词表外的说法仍可能未进入本次材料；未进入不等于已审完全库。假引文与无源数字仍会被闸拦住。向量重排未启用。</div>
       </div>
       <div class="sec"><h2>一句话判断</h2><div id="synthesis"></div>
         <div class="sub" style="margin-top:8px">置信度是规则分，不是命中率。</div>
@@ -1431,6 +1439,24 @@ function render(){
   $("#heroTitle").textContent=d.question||"（未写议题）";
   const modeTag=(D.workbench_mode==="live"||(LLM&&LLM.mode==="live"))?"真实模型":"演示结果";
   $("#heroMeta").textContent=`${modeTag} · ${zhRoles(d.panel)} · ${d.sources.length} 份资料 · ${acc.elapsed_s==null?"—":acc.elapsed_s+" 秒"} · 置信度是规则分，不是命中率`;
+  const cs=acc.corpus_select||null;
+  const box=$("#corpusSelect");
+  if(box){
+    const note=cs&&String(cs.note||"").trim();
+    if(note){
+      box.textContent="选料范围："+note;
+      box.classList.remove("hidden");
+    }else{
+      box.textContent="";
+      box.classList.add("hidden");
+    }
+  }
+  const bound=$("#retrievalBound");
+  if(bound){
+    const rec=acc.retrieval||{};
+    const note=String(rec.note||"").trim();
+    if(note) bound.textContent=note;
+  }
   const pill=$("#kpiChain");
   pill.textContent=D.chain.ok?`账本完好 · ${D.chain.n_records} 笔`:`账本异常`;
   pill.className="conn "+(D.chain.ok?"ok":"bad");
@@ -1619,27 +1645,34 @@ function renderSources(d){
     </div>
   </div>`}).join("")||`<div class="sec empty">案卷中没有信源。</div>`;
 }
+function editPayload(extra){
+  const rev=(D&&D.chain&&D.chain.n_records!=null)?D.chain.n_records:null;
+  return JSON.stringify(Object.assign({case:CUR, base_rev:rev}, extra||{}));
+}
 function histWriteGuard(){
-  if(PAGE==="hist"){toast("历史记录只读。要改判断，请点「拿到工作台再问」。");return true}
+  if(PAGE==="hist" || (D && D.writable===false)){
+    toast("历史记录只读。要改判断，请点「拿到工作台再问」。");
+    return true;
+  }
   return false;
 }
 async function setRel(id,ov){
   if(histWriteGuard())return;
   D=await api("/api/source/relevance",{method:"POST",headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({case:CUR,source_id:id,override:ov})});
+    body:editPayload({source_id:id,override:ov})});
   render();toast(ov?(ov==="include"?"已强制纳入，并记入账本":"已强制排除，并记入账本"):"已恢复自动分层，并记入账本");
 }
 async function setWeight(id,w){
   if(histWriteGuard())return;
   D=await api("/api/evidence/weight",{method:"POST",headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({case:CUR,evidence_id:id,weight:parseFloat(w)})});
+    body:editPayload({evidence_id:id,weight:parseFloat(w)})});
   G=await api("/api/reasoning_graph?"+dossierQs()).catch(()=>G);
   render();toast(`权重已调整并重算（账本 ${D.chain.n_records} 笔）`);
 }
 async function setRelation(id,rel){
   if(histWriteGuard())return;
   D=await api("/api/evidence/relation",{method:"POST",headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({case:CUR,evidence_id:id,relation:rel})});
+    body:editPayload({evidence_id:id,relation:rel})});
   G=await api("/api/reasoning_graph?"+dossierQs()).catch(()=>G);
   render();
   const flags=(D.audit&&D.audit.flags)||[];
@@ -1652,14 +1685,14 @@ async function removeEv(id){
   if(histWriteGuard())return;
   if(!confirm("确认删除这条证据？结论置信度会立刻重算，操作记入防伪账本。"))return;
   D=await api("/api/evidence/remove",{method:"POST",headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({case:CUR,evidence_id:id})});
+    body:editPayload({evidence_id:id})});
   G=await api("/api/reasoning_graph?"+dossierQs()).catch(()=>G);
   render();toast("证据已删除并重算，已记入账本");
 }
 async function setCred(id,v){
   if(histWriteGuard())return;
   D=await api("/api/source/credibility",{method:"POST",headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({case:CUR,source_id:id,credibility:parseFloat(v)})});
+    body:editPayload({source_id:id,credibility:parseFloat(v)})});
   G=await api("/api/reasoning_graph?"+dossierQs()).catch(()=>G);
   render();toast("信源可信度已更新并重算全链");
 }
@@ -1667,7 +1700,7 @@ async function editCon(id){
   if(histWriteGuard())return;
   const el=document.getElementById("edit-"+id);if(!el)return;
   D=await api("/api/conclusion/edit",{method:"POST",headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({case:CUR,conclusion_id:id,statement:el.value})});
+    body:editPayload({conclusion_id:id,statement:el.value})});
   G=await api("/api/reasoning_graph?"+dossierQs()).catch(()=>G);
   render();
   const op=D.op;
@@ -1679,7 +1712,7 @@ async function editCon(id){
 async function overrideWin(cid,winner){
   if(histWriteGuard())return;
   D=await api("/api/conflict/override",{method:"POST",headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({case:CUR,conflict_id:cid,winner_id:winner})});
+    body:editPayload({conflict_id:cid,winner_id:winner})});
   G=await api("/api/reasoning_graph?"+dossierQs()).catch(()=>G);
   render();toast("人工裁决已落卷并记入账本");
 }
@@ -1687,7 +1720,7 @@ async function resetCase(){
   if(histWriteGuard())return;
   if(!confirm("撤销本案例的全部人工修改，还原到研判产物？撤销动作仍会记入防伪账本。"))return;
   D=await api("/api/case/reset",{method:"POST",headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({case:CUR})});
+    body:editPayload({})});
   G=await api("/api/reasoning_graph?"+dossierQs()).catch(()=>G);
   render();toast("已还原到研判产物（撤销动作已入账）");
 }

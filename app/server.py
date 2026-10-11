@@ -176,6 +176,14 @@ def _load_pair(out_dir: Path) -> tuple[Dossier, HashChain]:
     return dossier, chain
 
 
+def _case_and_out_label(out_dir: Path) -> tuple[str, str]:
+    """history/<run> 下 parent 是 history，案例名要再往上一级。"""
+    out_dir = Path(out_dir)
+    if out_dir.parent.name == "history":
+        return out_dir.parent.parent.name, f"history/{out_dir.name}"
+    return out_dir.parent.name, out_dir.name
+
+
 def _dossier_payload(out_dir: Path, clearance: str = "confidential") -> dict:
     from app.core.view_filter import redact_dossier
 
@@ -186,9 +194,12 @@ def _dossier_payload(out_dir: Path, clearance: str = "confidential") -> dict:
     # 逃不过下一次读取（「改数字即红」的工作台侧实现）
     view, _stats = redact_dossier(dossier, clearance)
     flags = audit_all(view)
+    case_name, out_rel = _case_and_out_label(out_dir)
+    writable = out_dir.parent.name != "history"
     return {
-        "case": out_dir.parent.name,
-        "out_dir": out_dir.name,
+        "case": case_name,
+        "out_dir": out_rel,
+        "writable": writable,
         "dossier": view.to_dict(),
         "audit": {"flags": flags, **summarize(flags),
                   "skills": skill_status(view)},
@@ -218,24 +229,37 @@ def _ensure_pristine(out_dir: Path) -> None:
 
 
 def _mutate(cases_root: Path | None, case: str, event: str,
-            payload: dict, mutate_fn) -> dict:
+            payload: dict, mutate_fn, *,
+            base_rev: int | None = None) -> dict:
     """变更端点公共骨架：改 → 重算 → 哈希链留痕 → 落盘 → 回最新全量。
 
+    同一产物目录写锁串行。若客户端带来打开时的账本条数且已过期，
+    拒绝写入，避免后保存的人盖掉先保存的人。
     mutate_fn 可返回 dict——并入链事件 payload（审计计数等）并随响应
     回传（resp["op"]），供前端提示「本次修改新引入了什么」。"""
+    from app.core.edit_lock import out_edit_lock
+
     out_dir = _find_out_dir(cases_root, case)
-    dossier, chain = _load_pair(out_dir)
-    _ensure_pristine(out_dir)
-    extra = mutate_fn(dossier)
-    recompute_all(dossier, n_panel=max(1, len(dossier.panel)))
-    refresh_synthesis_after_human(dossier)
-    chain.append(event, "human", {**payload, **(extra or {})})
-    dossier.to_json(out_dir / "report.json")
-    chain.to_jsonl(out_dir / "chain.jsonl")
-    result = _dossier_payload(out_dir)
-    if extra:
-        result["op"] = extra
-    return result
+    with out_edit_lock(out_dir):
+        dossier, chain = _load_pair(out_dir)
+        current = len(chain.records)
+        if base_rev is not None and int(base_rev) != current:
+            raise HTTPException(
+                409, "这份结果刚被别人改过，请刷新后再改。")
+        _ensure_pristine(out_dir)
+        extra = mutate_fn(dossier)
+        recompute_all(dossier, n_panel=max(1, len(dossier.panel)))
+        refresh_synthesis_after_human(dossier)
+        chain.append(event, "human", {
+            **payload, **(extra or {}),
+            **({} if base_rev is None else {"base_rev": int(base_rev)}),
+        })
+        dossier.to_json(out_dir / "report.json")
+        chain.to_jsonl(out_dir / "chain.jsonl")
+        result = _dossier_payload(out_dir)
+        if extra:
+            result["op"] = extra
+        return result
 
 
 
@@ -254,45 +278,53 @@ class EvidenceWeightReq(BaseModel):
     case: str
     evidence_id: str
     weight: float
+    base_rev: int | None = None
 
 
 class EvidenceRemoveReq(BaseModel):
     case: str
     evidence_id: str
+    base_rev: int | None = None
 
 
 class EvidenceRelationReq(BaseModel):
     case: str
     evidence_id: str
     relation: str  # causation | correlation | expert_judgment
+    base_rev: int | None = None
 
 
 class CredibilityReq(BaseModel):
     case: str
     source_id: str
     credibility: float
+    base_rev: int | None = None
 
 
 class RelevanceOverrideReq(BaseModel):
     case: str
     source_id: str
     override: str  # include / exclude / ""（恢复自动）
+    base_rev: int | None = None
 
 
 class ConclusionEditReq(BaseModel):
     case: str
     conclusion_id: str
     statement: str
+    base_rev: int | None = None
 
 
 class ConflictOverrideReq(BaseModel):
     case: str
     conflict_id: str
     winner_id: str
+    base_rev: int | None = None
 
 
 class CaseResetReq(BaseModel):
     case: str
+    base_rev: int | None = None
 
 
 class CaseRenameReq(BaseModel):
@@ -679,7 +711,8 @@ def create_app(cases_root: Path | None = None) -> FastAPI:
 
         return _mutate(cases_root, req.case, "conclusion_edit",
                        {"conclusion_id": req.conclusion_id,
-                        "statement": req.statement}, apply)
+                        "statement": req.statement}, apply,
+                       base_rev=req.base_rev)
 
     @app.post("/api/conflict/override")
     def override_conflict_api(req: ConflictOverrideReq) -> dict:
@@ -693,7 +726,8 @@ def create_app(cases_root: Path | None = None) -> FastAPI:
 
         return _mutate(cases_root, req.case, "conflict_override",
                        {"conflict_id": req.conflict_id,
-                        "winner_id": req.winner_id}, apply)
+                        "winner_id": req.winner_id}, apply,
+                       base_rev=req.base_rev)
 
     @app.post("/api/case/reset")
     def reset_case(req: CaseResetReq) -> dict:
@@ -702,16 +736,24 @@ def create_app(cases_root: Path | None = None) -> FastAPI:
         重置本身也是人工动作——在还原后的链上追加 case_reset 事件，
         「可还原」不等于「无痕」。无快照（从未人工修改过）时 422。"""
         out_dir = _find_out_dir(cases_root, req.case)
-        pristine_report = out_dir / _PRISTINE_REPORT
-        if not pristine_report.is_file():
-            raise HTTPException(422, "无快照可还原（本案例尚无人工修改）")
-        dossier = Dossier.from_json(pristine_report)
-        chain = (HashChain.from_jsonl(out_dir / _PRISTINE_CHAIN)
-                 if (out_dir / _PRISTINE_CHAIN).is_file() else HashChain())
-        chain.append("case_reset", "human", {"restored_to": "pristine"})
-        dossier.to_json(out_dir / "report.json")
-        chain.to_jsonl(out_dir / "chain.jsonl")
-        return _dossier_payload(out_dir)
+        from app.core.edit_lock import out_edit_lock
+
+        with out_edit_lock(out_dir):
+            pristine_report = out_dir / _PRISTINE_REPORT
+            if not pristine_report.is_file():
+                raise HTTPException(422, "无快照可还原（本案例尚无人工修改）")
+            if req.base_rev is not None:
+                _, live = _load_pair(out_dir)
+                if len(live.records) != int(req.base_rev):
+                    raise HTTPException(
+                        409, "这份结果刚被别人改过，请刷新后再改。")
+            dossier = Dossier.from_json(pristine_report)
+            chain = (HashChain.from_jsonl(out_dir / _PRISTINE_CHAIN)
+                     if (out_dir / _PRISTINE_CHAIN).is_file() else HashChain())
+            chain.append("case_reset", "human", {"restored_to": "pristine"})
+            dossier.to_json(out_dir / "report.json")
+            chain.to_jsonl(out_dir / "chain.jsonl")
+            return _dossier_payload(out_dir)
 
     @app.post("/api/evidence/weight")
     def set_weight(req: EvidenceWeightReq) -> dict:
@@ -725,7 +767,8 @@ def create_app(cases_root: Path | None = None) -> FastAPI:
             ev.weight = round(req.weight, 2)
 
         return _mutate(cases_root, req.case, "evidence_weight",
-                       {"evidence_id": req.evidence_id, "weight": req.weight}, apply)
+                       {"evidence_id": req.evidence_id, "weight": req.weight},
+                       apply, base_rev=req.base_rev)
 
     @app.post("/api/evidence/remove")
     def remove_evidence(req: EvidenceRemoveReq) -> dict:
@@ -735,7 +778,8 @@ def create_app(cases_root: Path | None = None) -> FastAPI:
             d.remove_evidence(req.evidence_id)
 
         return _mutate(cases_root, req.case, "evidence_removed",
-                       {"evidence_id": req.evidence_id}, apply)
+                       {"evidence_id": req.evidence_id}, apply,
+                       base_rev=req.base_rev)
 
     @app.post("/api/evidence/relation")
     def set_relation(req: EvidenceRelationReq) -> dict:
@@ -760,7 +804,8 @@ def create_app(cases_root: Path | None = None) -> FastAPI:
 
         return _mutate(cases_root, req.case, "evidence_relation",
                        {"evidence_id": req.evidence_id,
-                        "relation": kind.value}, apply)
+                        "relation": kind.value}, apply,
+                       base_rev=req.base_rev)
 
     @app.post("/api/source/relevance")
     def set_relevance(req: RelevanceOverrideReq) -> dict:
@@ -779,7 +824,8 @@ def create_app(cases_root: Path | None = None) -> FastAPI:
 
         return _mutate(cases_root, req.case, "source_relevance",
                        {"source_id": req.source_id,
-                        "override": req.override or "auto"}, apply)
+                        "override": req.override or "auto"}, apply,
+                       base_rev=req.base_rev)
 
     @app.post("/api/source/credibility")
     def set_credibility(req: CredibilityReq) -> dict:
@@ -795,7 +841,8 @@ def create_app(cases_root: Path | None = None) -> FastAPI:
 
         return _mutate(cases_root, req.case, "source_credibility",
                        {"source_id": req.source_id,
-                        "credibility": req.credibility}, apply)
+                        "credibility": req.credibility}, apply,
+                       base_rev=req.base_rev)
 
     @app.post("/api/chain/verify")
     def verify_chain(req: dict) -> dict:

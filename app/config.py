@@ -110,10 +110,15 @@ class Settings:
     # 常态语料（几万字）远低于默认值=零影响；超大输入时保产出。
     material_char_budget: int = 80_000
 
-    # 语料收窄阈值：信源数达到该值才走索引选料（0=关闭，小案例零影响）。
+    # 语料收窄阈值：信源数达到该值才走索引选料（默认 50=自动；
+    # 0=强制关闭，小案例到不了阈值则整卷研判、不建 .corpus）。
     # 收窄后研判只看见 hydrate 出的小案卷，并披露「库内 N / 本次 M」。
     # 不代表已能把十万份留在磁盘倒排里——建索引仍会读入材料。
-    corpus_select_min_sources: int = 0
+    corpus_select_min_sources: int = 50
+
+    # 检索：原问 + 词表同义词始终生效。模型只在最新一句不完整且有上一句时
+    # 补成一条独立问句。无上一句不猜主语。VERITAS_QUERY_REWRITE=0 只关这次补全。
+    query_rewrite_enabled: bool = True
 
     # 链接抓取（默认关——离线演示兜底不受影响）：链接清单文件在
     # 开启时逐条抓取为 web 信源（超时/大小/条数三重上限），逐条披露
@@ -191,6 +196,11 @@ class Settings:
         select_min = (os.environ.get("VERITAS_CORPUS_SELECT_MIN") or "").strip()
         if select_min.isdigit():
             s.corpus_select_min_sources = int(select_min)
+        rewrite_env = (os.environ.get("VERITAS_QUERY_REWRITE") or "").strip().lower()
+        if rewrite_env in ("0", "false", "off", "no"):
+            s.query_rewrite_enabled = False
+        elif rewrite_env in ("1", "true", "on", "yes"):
+            s.query_rewrite_enabled = True
         return s.validate()
 
     @classmethod
@@ -214,6 +224,10 @@ class Settings:
             val = data.get(key)
             if isinstance(val, int) and not isinstance(val, bool) and val > 0:
                 setattr(s, key, val)
+        select_min = data.get("corpus_select_min_sources")
+        if isinstance(select_min, int) and not isinstance(select_min, bool) \
+                and select_min >= 0:
+            s.corpus_select_min_sources = select_min
         temp = data.get("llm_temperature")
         if isinstance(temp, (int, float)) and not isinstance(temp, bool) \
                 and 0.0 <= float(temp) <= 2.0:

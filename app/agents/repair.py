@@ -5,9 +5,9 @@
 同一 JSON 契约重写该结论；新版本先过引文闸与数字闸，**变好才接受，
 否则原样回滚**（警示保留，绝不因修复而变得更差）。
 
-护栏：每条问题结论至多重写 1 次，单次研判总修复次数封顶（默认 6），
-成本可控；修复只在生产路径（真实模型客户端）启用，桩与离线演示不受
-影响。全程入 chain 留痕（repair_round 事件）。
+护栏：每条问题结论至多重写 1 次，单次研判总修复次数封顶（默认 2），
+连续 2 条未接受即整环停止；修复只在生产路径（真实模型客户端）启用，
+桩与离线演示不受影响。全程入 chain 留痕（repair_round 事件）。
 """
 
 from __future__ import annotations
@@ -22,6 +22,7 @@ from app.core.numeric_check import audit_counting, audit_numeric
 from app.llm.model_client import ModelClient
 
 _REPAIR_KINDS = {"calc", "provenance"}
+_MAX_CONSECUTIVE_REJECTS = 2
 
 
 @dataclass
@@ -32,7 +33,7 @@ class RepairCtx:
     client: ModelClient
     model: str
     analysts: list[Analyst] = field(default_factory=list)
-    max_repairs: int = 6
+    max_repairs: int = 2
 
 
 @dataclass
@@ -79,7 +80,10 @@ def _directive(con: Conclusion, flags: list[dict]) -> str:
 
 def run_repair_round(dossier: Dossier, flags: list[dict],
                      ctx: RepairCtx) -> dict:
-    """对被数字闸打回的结论做一轮定向重写；返回 {attempted, accepted}。"""
+    """对被数字闸打回的结论做一轮定向重写。
+
+    返回 attempted / accepted / repair_accept_rate；连续未接受达上限则停。
+    """
     from app.core.skills import render_skills_rules
 
     client, model = ctx.client, ctx.model
@@ -91,15 +95,18 @@ def run_repair_round(dossier: Dossier, flags: list[dict],
             by_con.setdefault(f["conclusion_id"], []).append(f)
 
     attempted = accepted = 0
+    consecutive_rejects = 0
+    stopped_early = False
     for cid, con_flags in by_con.items():
         if attempted >= max_repairs:
+            break
+        if consecutive_rejects >= _MAX_CONSECUTIVE_REJECTS:
+            stopped_early = True
             break
         con = dossier.conclusion(cid)
         if con is None:
             continue
         attempted += 1
-        persona = next((a.persona for a in ctx.analysts if a.name == con.author),
-                       "独立分析师")
         system = ("你是研判分析师。"
                   + render_skills_rules(dossier, "noncompliant").strip())
         user = _directive(con, con_flags) + "\n\n" + _segments_of(dossier, con)
@@ -110,15 +117,26 @@ def run_repair_round(dossier: Dossier, flags: list[dict],
                     {"role": "user", "content": user},
                 ], json_mode=True).content)
         except Exception:
+            consecutive_rejects += 1
             continue  # 修复调用失败：保留原状与警示
         snap = _snapshot(dossier, con)
         _apply_repair(dossier, con, data)
         if len(_conclusion_flags(dossier, cid)) < len(con_flags) \
                 and dossier.evidences_of(cid):
             accepted += 1
+            consecutive_rejects = 0
         else:
             _rollback(dossier, con, snap)
-    return {"attempted": attempted, "accepted": accepted}
+            consecutive_rejects += 1
+    if consecutive_rejects >= _MAX_CONSECUTIVE_REJECTS and attempted < len(by_con):
+        stopped_early = True
+    rate = round(accepted / attempted, 4) if attempted else None
+    return {
+        "attempted": attempted,
+        "accepted": accepted,
+        "repair_accept_rate": rate,
+        "stopped_early": stopped_early,
+    }
 
 
 def _apply_repair(dossier: Dossier, con: Conclusion, data: dict) -> None:

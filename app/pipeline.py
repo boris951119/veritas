@@ -56,10 +56,72 @@ from app.core.relevance import classify_sources
 from app.core.skills import detect_skills, set_skills_enabled, skills_enabled
 from app.core.untrusted import scan_injections
 from app.core.run_progress import ensure_progress, get_active_progress, set_active_progress
-from app.ingest.case_loader import load_case
+from app.ingest.case_loader import count_case_files, load_case, peek_case_question
 from app.llm.budget import BudgetGuard, set_active_budget_guard
 from app.llm.model_client import ModelClient, ModelClientFactory
 from app.llm.profile import probe_model
+
+
+def _load_case_dossier(case_dir: Path, settings: Settings, *,
+                       on_file=None,
+                       search_queries: list[str] | None = None) -> Dossier:
+    """摄取案卷：达到选料阈值才收窄；未达阈值整卷研判且不建磁盘索引。"""
+    min_sel = int(settings.corpus_select_min_sources or 0)
+    fetch = settings.fetch_links_enabled
+    if min_sel <= 0:
+        return load_case(case_dir, fetch_links=fetch, on_file=on_file)
+
+    # 文件数先预判：演示小案不到阈值，跳过 .corpus，零额外成本。
+    if count_case_files(case_dir) >= min_sel:
+        from app.core.corpus_store import dossier_from_case_index
+
+        return dossier_from_case_index(
+            case_dir,
+            project_id=case_dir.name,
+            min_sources=min_sel,
+            material_budget=settings.material_char_budget,
+            fetch_links=fetch,
+            on_file=on_file,
+            queries=search_queries,
+        )
+
+    dossier = load_case(case_dir, fetch_links=fetch, on_file=on_file)
+    # 压缩包拆封后信源数可能越过阈值——内存收窄，并写出选料披露。
+    if len(dossier.sources) >= min_sel:
+        from app.core.corpus_index import narrow_dossier
+
+        return narrow_dossier(
+            dossier,
+            project_id=case_dir.name,
+            material_budget=settings.material_char_budget,
+            queries=search_queries,
+        )
+    return dossier
+
+
+def _prepare_search_queries(question: str, prior: str, client,
+                            settings: Settings, prog) -> dict:
+    """原问 + 词表；仅在问句不完整且有上一句时补成一条独立问句。"""
+    from app.core.query_rewrite import needs_context, prepare_search_info
+
+    original = (question or "").strip()
+    model = (settings.models[0] if settings.models else "") or ""
+    call = (settings.query_rewrite_enabled and needs_context(original)
+            and (prior or "").strip() and prior.strip() != original
+            and client is not None and model)
+    if call:
+        with prog.stage("query_rewrite", "把不完整的问句补成独立问句"):
+            info = prepare_search_info(
+                original, prior=prior, client=client, model=model,
+                enabled=settings.query_rewrite_enabled,
+            )
+            prog.note(n_variants=len(info.get("variants") or []),
+                      status=info.get("status"))
+        return info
+    return prepare_search_info(
+        original, prior=prior, client=None, model=model,
+        enabled=settings.query_rewrite_enabled,
+    )
 
 
 def touch_progress() -> None:
@@ -125,6 +187,38 @@ def run_case(spec: RunSpec | None = None,
     created_progress = get_active_progress() is None
     prog = ensure_progress(spec.out_dir)
 
+    # 选料前准备检索问句。完整问句只用原问+词表。
+    # 不完整且有上一句时，生产路径才调模型补成一条独立问句。
+    # 注入桩不调模型，避免打乱脚本化响应。
+    search_queries: list[str] | None = None
+    rewrite_info: dict | None = None
+    if settings.query_rewrite_enabled:
+        from app.core.query_rewrite import needs_context, prior_question
+
+        peek_q = ""
+        if spec.dossier is not None:
+            peek_q = spec.dossier.question
+        elif spec.case_dir is not None:
+            peek_q = peek_case_question(Path(spec.case_dir))
+        prior = ""
+        if peek_q and spec.case_dir is not None:
+            prior = prior_question(
+                peek_q, Path(spec.case_dir), skip_dir=spec.out_dir)
+        rewrite_client = None
+        if (peek_q and needs_context(peek_q) and prior
+                and not injected_client):
+            rewrite_client = client
+            if rewrite_client is None:
+                try:
+                    rewrite_client = ModelClientFactory(settings).create()
+                    client = rewrite_client
+                except Exception:
+                    rewrite_client = None
+        if peek_q:
+            rewrite_info = _prepare_search_queries(
+                peek_q, prior, rewrite_client, settings, prog)
+            search_queries = list(rewrite_info.get("queries") or [])
+
     if spec.dossier is None:
         prog.start("ingest", "读取资料并切片（PDF/文本）")
 
@@ -133,21 +227,9 @@ def run_case(spec: RunSpec | None = None,
             prog.note(file=name, index=index, total=total,
                       hint=f"{index}/{total} {name}")
 
-        if settings.corpus_select_min_sources:
-            from app.core.corpus_store import dossier_from_case_index
-
-            dossier = dossier_from_case_index(
-                Path(spec.case_dir),
-                project_id=Path(spec.case_dir).name,
-                min_sources=settings.corpus_select_min_sources,
-                material_budget=settings.material_char_budget,
-                fetch_links=settings.fetch_links_enabled,
-                on_file=_on_file,
-            )
-        else:
-            dossier = load_case(
-                Path(spec.case_dir), fetch_links=settings.fetch_links_enabled,
-                on_file=_on_file)
+        dossier = _load_case_dossier(
+            Path(spec.case_dir), settings, on_file=_on_file,
+            search_queries=search_queries)
         prog.finish(
             n_sources=len(dossier.sources),
             n_segments=sum(len(s.segments) for s in dossier.sources),
@@ -155,12 +237,22 @@ def run_case(spec: RunSpec | None = None,
     else:
         dossier = spec.dossier
 
+    if rewrite_info:
+        dossier.accounting["query_rewrite"] = rewrite_info
+
     chain = HashChain()
     chain.append("case_loaded", "pipeline", {
         "question": dossier.question,
         "n_sources": len(dossier.sources),
         "n_segments": sum(len(s.segments) for s in dossier.sources),
     })
+    if rewrite_info:
+        chain.append("query_rewrite", "pipeline", {
+            "status": rewrite_info.get("status"),
+            "reason": rewrite_info.get("reason"),
+            "n_queries": rewrite_info.get("n_queries"),
+            "n_variants": len(rewrite_info.get("variants") or []),
+        })
 
     with prog.stage("hygiene", "议题预检·对撞·去重·相关性"):
         premise = premise_flags(dossier)
@@ -197,6 +289,9 @@ def run_case(spec: RunSpec | None = None,
     )
 
     intent = slot_intent(dossier.question, dossier)
+    disclosures = list(intent.get("disclosures") or [])
+    if disclosures:
+        dossier.accounting["slot_disclosures"] = disclosures
     import os
     force_judgment = (os.environ.get("VERITAS_FORCE_JUDGMENT") or "").strip() in (
         "1", "true", "TRUE", "yes", "YES",
@@ -222,7 +317,10 @@ def run_case(spec: RunSpec | None = None,
                       n_metrics=len(intent["metrics"]),
                       clarify=list(intent["clarify"]),
                       hint="请先补齐下面几项，再开始研判")
+        kept = {k: v for k, v in (dossier.accounting or {}).items()
+                if k in ("corpus_select", "query_rewrite", "slot_disclosures")}
         dossier.accounting = {
+            **kept,
             "elapsed_s": round(time.monotonic() - t0, 1),
             "tokens": 0,
             "n_calls": 0,
@@ -234,6 +332,10 @@ def run_case(spec: RunSpec | None = None,
                 for s in prog.steps if s.get("id") != "done"
             ],
         }
+        from app.core.retrieval import retrieval_record
+
+        dossier.accounting["retrieval"] = retrieval_record(
+            dossier.accounting.get("query_rewrite"))
         chain.append("report_finalized", "pipeline", {
             "question": dossier.question,
             **{k: v for k, v in dossier.accounting.items() if k != "steps"},
@@ -368,10 +470,14 @@ def run_case(spec: RunSpec | None = None,
             repair = run_repair_round(dossier, numeric, RepairCtx(
                 client=client, model=settings.models[0], analysts=analysts))
             numeric = audit_numeric(dossier) + audit_counting(dossier)
+            dossier.accounting["repair_accept_rate"] = repair.get(
+                "repair_accept_rate")
             chain.append("repair_round", "pipeline",
                          {**repair, "flags_after": summarize(numeric)})
             prog.note(attempted=repair.get("attempted"),
-                      accepted=repair.get("accepted"))
+                      accepted=repair.get("accepted"),
+                      repair_accept_rate=repair.get("repair_accept_rate"),
+                      stopped_early=repair.get("stopped_early"))
     chain.append("numeric_audit", "pipeline", summarize(numeric))
 
     if len(analysts) >= 2:
@@ -419,7 +525,11 @@ def run_case(spec: RunSpec | None = None,
                   n_points=len(synthesis.get("points") or []))
 
     n_calls = len(getattr(client, "call_log", []) or [])
+    kept = {k: v for k, v in (dossier.accounting or {}).items()
+            if k in ("corpus_select", "query_rewrite", "slot_disclosures",
+                     "repair_accept_rate")}
     dossier.accounting = {
+        **kept,
         "elapsed_s": round(time.monotonic() - t0, 1),
         "tokens": int(getattr(client, "total_tokens_used", 0) or 0),
         "n_calls": n_calls,
@@ -431,6 +541,10 @@ def run_case(spec: RunSpec | None = None,
             for s in prog.steps if s.get("id") != "done"
         ],
     }
+    from app.core.retrieval import retrieval_record
+
+    dossier.accounting["retrieval"] = retrieval_record(
+        dossier.accounting.get("query_rewrite"))
     chain.append("report_finalized", "pipeline", {
         "question": dossier.question,
         **{k: v for k, v in dossier.accounting.items() if k != "steps"},
@@ -549,6 +663,31 @@ def render_report_md(dossier: Dossier, chain: HashChain, rejected: list[dict]) -
         "",
     ]
     acc = dossier.accounting or {}
+    select_note = str((acc.get("corpus_select") or {}).get("note") or "").strip()
+    if select_note:
+        lines += [
+            f"**选料范围**：{select_note}",
+            "",
+        ]
+    rewrite_note = str((acc.get("query_rewrite") or {}).get("note") or "").strip()
+    if rewrite_note and (acc.get("query_rewrite") or {}).get("variants"):
+        lines += [
+            f"**检索问法**：{rewrite_note}",
+            "",
+        ]
+    slot_notes = [str(x).strip() for x in (acc.get("slot_disclosures") or [])
+                  if str(x).strip()]
+    if slot_notes:
+        lines += [
+            f"**议题披露**：{'；'.join(slot_notes)}",
+            "",
+        ]
+    from app.core.retrieval import retrieval_note
+
+    lines += [
+        f"**检索边界**：{retrieval_note(acc)}",
+        "",
+    ]
     if acc:
         lines += [
             f"**本次研判**：{acc.get('elapsed_s', '-')} 秒 · "
@@ -841,7 +980,8 @@ def _render_excluded_sources(lines: list[str], dossier: Dossier) -> None:
             entries.append((src.id, src.title,
                             f"与 {dups[src.id]} 内容完全重复——不重复进入研判，"
                             "防止一致性虚增"))
-    if not entries and not dossier.ingest_notes:
+    ingest = [n for n in dossier.ingest_notes if n.get("kind") != "corpus_select"]
+    if not entries and not ingest:
         return
     lines += ["## 未采信信源（未进入分析师视野）", ""]
     for sid, title, reason in entries:
@@ -849,9 +989,9 @@ def _render_excluded_sources(lines: list[str], dossier: Dossier) -> None:
     if not entries:
         lines.append("（无——全部信源均进入研判）")
     lines.append("")
-    if dossier.ingest_notes:
+    if ingest:
         lines += ["## 摄取披露（解析失败 / 空文件 / 图像内容）", ""]
-        for n in dossier.ingest_notes:
+        for n in ingest:
             lines.append(f"- `{n['file']}`[{n['kind']}]：{n['detail']}")
         lines.append("")
 
