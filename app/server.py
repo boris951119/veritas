@@ -242,10 +242,12 @@ def _mutate(cases_root: Path | None, case: str, event: str,
 class RunReq(BaseModel):
     case: str
     question: str = ""
+    background: bool = False
 
 
 class CancelReq(BaseModel):
     case: str
+    run_id: str = ""
 
 
 class EvidenceWeightReq(BaseModel):
@@ -384,6 +386,26 @@ def create_app(cases_root: Path | None = None) -> FastAPI:
                      "请补充 PDF、docx、xlsx 或文本后再研判。")
         from app.workbench_llm import llm_status
 
+        if req.background:
+            import threading
+            from app.workbench_run import new_run_id
+
+            rid = new_run_id()
+
+            def _job() -> None:
+                try:
+                    run_workbench_case(case_dir, question=req.question, run_id=rid)
+                except Exception:
+                    return
+
+            threading.Thread(target=_job, name=f"veritas-{rid}", daemon=True).start()
+            return {
+                "ok": True,
+                "run_id": rid,
+                "out": f"history/{rid}",
+                "status": "running",
+            }
+
         try:
             out_dir = run_workbench_case(case_dir, question=req.question)
         except Exception as exc:
@@ -418,11 +440,12 @@ def create_app(cases_root: Path | None = None) -> FastAPI:
         case_dir = _case_dir(cases_root, req.case)
         if not case_dir.is_dir():
             raise HTTPException(404, "找不到这套资料")
-        ok = request_cancel(req.case)
+        rid = (req.run_id or "").strip() or None
+        ok = request_cancel(req.case, rid)
         return {
             "ok": True,
             "accepted": ok,
-            "cancelled": is_cancelled(req.case),
+            "cancelled": is_cancelled(req.case, rid),
             "detail": ("已发出终止信号，将在当前模型调用结束后停下"
                        if ok else "当前没有进行中的研判"),
         }
@@ -822,7 +845,10 @@ def create_app(cases_root: Path | None = None) -> FastAPI:
             raise HTTPException(422, "缺少 case")
         out_dir = _safe_out_dir(cases_root, case, out or None)
         data = build_audit_pack(out_dir, case=case, clearance=clearance)
-        fname = f"veritas-audit-{case}.zip"
+        from app.core.view_filter import normalize_clearance
+        level = normalize_clearance(clearance)
+        suffix = "-redacted" if level != "confidential" else ""
+        fname = f"veritas-audit-{case}{suffix}.zip"
         return Response(
             content=data,
             media_type="application/zip",

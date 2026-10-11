@@ -11,6 +11,7 @@
 
 from __future__ import annotations
 
+from contextvars import ContextVar
 from typing import Callable
 
 
@@ -22,18 +23,18 @@ class TaskCancelledError(RuntimeError):
     """任务被用户取消（协作式取消：检查点抛出，任务体终止）。"""
 
 
-_active_guard: "BudgetGuard | None" = None
+_active_guard: ContextVar["BudgetGuard | None"] = ContextVar(
+    "veritas_budget_guard", default=None)
 
 
 def set_active_budget_guard(guard: "BudgetGuard | None") -> None:
-    """登记当前任务的活动护栏（管线创建护栏时调用一次）。"""
-    global _active_guard
-    _active_guard = guard
+    """登记当前任务的活动护栏。按线程/任务隔离，两次并行研判不共用一份用量。"""
+    _active_guard.set(guard)
 
 
 def get_active_budget_guard() -> "BudgetGuard | None":
     """零散 ModelClient 兜底数据源：未显式接线时复用活动护栏。"""
-    return _active_guard
+    return _active_guard.get()
 
 
 class BudgetGuard:

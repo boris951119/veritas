@@ -8,11 +8,13 @@ from __future__ import annotations
 import json
 import time
 from contextlib import contextmanager
+from contextvars import ContextVar
 from pathlib import Path
 from typing import Any, Iterator
 
-# 当前跑次的进度器（单进程工作台一次一跑；测试可显式 set/clear）
-_ACTIVE: "RunProgress | None" = None
+# 当前跑次的进度器。按线程隔离，并行研判各写各的 progress.json。
+_ACTIVE: ContextVar["RunProgress | None"] = ContextVar(
+    "veritas_run_progress", default=None)
 
 # 稳定中文标签（UI / 报告共用）
 STEP_LABELS: dict[str, str] = {
@@ -32,12 +34,11 @@ STEP_LABELS: dict[str, str] = {
 
 
 def set_active_progress(prog: "RunProgress | None") -> None:
-    global _ACTIVE
-    _ACTIVE = prog
+    _ACTIVE.set(prog)
 
 
 def get_active_progress() -> "RunProgress | None":
-    return _ACTIVE
+    return _ACTIVE.get()
 
 
 class RunProgress:
@@ -130,6 +131,12 @@ class RunProgress:
             payload.update(extra)
         (self.out_dir / "progress.json").write_text(
             json.dumps(payload, ensure_ascii=False), encoding="utf-8")
+
+    def mark_failed(self, reason: str) -> None:
+        """后台线程里的失败落盘，轮询方据此停止等待。"""
+        self._close_open()
+        self.step = "error"
+        self.flush(extra={"status": "error", "error": str(reason)[:300]})
 
     def mark_cancelled(self, reason: str = "用户终止") -> None:
         """协作式取消落盘：面板立刻可见，不再装成「还在跑」。"""

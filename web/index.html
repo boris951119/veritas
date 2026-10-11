@@ -491,7 +491,8 @@ openai/glm-5.3" oninput="previewAssignment()"></textarea>
       <div class="demo-tools" id="demoTools">
         <button type="button" onclick="verifyChain()">核验账本</button>
         <button type="button" id="btnTamper" onclick="tamperDemo()">演示篡改</button>
-        <button type="button" onclick="exportAudit()">导出审计包</button>
+        <button type="button" onclick="exportAudit('full')" title="含完整报告与哈希链，供独立验签">导出验签包</button>
+        <button type="button" onclick="exportAudit('redacted')" title="按公开密级脱敏，不含链原文">导出脱敏包</button>
         <button type="button" onclick="demoExternalReject()">外部假引文入卷</button>
         <button type="button" id="btnReset" onclick="resetCase()">撤销改动</button>
       </div>
@@ -940,6 +941,7 @@ function reuseToWork(){
 }
 let _progTimer=null;
 let _runAbort=null;
+let _activeRunId="";
 function stopProgressPoll(){
   if(_progTimer){clearInterval(_progTimer);_progTimer=null}
 }
@@ -950,7 +952,7 @@ async function cancelRun(){
   try{
     const r=await fetch("/api/cancel",{method:"POST",
       headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({case:CUR})});
+      body:JSON.stringify({case:CUR,run_id:_activeRunId||""})});
     const j=await r.json().catch(()=>({}));
     toast(j.detail||"已请求终止",2800);
   }catch(e){toast("终止请求失败",2800)}
@@ -1021,19 +1023,33 @@ function renderRunProgress(p){
     list.scrollTop=list.scrollHeight;
   }
 }
-function startProgressPoll(caseName){
+function startProgressPoll(caseName,outRel){
   stopProgressPoll();
   showRunProgressShell("正在启动研判…");
+  const out=outRel||"out_offline";
   const tick=async()=>{
     try{
       const r=await fetch("/api/progress?case="+encodeURIComponent(caseName)
-        +"&out=out_offline",{cache:"no-store"});
+        +"&out="+encodeURIComponent(out),{cache:"no-store"});
       if(!r.ok) return;
       renderRunProgress(await r.json());
     }catch(e){}
   };
   tick();
   _progTimer=setInterval(tick,500);
+}
+async function waitRun(caseName,outRel){
+  for(let i=0;i<600;i++){
+    const r=await fetch("/api/progress?case="+encodeURIComponent(caseName)
+      +"&out="+encodeURIComponent(outRel),{cache:"no-store"});
+    if(r.ok){
+      const p=await r.json();
+      if(p.step==="done"||p.step==="cancelled"||p.step==="error"
+         ||p.status==="cancelled"||p.status==="error") return p;
+    }
+    await new Promise(res=>setTimeout(res,1000));
+  }
+  throw new Error("研判超时，请稍后在历史记录里查看");
 }
 async function startRun(){
   const q=($("#question").value||"").trim();
@@ -1043,17 +1059,41 @@ async function startRun(){
   const cbtn=$("#btnCancel");if(cbtn){cbtn.disabled=false;cbtn.textContent="终止"}
   const mid=$("#midCol");if(mid) mid.classList.add("running");
   _runAbort=new AbortController();
-  startProgressPoll(CUR);
+  _activeRunId="";
+  startProgressPoll(CUR,"out_offline");
   let cancelled=false;
   try{
     const r=await fetch("/api/run",{method:"POST",
       headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({case:CUR,question:q}),
+      body:JSON.stringify({case:CUR,question:q,background:true}),
       signal:_runAbort.signal});
     const j=await r.json().catch(()=>({}));
     if(!r.ok){
       if(r.status===409){cancelled=true;toast("研判已终止",3200)}
       else throw new Error(j.detail||j.error||("HTTP "+r.status));
+    }else if(j.run_id){
+      _activeRunId=j.run_id;
+      CUR_OUT=j.out||("history/"+j.run_id);
+      startProgressPoll(CUR,CUR_OUT);
+      const terminal=await waitRun(CUR,CUR_OUT);
+      if(terminal.status==="cancelled"||terminal.step==="cancelled"){
+        cancelled=true;toast("研判已终止",3200);
+      }else if(terminal.status==="error"||terminal.step==="error"){
+        throw new Error(terminal.error||"研判未完成");
+      }else{
+        D=await api("/api/dossier?"+dossierQs());
+        D.workbench_mode=(LLM&&LLM.mode)||D.workbench_mode;
+        G=await api("/api/reasoning_graph?"+dossierQs()).catch(()=>({nodes:[],edges:[]}));
+        const c=CASES.find(x=>x.name===CUR);if(c)c.has_result=true;
+        if(D.workbench_mode){LLM={...(LLM||{}),mode:D.workbench_mode};renderModeNote()}
+        else await refreshLlm();
+        renderCaseList();render();showResult(true);showTab("evidence");
+        const elapsed=((D.dossier&&D.dossier.accounting)||D.accounting||{}).elapsed_s;
+        const mode=(LLM&&LLM.mode)||D.workbench_mode;
+        toast(mode==="live"
+          ?`真实研判完成${elapsed!=null?"（"+elapsed+" 秒）":""}。请按右边 1、2、3 核对。`
+          :`研判完成（演示桩${elapsed!=null?"，"+elapsed+" 秒":""}）。请按右边 1、2、3 核对。`,4200);
+      }
     }else{
       D=j;
       CUR_OUT="out_offline";
@@ -1103,7 +1143,7 @@ function goGuide(n){
   if(n===4){
     const tools=$("#demoTools");
     if(tools) tools.scrollIntoView({behavior:"smooth",block:"nearest"});
-    toast("顺序：核验账本 → 演示篡改 → 导出审计包 → 外部假引文入卷。",5000);
+    toast("顺序：核验账本 → 演示篡改 → 导出验签包/脱敏包 → 外部假引文入卷。",5000);
   }
 }
 async function api(path,opts){
@@ -1669,11 +1709,13 @@ async function verifyChain(){
     ?`账本完好 · ${r.n_records} 笔${r.signed?" · 已签名":""}`
     :"账本异常";
 }
-async function exportAudit(){
+async function exportAudit(mode){
   if(!CUR){toast("请先选择案例");return}
-  // 用 fetch+blob，避免 location.href：失败时整页跳到 JSON 错误页
+  // full=验签包（全量链）；redacted=脱敏移交包（public 视图、无链）
+  const clearance=(mode==="redacted")?"public":"confidential";
+  const qs=dossierQs()+"&clearance="+encodeURIComponent(clearance);
   try{
-    const r=await fetch("/api/export_audit?"+dossierQs());
+    const r=await fetch("/api/export_audit?"+qs);
     if(!r.ok){
       const j=await r.json().catch(()=>({}));
       const msg=(j.detail&&String(j.detail))||"导出失败";
@@ -1682,16 +1724,20 @@ async function exportAudit(){
     const blob=await r.blob();
     const cd=r.headers.get("Content-Disposition")||"";
     const m=/filename=\"([^\"]+)\"/.exec(cd);
-    const fname=(m&&m[1])||("veritas-audit-"+CUR+".zip");
+    const fname=(m&&m[1])||("veritas-audit-"+CUR
+      +(clearance==="public"?"-redacted":"")+".zip");
     const url=URL.createObjectURL(blob);
     const a=document.createElement("a");
     a.href=url;a.download=fname;
     document.body.appendChild(a);a.click();a.remove();
     URL.revokeObjectURL(url);
-    const signed=D&&D.chain&&D.chain.signed;
-    toast("已下载审计包 "+fname+"（报告+核验摘要"
-      +(signed?"，链已 HMAC 签名":"，链为哈希自洽")
-      +"；低密级导出不含链原文）",5600);
+    if(clearance==="public"){
+      toast("已下载脱敏包 "+fname+"（公开密级报告，不含哈希链原文）",5600);
+    }else{
+      const signed=D&&D.chain&&D.chain.signed;
+      toast("已下载验签包 "+fname+"（全量报告+链"
+        +(signed?"，HMAC 已签名":"，哈希自洽")+"）",5600);
+    }
   }catch(e){toast("导出失败：网络或浏览器拦截了下载")}
 }
 async function demoExternalReject(){

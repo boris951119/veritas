@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import shutil
+import threading
+import uuid
 from datetime import datetime
 from pathlib import Path
 
@@ -73,6 +75,35 @@ def _client_for(name: str, dossier):
     return GenericStubClient(dossier)
 
 
+_CASE_LOCKS: dict[str, threading.Lock] = {}
+_LOCKS_GUARD = threading.Lock()
+
+
+def new_run_id() -> str:
+    stamp = datetime.now().astimezone().strftime("%Y%m%dT%H%M%S")
+    return f"{stamp}_{uuid.uuid4().hex[:8]}"
+
+
+def _case_lock(name: str) -> threading.Lock:
+    with _LOCKS_GUARD:
+        lock = _CASE_LOCKS.get(name)
+        if lock is None:
+            lock = threading.Lock()
+            _CASE_LOCKS[name] = lock
+        return lock
+
+
+def publish_current(case_dir: Path, src: Path) -> None:
+    """把某次运行的产物复制为当前结果。只锁这一下指针切换，不锁整库。"""
+    with _case_lock(case_dir.name):
+        dest = case_dir / "out_offline"
+        dest.mkdir(parents=True, exist_ok=True)
+        for name in ("report.json", "chain.jsonl", "report.md", "progress.json"):
+            file = src / name
+            if file.is_file():
+                shutil.copy2(file, dest / name)
+
+
 def archive_run(case_dir: Path, out_dir: Path) -> Path:
     """把本次产物另存一份，供历史记录浏览（不覆盖 out_offline 当前位）。"""
     stamp = datetime.now().astimezone().strftime("%Y%m%dT%H%M%S")
@@ -89,8 +120,13 @@ def archive_run(case_dir: Path, out_dir: Path) -> Path:
     return dest
 
 
-def run_workbench_case(case_dir: Path, question: str | None = None) -> Path:
-    """写入 out_offline 并归档。有 key 且未强制演示 → 真模型；否则桩。"""
+def run_workbench_case(case_dir: Path, question: str | None = None,
+                       run_id: str | None = None) -> Path:
+    """写入 history/<run_id>/，结束后再把指针切到 out_offline。
+
+    有 key 且未强制演示 → 真模型；否则桩。两次运行各写各的目录，
+    后完成的那次更新当前指针，先完成的历史记录仍留着。
+    """
     from app.core.run_cancel import begin_run, end_run
     from app.core.run_progress import RunProgress, set_active_progress
     from app.ingest.pdf_backend import set_pdf_backend
@@ -101,10 +137,12 @@ def run_workbench_case(case_dir: Path, question: str | None = None) -> Path:
     apply_to_environ()
     ensure_demo_chain_key()
     set_pdf_backend(Settings.from_env().pdf_backend)
-    out = case_dir / "out_offline"
+    rid = (run_id or new_run_id()).strip()
+    out = case_dir / "history" / rid
+    out.mkdir(parents=True, exist_ok=True)
     prog = RunProgress(out)
     set_active_progress(prog)
-    begin_run(case_dir.name)
+    begin_run(case_dir.name, rid)
     try:
         prog.start("ingest", "读取资料并切片（PDF/文本）")
 
@@ -121,6 +159,8 @@ def run_workbench_case(case_dir: Path, question: str | None = None) -> Path:
             n_segments=sum(len(s.segments) for s in dossier.sources),
             n_files=len(dossier.triage),
         )
+        spec = RunSpec(case_dir=case_dir, out_dir=out, dossier=dossier,
+                       run_id=rid)
         live = is_live_mode()
         if live:
             settings = Settings.from_env()
@@ -128,21 +168,19 @@ def run_workbench_case(case_dir: Path, question: str | None = None) -> Path:
             models = list(status.get("models") or [])
             if models:
                 settings.models = models
-            run_case(
-                RunSpec(case_dir=case_dir, out_dir=out, dossier=dossier,
-                        settings=settings, roster=workbench_roster()),
-                RunDeps(),  # client=None → 工厂建真实 ModelClient
-            )
+            spec.settings = settings
+            spec.roster = workbench_roster()
+            run_case(spec, RunDeps())  # client=None → 工厂建真实 ModelClient
         else:
-            run_case(
-                RunSpec(case_dir=case_dir, out_dir=out, dossier=dossier),
-                RunDeps(client=_client_for(case_dir.name, dossier)),
-            )
-        archive_run(case_dir, out)
+            run_case(spec, RunDeps(client=_client_for(case_dir.name, dossier)))
+        publish_current(case_dir, out)
         return out
     except TaskCancelledError:
         prog.mark_cancelled("用户终止")
         raise
+    except Exception as exc:
+        prog.mark_failed(f"{type(exc).__name__}: {exc}")
+        raise
     finally:
-        end_run(case_dir.name)
+        end_run(case_dir.name, rid)
         set_active_progress(None)

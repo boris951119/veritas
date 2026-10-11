@@ -137,6 +137,30 @@ def test_cancel_endpoint_when_running(api):
     assert idle["accepted"] is False
 
 
+def test_background_run_finishes_in_its_own_history(api):
+    import urllib.parse
+
+    body = _post(api + "/api/run", {
+        "case": "demo",
+        "question": "后台这次的问题是什么？",
+        "background": True,
+    })
+    assert body["status"] == "running" and body["run_id"]
+    out = body["out"]
+    step = "unknown"
+    for _ in range(50):
+        prog = _get(api + "/api/progress?case=demo&out="
+                    + urllib.parse.quote(out, safe="/"))
+        step = prog.get("step") or prog.get("status")
+        if step in ("done", "error", "cancelled"):
+            break
+        time.sleep(0.2)
+    assert step == "done"
+    dossier = _get(api + "/api/dossier?case=demo&out="
+                   + urllib.parse.quote(out, safe="/"))
+    assert dossier["dossier"]["question"] == "后台这次的问题是什么？"
+
+
 def test_workbench_run_uses_user_question(api):
     data = _post(api + "/api/run", {
         "case": "demo",
@@ -254,6 +278,25 @@ def test_export_audit_zip(api):
     assert "manifest.json" in names
     assert "chain.jsonl" in names
     assert "VERIFY.json" in names
+
+
+def test_export_audit_redacted_omits_chain(api):
+    import io
+    import zipfile
+    import urllib.request
+
+    req = urllib.request.Request(
+        api + "/api/export_audit?case=demo&clearance=public")
+    with urllib.request.urlopen(req) as resp:
+        raw = resp.read()
+        cd = resp.headers.get("Content-Disposition") or ""
+        assert "veritas-audit-demo-redacted.zip" in cd
+    with zipfile.ZipFile(io.BytesIO(raw)) as zf:
+        names = set(zf.namelist())
+        manifest = json.loads(zf.read("manifest.json"))
+    assert "chain.jsonl" not in names
+    assert manifest.get("redacted") is True
+    assert manifest["chain"]["included"] is False
 
 
 def test_credibility_update(api):

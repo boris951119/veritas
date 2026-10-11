@@ -47,27 +47,37 @@ def _corpus_root(explicit: str = "") -> Path:
     raise SystemExit("找不到评测语料目录（eval/corpus 或桌面 eval-corpus）")
 
 
+def _norm_digits(text: str) -> str:
+    """评分用：去掉空白，避免「25 万」与「25万吨」对不上。"""
+    return "".join((text or "").split())
+
+
 def _score_question(d, q: dict) -> tuple[bool, bool]:
     cited = {sid for ev in d.evidences for sid in ev.segment_ids}
     quotes = " ".join(ev.quote or "" for ev in d.evidences)
     statements = " ".join(c.statement or "" for c in d.conclusions)
     val = str(q.get("value") or "")
-    m1 = q.get("ground_seg") in cited or (bool(val) and val in quotes)
-    m2 = (bool(val) and val in statements) or (bool(val) and val in quotes)
+    val_n, quotes_n, stmts_n = (_norm_digits(val), _norm_digits(quotes),
+                                _norm_digits(statements))
+    m1 = q.get("ground_seg") in cited or (bool(val_n) and val_n in quotes_n)
+    m2 = (bool(val_n) and val_n in stmts_n) or (bool(val_n) and val_n in quotes_n)
     return m1, m2
 
 
 def _write_manifest(case_dir: Path, question: str, pdfs: list[Path],
                     htmls: list[Path]) -> None:
-    src_lines: list[str] = []
-    for p in pdfs:
-        rel = p.relative_to(case_dir).as_posix() if p.is_relative_to(case_dir) else p.name
-        src_lines.append(f"  - file: {rel}\n    type: report\n")
-    for p in htmls:
-        rel = p.relative_to(case_dir).as_posix() if p.is_relative_to(case_dir) else p.name
-        src_lines.append(f"  - file: {rel}\n    type: report\n")
+    """写入 manifest；题干必须 YAML 安全转义（换行题曾写坏文件→议题退化成目录名）。"""
+    import yaml
+
+    sources: list[dict] = []
+    for p in list(pdfs) + list(htmls):
+        rel = (p.relative_to(case_dir).as_posix()
+               if p.is_relative_to(case_dir) else p.name)
+        sources.append({"file": rel, "type": "report"})
+    payload = {"question": str(question or ""), "sources": sources}
     (case_dir / "manifest.yaml").write_text(
-        f"question: {question}\nsources:\n" + "".join(src_lines),
+        yaml.safe_dump(payload, allow_unicode=True, sort_keys=False,
+                       width=10_000),
         encoding="utf-8",
     )
 

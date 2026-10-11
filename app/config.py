@@ -101,11 +101,19 @@ class Settings:
     # 「纪律遵从」档，noncompliant 档注入强化规则+derived 契约并启用
     # 打回修复环。VERITAS_PROBE=0 关闭（A/B 需要固定提示词时用）。
     model_probe_enabled: bool = True
+    # 答辩演示：强制档位（noncompliant/compliant/standard），空=真实探测。
+    # VERITAS_FORCE_TIER=noncompliant 时跳过探测调用，链上记 forced=true。
+    force_profile_tier: str = ""
 
     # 资料预算装箱（字符）：BM25 精排后按预算装入分析师提示词，
     # 装不下的段落全部披露（报告「因预算未进入研判的段落」）。
     # 常态语料（几万字）远低于默认值=零影响；超大输入时保产出。
     material_char_budget: int = 80_000
+
+    # 语料收窄阈值：信源数达到该值才走索引选料（0=关闭，小案例零影响）。
+    # 收窄后研判只看见 hydrate 出的小案卷，并披露「库内 N / 本次 M」。
+    # 不代表已能把十万份留在磁盘倒排里——建索引仍会读入材料。
+    corpus_select_min_sources: int = 0
 
     # 链接抓取（默认关——离线演示兜底不受影响）：链接清单文件在
     # 开启时逐条抓取为 web 信源（超时/大小/条数三重上限），逐条披露
@@ -168,6 +176,9 @@ class Settings:
         probe_env = (os.environ.get("VERITAS_PROBE") or "").strip().lower()
         if probe_env in ("0", "false", "off", "no"):
             s.model_probe_enabled = False
+        force_tier = (os.environ.get("VERITAS_FORCE_TIER") or "").strip().lower()
+        if force_tier in ("noncompliant", "compliant", "standard"):
+            s.force_profile_tier = force_tier
         fetch_env = (os.environ.get("VERITAS_FETCH_LINKS") or "").strip().lower()
         if fetch_env in ("1", "true", "on", "yes"):
             s.fetch_links_enabled = True
@@ -177,6 +188,9 @@ class Settings:
         pdf_backend = (os.environ.get("VERITAS_PDF_BACKEND") or "").strip().lower()
         if pdf_backend in ("pypdf", "docling"):
             s.pdf_backend = pdf_backend
+        select_min = (os.environ.get("VERITAS_CORPUS_SELECT_MIN") or "").strip()
+        if select_min.isdigit():
+            s.corpus_select_min_sources = int(select_min)
         return s.validate()
 
     @classmethod

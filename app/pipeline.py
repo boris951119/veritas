@@ -97,6 +97,7 @@ class RunSpec:
     dossier: Dossier | None = None
     roster: list | None = None
     probe: bool | None = None
+    run_id: str = ""
 
 
 @dataclass
@@ -132,9 +133,21 @@ def run_case(spec: RunSpec | None = None,
             prog.note(file=name, index=index, total=total,
                       hint=f"{index}/{total} {name}")
 
-        dossier = load_case(
-            Path(spec.case_dir), fetch_links=settings.fetch_links_enabled,
-            on_file=_on_file)
+        if settings.corpus_select_min_sources:
+            from app.core.corpus_store import dossier_from_case_index
+
+            dossier = dossier_from_case_index(
+                Path(spec.case_dir),
+                project_id=Path(spec.case_dir).name,
+                min_sources=settings.corpus_select_min_sources,
+                material_budget=settings.material_char_budget,
+                fetch_links=settings.fetch_links_enabled,
+                on_file=_on_file,
+            )
+        else:
+            dossier = load_case(
+                Path(spec.case_dir), fetch_links=settings.fetch_links_enabled,
+                on_file=_on_file)
         prog.finish(
             n_sources=len(dossier.sources),
             n_segments=sum(len(s.segments) for s in dossier.sources),
@@ -275,10 +288,12 @@ def run_case(spec: RunSpec | None = None,
 
     guard = BudgetGuard(settings.budget_tokens, settings.budget_throttle_threshold)
     case_key = Path(spec.case_dir).name if spec.case_dir else ""
+    run_id = (spec.run_id or "").strip()
     if case_key:
         from app.core.run_cancel import is_cancelled
 
-        guard.attach_cancel_check(lambda k=case_key: is_cancelled(k))
+        guard.attach_cancel_check(
+            lambda k=case_key, r=run_id: is_cancelled(k, r or None))
     set_active_budget_guard(guard)
 
     if analysts is None:
@@ -286,7 +301,18 @@ def run_case(spec: RunSpec | None = None,
 
     adaptive = bool(spec.probe) if spec.probe is not None else not injected_client
     tiers: dict[str, str] = {}
-    if adaptive and settings.model_probe_enabled and settings.models:
+    force_tier = (settings.force_profile_tier or "").strip().lower()
+    if force_tier in ("noncompliant", "compliant", "standard"):
+        # 答辩演示：强制档位，跳过真实探测（省一次调用，链上记 forced）
+        with prog.stage("probe", "模型纪律画像探测（强制档）"):
+            models = sorted({a.model for a in analysts} or set(settings.models))
+            for m in models:
+                profile = {"tier": force_tier, "model": m, "forced": True,
+                           "scores": None}
+                tiers[m] = force_tier
+                chain.append("model_profile", "pipeline", profile)
+                prog.note(model=m, tier=force_tier, forced=True)
+    elif adaptive and settings.model_probe_enabled and settings.models:
         with prog.stage("probe", "模型纪律画像探测"):
             for m in sorted({a.model for a in analysts}):
                 try:

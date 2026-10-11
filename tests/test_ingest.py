@@ -137,3 +137,43 @@ def test_default_segment_size_is_fine_grained():
     from app.ingest.segment import SEGMENT_MAX, SEGMENT_TARGET
 
     assert (SEGMENT_TARGET, SEGMENT_MAX) == (500, 650)
+
+
+# -- 层次切片（公文标题断段） -----------------------------------------------------
+
+
+def test_cn_section_heading_breaks_even_when_under_target():
+    """「一、」「二、」即使未满 target 也不跨节聚合。"""
+    text = "一、收入情况简述如下。\n\n二、成本情况简述如下。"
+    segs = split_segments(text, target=200, max_len=650)
+    assert len(segs) == 2
+    assert segs[0].startswith("一、")
+    assert segs[1].startswith("二、")
+
+
+def test_cn_paren_and_chapter_headings_split_without_blank_line():
+    """无空行时，（一）/第X章 仍从行首起新段。"""
+    text = "第一章总则适用范围说明。\n（一）本报告覆盖范围。\n（二）数据口径说明。"
+    segs = split_segments(text, target=500, max_len=650)
+    assert any(s.startswith("第一章") for s in segs)
+    assert any(s.startswith("（一）") for s in segs)
+    assert any(s.startswith("（二）") for s in segs)
+
+
+def test_same_section_body_still_merges():
+    """同一节内的短正文仍可聚合；仅标题行触发跨节禁合。"""
+    text = "一、概述\n本段很短。\n\n续写也很短，同属概述。"
+    segs = split_segments(text, target=80, max_len=650)
+    assert len(segs) == 1
+    assert "一、概述" in segs[0] and "续写" in segs[0]
+
+
+def test_arabic_numbered_list_not_treated_as_section():
+    """阿拉伯数字「1.」不按层次标题断节，避免打散普通编号列表。"""
+    from app.ingest.segment import is_section_heading
+
+    assert not is_section_heading("1. 第一条目内容")
+    assert not is_section_heading("2、第二条目")
+    assert is_section_heading("一、经营情况")
+    assert is_section_heading("（一）收入")
+    assert is_section_heading("第12条 定义")

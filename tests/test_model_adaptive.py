@@ -244,6 +244,37 @@ PANEL_BAD_CALC = json.dumps({"conclusions": [{
                   "level": "B", "note": "计算:512/1280=45%"}]}]}, ensure_ascii=False)
 
 
+def test_force_tier_skips_probe_and_injects_hard_rules(tmp_path, monkeypatch):
+    """VERITAS_FORCE_TIER=noncompliant：不探测，链记 forced，提示词带 derived。"""
+    from app.config import Settings
+    from app.pipeline import RunDeps, RunSpec, run_case
+
+    monkeypatch.setenv("VERITAS_FORCE_TIER", "noncompliant")
+    case_dir = _case(tmp_path)
+    good = json.dumps({"conclusions": [{
+        "statement": "客户B回款率为40%",
+        "derived": [{"value": "40%", "formula": "512/1280=40%"}],
+        "evidence": [{"quote": "合同金额1,280万元，累计回款512万元",
+                      "segment_id": "SRC1#s1", "relation": "correlation",
+                      "level": "B", "note": "回款率"}]}]}, ensure_ascii=False)
+    client = Scripted([good])  # 强制档：无探测调用
+    settings = Settings.from_env()
+    assert settings.force_profile_tier == "noncompliant"
+    result = run_case(
+        RunSpec(case_dir=case_dir, out_dir=case_dir / "out", probe=True,
+                settings=settings),
+        RunDeps(client=client,
+                analysts=[Analyst("mainstream", "测", client, "m")]))
+    profiles = [r.payload for r in result.chain.records
+                if r.event == "model_profile"]
+    assert profiles and profiles[0].get("forced") is True
+    assert profiles[0]["tier"] == "noncompliant"
+    assert "derived" in client.calls[0]["messages"][0]["content"]
+    assert len(client.calls) >= 1
+    assert all("SRC-P#s1" not in json.dumps(c["messages"], ensure_ascii=False)
+               for c in client.calls)
+
+
 def test_pipeline_probe_and_repair_round_in_chain(tmp_path):
     from app.pipeline import RunDeps, RunSpec, run_case
 

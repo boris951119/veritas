@@ -1,8 +1,13 @@
 """文本切段：把整篇文档拆成可下钻、可引用的原文段落。
 
-策略：按空行切自然段，过短相邻段聚合到目标 500 字、单段超 650 字
-二次切分（比赛提问颗粒度细——500 字左右的段落才能让「下钻到原文」
-落在真正回答该细节的段落上，900 字的大块往往一段盖三个话题）。
+策略：按空行 / Markdown 标题 / 公文层次标题切自然段，过短相邻段
+聚合到目标 500 字、单段超 650 字二次切分（比赛提问颗粒度细——
+500 字左右的段落才能让「下钻到原文」落在真正回答该细节的段落上，
+900 字的大块往往一段盖三个话题）。
+
+层次切片：识别「一、」「（一）」「第一章/条」等结构标题，标题行
+强制起新段，且聚合时禁止跨节合并——通告/年报按章节下钻，不把
+「一、」与「二、」粘成一块。
 
 完整性优先于均匀：二次切分遵守三条规则——
 1. 句子边界优先（。！？；换行后落刀），从不切断句子中段；
@@ -20,8 +25,29 @@ _MAX = 650
 
 SEGMENT_TARGET = _TARGET
 SEGMENT_MAX = _MAX
+# 切段规则变更时递增。语料索引据此废旧段，避免旧 segment_id 与新边界混用。
+SEGMENTER_VERSION = "hier-v1"
 
 _LIST_ITEM = re.compile(r"^\s*(?:[-*•·]|\d+[.、)])")
+
+# 公文/年报结构标题（行首）。不含阿拉伯数字「1.」——那与列表条目重合，
+# 仍走列表行原子切分；层次断段只认中文序号与「第X章/节/条」。
+_CN_NUM = r"[一二三四五六七八九十百千零〇两]+"
+_SECTION_HEADING = re.compile(
+    rf"^(?:"
+    rf"#{1,6}\s+\S"                          # Markdown 标题
+    rf"|{_CN_NUM}、\S"                        # 一、概述
+    rf"|[（(]{_CN_NUM}[)）]\S?"               # （一）或（一）标题
+    rf"|第{_CN_NUM}[章节条款项部分篇]\S*"       # 第一章 / 第十条
+    rf"|第\d{{1,3}}[章节条款项部分篇]\S*"      # 第1章 / 第12条
+    rf")"
+)
+
+
+def is_section_heading(line: str) -> bool:
+    """行首是否为结构标题（层次切片的断点判据）。"""
+    s = line.strip()
+    return bool(s) and _SECTION_HEADING.match(s) is not None
 
 
 def split_segments(text: str, target: int = _TARGET, max_len: int = _MAX) -> list[str]:
@@ -32,11 +58,16 @@ def split_segments(text: str, target: int = _TARGET, max_len: int = _MAX) -> lis
     out: list[str] = []
     buf = ""
     for para in paras:
+        starts_section = is_section_heading(para.splitlines()[0])
         if len(para) > max_len:
             if buf:
                 out.append(buf)
                 buf = ""
             out.extend(hard_split(para, max_len))
+        elif starts_section and buf:
+            # 新节起笔：即使未满 target 也不与上一节聚合
+            out.append(buf)
+            buf = para
         elif len(buf) + len(para) + 1 <= target:
             buf = f"{buf}\n{para}" if buf else para
         else:
@@ -49,12 +80,12 @@ def split_segments(text: str, target: int = _TARGET, max_len: int = _MAX) -> lis
 
 
 def re_split(text: str) -> list[str]:
-    """按空行（含 Markdown 标题行）切自然段。"""
+    """按空行、Markdown/公文层次标题切自然段。"""
     lines = text.splitlines()
     paras: list[str] = []
     buf: list[str] = []
     for line in lines:
-        if line.strip().startswith("#") and buf:
+        if is_section_heading(line) and buf:
             paras.append("\n".join(buf))
             buf = [line]
         elif not line.strip() and buf:

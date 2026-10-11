@@ -222,7 +222,7 @@ def _collect_files(case_dir: Path, max_files: int = 500,
 
 
 def load_case(case_dir: Path, fetch_links: bool = False,
-              on_file=None) -> Dossier:
+              on_file=None, source_sink=None) -> Dossier:
     """案例目录 → Dossier（manifest.yaml 用缩进自愈加载）。
 
     摄取按文件隔离：单个损坏/加密文件只降级为 ingest_notes 披露，
@@ -232,6 +232,8 @@ def load_case(case_dir: Path, fetch_links: bool = False,
     披露成败）。
 
     on_file: 可选回调 ``(rel, index, total)``，供工作台进度条刷新。
+    source_sink: 若给出，信源交给回调后不留在 dossier.sources（磁盘
+    索引逐份写入，避免全库同时驻留内存）。分诊与披露笔记仍在案卷上。
     """
     case_dir = Path(case_dir)
     manifest = {}
@@ -258,6 +260,12 @@ def load_case(case_dir: Path, fetch_links: bool = False,
         nonlocal counter
         counter += 1
         return f"SRC{counter}"
+
+    def _keep(source) -> None:
+        if source_sink is not None:
+            source_sink(source)
+        else:
+            dossier.add_source(source)
 
     def _ingest_one(path: Path, rel: str, spec: SourceSpec) -> None:
         declared_type = spec.source_type
@@ -299,7 +307,7 @@ def load_case(case_dir: Path, fetch_links: bool = False,
                     f"{source.meta.get('parser_error', '')}"
                 ),
             })
-        dossier.add_source(source)
+        _keep(source)
         parser = str(source.meta.get("parser") or "")
         if parser == "docling" and not source.meta.get("parser_fallback"):
             route, reason = "layout_parsed", (
@@ -376,7 +384,7 @@ def load_case(case_dir: Path, fetch_links: bool = False,
                     source = Source.from_dict(cache[url])
                     source.id = _next_id()
                     source.meta["cached"] = True
-                    dossier.add_source(source)
+                    _keep(source)
                     n_cached += 1
                     continue
                 except Exception:
@@ -384,7 +392,7 @@ def load_case(case_dir: Path, fetch_links: bool = False,
             try:
                 source = fetch_link_source(url)
                 source.id = _next_id()
-                dossier.add_source(source)
+                _keep(source)
                 n_ok += 1
                 # 缓存条目 = 信源 dict + 完整性字段（正文全文+_cache_body,
                 # 哈希覆盖 url——防换 url 张冠李戴）
