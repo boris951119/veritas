@@ -22,6 +22,18 @@
 - **逐问**（`--per-question`）：更贴单问、更耗额度；成绩单与合并口径分列，勿混称
 - 报告：`eval/report.md`（每次跑批覆盖写入）
 
+## 选料召回抽检（真实语料，零 LLM）
+
+- 题目：复用 `eval/questions.jsonl`（30 问）
+- 语料：默认桌面全量库 `~/Desktop/veritas-testcases/eval-corpus`（可用
+  `VERITAS_EVAL_CORPUS` / `--corpus` 覆盖）；按公司建磁盘索引缓存于
+  `.tmp/recall_real_index/`
+- 金标：指标词 + 答案值自动标 must-keep（弱数字须邻近共现；区分性短语收紧）
+- 跑法：`.venv/bin/python scripts/run_recall_real.py`
+- 量的是「must-keep 有没有进本次选料案卷」，不是模型答对不对
+- 最新结果：`eval/recall_real_report.md`（2026-10-11：**30/30**，平均 Recall 100%）
+- 合成金标仍见 `eval/recall_gold.py`（4 条可控边界，不替代本抽检）
+
 ## 语料 v2（全量公告 — 已完成）
 
 - 主副本：桌面 `~/Desktop/veritas-testcases/eval-corpus/`（约 **2012** 文件 / 1.6G）
