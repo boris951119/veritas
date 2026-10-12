@@ -51,7 +51,7 @@ from app.core.fact_ledger import extract_facts, find_collisions
 from app.core.hashchain import HashChain
 from app.core.material import pack_material, set_material_budget
 from app.core.numeric_check import audit_conservation, audit_counting, audit_numeric
-from app.core.premise_check import premise_flags
+from app.core.premise_check import premise_flags, premise_record
 from app.core.relevance import classify_sources
 from app.core.skills import detect_skills, set_skills_enabled, skills_enabled
 from app.core.untrusted import scan_injections
@@ -101,16 +101,15 @@ def _load_case_dossier(case_dir: Path, settings: Settings, *,
 
 def _prepare_search_queries(question: str, prior: str, client,
                             settings: Settings, prog) -> dict:
-    """原问 + 词表；仅在问句不完整且有上一句时补成一条独立问句。"""
-    from app.core.query_rewrite import needs_context, prepare_search_info
+    """原问 + 词表兜底；有模型时按规则做同义拓展（机械闸防换主体/捏造）。"""
+    from app.core.query_rewrite import prepare_search_info
 
     original = (question or "").strip()
     model = (settings.models[0] if settings.models else "") or ""
-    call = (settings.query_rewrite_enabled and needs_context(original)
-            and (prior or "").strip() and prior.strip() != original
-            and client is not None and model)
+    call = (settings.query_rewrite_enabled and bool(original)
+            and client is not None and bool(model))
     if call:
-        with prog.stage("query_rewrite", "把不完整的问句补成独立问句"):
+        with prog.stage("query_rewrite", "检索问句同义拓展（约束+机械闸）"):
             info = prepare_search_info(
                 original, prior=prior, client=client, model=model,
                 enabled=settings.query_rewrite_enabled,
@@ -193,7 +192,7 @@ def run_case(spec: RunSpec | None = None,
     search_queries: list[str] | None = None
     rewrite_info: dict | None = None
     if settings.query_rewrite_enabled:
-        from app.core.query_rewrite import needs_context, prior_question
+        from app.core.query_rewrite import prior_question
 
         peek_q = ""
         if spec.dossier is not None:
@@ -204,9 +203,10 @@ def run_case(spec: RunSpec | None = None,
         if peek_q and spec.case_dir is not None:
             prior = prior_question(
                 peek_q, Path(spec.case_dir), skip_dir=spec.out_dir)
+        # 生产路径：有网关就做同义拓展。注入桩的测试/离线演示不调拓展，
+        # 避免桩 JSON 污染检索；单测直接打 prepare_search_info。
         rewrite_client = None
-        if (peek_q and needs_context(peek_q) and prior
-                and not injected_client):
+        if peek_q and not injected_client:
             rewrite_client = client
             if rewrite_client is None:
                 try:
@@ -255,8 +255,15 @@ def run_case(spec: RunSpec | None = None,
         })
 
     with prog.stage("hygiene", "议题预检·对撞·去重·相关性"):
-        premise = premise_flags(dossier)
-        chain.append("premise_check", "pipeline", summarize(premise))
+        premise_rec = premise_record(dossier)
+        dossier.accounting["premise"] = premise_rec
+        premise = list(premise_rec.get("flags") or [])
+        chain.append("premise_check", "pipeline", {
+            **summarize(premise),
+            "status": premise_rec.get("status"),
+            "n_candidates": premise_rec.get("n_candidates"),
+            "note": premise_rec.get("note"),
+        })
         collisions = find_collisions(dossier)
         chain.append("fact_ledger", "pipeline", {
             "n_facts": len(extract_facts(dossier)),
@@ -318,7 +325,8 @@ def run_case(spec: RunSpec | None = None,
                       clarify=list(intent["clarify"]),
                       hint="请先补齐下面几项，再开始研判")
         kept = {k: v for k, v in (dossier.accounting or {}).items()
-                if k in ("corpus_select", "query_rewrite", "slot_disclosures")}
+                if k in ("corpus_select", "query_rewrite", "slot_disclosures",
+                         "panel_attrition", "repair_accept_rate", "premise")}
         dossier.accounting = {
             **kept,
             "elapsed_s": round(time.monotonic() - t0, 1),
@@ -442,10 +450,22 @@ def run_case(spec: RunSpec | None = None,
         from app.core.run_cancel import check_cancel
         check_cancel(case_key)
 
+    roster_names = [a.name for a in analysts]
     with prog.stage("panel", "三分析师并行研判", n_analysts=len(analysts)):
         results = run_panel(dossier, analysts, on_done=_on_analyst_done)
         for name, err in results.get("_failures", {}).items():
             chain.append("analyst_failed", name, {"error": err})
+        from app.core.panel_attrition import apply_panel_attrition
+
+        attrition = apply_panel_attrition(
+            dossier, roster_names, results.get("_failures") or {})
+        if attrition:
+            chain.append("panel_attrition", "pipeline", {
+                "n_roster": attrition.get("n_roster"),
+                "n_failed": attrition.get("n_failed"),
+                "failures": attrition.get("failures"),
+                "agreement_cap": attrition.get("agreement_cap"),
+            })
         dossier.conclusions.sort(key=lambda c: (c.statement, c.author))
         _ev_key = lambda e: (e.quote, tuple(e.segment_ids), e.level.value,
                               e.relation.value, e.author, e.note,
@@ -462,6 +482,35 @@ def run_case(spec: RunSpec | None = None,
         dossier.rejected = rejected
         numeric = audit_numeric(dossier) + audit_counting(dossier)
         prog.note(n_rejected=len(rejected), n_numeric_flags=len(numeric))
+
+    # 刀十一：第一轮引文闸后，就未引用的议题关键段再定向补一轮。
+    # 注入桩路径默认跳过（离线演示/单测确定性）；真模型路径默认开。
+    if (settings.second_pass_enabled and not injected_client
+            and analysts and client is not None):
+        from app.agents.second_pass import run_second_pass
+
+        with prog.stage("second_pass", "未用关键段二次定向研判"):
+            sp = run_second_pass(
+                dossier, analysts,
+                max_segments=settings.second_pass_max_segments,
+                on_done=_on_analyst_done,
+            )
+            dossier.accounting["second_pass"] = sp
+            chain.append("second_pass", "pipeline", {
+                "status": sp.get("status"),
+                "focus_ids": sp.get("focus_ids"),
+                "n_conclusions": sp.get("n_conclusions"),
+                "analyst": sp.get("analyst"),
+                "error": sp.get("error") or "",
+            })
+            if sp.get("n_conclusions"):
+                more_rej = _reject_failed_citations(dossier, chain)
+                rejected = list(dossier.rejected or []) + more_rej
+                dossier.rejected = rejected
+                numeric = audit_numeric(dossier) + audit_counting(dossier)
+            prog.note(status=sp.get("status"),
+                      n_focus=len(sp.get("focus_ids") or []),
+                      n_conclusions=sp.get("n_conclusions"))
 
     if adaptive and numeric:
         with prog.stage("repair", "打回修复环"):
@@ -499,7 +548,8 @@ def run_case(spec: RunSpec | None = None,
     chain.append("discourse_audit", "pipeline", summarize(discourse))
 
     with prog.stage("finalize", "置信度融合"):
-        recompute_all(dossier, n_panel=len(analysts))
+        # 一致性按原编队人数计（减员已在 panel_attrition 披露）
+        recompute_all(dossier, n_panel=len(roster_names) or len(analysts))
         chain.append("confidence_computed", "pipeline", {
             "n_majority": len(majority_conclusions(dossier)),
             "n_dissent": len(dissent_conclusions(dossier)),
@@ -513,6 +563,38 @@ def run_case(spec: RunSpec | None = None,
     with prog.stage("chair", "主席汇总"):
         chair_client = None if injected_client else client
         synthesis = build_synthesis(dossier, chair_client, settings.models[0])
+        from app.core.coverage_gap import (
+            subquestion_status,
+            unused_topic_note,
+            unused_topic_segments,
+        )
+
+        unused = unused_topic_segments(dossier)
+        if unused:
+            dossier.accounting["unused_topic_segments"] = unused
+            note = unused_topic_note(unused)
+            if note:
+                issues = list(synthesis.get("open_issues") or [])
+                issues.insert(0, {
+                    "kind": "gap", "ref": "资料",
+                    "text": note[:120],
+                })
+                synthesis["open_issues"] = issues
+        subs = subquestion_status(dossier, synthesis)
+        if subs:
+            dossier.accounting["subquestion_status"] = subs
+            issues = list(synthesis.get("open_issues") or [])
+            for sq in subs:
+                if sq.get("status") != "unanswered":
+                    continue
+                text = f"子问未答：{(sq.get('text') or '')[:40]}"
+                if not any(text[:16] in str(o.get("text") or "") for o in issues):
+                    issues.append({
+                        "kind": "question", "ref": "议题",
+                        "text": text,
+                    })
+            synthesis["open_issues"] = issues
+        dossier.synthesis = synthesis
         chain.append("chair_summary", "pipeline", {
             "mode": synthesis.get("mode"),
             "n_points": len(synthesis.get("points") or []),
@@ -520,6 +602,8 @@ def run_case(spec: RunSpec | None = None,
                                  if p.get("auto")),
             "n_open_issues": len(synthesis.get("open_issues") or []),
             "gate_notes": synthesis.get("gate_notes") or [],
+            "n_unused_topic": len(unused),
+            "n_subquestions": len(subs),
         })
         prog.note(mode=synthesis.get("mode"),
                   n_points=len(synthesis.get("points") or []))
@@ -527,7 +611,9 @@ def run_case(spec: RunSpec | None = None,
     n_calls = len(getattr(client, "call_log", []) or [])
     kept = {k: v for k, v in (dossier.accounting or {}).items()
             if k in ("corpus_select", "query_rewrite", "slot_disclosures",
-                     "repair_accept_rate")}
+                     "repair_accept_rate", "panel_attrition",
+                     "unused_topic_segments", "subquestion_status",
+                     "premise", "second_pass")}
     dossier.accounting = {
         **kept,
         "elapsed_s": round(time.monotonic() - t0, 1),
@@ -658,11 +744,20 @@ def render_report_md(dossier: Dossier, chain: HashChain, rejected: list[dict]) -
         f"**研判编队**：{('、'.join(dossier.panel) or 'N/A')}"
         f"（独立研判，互不可见对方结论）",
         "",
+    ]
+    acc = dossier.accounting or {}
+    attrition_note = str(
+        (acc.get("panel_attrition") or {}).get("note") or "").strip()
+    if attrition_note:
+        lines += [
+            f"**编队减员**：{attrition_note}",
+            "",
+        ]
+    lines += [
         f"**资料**：{len(dossier.sources)} 份信源 / "
         f"{sum(len(s.segments) for s in dossier.sources)} 个段落",
         "",
     ]
-    acc = dossier.accounting or {}
     select_note = str((acc.get("corpus_select") or {}).get("note") or "").strip()
     if select_note:
         lines += [
@@ -680,6 +775,15 @@ def render_report_md(dossier: Dossier, chain: HashChain, rejected: list[dict]) -
     if slot_notes:
         lines += [
             f"**议题披露**：{'；'.join(slot_notes)}",
+            "",
+        ]
+    subs = acc.get("subquestion_status") or []
+    if subs:
+        st_cn = {"answered": "已答", "gap": "缺口", "unanswered": "未答"}
+        bits = [f"{st_cn.get(s.get('status'), s.get('status'))}｜"
+                f"{(s.get('text') or '')[:36]}" for s in subs]
+        lines += [
+            f"**子问落点**：{'；'.join(bits)}",
             "",
         ]
     from app.core.retrieval import retrieval_note
@@ -767,6 +871,7 @@ _KIND_LABEL = {
     "source_unverified": "信源出处未核验",
     "level_consistency": "证据等级与信源类型不符",
     "causation_support": "因果标注缺乏机制词",
+    "warrant_theme": "理由与主张无共同主题词",
 }
 
 
@@ -778,9 +883,34 @@ def _render_flags_section(lines: list[str], dossier: Dossier) -> None:
     仍归分析师与读者，机械侧只保证「每个数字都能对账」。"""
     flags = audit_all(dossier)
     lines += ["## 机械核对警示（零 LLM 复算）", ""]
+    prem = (dossier.accounting or {}).get("premise") or {}
+    prem_status = prem.get("status")
+    prem_note = str(prem.get("note") or "").strip()
+    unchecked = prem_status in ("no_candidates", "no_corpus")
+    exempt = prem_status == "exempt_template"
     if not flags:
-        lines += ["- 计算复算、数字溯源、议题前提、质证/仲裁引用：全部通过 ✅", ""]
+        if unchecked:
+            fallback = {
+                "no_candidates": "议题前提：未核（议题未抽出可比对实体）",
+                "no_corpus": "议题前提：未核（案卷无信源正文）",
+            }.get(str(prem_status), "议题前提：未核")
+            lines += [
+                f"- {prem_note or fallback}",
+                "- 计算复算、数字溯源、质证/仲裁引用：全部通过 ✅",
+                "",
+            ]
+        else:
+            # checked_ok / exempt_template：议题前提项算过关（免核单独注明）
+            lines += [
+                "- 计算复算、数字溯源、议题前提、质证/仲裁引用：全部通过 ✅"
+                + (f"（{prem_note}）" if prem_note else ""),
+                "",
+            ]
         return
+    if unchecked and prem_note:
+        lines.append(f"- ⚪ {prem_note}")
+    elif exempt and prem_note:
+        lines.append(f"- ⚪ {prem_note}")
     high = [f for f in flags if f["severity"] == "high"]
     medium = [f for f in flags if f["severity"] == "medium"]
     if high:
@@ -840,11 +970,16 @@ def _render_synthesis(lines: list[str], dossier: Dossier) -> None:
         auto = "（程序自动补全）" if (mode == "llm" and p.get("auto")) else ""
         lines.append(f"- {p['gloss']}`{p['con_id']}` · 置信度 "
                      f"{p.get('confidence', 0):.2f}{auto}")
+    unused = (dossier.accounting or {}).get("unused_topic_segments") or []
+    if unused:
+        from app.core.coverage_gap import unused_topic_note
+
+        lines += ["", f"**含议题词但未引用**：{unused_topic_note(unused)}", ""]
     issues = synthesis.get("open_issues") or []
     if issues:
         lines += ["", "**分歧与缺口（明示，不抹平）**："]
         kind_cn = {"conflict": "冲突", "dissent": "少数意见",
-                   "gap": "资料缺口", "note": "说明"}
+                   "gap": "资料缺口", "note": "说明", "question": "待确认"}
         for o in issues:
             lines.append(f"- ⚠ [{kind_cn.get(o.get('kind'), o.get('kind'))}]"
                          f" {o.get('text')}（{o.get('ref')}）")

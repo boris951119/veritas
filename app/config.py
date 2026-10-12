@@ -120,6 +120,10 @@ class Settings:
     # 补成一条独立问句。无上一句不猜主语。VERITAS_QUERY_REWRITE=0 只关这次补全。
     query_rewrite_enabled: bool = True
 
+    # 刀十一：未用关键段二次定向研判。VERITAS_SECOND_PASS=0 关闭。
+    second_pass_enabled: bool = True
+    second_pass_max_segments: int = 3
+
     # 链接抓取（默认关——离线演示兜底不受影响）：链接清单文件在
     # 开启时逐条抓取为 web 信源（超时/大小/条数三重上限），逐条披露
     # 成败。VERITAS_FETCH_LINKS=1 / CLI --fetch-links 开启。
@@ -201,6 +205,11 @@ class Settings:
             s.query_rewrite_enabled = False
         elif rewrite_env in ("1", "true", "on", "yes"):
             s.query_rewrite_enabled = True
+        second_env = (os.environ.get("VERITAS_SECOND_PASS") or "").strip().lower()
+        if second_env in ("0", "false", "off", "no"):
+            s.second_pass_enabled = False
+        elif second_env in ("1", "true", "on", "yes"):
+            s.second_pass_enabled = True
         return s.validate()
 
     @classmethod

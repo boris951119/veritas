@@ -506,7 +506,9 @@ openai/glm-5.3" oninput="previewAssignment()"></textarea>
         <h1 id="heroTitle"></h1>
         <div class="meta" id="heroMeta"></div>
         <div class="corpus-banner hidden" id="corpusSelect"></div>
+        <div class="corpus-banner hidden" id="panelAttrition" style="border-color:var(--warn);color:var(--warn)"></div>
         <div class="retrieval-bound" id="retrievalBound">检索为字面 BM25，命中词表时在原问上补充同义词。词表外的说法仍可能未进入本次材料；未进入不等于已审完全库。假引文与无源数字仍会被闸拦住。向量重排未启用。</div>
+        <div class="sub hidden" id="subquestionStatus" style="margin-top:8px"></div>
       </div>
       <div class="sec"><h2>一句话判断</h2><div id="synthesis"></div>
         <div class="sub" style="margin-top:8px">置信度是规则分，不是命中率。</div>
@@ -551,7 +553,8 @@ const FLAG_CN={calc:"计算复算不符",provenance:"来源外数字",counting:"
   injection:"疑似指令注入内容",near_dup:"疑似同源转述",question:"议题表述待聚焦",
   premise:"议题前提未覆盖",percent_no_base:"涨跌百分比未见基数",
   unit_mismatch:"人民币与美元口径混用",source_unverified:"信源出处未核验",
-  level_consistency:"证据等级与信源类型不符",causation_support:"因果标注缺乏机制词"};
+  level_consistency:"证据等级与信源类型不符",causation_support:"因果标注缺乏机制词",
+  warrant_theme:"理由与主张无共同主题词"};
 const ROLE_CN={mainstream:"主流视角",redteam:"质疑视角",technologist:"技术视角",
   coordinator:"协调员",pipeline:"系统",chair:"汇总",human:"人工"};
 const CASE_CN={"demo-solid-state":"固态电池量产前景","bi-delivery-risk":"数据中台交付风险",
@@ -576,8 +579,9 @@ const TRIAGE_CN={
 const PARSER_CN={pypdf:"轻量抽取",docling:"Docling 版式解析"};
 const SKILL_CN={calc_discipline:"计算纪律",number_provenance:"数字溯源",
   counting_discipline:"计数纪律",hedged_claim:"转述语气",table_citation:"表格引文",
-  level_tone:"措辞等级",as_of_discipline:"时点锚定",question_focus:"议题聚焦",
-  question_scoped:"议题范围",negation_guard:"否定口径",sic_verbatim:"原文照录"};
+  level_tone:"措辞等级",warrant_theme:"理由主张同题",as_of_discipline:"时点锚定",
+  question_focus:"议题聚焦",question_scoped:"议题范围",negation_guard:"否定口径",
+  sic_verbatim:"原文照录"};
 const EVENT_CN={case_loaded:"装载案卷",premise_check:"议题前提核对",fact_ledger:"事实对账",
   injection_scan:"指令注入扫描",dup_check:"重复件核对",relevance_layered:"相关性分层",
   skills_triggered:"纪律注入",material_pack:"资料装箱",analyst_done:"视角完成",
@@ -1449,6 +1453,31 @@ function render(){
     }else{
       box.textContent="";
       box.classList.add("hidden");
+    }
+  }
+  const pa=$("#panelAttrition");
+  if(pa){
+    const note=String((acc.panel_attrition||{}).note||"").trim();
+    if(note){
+      pa.textContent="编队减员："+note;
+      pa.classList.remove("hidden");
+    }else{
+      pa.textContent="";
+      pa.classList.add("hidden");
+    }
+  }
+  const sq=$("#subquestionStatus");
+  if(sq){
+    const items=acc.subquestion_status||[];
+    if(items.length){
+      sq.innerHTML="子问落点："+items.map(it=>{
+        const st=it.status==="answered"?"已答":(it.status==="gap"?"缺口":"未答");
+        return `<span class="tag">${esc(st)}</span> ${esc((it.text||"").slice(0,40))}`;
+      }).join(" · ");
+      sq.classList.remove("hidden");
+    }else{
+      sq.innerHTML="";
+      sq.classList.add("hidden");
     }
   }
   const bound=$("#retrievalBound");

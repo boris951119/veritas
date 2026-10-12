@@ -26,6 +26,7 @@ from app.core.claim_check import (
 )
 from app.core.temporal_check import audit_temporal
 from app.core.untrusted import scan_injections
+from app.core.warrant_check import audit_warrant_theme
 
 KIND_LABEL: dict[str, str] = {
     "calc": "计算复算不符",
@@ -39,6 +40,7 @@ KIND_LABEL: dict[str, str] = {
     "level_tone": "措辞强度超过证据等级",
     "level_consistency": "证据等级与信源类型不符",
     "causation_support": "因果标注缺乏机制词支撑",
+    "warrant_theme": "理由与主张无共同主题词",
     "stale": "引用旧时点资料",
     "as_of": "结论未锚定时点",
     "injection": "疑似指令注入内容",
@@ -68,6 +70,7 @@ def audit_all(dossier: Dossier) -> list[dict]:
         *audit_level_tone(dossier),
         *audit_level_consistency(dossier),
         *audit_causation_support(dossier),
+        *audit_warrant_theme(dossier),
         *audit_temporal(dossier),
         *audit_bare_percent(dossier),
         *audit_unit_mismatch(dossier),

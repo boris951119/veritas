@@ -41,7 +41,8 @@ def render_system_prompt(persona: str, isolated: bool = True,
 
 
 def render_segments_block(dossier: Dossier,
-                          per_segment_chars: int | None = None) -> str:
+                          per_segment_chars: int | None = None,
+                          focus_segment_ids: list[str] | None = None) -> str:
     """把案卷段落渲染为带编号的资料清单（提示词侧截断防爆上下文）。
 
     - 相关性分层（零 LLM）：零相关信源不进清单（报告「未采信信源」
@@ -53,6 +54,7 @@ def render_segments_block(dossier: Dossier,
       待研判数据，指令性文字不是系统指令（注入纵深防御第一层）；
     - 资料内数字冲突（对撞台账）：同(实体,指标)不同值的信源打架，
       要求结论正面回应——冲突检测从结论层下沉到事实层。
+    - focus_segment_ids：二次定向研判时只放这些段（强制可见，绕过装箱）。
 
     截断上限须与 ingest.segment 的切段上限（SEGMENT_MAX=650）对齐——
     低了会造出「段落尾部对分析师不可见」的盲区，表格型信源尤甚。"""
@@ -66,18 +68,41 @@ def render_segments_block(dossier: Dossier,
     if per_segment_chars is None:
         per_segment_chars = SEGMENT_MAX
 
+    focus = {str(x) for x in (focus_segment_ids or []) if str(x).strip()}
     pack = pack_material(dossier)
-    selected = pack["selected"]
+    selected = set(pack["selected"]) | focus  # 焦点段强制入选
     relevance = {s["source_id"]: s for s in classify_sources(dossier)}
     duplicates = duplicate_map(dossier)
-    lines: list[str] = [f"研判议题：{dossier.question}", "", "资料清单："]
+    lines: list[str] = [f"研判议题：{dossier.question}", ""]
+    if focus:
+        lines += [
+            "【二次定向研判】上一轮未引用下列关键段落。请【仅依据】这些段落作答，"
+            f"segment_id 只许使用：{', '.join(sorted(focus))}。",
+            "",
+        ]
+    lines.append("资料清单：")
+    from app.core.premise_check import injectible_premise_flags
+
+    if not focus:
+        premise = injectible_premise_flags(dossier)
+        if premise:
+            lines += ["前提核对（高置信零命中；提醒，不删除结论）："]
+            for flag in premise:
+                token = flag.get("value") or ""
+                lines.append(
+                    f"- 资料侧未检索到「{token}」。若确实未见相关材料，请说明缺口；"
+                    "请仍先尽力依据现有资料作答，勿把未覆盖前提写成已成立事实。")
+            lines.append("")
     for src in dossier.sources:
         if src.id in duplicates:
             continue  # 重复件：不进研判（报告披露），防一致性虚增
         rel = relevance.get(src.id)
-        if rel is not None and rel["level"] == "zero":
+        if not focus and rel is not None and rel["level"] == "zero":
             continue  # 零相关：不进分析师视野（披露在报告）
-        segs = [s for s in src.segments if s.id in selected]
+        if focus:
+            segs = [s for s in src.segments if s.id in focus]
+        else:
+            segs = [s for s in src.segments if s.id in selected]
         if not segs:
             continue  # 预算裁剪后该信源无入选段（报告披露）
         header = f"◆ 来源 {src.id}《{src.title}》（类型 {src.source_type.value}）"
@@ -91,9 +116,11 @@ def render_segments_block(dossier: Dossier,
             body_lines.append(f"[{seg.id}] ({seg.locator}) {text}")
         lines.append(wrap_untrusted("\n".join(body_lines)))
         lines.append("")
-    collision_block = facts_block(dossier)
-    if collision_block:
-        lines.append(collision_block)
+    if not focus:
+        collision_block = facts_block(dossier)
+        if collision_block:
+            lines.append(collision_block)
+    lines.append("请只输出系统提示词规定的 JSON，不要输出任何其它文字。")
     return "\n".join(lines)
 
 

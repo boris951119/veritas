@@ -58,7 +58,7 @@ python3 -m venv .venv
 .venv/bin/python -m pytest tests -q
 ```
 
-**通过判据**：`407 passed`（或更多，零 failed；未装 mcp 时少 1 条属正常）。测试全 stub，无需密钥。
+**通过判据**：`415 passed`（或更多，零 failed；未装 mcp 时少 1 条属正常）。测试全 stub，无需密钥。
 
 ## 第 3 步：离线演示（断网/无 key 时的完整演示兜底）
 
@@ -104,11 +104,10 @@ python3 -m venv .venv
 要强制关掉：`.env` 写 `VERITAS_CORPUS_SELECT_MIN=0`。
 要改阈值：写其他正整数。这是本机索引，不是外接业务库或搜索集群。
 
-检索默认：原问上按词表补同义词（停工/停产、资金链/流动性、应收账款/回款等），
-每次检索都生效。最新一句已经完整，或没有上一句可对照时，不调用模型。
-只有指代或省略了主语/宾语、并且能对照上一句时，才把最新一句补成一条独立问句
-追加进检索；研判议题仍是用户原话。补不上就退回「原问 + 词表」。
-`VERITAS_QUERY_REWRITE=0` 只关这次补全，词表扩展仍在。
+检索默认：有模型时按规则做同义/近义拓展（主体锁定、禁捏造数字与换主体，
+机械闸过滤后追加进 BM25）；词表（停工/停产等）作兜底。研判议题仍是用户原话。
+指代不完整且有上一句时，允许用上一句主体补全后再拓展。失败则退回「原问+词表」。
+`VERITAS_QUERY_REWRITE=0` 只关模型拓展，词表仍在。
 
 ## 第 5 步：可视化工作台（演示主入口）
 
@@ -152,7 +151,7 @@ python3 -m venv .venv
 | PDF 信源摄取报 pypdf 缺失 | `pip install pypdf`（PDF 是可选格式，demo 案例不含 PDF 不影响演示） |
 | 要开源版式增强（跨页表等） | `pip install -r requirements-docling.txt` 后设 `VERITAS_PDF_BACKEND=docling`；失败自动回退 pypdf；默认 U 盘包不装 Docling |
 | venv 激活后命令找不到 | 直接用绝对路径调 python：`.venv\Scripts\python`（Win）/ `.venv/bin/python`（Mac） |
-| 测试出现 failed | 把失败摘要原样反馈给开发者；在修好前用第 3 步离线演示兜底（未装 mcp 时 MCP 协议测试自动跳过，407 passed ± 1 skipped 属正常） |
+| 测试出现 failed | 把失败摘要原样反馈给开发者；在修好前用第 3 步离线演示兜底（未装 mcp 时 MCP 协议测试自动跳过，415 passed ± 1 skipped 属正常） |
 
 ## 仓库速览（供智能体理解上下文）
 

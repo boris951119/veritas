@@ -133,8 +133,9 @@ def facts_block(dossier: Dossier) -> str:
     collisions = find_collisions(dossier)
     if not collisions:
         return ""
-    lines = ["", "资料内已知数字冲突（下列数值互相矛盾，你的结论必须正面回应："
-             "采信哪一方、依据什么，或声明资料不足）："]
+    lines = ["", "资料内已知数字冲突（下列数值互相矛盾；请在 JSON 的 conclusions 里"
+             "正面回应：采信哪一方、依据什么，或声明资料不足。"
+             "禁止另起 Markdown 分析报告）："]
     for c in collisions[:8]:
         detail = "；".join(
             f"{f.source_id}说{f.entity}{f.metric}{f.raw}"

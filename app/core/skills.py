@@ -24,6 +24,7 @@ from app.core.evidence import Dossier, SourceType
 KNOWN_GATES = {
     "citation", "calc", "provenance", "counting",
     "hedge", "level_tone", "as_of", "question",
+    "warrant_theme",
 }
 
 _LOWCRED = {SourceType.NEWS, SourceType.WEB, SourceType.NOTE}
@@ -163,6 +164,18 @@ SKILLS: list[GateSkill] = [
         rule_hard="证据等级为 C/D 时，statement 里禁止出现「必然/肯定/无疑/"
                   "确凿/必将/一定」等断言词，程序逐词扫描，命中即打回；"
                   "把断言改成「可能/或/待证」。",
+    ),
+    GateSkill(
+        name="warrant_theme",
+        description="引文真实但主题推不出主张（理由与主张脱节）",
+        rule="结论主张若含延期/回款/坏账/人员流失等主题，所引段落必须出现"
+             "同一主题词；禁止用无关账目截止日之类支撑「无人员流失」。",
+        trigger=_always,
+        gate="warrant_theme",
+        rule_hard="主张含延期/回款/坏账/人员流失等主题时，所引段落必须含同一"
+                  "主题词；程序做主题词交集，零重叠即亮黄灯——换能支撑主张"
+                  "的段落，或改下资料不足。否定传闻时，段落里的「不实／核查确认／"
+                  "按计划运转」算已支撑，不必复读指控原词。",
     ),
     GateSkill(
         name="as_of_discipline",

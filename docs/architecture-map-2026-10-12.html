@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>veritas 架构与问题点地图 · 2026-10-12</title>
+<style>
+  :root{
+    --bg:#f6f7f9; --card:#fff; --ink:#1c2027; --muted:#6b7280; --line:#e3e6eb;
+    --ok:#16a34a; --ok-bg:#f0fdf4;
+    --warn:#ca8a04; --warn-bg:#fefce8;
+    --bad:#dc2626; --bad-bg:#fef2f2;
+    --accent:#2563eb;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;padding:32px 28px 60px;background:var(--bg);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;
+    line-height:1.6;font-size:15px}
+  .wrap{max-width:1180px;margin:0 auto}
+  h1{font-size:26px;margin:0 0 4px;letter-spacing:-.3px}
+  .sub{color:var(--muted);font-size:14px;margin-bottom:22px}
+  .scores{display:flex;gap:14px;flex-wrap:wrap;margin:18px 0 6px}
+  .score{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 18px;min-width:150px}
+  .score .n{font-size:30px;font-weight:700;line-height:1.1}
+  .score .l{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+  .score .t{font-size:12px;color:var(--muted);margin-top:3px}
+  .thesis{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--accent);
+    border-radius:10px;padding:14px 18px;margin:20px 0 26px;font-size:15px}
+  .legend{display:flex;gap:18px;flex-wrap:wrap;margin:0 0 26px;font-size:13.5px;color:var(--muted)}
+  .dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px;vertical-align:1px}
+  .band{margin:0 0 30px}
+  .bandhead{display:flex;align-items:baseline;gap:10px;margin-bottom:12px;padding-bottom:6px;border-bottom:2px solid var(--line)}
+  .bandhead h2{font-size:17px;margin:0}
+  .bandhead .meta{font-size:12.5px;color:var(--muted)}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:12px}
+  .node{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--ok);
+    border-radius:9px;padding:12px 14px}
+  .node.warn{border-left-color:var(--warn);background:var(--warn-bg)}
+  .node.bad{border-left-color:var(--bad);background:var(--bad-bg)}
+  .node.head{font-weight:600;font-size:14.5px;margin-bottom:2px;display:flex;justify-content:space-between;gap:8px}
+  .node .en{font-weight:400;color:var(--muted);font-size:12px;font-family:ui-monospace,Menlo,monospace}
+  .node .does{font-size:13px;color:#374151;margin-bottom:6px}
+  .issue{font-size:13px;margin-top:7px;padding-top:7px;border-top:1px dashed rgba(0,0,0,.12)}
+  .issue b{font-weight:650}
+  .tag{font-size:11px;padding:1px 7px;border-radius:999px;white-space:nowrap;height:fit-content;flex:none;font-weight:600}
+  .tag.ok{background:#dcfce7;color:#166534}.tag.warn{background:#fef9c3;color:#854d0e}.tag.bad{background:#fee2e2;color:#991b1b}
+  code{background:rgba(0,0,0,.055);padding:1px 5px;border-radius:4px;font-size:12.5px;
+    font-family:ui-monospace,Menlo,monospace}
+  .flow{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:12.5px;color:var(--muted);margin:-6px 0 14px}
+  .flow span{background:#fff;border:1px solid var(--line);border-radius:6px;padding:2px 8px}
+  .flow i{font-style:normal;color:#9ca3af}
+  table{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);
+    border-radius:10px;overflow:hidden;font-size:13.5px}
+  th,td{padding:9px 12px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}
+  th{background:#f9fafb;font-size:12px;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);font-weight:600}
+  tr:last-child td{border-bottom:none}
+  td.c{text-align:center;white-space:nowrap}
+  .sec-title{font-size:18px;margin:34px 0 12px;padding-bottom:6px;border-bottom:2px solid var(--line)}
+  .note{font-size:13px;color:var(--muted);background:var(--card);border:1px solid var(--line);
+    border-radius:10px;padding:13px 16px;margin-top:16px}
+  .note b{color:var(--ink)}
+  @media print{body{background:#fff;padding:12px}.node,.card,table{break-inside:avoid}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>veritas 架构与问题点地图</h1>
+  <div class="sub">多智能体可信研判与证据链溯源 · 实测状态版 · 2026-10-12（第三轮体检，刀十已过）　
+    规模：app 13,805 行 / web 1,800 行 / tests 7,279 行 · <b>418 项测试实跑全绿（2.11s）</b></div>
+
+  <div class="scores">
+    <div class="score"><div class="l">产品分</div><div class="n">6.4</div><div class="t">6.0 → 6.2 → 6.4</div></div>
+    <div class="score"><div class="l">比赛分</div><div class="n">8.7</div><div class="t">8.0 → 8.5 → 8.7</div></div>
+    <div class="score"><div class="l">机械闸</div><div class="n">21</div><div class="t">kind 全有 skill 配对</div></div>
+    <div class="score"><div class="l">已证病因</div><div class="n">3</div><div class="t">见文末病因表 + 图内红框</div></div>
+  </div>
+
+  <div class="thesis">
+    <b>一句话主张：</b>模型负责主张，程序负责复算。<br>
+    <b>当前真实状态：</b>这台审计机器的<b>核对能力已到位</b>（假引文进不来、无源数字亮灯、改一字即红），
+    但<b>判断能力没跟上</b>——窄题 10/10，开放题产出的是「过了全部闸、却推不出主张」的结论。
+    第三轮把病灶<b>照出来了</b>，还没<b>治好</b>。
+  </div>
+
+  <div class="legend">
+    <span><span class="dot" style="background:var(--ok)"></span>实测可用，可对外演示</span>
+    <span><span class="dot" style="background:var(--warn)"></span>能用，但有明确边界或未做端到端验证</span>
+    <span><span class="dot" style="background:var(--bad)"></span>已实证的洞（带产物证据）</span>
+  </div>
+
+  <!-- A 输入层 -->
+  <div class="band">
+    <div class="bandhead"><h2>① 输入层 — 假定材料是敌意的</h2><span class="meta">app/ingest/ · 1,848 行</span></div>
+    <div class="grid">
+      <div class="node"><div class="head">安全摄取与拆封 <span class="en">archive/links/ocr</span> <span class="tag ok">绿</span></div>
+        <div class="does">压缩包四道边界（路径穿越/炸弹/条目数/嵌套）、链接默认只披露、图片可选 OCR。</div>
+        <div class="issue">56 项对抗用例全过（零 LLM，约 0.3s）。7z/rar 明确不支持并写进报告。</div></div>
+
+      <div class="node"><div class="head">切段与断行愈合 <span class="en">text_heal</span> <span class="tag ok">绿</span></div>
+        <div class="does">层次切段（空行/一、/第X章/Markdown）给出可锚定的 <code>segment_id</code>，引文颗粒度靠它。</div>
+        <div class="issue">PDF 拆字 + 表行标签断行已修，恒兴 8 份公告 → 94 段可逐字命中。</div></div>
+
+      <div class="node"><div class="head">输入分诊账本 <span class="en">triage</span> <span class="tag ok">绿</span></div>
+        <div class="does">每个文件一条路由记录（入卷/抓取/转写/排除 + 理由），报告整章渲染。</div>
+        <div class="issue">"读了什么、没读什么、为什么"账面可见——这是可审计的地基。</div></div>
+    </div>
+  </div>
+
+  <!-- B 收窄层 -->
+  <div class="band">
+    <div class="bandhead"><h2>② 收窄层 — 把"一叠材料"收成"本次案卷"</h2><span class="meta">app/core/ · 检索与议题预检</span></div>
+    <div class="flow"><span>问句同义拓展</span><i>→</i><span>议题预检 · 对撞 · 去重 · 相关性</span><i>→</i><span>澄清早退</span><i>→</i><span>BM25 精排与预算装箱</span></div>
+    <div class="grid">
+      <div class="node warn"><div class="head">问句同义拓展 <span class="en">query_rewrite</span> <span class="tag warn">黄</span></div>
+        <div class="does">有模型时按规则生成同义检索问法（原议题不替换）；词表兜底。约束：主体锁定、禁捏造数字/换主体，机械闸过滤。</div>
+        <div class="issue"><b>已改主路径（仍黄）：</b>完整问也调模型拓展；<code>VERITAS_QUERY_REWRITE=0</code> 只关模型。
+          <br><b>变绿判据：</b>
+          ① 真网关：账本 <code>status=ok</code> + <code>variants</code> 非空，无换主体/捏造数字；
+          ② 同义盲区金标段 Top-K 优于纯原问；
+          ③ 报告检索边界文案与实跑一致。
+          <br><b>进度日志：</b>
+          · ✅ 代码主路径改完（约束提示词 + 机械闸 + 单测）<br>
+          · ✅ 2026-10-12 本地 14B 抽检：8/8 <code>ok</code>（约 71s）；例：南山分红→「占比/现金分红比例」；
+            「它的净利润呢」+上一句→补全南山铝业；毒丸「中国银行/2025年」<b>闸掉</b><br>
+          · ⏳ 云端正式网关验收（判据①）；盲区抬名次（判据②，见 BM25 格）<br>
+          详表：<code>docs/local-retrieval-smoke-2026-10-12.md</code> · 脚本 <code>scripts/local_retrieval_smoke.py</code>
+          · <strong>不能</strong>因本地抽检改绿。</div></div>
+
+      <div class="node warn"><div class="head">议题预检 / 前提核对 <span class="en">answer_slots · premise_check</span> <span class="tag warn">黄</span></div>
+        <div class="does">检查题面缺不缺主体/期间/口径/轮次，并核对议题前提在资料里有没有着落。</div>
+        <div class="issue"><b>闸侧已收口 ≠ 整格可绿</b>（测试锁「不误报」，不锁答题）。
+          <br><b>变绿判据：</b>
+          ① ✅ Q9 股东问句 → <code>exempt_template</code>（免核）<br>
+          ② ✅ 恒兴 10 问前提黄灯 0 + 阳性仍报警 + <code>no_corpus</code> 不伪装 checked_ok<br>
+          ③ ⏳ 云端恒兴 ≥约 9.5，且 Q6 两轮回购按时序拆开<br>
+          ④ ⏳ 成绩单换成「当前代码」产物（勿用 10-08 旧牌子）
+          <br><b>进度日志：</b>
+          · ✅ 词表/长串再切/语素残渣/注入≤3/未核显影/残渣尾缀<br>
+          · ✅ 本地 14B 恒兴 10 问约 <b>9/10</b>（Q6 挂；Q4/Q9 过程债）→
+            <code>cases/.../out_local14b_10q/SCORECARD_local14b.md</code><br>
+          · ⏳ 云端正式网关重跑换 <code>eval/hengxing-10q-scorecard.md</code>
+          · <strong>不能</strong>因本地 9/10 改绿。</div></div>
+
+      <div class="node"><div class="head">澄清早退 <span class="en">pipeline · 刀一</span> <span class="tag ok">绿</span></div>
+        <div class="does">槽位不齐时不烧分析师，直接回读确认。</div>
+        <div class="issue"><b>已修：</b>题面含分配性量词（各客户／分别／逐一）时改为披露"多主体整卷研判"，不再逼用户点名一家。
+          实测产物首行已从"请写明是哪一家"变成一句正面研判。</div></div>
+
+      <div class="node warn"><div class="head">BM25 精排与预算装箱 <span class="en">bm25 · material</span> <span class="tag warn">黄</span></div>
+        <div class="does">纯 Python 段级检索 + 跨信源轮转装箱，装不下的段落全部披露不静默丢。大库选料默认阈值 50。</div>
+        <div class="issue"><b>为何黄：</b>机制可用；字面上限仍在；30/30 自建自标；向量口空置；缺官方召回闭环。
+          <br><b>变绿判据（不要求先接 embedding）：</b>
+          ① ⏳ 官方/甲方召回用例（或产品书面接受自建口径）<br>
+          ② ⏳ 拓展联动：盲区召回 ≥ 关拓展基线，无张冠李戴<br>
+          ③ ✅ 大库选料实跑「库内 N / 纳入 M / 未入选≠已审」<br>
+          ④ embedding = 加分项，非改绿前提
+          <br><b>进度日志（2026-10-12 本地 14B）：</b>
+          · ✅ 南山铝业桌面全量库选料：<b>库内 268 份 / 12507 段 → 纳入 8 份 / 59 段</b>，披露句齐全（约 43s）<br>
+          · ✅ 同义盲区 3 场景对照（倒闭/回款/停工）：仅原问 vs 词表 vs 模型拓展，金标名次均为
+            2/1/2，<b>本批模型拓展未抬名次</b>（诚实记账；词表已覆盖部分同义）<br>
+          · ⏳ 官方用例或书面接受自建口径后，①② 过了才许改绿<br>
+          详表：<code>docs/local-retrieval-smoke-2026-10-12.md</code></div></div>
+    </div>
+  </div>
+
+  <!-- C 研判层 -->
+  <div class="band">
+    <div class="bandhead"><h2>③ 研判层 — 病都在这条带上</h2><span class="meta">app/agents/ · 1,313 行 + llm/ 1,185 行</span></div>
+    <div class="flow"><span>纪律探测</span><i>→</i><span>三分析师独立研判</span><i>→</i><span>引文逐字核对</span><i>→</i><span>打回修复环</span><i>→</i><span>归并·冲突·质证·仲裁</span><i>→</i><span>置信度融合</span><i>→</i><span>主席汇总</span></div>
+    <div class="grid">
+      <div class="node"><div class="head">模型纪律画像探测 <span class="en">llm/profile</span> <span class="tag ok">绿</span></div>
+        <div class="does">接任何网关前先 1 次微型调用，机械判分给模型打"纪律遵从"档；noncompliant 改注强化规则 + 启用修复环。</div>
+        <div class="issue">实测热态 11.6s。<b>提醒：</b>上次记的 218s 是本地 14B <b>冷启动加载</b>，不是浪费，别当成本账优化。</div></div>
+
+      <div class="node warn"><div class="head">三分析师独立研判 <span class="en">agents/panel</span> <span class="tag warn">黄</span></div>
+        <div class="does">主流/红队/技术推进三视角硬隔离，互不可见对方输出；per-agent 模型异构为配置项。
+          <b>刀十一已接：</b>首轮引文闸后对 <code>unused_topic_segments</code> 再定向一轮（<code>agents/second_pass</code>）。</div>
+        <div class="issue"><b>旧病灶（bi out_local14b）：</b>66 段只用 11 段；置信度挤在 ≤0.267；
+          <code>SRC2#s5</code>/<code>SRC6#s6</code> 风险台账 0 引用。
+          <b>进度（2026-10-13）：</b>定向冒烟在旧案卷上补出 5 条结论，
+          <b>同时引用 SRC2#s5 + SRC6#s6 + SRC4#s2</b>（64s / 本地 14B）；
+          全管线重跑后「多数置信度 &gt;0.27」仍待验，故黄不绿。</div></div>
+
+      <div class="node"><div class="head">引文逐字核对 <span class="en">citation_check</span> <span class="tag ok">绿</span></div>
+        <div class="does">NFC 归一 + 空白/半全角/Markdown 记号剔除后做子串命中；跨段省略号按段切分依序核。零模型、毫秒级、可复现。</div>
+        <div class="issue">编造的引文<b>进不了正式证据池</b>——这是全产品最硬的一块。</div></div>
+
+      <div class="node"><div class="head">打回修复环 <span class="en">agents/repair</span> <span class="tag ok">绿</span></div>
+        <div class="does">对被数字闸打回的结论定向重写，新版本先过引文闸与数字闸，变好才接受。</div>
+        <div class="issue"><b>刀二已落地：</b><code>max_repairs</code> 6→2 + 连败熔断，耗时 509s → <b>38.9s</b>，
+          账本新增 <code>repair_accept_rate</code>（本轮 0）——这类环从此可度量。</div></div>
+
+      <div class="node bad"><div class="head">归并 · 冲突 · 质证 · 仲裁 <span class="en">agents/arbiter</span> <span class="tag bad">红</span></div>
+        <div class="does">语义归并（证据转挂、同引文去重、署名继承）→ 冲突检测 → 各一轮书面质证 → 按证据强度仲裁，败方转"少数意见"不删。</div>
+        <div class="issue"><b>实测 6 场冲突：4 场判平局（未裁决），2 场真裁决——而那 2 场恰恰是配错了的：</b>
+          议题「客户C 坏账风险」把 A=客户C 的结论和 B=客户B 的结论配成一对，裁决建立在跨主体错配之上。
+          配对过程<b>没有锁主体</b>。同一类错误（"客户B 不存在回款风险、无坏账风险"）在主表里沉默存在，冲突层没检出。</div></div>
+
+      <div class="node warn"><div class="head">置信度融合 <span class="en">confidence</span> <span class="tag warn">黄</span></div>
+        <div class="does">强度 × 覆盖 × 一致性三分量可解释乘法，人工删证据/改权重后走同一入口增量重算。</div>
+        <div class="issue"><b>一致性被单点压死：</b>一个分析师超时 → 全部结论变单人署名 → agreement 封顶 1/N → 整份报告天花板 0.267。
+          已按原编队人数显式封顶并在首屏披露（刀六）。<b>刻意不做校准表</b>（分数分桶 vs 命中率），文档以诚实边界替代——甲方若问"0.27 等于几成把握"，答不了。</div></div>
+
+      <div class="node warn"><div class="head">主席汇总 <span class="en">agents/chair</span> <span class="tag warn">黄</span></div>
+        <div class="does">输入封闭（只见过闸结论），输出正面回答 + 逐要点 + 分歧与缺口；四道机械闸；模型违规则原文顶替而非丢弃；零 LLM 模板兜底。</div>
+        <div class="issue">本轮产物 gate_notes 记着「<b>少数意见被略过 → 模板补全</b>」——模型自己会漏分歧，靠模板强制补回。
+          恒兴那次另有"3 条多数结论被遗漏 → 程序自动补全"。<b>刀九已修：</b>复合议题子问现在三态可查，
+          Q1 <code>answered</code>、Q2「自述指标可信吗」<code>gap</code>（上轮被静默丢弃）。</div></div>
+    </div>
+  </div>
+
+  <!-- D 可信与交付层 -->
+  <div class="band">
+    <div class="bandhead"><h2>④ 可信与交付层 — 卖点在这一带，也是唯一没塌的一带</h2><span class="meta">app/core/audit.py · server.py · mcp_server.py · web/</span></div>
+    <div class="grid">
+      <div class="node warn"><div class="head">机械闸族 21 kind + skill 12 条 <span class="tag warn">黄</span></div>
+        <div class="does">计算复算/数字溯源/计数/归并守恒/质证引用/措辞/时序/前提/注入/单位口径…全部零 LLM 派生即时重算。纪律必须配对才注册（"没闸的 skill 是许愿"）。</div>
+        <div class="issue"><b>刀七新闸（理由—主张相关性）实测有效：</b>坏报告命中 11 条、恒兴好报告 0 误伤。
+          谣言案例曾亮 3 次（主张「并未因资金链断裂停工」，证据是「传闻不实、产线按计划运转」）。
+          <b>刀十已过：</b>否定主张且所引段落含「不实／核查确认／按计划运转」时不再因缺指控原词亮灯。
+          离线复放：谣言 <b>3 → 0</b>，bi 仍 <b>11</b>，恒兴仍 <b>0</b>。</div></div>
+
+      <div class="node"><div class="head">哈希链 · HMAC · 审计包 <span class="en">hashchain/audit_pack</span> <span class="tag ok">绿</span></div>
+        <div class="does">SHA-256 串联全程事件，逐条重算可定位首个篡改点；导出包带 HMAC 独立验签。人工修改以 human 事件入链。</div>
+        <div class="issue">篡改演示"改一字即红"三案例均 ✅。修改可审计、可还原且还原也留痕。</div></div>
+
+      <div class="node warn"><div class="head">可视化工作台 <span class="en">server.py + web 1,800 行</span> <span class="tag warn">黄</span></div>
+        <div class="does">三级下钻（结论→逐字引文→原文段落）、置信度分量面板、冲突与少数意见视图、机械核对警示面板、即时重算。</div>
+        <div class="issue"><b>单机演示台，不是 SaaS：</b>无账号体系；同案编辑有写锁 + 过期 409，历史跑次只读；并发只做到 <code>history/&lt;run_id&gt;/</code> 跑次隔离。</div></div>
+
+      <div class="node"><div class="head">MCP 标准接口 <span class="en">mcp_server · 6 工具</span> <span class="tag ok">绿</span></div>
+        <div class="does">list_cases / get_report / verify_chain（零 LLM 离线可验）+ ingest_external（第三方结论按契约入卷、过同一引文闸）+ run_analyst / run_judgment（与 CLI 同一代码路径）。</div>
+        <div class="issue">1.x / 2.x 双兼容。答辩"能接进现有智能体体系"这条的实证。</div></div>
+
+      <div class="node bad"><div class="head">单位成本账本 <span class="en">accounting / model_client</span> <span class="tag bad">红</span></div>
+        <div class="does">报告与账本记 elapsed_s / tokens / n_calls / 分阶段耗时，预算闸门 800k token。</div>
+        <div class="issue"><b>同一叠材料被念 22 遍：</b>恒兴一次 371,325 token ÷ 22 次调用 ≈ 每次 1.7 万 ≈ 整个案卷体积。
+          <code>model_client</code> chat 侧<b>无任何缓存</b>（只有默认关的 embedding 缓存），问第二个问题再念一遍。
+          bi 本轮 token 还从 52,329 升到 <b>60,419</b>。墙钟 14 分钟一问是主要卖点障碍，不是钱。</div></div>
+    </div>
+  </div>
+
+  <!-- 病因 -->
+  <h2 class="sec-title">三条已证病因（与图上红/黄框对应）</h2>
+  <table>
+    <tr><th style="width:52px">#</th><th style="width:31%">病因</th><th>位置</th><th style="width:34%">最硬的一条证据</th></tr>
+    <tr><td class="c"><b style="color:var(--bad)">1</b></td><td><b>答案质量双峰</b><br>窄题与开放题差一个数量级</td><td>③ 三分析师独立研判</td>
+      <td>恒兴 10 问真模型 10/10（数字精确到分）；bi 24 条结论全挤 0.18–0.267、66 段只用 11 段</td></tr>
+    <tr><td class="c"><b style="color:var(--bad)">2</b></td><td><b>程序复算不管"支不支持"</b><br>闸校验出处与算术，不校验推理</td><td>④ 机械闸族</td>
+      <td>「客户C 不存在人员流失风险，<b>因为</b>账目统计截止日为 2025-03-31」——引文真、A 级、数字有出处。刀七现在会亮黄灯，结论仍留在报告里，答案没有因此改写</td></tr>
+    <tr><td class="c"><b style="color:var(--warn)">3</b></td><td><b>"照出来"≠"治好"</b><br>披露曾不回灌；刀十一已接反馈</td><td>②③ 未用段 → 二次定向</td>
+      <td>旧：<code>coverage_gap</code> 只披露 SRC6#s6。新：定向冒烟已用该清单补出引用 SRC6#s6 的结论；全管线置信度抬升仍待重跑</td></tr>
+  </table>
+
+  <!-- 刀口状态 -->
+  <h2 class="sec-title">刀口状态（12 把，含实测验收）</h2>
+  <table>
+    <tr><th style="width:8%">刀</th><th style="width:30%">动作</th><th style="width:11%" class="c">工时</th><th style="width:15%" class="c">状态</th><th>验收证据 / 待办</th></tr>
+    <tr><td>一</td><td>分配性多主体不再早退</td><td class="c">0.5 天</td><td class="c"><span class="tag ok">已过</span></td><td>不设 FORCE 重跑 bi，首行为正面研判；带 4 条回归单测</td></tr>
+    <tr><td>二</td><td>修复环连败熔断 + 接受率入账</td><td class="c">1 小时</td><td class="c"><span class="tag ok">已过</span></td><td>509s → 38.9s；attempted 2 / accepted 0 / stopped_early</td></tr>
+    <tr><td>三</td><td>案卷复用 + 前缀缓存</td><td class="c">0.5 天</td><td class="c"><span class="tag warn">搁置</span></td><td>待云端额度恢复后验证网关是否返回 <code>cached_tokens</code>；token 未降</td></tr>
+    <tr><td>四</td><td>成绩单作者判／盲判分列</td><td class="c">2 小时</td><td class="c"><span class="tag warn">半</span></td><td>已按 9.5 计并分列；<b>盲判栏仍空</b>，未填前不得对外报 10/10</td></tr>
+    <tr><td>五</td><td>交件口径对齐</td><td class="c">1 小时</td><td class="c"><span class="tag ok">已合</span></td><td>文档改为 13,700 行 / 407 测（当前实为 13,805 / 418，轻微滞后）</td></tr>
+    <tr><td>六</td><td>编队减员显影进首屏</td><td class="c">1 小时</td><td class="c"><span class="tag ok">已合</span></td><td>实测渲染出"3 人中 1 人未交付（redteam 超时）…封顶 0.3333"；<code>panel</code> 收成实际交付者</td></tr>
+    <tr><td>七</td><td>理由—主张相关性闸</td><td class="c">0.5 天</td><td class="c"><span class="tag ok">已合</span></td><td>bi 11 命中 / 恒兴 0 误伤；谣言假警报已由刀十收口</td></tr>
+    <tr><td>八</td><td>含议题词却零引用的段落列出</td><td class="c">0.5 天</td><td class="c"><span class="tag ok">已合</span></td><td>实测列出 SRC2#s5、SRC6#s6（比预期多一张）；恒兴 0 噪音</td></tr>
+    <tr><td>九</td><td>复合子问三态不得静默丢</td><td class="c">0.5 天</td><td class="c"><span class="tag ok">已合</span></td><td>真实议题判出 Q1 answered / Q2 gap</td></tr>
+    <tr><td>十</td><td>否定式主张放行（修刀七假警报）</td><td class="c">1 小时</td><td class="c"><span class="tag ok">已过</span></td><td>离线复放旧产物：谣言黄灯 <b>3→0</b>，bi 仍 <b>11</b>，恒兴仍 <b>0</b>。说明复述不算支持</td></tr>
+    <tr><td><b style="color:var(--warn)">十一</b></td><td><b>未用关键段 → 二次定向研判</b></td><td class="c">1 天</td><td class="c"><span class="tag warn">半</span></td><td>代码已合（<code>second_pass</code> + 管线钩子 + 4 单测）；本地 14B 定向冒烟 <b>引用 SRC2#s5/SRC6#s6</b>，5 条新结论（桌面 <code>bi-knife11-second-pass-smoke.json</code>）。判据下半：全管线多数置信度 &gt;0.27 仍待重跑</td></tr>
+    <tr><td>十二</td><td>单人署名渲染进每条结论行</td><td class="c">0.5 小时</td><td class="c"><span class="tag bad">未做</span></td><td>封顶只在首屏，读者不懂 24 条为何都是 0.3333</td></tr>
+    <tr><td>—</td><td>冲突配对加主体约束</td><td class="c">2 小时</td><td class="c"><span class="tag bad">未做</span></td><td>本轮实测确认：2 场真裁决建立在客户C↔客户B 错配之上</td></tr>
+  </table>
+
+  <div class="note">
+    <b>本图怎么验的（重要）：</b>绿/黄/红不是按文档抄的。
+    刀六～十等曾用 <code>Dossier.from_json</code> 离线喂旧产物验收闸；测试套件持续全绿（当前 <b>441</b>）。<br>
+    <b>2026-10-12～13 进度补记（你盯的收窄层）：</b>
+    ① 问句拓展改主路径（模型同义 + 约束闸）+ 本地 14B <b>8/8 ok</b>；
+    ② BM25/选料：南山铝业 <b>库内 268 → 纳入 8</b>，盲区 3 场景名次未抬（诚实）；
+    ③ 前提闸 Q9 免核 + 恒兴本地 10 问约 <b>9/10</b>（Q6 挂）；
+    ④ <b>刀十一半过：</b>未用关键段二次定向已接线；bi 旧案卷定向冒烟同时引用 SRC2#s5/SRC6#s6（64s）。
+    ⑤ bi 全管线两轮失败：本地 14B 被对撞台账带成 Markdown「数字冲突分析」（探测 compliant 也挡不住）；已收紧 <code>facts_block</code> + 用户末行 JSON 提醒后重跑。
+    详表 <code>docs/local-retrieval-smoke-2026-10-12.md</code>、
+    <code>cases/user-20261008-144308/out_local14b_10q/SCORECARD_local14b.md</code>、<code>cases/bi-delivery-risk/out_local14b_knife11/</code>。<br>
+    <b>仍未完成（须云端额度或本地长跑）：</b>正式网关重跑恒兴换成绩单；拓展/盲区云端验收；
+    bi 全管线重跑验置信度 &gt;0.27；官方召回用例到手前 BM25 格不改绿。
+  </div>
+
+</div>
+</body>
+</html>

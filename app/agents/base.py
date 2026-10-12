@@ -57,7 +57,8 @@ def extract_json(text: str) -> dict:
 class Analyst(Agent):
     """分析师智能体：独立研判，产出结构化结论 + 逐字引文证据。"""
 
-    def analyze(self, dossier: Dossier) -> list[Conclusion]:
+    def analyze(self, dossier: Dossier,
+                focus_segment_ids: list[str] | None = None) -> list[Conclusion]:
         from app.agents.prompts import render_segments_block, render_system_prompt
         from app.core.skills import render_skills_rules
 
@@ -66,7 +67,8 @@ class Analyst(Agent):
              "content": render_system_prompt(
                  self.persona,
                  skills_rules=render_skills_rules(dossier, self.profile_tier))},
-            {"role": "user", "content": render_segments_block(dossier)},
+            {"role": "user", "content": render_segments_block(
+                dossier, focus_segment_ids=focus_segment_ids)},
         ]
         response = self.client.chat(self.model, messages, json_mode=True)
         data = extract_json(response.content)
