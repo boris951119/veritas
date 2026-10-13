@@ -24,7 +24,7 @@ from app.core.evidence import Dossier, SourceType
 KNOWN_GATES = {
     "citation", "calc", "provenance", "counting",
     "hedge", "level_tone", "as_of", "question",
-    "warrant_theme",
+    "warrant_theme", "scope",
 }
 
 _LOWCRED = {SourceType.NEWS, SourceType.WEB, SourceType.NOTE}
@@ -187,6 +187,20 @@ SKILLS: list[GateSkill] = [
         gate="as_of",
         rule_hard="涉及状态/数值的结论必须含时点词（如「截至2025年报」「2026年"
                   "3月」）；程序核对所引信源时点与结论时点词，缺锚即打回。",
+    ),
+    GateSkill(
+        name="scope_honesty",
+        description="把「没找到」写成「不存在」，或声称「全部/所有」却不声明覆盖",
+        rule="范围词要用得诚实：只能说「在本次纳入的 N 份资料中未见 X」，"
+             "不能说「所有资料都不存在 X」；确实要声称全部/所有时，"
+             "给结论加 coverage 声明——partial 必须写明局限，"
+             "unknown 必须写明为什么未知。",
+        trigger=_always,
+        gate="scope",
+        rule_hard="程序扫描「全部/所有/无一/每个/没有任何/均未/未发现/不存在」"
+                  "这些范围词：命中而结论没有 coverage 声明即亮黄灯；"
+                  "coverage=partial 不写局限、unknown 不写理由会被直接拒收。"
+                  "要么改写成「本次纳入的 N 份中未见…」，要么补声明。",
     ),
     GateSkill(
         name="question_focus",

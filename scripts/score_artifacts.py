@@ -36,7 +36,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-from app.core.audit import audit_all, summarize  # noqa: E402
+from app.core.audit import audit_scan  # noqa: E402
 from app.core.conflicts import (  # noqa: E402
     dissent_conclusions, majority_conclusions)
 from app.core.coverage_gap import (  # noqa: E402
@@ -47,7 +47,8 @@ from app.core.evidence import Dossier  # noqa: E402
 _HIGHER_BETTER = {"conf_max", "conf_median", "cited_share", "subq_answered",
                   "multi_author"}
 # 越小越好的指标
-_LOWER_BETTER = {"flags_high", "flags_medium", "warrant_flags", "unused_topic",
+_LOWER_BETTER = {"flags_high", "flags_medium", "flags_not_evaluated",
+                 "warrant_flags", "scope_flags", "unused_topic",
                  "single_author", "subq_unanswered", "subq_gap", "n_rejected",
                  "elapsed_s", "tokens", "n_calls"}
 _REFUSE_MARKS = ("议题未齐", "请写明", "请补充", "无法研判")
@@ -93,8 +94,10 @@ def _resolve(items: list[str]) -> list[Path]:
 def score_artifact(path: Path) -> dict:
     """一份 report.json → 一行可比较的指标。任何异常向上抛，由调用方显式记为失败。"""
     dossier = Dossier.from_json(path)
-    flags = audit_all(dossier)
-    summary = summarize(flags)
+    scan = audit_scan(dossier)
+    flags = scan["flags"]
+    not_eval = scan["not_evaluated"]
+    summary = scan["summary"]
 
     majority = majority_conclusions(dossier)
     confs = [c.confidence for c in majority]
@@ -140,8 +143,14 @@ def score_artifact(path: Path) -> dict:
         "panel": dossier.panel,
         "flags_high": summary["n_high"],
         "flags_medium": summary["n_medium"],
+        # 未执行的闸：亮灯为 0 不等于核对通过，这一栏就是防止「零警示」被当成成绩
+        "flags_not_evaluated": len(not_eval),
+        "not_evaluated_kinds": sorted(n["kind"] for n in not_eval),
+        "clean": summary["clean"],
         "flags_by_kind": by_kind,
         "warrant_flags": by_kind.get("warrant_theme", 0),
+        # 范围诚实闸亮灯数：声称了范围却没声明覆盖的结论条数
+        "scope_flags": by_kind.get("scope", 0),
         "conf_max": round(max(confs), 4) if confs else 0.0,
         "conf_median": round(statistics.median(confs), 4) if confs else 0.0,
         "single_author": sum(1 for p in parts
@@ -182,7 +191,9 @@ _COLS = [
     ("不足", "n_insufficient", 4),
     ("红", "flags_high", 3),
     ("黄", "flags_medium", 3),
+    ("未执行", "flags_not_evaluated", 4),
     ("warrant", "warrant_flags", 7),
+    ("范围", "scope_flags", 4),
     ("置信max", "conf_max", 8),
     ("单署", "single_author", 4),
     ("覆盖", "cited_share", 6),

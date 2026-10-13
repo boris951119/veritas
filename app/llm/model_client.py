@@ -171,8 +171,52 @@ class LLMResponse:
         return self.input_tokens + self.output_tokens
 
 
+class RealCallGuardedError(RuntimeError):
+    """测试会话里试图发起真 LLM 调用（钱与网络都花在这里）。
+
+    为什么要有它：`self._completion_fn or _default_completion_fn()` 这个兜底
+    写法意味着——**某个测试只要忘了注入假客户端，就会静默走到真网关**。
+    `.env` 里的 key 在 `app/config.py` import 时就已经进进程，所以"这条测试
+    不花钱"过去全靠写测试的人记得塞桩，没有任何机器拦阻。测试跑完是绿的，
+    账单是花的，人只在月底发现。
+
+    上膛方：`tests/conftest.py`（只在测试里调 `arm_no_real_calls()`）。
+    生产入口（`python -m app.pipeline`、工作台、MCP `run_judgment`）不上膛，
+    行为一字不变——这道闸只把「忘了塞桩」从"静默花钱"变成"当场报错"。
+    """
+
+
+_GUARD_ARMED = False
+
+
+def arm_no_real_calls() -> None:
+    """上膛：此后任何落回默认 litellm 的调用都被拦死（测试会话专用）。"""
+    global _GUARD_ARMED
+    _GUARD_ARMED = True
+
+
+def disarm_no_real_calls() -> None:
+    """卸膛：仅给守卫自身的回归测试用，业务与测试会话不得调用。"""
+    global _GUARD_ARMED
+    _GUARD_ARMED = False
+
+
+def real_call_guard_armed() -> bool:
+    return _GUARD_ARMED
+
+
+def _guard_default_call(kind: str) -> None:
+    if _GUARD_ARMED:
+        raise RealCallGuardedError(
+            f"测试会话禁止真发起 {kind} 调用：调用方没有注入假客户端"
+            "（completion_fn/embedding_fn）。这通常意味着新加的测试忘了塞桩——"
+            "真走下去会拿 .env 里的网关 key 花钱。请注入桩，"
+            "确实需要真调用的手工验模型请另走 scripts/bench_*.py。")
+
+
 def _default_completion_fn() -> CompletionFn:
     """懒加载 litellm.completion（沙箱/测试环境无需安装）。"""
+    _guard_default_call("completion")
     try:
         import litellm
     except ImportError as exc:  # pragma: no cover - 环境缺依赖时的明确报错
@@ -186,6 +230,7 @@ def _default_completion_fn() -> CompletionFn:
 
 def _default_embedding_fn() -> EmbeddingFn:
     """懒加载 litellm.embedding（同 completion 的懒加载模式）。"""
+    _guard_default_call("embedding")
     try:
         import litellm
     except ImportError as exc:  # pragma: no cover
@@ -195,6 +240,33 @@ def _default_embedding_fn() -> EmbeddingFn:
         ) from exc
     litellm.suppress_debug_info = True
     return litellm.embedding
+
+
+def _resolve_completion_fn(injected: CompletionFn | None) -> CompletionFn:
+    """没注入桩 = 配置错误，不再静默兜底到真网关。
+
+    旧写法是 `self._completion_fn or _default_completion_fn()`——测试忘了传桩
+    就一路走到真 litellm 花钱（守卫能拦住花钱，但拦不住「这个入口本来就该报错」）。
+    现在缺省即抛：生产由工厂显式传 None→走默认真调用，测试必须传桩。
+    """
+    if injected is not None:
+        return injected
+    if real_call_guard_armed():
+        raise RealCallGuardedError(
+            "ModelClient 没有注入 completion_fn，且当前是测试会话（守卫已上膛）："
+            "请给测试注入桩客户端，不要让它落回真网关")
+    return _default_completion_fn()
+
+
+def _resolve_embedding_fn(injected: EmbeddingFn | None) -> EmbeddingFn:
+    """同 `_resolve_completion_fn`：测试会话里缺桩即报错。"""
+    if injected is not None:
+        return injected
+    if real_call_guard_armed():
+        raise RealCallGuardedError(
+            "ModelClient 没有注入 embedding_fn，且当前是测试会话（守卫已上膛）："
+            "请给测试注入桩，不要让它落回真网关")
+    return _default_embedding_fn()
 
 
 def _get_embedding(response: Any) -> tuple[list[float], int]:
@@ -450,7 +522,7 @@ class ModelClient:
         if use_json:
             kwargs["response_format"] = {"type": "json_object"}
 
-        completion = self._completion_fn or _default_completion_fn()
+        completion = _resolve_completion_fn(self._completion_fn)
 
         # factory26 r7b：响应构建（含 content 校验）纳入重试与墙钟范围——
         # 网关偶发返回 message.content 缺失的响应，构建在重试外会让该
@@ -592,7 +664,7 @@ class ModelClient:
                 self._notify_on_call(entry)
                 return cached
 
-        embedding = self._embedding_fn or _default_embedding_fn()
+        embedding = _resolve_embedding_fn(self._embedding_fn)
         embed_kwargs: dict[str, Any] = {
             "model": model,
             "input": [text],

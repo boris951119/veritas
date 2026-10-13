@@ -24,6 +24,9 @@ def edit_conclusion(dossier: Dossier, conclusion_id: str, statement: str) -> Non
     if not text:
         raise ValueError("statement 不能为空")
     con.statement = text
+    # 句子是人工重写的，模型原先的覆盖声明就不再对得上：清零，由范围诚实闸
+    # 按新句重新判定（人若写下「所有/全部」而没重新声明，当场亮黄灯）。
+    con.coverage = None
 
 
 def _find_conflict(dossier: Dossier, conflict_id: str) -> tuple[int, ConflictPair]:

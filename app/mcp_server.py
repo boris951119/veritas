@@ -153,13 +153,18 @@ def _make_server():
             dossier = Dossier.from_json(_out_dir_of(case) / "report.json")
         except KeyError:
             return {"error": f"案例 {case} 无研判产物"}
-        from app.core.audit import audit_all, summarize
+        from app.core.audit import audit_scan
+        from app.core.gate_applicability import not_evaluated_note
         from app.core.view_filter import redact_dossier
 
         view, _stats = redact_dossier(dossier, clearance)
-        flags = audit_all(view)
-        return {**view.to_dict(), "audit": {"flags": flags,
-                                            **summarize(flags)}}
+        # 与工作台/报告同一口径：亮了哪些灯 + 哪些闸本次没进场 + clean。
+        # 第三方 Agent 只看 flags 数就宣布「全部核对通过」是不行的。
+        scan = audit_scan(view)
+        ne = scan["not_evaluated"]
+        return {**view.to_dict(),
+                "audit": {**scan, **scan["summary"],
+                          "not_evaluated_note": not_evaluated_note(ne)}}
 
     @mcp.tool()
     def verify_chain(case: str) -> dict:

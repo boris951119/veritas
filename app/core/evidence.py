@@ -13,6 +13,7 @@ import uuid
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
+from typing import Any
 
 
 def _new_id(prefix: str) -> str:
@@ -206,6 +207,14 @@ class Conclusion:
     confidence: float = 0.0                # 0-1（confidence 融合后回填）
     confidence_parts: dict = field(default_factory=dict)  # 分量解释
     dissent: list[dict] = field(default_factory=list)     # 少数意见记录
+    # 覆盖声明三态（None=未声明）：partial 必带局限、unknown 必带理由，
+    # 非法状态在构造阶段就抛——见 app/core/scope_state.py
+    coverage: Any = None
+
+    def __post_init__(self) -> None:
+        from app.core.scope_state import Coverage
+
+        self.coverage = Coverage.parse(self.coverage)
 
     @classmethod
     def create(cls, statement: str, author: str = "", **kw) -> "Conclusion":
@@ -223,6 +232,7 @@ class Conclusion:
             "status": self.status,
             "evidence_ids": self.evidence_ids, "confidence": self.confidence,
             "confidence_parts": self.confidence_parts, "dissent": self.dissent,
+            "coverage": self.coverage.to_dict() if self.coverage else None,
         }
 
     @classmethod
@@ -237,6 +247,7 @@ class Conclusion:
             confidence=float(d.get("confidence", 0.0)),
             confidence_parts=dict(d.get("confidence_parts") or {}),
             dissent=list(d.get("dissent") or []),
+            coverage=d.get("coverage"),        # 旧产物没这字段 → None（未声明）
         )
 
 

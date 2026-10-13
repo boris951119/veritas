@@ -555,7 +555,7 @@ const FLAG_CN={calc:"计算复算不符",provenance:"来源外数字",counting:"
   premise:"议题前提未覆盖",percent_no_base:"涨跌百分比未见基数",
   unit_mismatch:"人民币与美元口径混用",source_unverified:"信源出处未核验",
   level_consistency:"证据等级与信源类型不符",causation_support:"因果标注缺乏机制词",
-  warrant_theme:"理由与主张无共同主题词"};
+  warrant_theme:"理由与主张无共同主题词",scope:"声称范围却无覆盖声明"};
 const ROLE_CN={mainstream:"主流视角",redteam:"质疑视角",technologist:"技术视角",
   coordinator:"协调员",pipeline:"系统",chair:"汇总",human:"人工"};
 const CASE_CN={"demo-solid-state":"固态电池量产前景","bi-delivery-risk":"数据中台交付风险",
@@ -1489,11 +1489,16 @@ function render(){
   const sq=$("#subquestionStatus");
   if(sq){
     const items=acc.subquestion_status||[];
+    const SRC_CN={chair:"主席声明",subquestion:"议题子问",theme:"主题词",whole_question:"整题兜底"};
     if(items.length){
-      sq.innerHTML="子问落点："+items.map(it=>{
+      const srcs=[...new Set(items.map(it=>SRC_CN[it.source]||it.source||"未知"))].join("、");
+      const body=items.map(it=>{
         const st=it.status==="answered"?"已答":(it.status==="gap"?"缺口":"未答");
         return `<span class="tag">${esc(st)}</span> ${esc((it.text||"").slice(0,40))}`;
       }).join(" · ");
+      const lim=String(acc.obligation_limitation||"").trim();
+      sq.innerHTML=`完整性判据（${items.length} 条 · 来源：${esc(srcs)}）：`+body
+        +(lim?`<div style="margin-top:6px;color:#b45309">⚠️ ${esc(lim)}</div>`:"");
       sq.classList.remove("hidden");
     }else{
       sq.innerHTML="";
@@ -1671,18 +1676,26 @@ function renderRejected(d){
 function renderFlags(audit){
   if(!audit){$("#flags").innerHTML=`<div class="empty">暂无质控数据。</div>`;return}
   const fs=audit.flags||[];
+  const ne=audit.not_evaluated||[];
   const skills=(audit.skills||[]);
   const skillLine=skills.length?`<div class="kv" style="margin-top:6px">已启用的研判纪律：${
     skills.map(s=>`<span class="chip" style="${s.triggered?"color:var(--good)":""}">${esc(SKILL_CN[s.name]||"研判纪律")}${s.enabled?(s.triggered?" · 已触发":" · 待命"):" · 已停用"}</span>`).join("")
   }</div>`:"";
+  // 未执行的闸必须显影：「无警示」不等于「全部核对通过」
+  const neLine=ne.length?`<div class="kv" style="margin-top:6px;color:var(--warn)">⚪ ${
+    esc(audit.not_evaluated_note||`本次有 ${ne.length} 项机械核对因无可核对象未执行`)
+  }</div><div class="kv" style="margin-top:4px">${ne.map(n=>
+    `<span class="chip" title="${esc(n.reason||"")}">${esc(n.label||n.kind)} · 未执行</span>`).join("")}</div>`:"";
   const head=`<div class="kv">红灯 <b style="color:${audit.n_high?"var(--bad)":"var(--good)"}">${audit.n_high}</b> ·
-    黄牌 <b style="color:${audit.n_medium?"var(--warn)":"var(--good)"}">${audit.n_medium}</b>
-    <span class="sub">　告警只提示，不擅自删判断</span></div>${skillLine}`;
+    黄牌 <b style="color:${audit.n_medium?"var(--warn)":"var(--good)"}">${audit.n_medium}</b> ·
+    未执行 <b style="color:${ne.length?"var(--warn)":"var(--good)"}">${ne.length}</b>
+    <span class="sub">　告警只提示，不擅自删判断</span></div>${skillLine}${neLine}`;
   $("#flags").innerHTML=head+(fs.map(f=>`
     <div class="flagitem ${esc(f.severity)}"><span class="tag ${esc(f.severity)}">${f.severity==="high"?"红灯":"黄牌"}</span>
     <b>${esc(FLAG_CN[f.kind]||"质控提示")}</b>　${esc(f.detail)}
     ${f.human_edit?`<span class="tag high">本次人工改写引入</span>`:""}</div>`).join("")
-    ||`<div class="empty">质控全部通过：算式能复算，数字有出处。</div>`);
+    ||(ne.length?`<div class="empty">本次没有亮灯，但上述 ${ne.length} 项核对未执行，不构成「全部通过」。</div>`
+                :`<div class="empty">质控全部通过：算式能复算，数字有出处。</div>`));
 }
 function renderSources(d){
   $("#sources").innerHTML=d.sources.map(s=>{

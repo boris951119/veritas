@@ -85,7 +85,16 @@ class Analyst(Agent):
         for item in data.get("conclusions") or []:
             if not isinstance(item, dict) or not str(item.get("statement", "")).strip():
                 continue
-            con = Conclusion.create(statement=str(item["statement"]).strip(), author=self.name)
+            try:
+                con = Conclusion.create(statement=str(item["statement"]).strip(),
+                                        author=self.name,
+                                        coverage=item.get("coverage"))
+            except ValueError:
+                # 覆盖声明写歪了（partial 没写局限、unknown 没写理由、state 不是三态）：
+                # 按「未声明」处理，让范围诚实闸把它亮出来——不许整轮研判因此崩掉，
+                # 也不许悄悄替模型补一个 complete（那等于替它吹圆场）
+                con = Conclusion.create(statement=str(item["statement"]).strip(),
+                                        author=self.name)
             dossier.conclusions.append(con)
             note_suffix = self._derived_note(item)
             for ev in item.get("evidence") or []:

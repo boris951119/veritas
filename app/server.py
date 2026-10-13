@@ -25,7 +25,8 @@ from fastapi.responses import FileResponse
 from pydantic import BaseModel
 
 from app.agents.chair import refresh_synthesis_after_human
-from app.core.audit import audit_all, summarize
+from app.core.audit import audit_all, audit_scan, summarize
+from app.core.gate_applicability import not_evaluated_note
 from app.core.confidence import recompute_all
 from app.core.evidence import Dossier
 from app.core.hashchain import HashChain
@@ -193,7 +194,21 @@ def _dossier_payload(out_dir: Path, clearance: str = "confidential") -> dict:
     # 机械核对警示在所服务的视图上即时重算——人工修改与文件篡改都
     # 逃不过下一次读取（「改数字即红」的工作台侧实现）
     view, _stats = redact_dossier(dossier, clearance)
-    flags = audit_all(view)
+    # 机械核对：亮了哪些灯 + 哪些闸本次没进场（未执行不许写成「通过」）
+    scan = audit_scan(view)
+    flags, ne = scan["flags"], scan["not_evaluated"]
+    # 完整性判据台账同样即时复算：存量产物的 accounting 里没这两个键（早于
+    # 2026-10-13 的落盘白名单），不在这里补算的话工作台就显示成「没有判据」
+    accounting = dict(dossier.accounting or {})
+    if not accounting.get("subquestion_status"):
+        from app.core.coverage_gap import ledger_limitation, subquestion_status
+
+        ledger = subquestion_status(view)
+        if ledger:
+            accounting["subquestion_status"] = ledger
+            limitation = ledger_limitation(ledger)
+            if limitation:
+                accounting["obligation_limitation"] = limitation
     case_name, out_rel = _case_and_out_label(out_dir)
     writable = out_dir.parent.name != "history"
     return {
@@ -201,9 +216,11 @@ def _dossier_payload(out_dir: Path, clearance: str = "confidential") -> dict:
         "out_dir": out_rel,
         "writable": writable,
         "dossier": view.to_dict(),
-        "audit": {"flags": flags, **summarize(flags),
+        "audit": {"flags": flags, **scan["summary"],
+                  "not_evaluated": ne,
+                  "not_evaluated_note": not_evaluated_note(ne),
                   "skills": skill_status(view)},
-        "accounting": dict(dossier.accounting or {}),
+        "accounting": accounting,
         "timeline": [
             {"index": r.index, "ts": r.ts, "actor": r.actor, "event": r.event}
             for r in chain.records

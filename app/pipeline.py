@@ -32,7 +32,8 @@ from app.agents.panel import (
     run_panel,
 )
 from app.config import Settings
-from app.core.audit import audit_all, summarize
+from app.core.audit import audit_all, audit_scan, summarize
+from app.core.gate_applicability import not_evaluated_note
 from app.core.citation_check import audit_dossier
 from app.core.confidence import recompute_all
 from app.core.conflicts import (
@@ -573,6 +574,7 @@ def run_case(spec: RunSpec | None = None,
         chair_client = None if injected_client else client
         synthesis = build_synthesis(dossier, chair_client, settings.models[0])
         from app.core.coverage_gap import (
+            ledger_limitation,
             subquestion_status,
             unused_topic_note,
             unused_topic_segments,
@@ -592,6 +594,11 @@ def run_case(spec: RunSpec | None = None,
         subs = subquestion_status(dossier, synthesis)
         if subs:
             dossier.accounting["subquestion_status"] = subs
+            # 台账来源偏弱（主题词/整题兜底）时必须留下一句声明：
+            # 「拆不出来」不等于「没有要做的事」
+            limitation = ledger_limitation(subs)
+            if limitation:
+                dossier.accounting["obligation_limitation"] = limitation
             issues = list(synthesis.get("open_issues") or [])
             for sq in subs:
                 if sq.get("status") != "unanswered":
@@ -613,6 +620,8 @@ def run_case(spec: RunSpec | None = None,
             "gate_notes": synthesis.get("gate_notes") or [],
             "n_unused_topic": len(unused),
             "n_subquestions": len(subs),
+            "ledger_sources": sorted({str(s.get("source") or "") for s in subs}),
+            "ledger_weak": bool(dossier.accounting.get("obligation_limitation")),
         })
         prog.note(mode=synthesis.get("mode"),
                   n_points=len(synthesis.get("points") or []))
@@ -622,6 +631,7 @@ def run_case(spec: RunSpec | None = None,
             if k in ("corpus_select", "query_rewrite", "slot_disclosures",
                      "repair_accept_rate", "panel_attrition",
                      "unused_topic_segments", "subquestion_status",
+                     "obligation_limitation",
                      "premise", "second_pass", "conflict_drops",
                      "mechanical_merge")}
     dossier.accounting = {
@@ -807,13 +817,20 @@ def render_report_md(dossier: Dossier, chain: HashChain, rejected: list[dict]) -
         ]
     subs = acc.get("subquestion_status") or []
     if subs:
+        from app.core.coverage_gap import LEDGER_SOURCE_CN
+
         st_cn = {"answered": "已答", "gap": "缺口", "unanswered": "未答"}
+        srcs = "、".join(sorted({LEDGER_SOURCE_CN.get(
+            s.get("source"), s.get("source") or "未知") for s in subs}))
         bits = [f"{st_cn.get(s.get('status'), s.get('status'))}｜"
                 f"{(s.get('text') or '')[:36]}" for s in subs]
         lines += [
-            f"**子问落点**：{'；'.join(bits)}",
+            f"**完整性判据**（{len(subs)} 条 · 来源：{srcs}）：{'；'.join(bits)}",
             "",
         ]
+        limitation = str(acc.get("obligation_limitation") or "").strip()
+        if limitation:
+            lines += [f"> ⚠️ {limitation}", ""]
     from app.core.retrieval import retrieval_note
 
     lines += [
@@ -907,6 +924,7 @@ _KIND_LABEL = {
     "level_consistency": "证据等级与信源类型不符",
     "causation_support": "因果标注缺乏机制词",
     "warrant_theme": "理由与主张无共同主题词",
+    "scope": "声称范围却无覆盖声明",
 }
 
 
@@ -915,8 +933,15 @@ def _render_flags_section(lines: list[str], dossier: Dossier) -> None:
 
     红（high）=算式复算不符/输入造假；黄（medium）=来源外数字、归并
     概括漂移、质证疑似歪曲、前提未覆盖等。警示不剔除内容——语义取舍
-    仍归分析师与读者，机械侧只保证「每个数字都能对账」。"""
-    flags = audit_all(dossier)
+    仍归分析师与读者，机械侧只保证「每个数字都能对账」。
+
+    「全部通过 ✅」是有条件的说法：**有闸本次没进场就不许写**。
+    2026-10-13 实测计数闸在 32/34 份存量产物里一个对象都没碰到，
+    旧文案把「没查」写成了「查过且干净」。未执行清单见 not_evaluated。"""
+    scan = audit_scan(dossier)
+    flags = scan["flags"]
+    ne = scan["not_evaluated"]
+    ne_note = not_evaluated_note(ne)
     lines += ["## 机械核对警示（零 LLM 复算）", ""]
     prem = (dossier.accounting or {}).get("premise") or {}
     prem_status = prem.get("status")
@@ -924,6 +949,11 @@ def _render_flags_section(lines: list[str], dossier: Dossier) -> None:
     unchecked = prem_status in ("no_candidates", "no_corpus")
     exempt = prem_status == "exempt_template"
     if not flags:
+        if ne:
+            lines += [f"- ⚪ {ne_note}", ""]
+            if unchecked and prem_note:
+                lines += [f"- {prem_note}", ""]
+            return
         if unchecked:
             fallback = {
                 "no_candidates": "议题前提：未核（议题未抽出可比对实体）",
@@ -942,6 +972,8 @@ def _render_flags_section(lines: list[str], dossier: Dossier) -> None:
                 "",
             ]
         return
+    if ne_note:
+        lines.append(f"- ⚪ {ne_note}")
     if unchecked and prem_note:
         lines.append(f"- ⚪ {prem_note}")
     elif exempt and prem_note:

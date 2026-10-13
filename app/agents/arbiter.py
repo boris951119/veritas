@@ -103,9 +103,13 @@ class Coordinator:
     def _materialize(dossier: Dossier, members: list[Conclusion],
                      statement: str) -> Conclusion:
         """成员结论 → 组结论：新建代表、证据转挂 + 同引文去重、成员标 merged。"""
+        from app.core.scope_state import Coverage
+
         group_con = Conclusion.create(
             statement=statement,
             authors=sorted({a for m in members for a in m.author_names()}),
+            # 覆盖声明不许在归并这一步蒸发：成员里最保守的那份往上并
+            coverage=Coverage.merge_declarations([m.coverage for m in members]),
         )
         dossier.conclusions.append(group_con)
         # 证据转挂 + 同引文去重：不同分析师摘了同一段原话时只保留一条

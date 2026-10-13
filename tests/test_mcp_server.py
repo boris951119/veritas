@@ -43,6 +43,13 @@ async def test_stdio_protocol_list_and_read(tmp_path):
             report = await session.call_tool("get_report",
                                              {"case": "demo-solid-state"})
             assert "conclusions" in report.content[0].text
+            # 第三方 Agent 必须拿到与工作台同口径的「未执行」与 clean——
+            # 只看 flags 数就宣布全部核对通过，是不许发生的
+            import json as _json
+            payload = _json.loads(report.content[0].text)["audit"]
+            assert {"flags", "not_evaluated", "summary",
+                    "n_flags", "clean"} <= set(payload)
+            assert payload["clean"] is False or not payload["not_evaluated"]
 
             verified = await session.call_tool("verify_chain",
                                                {"case": "demo-solid-state"})
