@@ -66,21 +66,22 @@
 <div class="wrap">
 
   <h1>veritas 架构与问题点地图</h1>
-  <div class="sub">多智能体可信研判与证据链溯源 · 实测状态版 · 2026-10-12（第三轮体检，刀十已过）　
-    规模：app 13,805 行 / web 1,800 行 / tests 7,279 行 · <b>418 项测试实跑全绿（2.11s）</b></div>
+  <div class="sub">多智能体可信研判与证据链溯源 · 实测状态版 · <b>2026-10-13 同步</b>（刀十一半过；编队空交付漏洞待修）　
+    测试套件实跑 <b>441 passed</b> · 产物锚点见文末 note · 本页给外部 bot 对齐用</div>
 
   <div class="scores">
-    <div class="score"><div class="l">产品分</div><div class="n">6.4</div><div class="t">6.0 → 6.2 → 6.4</div></div>
+    <div class="score"><div class="l">产品分</div><div class="n">6.4</div><div class="t">6.0 → 6.2 → 6.4（答案已抬，封面未诚实）</div></div>
     <div class="score"><div class="l">比赛分</div><div class="n">8.7</div><div class="t">8.0 → 8.5 → 8.7</div></div>
     <div class="score"><div class="l">机械闸</div><div class="n">21</div><div class="t">kind 全有 skill 配对</div></div>
-    <div class="score"><div class="l">已证病因</div><div class="n">3</div><div class="t">见文末病因表 + 图内红框</div></div>
+    <div class="score"><div class="l">已证病因</div><div class="n">3</div><div class="t">见文末病因表 + 图内红/黄框</div></div>
   </div>
 
   <div class="thesis">
     <b>一句话主张：</b>模型负责主张，程序负责复算。<br>
-    <b>当前真实状态：</b>这台审计机器的<b>核对能力已到位</b>（假引文进不来、无源数字亮灯、改一字即红），
-    但<b>判断能力没跟上</b>——窄题 10/10，开放题产出的是「过了全部闸、却推不出主张」的结论。
-    第三轮把病灶<b>照出来了</b>，还没<b>治好</b>。
+    <b>当前真实状态（2026-10-13）：</b>核对能力仍在；窄题本地 14B <b>9/10</b>（恒兴）；
+    开放题第一次因刀十一「答案本身变好」（风险台账被引用）。
+    <b>下一步不是先猜格式，而是让编队说实话：</b>谁没交、空卷还是晕倒——
+    <code>n_failures=0</code> ≠ 三人皆交付。详见「三分析师」黄框与刀六漏洞。
   </div>
 
   <div class="legend">
@@ -173,14 +174,27 @@
         <div class="does">接任何网关前先 1 次微型调用，机械判分给模型打"纪律遵从"档；noncompliant 改注强化规则 + 启用修复环。</div>
         <div class="issue">实测热态 11.6s。<b>提醒：</b>上次记的 218s 是本地 14B <b>冷启动加载</b>，不是浪费，别当成本账优化。</div></div>
 
-      <div class="node warn"><div class="head">三分析师独立研判 <span class="en">agents/panel</span> <span class="tag warn">黄</span></div>
-        <div class="does">主流/红队/技术推进三视角硬隔离，互不可见对方输出；per-agent 模型异构为配置项。
-          <b>刀十一已接：</b>首轮引文闸后对 <code>unused_topic_segments</code> 再定向一轮（<code>agents/second_pass</code>）。</div>
-        <div class="issue"><b>旧病灶（bi out_local14b）：</b>66 段只用 11 段；置信度挤在 ≤0.267；
-          <code>SRC2#s5</code>/<code>SRC6#s6</code> 风险台账 0 引用。
-          <b>进度（2026-10-13）：</b>定向冒烟在旧案卷上补出 5 条结论，
-          <b>同时引用 SRC2#s5 + SRC6#s6 + SRC4#s2</b>（64s / 本地 14B）；
-          全管线重跑后「多数置信度 &gt;0.27」仍待验，故黄不绿。</div></div>
+      <div class="node warn"><div class="head">三分析师独立研判 <span class="en">agents/panel · second_pass</span> <span class="tag warn">黄</span></div>
+        <div class="does">主流 / 红队 / 技术推进三视角硬隔离；per-agent 模型可异构。
+          刀十一：首轮引文闸后对未用议题相关段再定向一轮（<code>agents/second_pass</code>）。</div>
+        <div class="issue">
+          <b>已合：</b>硬隔离；刀十一接线（引用上半判据过）；对撞提示词收口（防 Markdown 跑题）。<br>
+          <b>产物（bi <code>out_local14b_knife11</code>，本地 14B，224s）：</b>
+          panel <code>n_failures=0</code>、<code>n_analysts=3</code>、首轮仅 4 条结论；
+          二次定向 <code>ok</code>，焦点含 SRC2#s5 / SRC6#s6，引用 <b>2 / 4</b>；
+          终表 11 条结论署名：mainstream×7、redteam×4、<b>technologist×0</b>；
+          max 置信度 <b>0.17</b>（agreement 按原编队 1/3 封顶）。
+          封面仍写「研判编队：mainstream、redteam、technologist」——<b>封面在撒谎</b>。<br>
+          <b>本机已合（2026-10-13，不烧云端）：</b><br>
+          ① ✅ <b>刀六补洞</b>：空交付计入 <code>failures_from_panel_results</code>；
+            原因码 empty/超时/非JSON；首屏「编队减员」；panel 名册剔未交付者。
+            离线复放 knife11 → technologist（空交付），见
+            <code>report_attrition_replay.md</code>。<br>
+          ② ✅ <b>刀十二</b>：结论行「仅 1 人署名」/「N 人署名」（报告 MD + 工作台）。<br>
+          <b>仍未修（整格改绿还需）：</b><br>
+          ③ 刀十一下半：多数置信度 &gt;0.27（多人真交付／归并抬署名；宜云端复跑）。<br>
+          ④ 首轮开放题覆盖仍偏弱（二次定向是补丁）。
+        </div></div>
 
       <div class="node"><div class="head">引文逐字核对 <span class="en">citation_check</span> <span class="tag ok">绿</span></div>
         <div class="does">NFC 归一 + 空白/半全角/Markdown 记号剔除后做子串命中；跨段省略号按段切分依序核。零模型、毫秒级、可复现。</div>
@@ -191,16 +205,21 @@
         <div class="issue"><b>刀二已落地：</b><code>max_repairs</code> 6→2 + 连败熔断，耗时 509s → <b>38.9s</b>，
           账本新增 <code>repair_accept_rate</code>（本轮 0）——这类环从此可度量。</div></div>
 
-      <div class="node bad"><div class="head">归并 · 冲突 · 质证 · 仲裁 <span class="en">agents/arbiter</span> <span class="tag bad">红</span></div>
-        <div class="does">语义归并（证据转挂、同引文去重、署名继承）→ 冲突检测 → 各一轮书面质证 → 按证据强度仲裁，败方转"少数意见"不删。</div>
-        <div class="issue"><b>实测 6 场冲突：4 场判平局（未裁决），2 场真裁决——而那 2 场恰恰是配错了的：</b>
-          议题「客户C 坏账风险」把 A=客户C 的结论和 B=客户B 的结论配成一对，裁决建立在跨主体错配之上。
-          配对过程<b>没有锁主体</b>。同一类错误（"客户B 不存在回款风险、无坏账风险"）在主表里沉默存在，冲突层没检出。</div></div>
+      <div class="node warn"><div class="head">归并 · 冲突 · 质证 · 仲裁 <span class="en">agents/arbiter · conflict_pairing</span> <span class="tag warn">黄</span></div>
+        <div class="does">语义归并 → <b>程序按主体×议题维生成候选</b> → 模型只判真对立 → 质证 → 仲裁。
+          跨主体永不进场；丢弃写入 <code>conflict_drops</code> 并报告披露；同主体极性对立强制补召。</div>
+        <div class="issue"><b>旧病灶（knife1）：</b>6 场冲突中 2 场 C↔B 错配且给出 winner。
+          <b>已修（2026-10-13）：</b>主体闸 + 候选主路径；knife1 离线复放那 2 场错配被挡并披露；
+          同主体「无坏账↔计提坏账」单测补召过。
+          <b>仍黄：</b>未用云端额度重跑全管线 collab；召回词表/议题维仍粗。
+          验收靶子是 <code>out_local14b_knife1</code>，<b>不是</b>冲突为 0 的 knife11。</div></div>
 
       <div class="node warn"><div class="head">置信度融合 <span class="en">confidence</span> <span class="tag warn">黄</span></div>
         <div class="does">强度 × 覆盖 × 一致性三分量可解释乘法，人工删证据/改权重后走同一入口增量重算。</div>
-        <div class="issue"><b>一致性被单点压死：</b>一个分析师超时 → 全部结论变单人署名 → agreement 封顶 1/N → 整份报告天花板 0.267。
-          已按原编队人数显式封顶并在首屏披露（刀六）。<b>刻意不做校准表</b>（分数分桶 vs 命中率），文档以诚实边界替代——甲方若问"0.27 等于几成把握"，答不了。</div></div>
+        <div class="issue"><b>一致性被单点压死：</b>原编队 N=3 时单人署名 agreement≤1/3 →
+          旧 bi 天花板 ~0.267；刀十一后 bi 更低（max <b>0.17</b>），因实际只有 1～2 人署名、
+          二次定向也是 mainstream 补做。刀六封顶逻辑在「有 failures」时进首屏；
+          <b>空交付时封顶披露也不出现</b>。<b>刻意不做校准表</b>——0.17≠命中率。</div></div>
 
       <div class="node warn"><div class="head">主席汇总 <span class="en">agents/chair</span> <span class="tag warn">黄</span></div>
         <div class="does">输入封闭（只见过闸结论），输出正面回答 + 逐要点 + 分歧与缺口；四道机械闸；模型违规则原文顶替而非丢弃；零 LLM 模板兜底。</div>
@@ -245,12 +264,14 @@
   <h2 class="sec-title">三条已证病因（与图上红/黄框对应）</h2>
   <table>
     <tr><th style="width:52px">#</th><th style="width:31%">病因</th><th>位置</th><th style="width:34%">最硬的一条证据</th></tr>
-    <tr><td class="c"><b style="color:var(--bad)">1</b></td><td><b>答案质量双峰</b><br>窄题与开放题差一个数量级</td><td>③ 三分析师独立研判</td>
-      <td>恒兴 10 问真模型 10/10（数字精确到分）；bi 24 条结论全挤 0.18–0.267、66 段只用 11 段</td></tr>
+    <tr><td class="c"><b style="color:var(--warn)">1</b></td><td><b>答案质量双峰</b><br>窄题稳、开放题曾废；刀十一抬了一截</td><td>③ 三分析师独立研判</td>
+      <td>恒兴本地 14B <b>9/10</b>（Q6 挂）。旧 bi：风险台账 0 引用、置信度挤 ≤0.267。
+        新 bi knife11：SRC6#s6×4 / SRC2#s5×2，答案变好；但封面仍装三人、max 置信度 0.17</td></tr>
     <tr><td class="c"><b style="color:var(--bad)">2</b></td><td><b>程序复算不管"支不支持"</b><br>闸校验出处与算术，不校验推理</td><td>④ 机械闸族</td>
       <td>「客户C 不存在人员流失风险，<b>因为</b>账目统计截止日为 2025-03-31」——引文真、A 级、数字有出处。刀七现在会亮黄灯，结论仍留在报告里，答案没有因此改写</td></tr>
-    <tr><td class="c"><b style="color:var(--warn)">3</b></td><td><b>"照出来"≠"治好"</b><br>披露曾不回灌；刀十一已接反馈</td><td>②③ 未用段 → 二次定向</td>
-      <td>旧：<code>coverage_gap</code> 只披露 SRC6#s6。新：定向冒烟已用该清单补出引用 SRC6#s6 的结论；全管线置信度抬升仍待重跑</td></tr>
+    <tr><td class="c"><b style="color:var(--warn)">3</b></td><td><b>封面曾说谎 / 空交付曾不显影</b><br>已修披露；质量下半仍在</td><td>③ panel（刀六已补）</td>
+      <td>旧：technologist 0 条却印三人。新：空交付进减员首屏（复放已证）。
+        整格仍黄：置信度 &gt;0.27 与第三人真交卷未验</td></tr>
   </table>
 
   <!-- 刀口状态 -->
@@ -262,29 +283,29 @@
     <tr><td>三</td><td>案卷复用 + 前缀缓存</td><td class="c">0.5 天</td><td class="c"><span class="tag warn">搁置</span></td><td>待云端额度恢复后验证网关是否返回 <code>cached_tokens</code>；token 未降</td></tr>
     <tr><td>四</td><td>成绩单作者判／盲判分列</td><td class="c">2 小时</td><td class="c"><span class="tag warn">半</span></td><td>已按 9.5 计并分列；<b>盲判栏仍空</b>，未填前不得对外报 10/10</td></tr>
     <tr><td>五</td><td>交件口径对齐</td><td class="c">1 小时</td><td class="c"><span class="tag ok">已合</span></td><td>文档改为 13,700 行 / 407 测（当前实为 13,805 / 418，轻微滞后）</td></tr>
-    <tr><td>六</td><td>编队减员显影进首屏</td><td class="c">1 小时</td><td class="c"><span class="tag ok">已合</span></td><td>实测渲染出"3 人中 1 人未交付（redteam 超时）…封顶 0.3333"；<code>panel</code> 收成实际交付者</td></tr>
+    <tr><td>六</td><td>编队减员显影进首屏（含空交付）</td><td class="c">1 小时</td><td class="c"><span class="tag ok">已过</span></td><td>空交付 + 抛错均显影；单测 7 条；knife11 离线复放点名 technologist（空交付）。
+      空交付不炸管线（仍出报告）</td></tr>
     <tr><td>七</td><td>理由—主张相关性闸</td><td class="c">0.5 天</td><td class="c"><span class="tag ok">已合</span></td><td>bi 11 命中 / 恒兴 0 误伤；谣言假警报已由刀十收口</td></tr>
     <tr><td>八</td><td>含议题词却零引用的段落列出</td><td class="c">0.5 天</td><td class="c"><span class="tag ok">已合</span></td><td>实测列出 SRC2#s5、SRC6#s6（比预期多一张）；恒兴 0 噪音</td></tr>
     <tr><td>九</td><td>复合子问三态不得静默丢</td><td class="c">0.5 天</td><td class="c"><span class="tag ok">已合</span></td><td>真实议题判出 Q1 answered / Q2 gap</td></tr>
     <tr><td>十</td><td>否定式主张放行（修刀七假警报）</td><td class="c">1 小时</td><td class="c"><span class="tag ok">已过</span></td><td>离线复放旧产物：谣言黄灯 <b>3→0</b>，bi 仍 <b>11</b>，恒兴仍 <b>0</b>。说明复述不算支持</td></tr>
-    <tr><td><b style="color:var(--warn)">十一</b></td><td><b>未用关键段 → 二次定向研判</b></td><td class="c">1 天</td><td class="c"><span class="tag warn">半</span></td><td>代码已合（<code>second_pass</code> + 管线钩子 + 4 单测）；本地 14B 定向冒烟 <b>引用 SRC2#s5/SRC6#s6</b>，5 条新结论（桌面 <code>bi-knife11-second-pass-smoke.json</code>）。判据下半：全管线多数置信度 &gt;0.27 仍待重跑</td></tr>
-    <tr><td>十二</td><td>单人署名渲染进每条结论行</td><td class="c">0.5 小时</td><td class="c"><span class="tag bad">未做</span></td><td>封顶只在首屏，读者不懂 24 条为何都是 0.3333</td></tr>
-    <tr><td>—</td><td>冲突配对加主体约束</td><td class="c">2 小时</td><td class="c"><span class="tag bad">未做</span></td><td>本轮实测确认：2 场真裁决建立在客户C↔客户B 错配之上</td></tr>
+    <tr><td><b style="color:var(--warn)">十一</b></td><td><b>未用关键段 → 二次定向研判</b></td><td class="c">1 天</td><td class="c"><span class="tag warn">半</span></td><td>全管线本地 14B（224s）：二次定向 <code>ok</code>，焦点含 SRC2#s5/SRC6#s6，引用 <b>2 / 4</b> 次——上半判据过。下半未过：11 条结论 max <b>0.17</b>，无一 &gt;0.27（单署名封顶）。产物 <code>out_local14b_knife11/</code></td></tr>
+    <tr><td>十二</td><td>单人署名渲染进每条结论行</td><td class="c">0.5 小时</td><td class="c"><span class="tag ok">已过</span></td><td>报告「研判方：…（仅 1 人署名）」；工作台同步。
+      复放 MD 可见</td></tr>
+    <tr><td>—</td><td>冲突配对加主体约束 + 丢弃披露 + 极性补召</td><td class="c">0.5 天</td><td class="c"><span class="tag warn">半</span></td><td>代码已合（<code>conflict_pairing</code>）；knife1 复放挡 C↔B；
+      报告「配对丢弃」行；451 测。全管线云端/本地长跑 collab 复验后改已过</td></tr>
   </table>
 
   <div class="note">
-    <b>本图怎么验的（重要）：</b>绿/黄/红不是按文档抄的。
-    刀六～十等曾用 <code>Dossier.from_json</code> 离线喂旧产物验收闸；测试套件持续全绿（当前 <b>441</b>）。<br>
-    <b>2026-10-12～13 进度补记（你盯的收窄层）：</b>
-    ① 问句拓展改主路径（模型同义 + 约束闸）+ 本地 14B <b>8/8 ok</b>；
-    ② BM25/选料：南山铝业 <b>库内 268 → 纳入 8</b>，盲区 3 场景名次未抬（诚实）；
-    ③ 前提闸 Q9 免核 + 恒兴本地 10 问约 <b>9/10</b>（Q6 挂）；
-    ④ <b>刀十一半过：</b>未用关键段二次定向已接线；bi 旧案卷定向冒烟同时引用 SRC2#s5/SRC6#s6（64s）。
-    ⑤ bi 全管线两轮失败：本地 14B 被对撞台账带成 Markdown「数字冲突分析」（探测 compliant 也挡不住）；已收紧 <code>facts_block</code> + 用户末行 JSON 提醒后重跑。
-    详表 <code>docs/local-retrieval-smoke-2026-10-12.md</code>、
-    <code>cases/user-20261008-144308/out_local14b_10q/SCORECARD_local14b.md</code>、<code>cases/bi-delivery-risk/out_local14b_knife11/</code>。<br>
-    <b>仍未完成（须云端额度或本地长跑）：</b>正式网关重跑恒兴换成绩单；拓展/盲区云端验收；
-    bi 全管线重跑验置信度 &gt;0.27；官方召回用例到手前 BM25 格不改绿。
+    <b>给外部 bot 的当前指令对齐：</b>
+    冲突主体闸已合：验收用 <code>out_local14b_knife1</code>（勿用 knife11 的 0 冲突）。
+    复放：错配 2 对丢弃并披露，保留 4 对。三分析师格仍黄（置信度下半 / 云端复跑）。<br><br>
+    <b>本图怎么验的：</b>绿/黄/红按产物。测试套件 <b>451 passed</b>。
+    锚点：
+    <code>out_local14b_knife1/conflict_subject_gate_replay.*</code>、
+    <code>out_local14b_knife11/report_attrition_replay.md</code>、
+    <code>SCORECARD_local14b.md</code>。<br>
+    <b>2026-10-13 本机收口：</b>刀六/十二已过；刀十一引用上半过；冲突主体约束半过（缺全管线重跑）。
   </div>
 
 </div>

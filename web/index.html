@@ -1567,7 +1567,7 @@ function renderChains(d){
         <div class="conf"><b style="color:${confColor(con.confidence)}">${con.confidence.toFixed(2)}</b>
           <div class="bar"><i style="width:${(con.confidence*100).toFixed(0)}%;background:${confColor(con.confidence)}"></i></div></div>
         <div class="chips">${chips}</div>
-        <div class="who">研判视角：${esc(zhRoles(con.authors&&con.authors.length?con.authors:[con.author]))}</div>
+        <div class="who">研判视角：${esc(zhRoles(con.authors&&con.authors.length?con.authors:[con.author]))}${authorSignLabel(con)}</div>
         <div class="editrow">
           <input type="text" id="edit-${esc(con.id)}" value="${esc(con.statement)}" placeholder="改写这条判断">
           <button class="mini" onclick="editCon('${esc(con.id)}')">保存改写</button>
@@ -1611,17 +1611,24 @@ function renderConflicts(d){
   }).join("")||`<div class="empty">本轮没有需要处置的分歧。</div>`;
 }
 function statementOf(d,id){const c=(d.conclusions||[]).find(x=>x.id===id);return c?c.statement:"（该条已不存在）"}
+function authorSignLabel(con){
+  const a=con.authors&&con.authors.length?con.authors:[con.author];
+  const n=(a||[]).filter(Boolean).length;
+  if(n<=0) return "（无署名）";
+  if(n===1) return "（仅 1 人署名）";
+  return `（${n} 人署名）`;
+}
 function renderDissents(d){
   const ds=d.conclusions.filter(c=>c.status==="dissent");
   $("#dissents").innerHTML=ds.map(c=>`<div class="dissent">「${esc(c.statement)}」
-    <span class="sub">视角 ${esc(zhRoles(c.authors&&c.authors.length?c.authors:[c.author]))}</span>
+    <span class="sub">视角 ${esc(zhRoles(c.authors&&c.authors.length?c.authors:[c.author]))}${authorSignLabel(c)}</span>
     ${(c.dissent||[]).map(x=>`<div class="dissent-note">裁决记录：${esc(hideIds(x.why||""))}</div>`).join("")}
     </div>`).join("")||`<div class="empty">没有少数意见。</div>`;
 }
 function renderInsufficient(d){
   const ds=(d.conclusions||[]).filter(c=>c.status==="insufficient");
   $("#insufficient").innerHTML=ds.map(c=>`<div class="dissent">「${esc(c.statement)}」
-    <span class="sub">视角 ${esc(zhRoles(c.authors&&c.authors.length?c.authors:[c.author]))} · 置信度记为零</span>
+    <span class="sub">视角 ${esc(zhRoles(c.authors&&c.authors.length?c.authors:[c.author]))}${authorSignLabel(c)} · 置信度记为零</span>
     </div>`).join("")||`<div class="empty">没有因证据全灭而停在台面上的判断。</div>`;
 }
 function renderRejected(d){

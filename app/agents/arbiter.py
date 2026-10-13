@@ -12,10 +12,16 @@ from __future__ import annotations
 from app.agents.base import extract_json
 from app.agents.prompts import (
     ARBITER_SYSTEM,
+    CONFLICT_JUDGE_SYSTEM,
     CONFLICT_SYSTEM,
     MERGE_SYSTEM,
     REBUTTAL_TEMPLATE,
     render_conclusions_block,
+)
+from app.core.conflict_pairing import (
+    build_candidate_pairs,
+    drops_record,
+    subject_mismatch_reason,
 )
 from app.core.conflicts import (
     ConflictPair,
@@ -103,31 +109,140 @@ class Coordinator:
 
     def detect_conflicts(self, dossier: Dossier,
                          conclusion_ids: list[str]) -> list[ConflictPair]:
-        """LLM 找冲突对 → 机械校验（id 存在、双方挂证）→ 只留合法对。"""
+        """程序候选（主体×议题）→ LLM 判真对立 → 主体闸；丢弃入账。"""
         active = [i for i in conclusion_ids if self._is_active(dossier, i)]
         if len(active) < 2:
+            dossier.accounting["conflict_drops"] = drops_record(
+                [], n_candidates=0, n_accepted=0)
             return []
-        try:
-            messages = [
-                {"role": "system", "content": CONFLICT_SYSTEM},
-                {"role": "user", "content": render_conclusions_block(dossier, active)},
-            ]
-            data = extract_json(
-                self.client.chat(self.model, messages, json_mode=True).content)
-            raw = data.get("conflicts") or []
-        except Exception:
-            return []
+
+        candidates = build_candidate_pairs(dossier, active)
+        cand_keys = {
+            tuple(sorted((c["a"], c["b"]))) for c in candidates
+        }
+        forced_keys = {
+            tuple(sorted((c["a"], c["b"])))
+            for c in candidates if c.get("forced_polarity")
+        }
+        drops: list[dict] = []
+        raw: list = []
+        used_judge = False
+
+        if candidates:
+            used_judge = True
+            try:
+                lines = ["候选冲突对（只许从中挑选）：", ""]
+                for i, c in enumerate(candidates, 1):
+                    ca = dossier.conclusion(c["a"])
+                    cb = dossier.conclusion(c["b"])
+                    lines.append(
+                        f"{i}. a={c['a']}「{(ca.statement if ca else '')[:60]}」"
+                        f" vs b={c['b']}「{(cb.statement if cb else '')[:60]}」"
+                        f" · {c.get('topic')}"
+                        + (" · 极性对立补召" if c.get("forced_polarity") else "")
+                    )
+                lines.append("")
+                lines.append(render_conclusions_block(dossier, active))
+                data = extract_json(self.client.chat(self.model, [
+                    {"role": "system", "content": CONFLICT_JUDGE_SYSTEM},
+                    {"role": "user", "content": "\n".join(lines)},
+                ], json_mode=True).content)
+                raw = data.get("conflicts") or []
+            except Exception:
+                raw = []
+                # 判读失败：极性对立候选机械补召，保证漏检有底
+                for c in candidates:
+                    if c.get("forced_polarity"):
+                        raw.append({
+                            "a": c["a"], "b": c["b"],
+                            "topic": c.get("topic") or "同主体极性对立",
+                            "description": "同主体自相矛盾（程序补召，判读失败兜底）",
+                        })
+        else:
+            # 无程序候选（多为无主体标签）→ 自由检出，事后主体闸
+            try:
+                data = extract_json(self.client.chat(self.model, [
+                    {"role": "system", "content": CONFLICT_SYSTEM},
+                    {"role": "user",
+                     "content": render_conclusions_block(dossier, active)},
+                ], json_mode=True).content)
+                raw = data.get("conflicts") or []
+            except Exception:
+                raw = []
+
         pairs: list[ConflictPair] = []
+        accepted_keys: set[tuple[str, str]] = set()
         for item in raw:
             if not isinstance(item, dict):
                 continue
+            a_id = str(item.get("a", ""))
+            b_id = str(item.get("b", ""))
+            key = tuple(sorted((a_id, b_id)))
+            if used_judge and key not in cand_keys:
+                drops.append({
+                    "a": a_id, "b": b_id,
+                    "reason": "非候选对（禁止新增/跨主体）",
+                })
+                continue
+            mismatch = subject_mismatch_reason(dossier, a_id, b_id)
+            if mismatch:
+                drops.append({"a": a_id, "b": b_id, "reason": mismatch})
+                continue
             pair = ConflictPair(
-                a_id=str(item.get("a", "")), b_id=str(item.get("b", "")),
+                a_id=a_id, b_id=b_id,
                 topic=str(item.get("topic", "")),
                 description=str(item.get("description", "")),
             )
-            if not validate_conflict(pair, dossier):
+            problems = validate_conflict(pair, dossier)
+            if problems:
+                drops.append({
+                    "a": a_id, "b": b_id,
+                    "reason": "非法对：" + "；".join(problems),
+                })
+                continue
+            if key in accepted_keys:
+                continue
+            accepted_keys.add(key)
+            pairs.append(pair)
+
+        # 判读成功但漏掉极性对立：补召进场（丢弃必披露的对偶：补召也记账）
+        if used_judge:
+            for c in candidates:
+                if not c.get("forced_polarity"):
+                    continue
+                key = tuple(sorted((c["a"], c["b"])))
+                if key in accepted_keys:
+                    continue
+                pair = ConflictPair(
+                    a_id=c["a"], b_id=c["b"],
+                    topic=str(c.get("topic") or "同主体极性对立"),
+                    description="同主体自相矛盾（程序补召）",
+                )
+                problems = validate_conflict(pair, dossier)
+                if problems:
+                    drops.append({
+                        "a": c["a"], "b": c["b"],
+                        "reason": "非法对：" + "；".join(problems),
+                    })
+                    continue
+                accepted_keys.add(key)
                 pairs.append(pair)
+
+        # 候选中未被采纳且非补召进场的 → 记非真对立（披露）
+        if used_judge:
+            for c in candidates:
+                key = tuple(sorted((c["a"], c["b"])))
+                if key in accepted_keys:
+                    continue
+                if c.get("forced_polarity"):
+                    continue  # 已补召或非法
+                drops.append({
+                    "a": c["a"], "b": c["b"],
+                    "reason": "非真对立（模型未选且非极性强制）",
+                })
+
+        dossier.accounting["conflict_drops"] = drops_record(
+            drops, n_candidates=len(candidates), n_accepted=len(pairs))
         return pairs
 
     # -- 辩论（质证一轮，轮数护栏=1）---------------------------------------

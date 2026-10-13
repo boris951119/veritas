@@ -78,7 +78,7 @@ class ConflictPair:
 
 
 def validate_conflict(pair: ConflictPair, dossier: Dossier) -> list[str]:
-    """冲突对机械校验：id 存在、a≠b、双方各挂至少一条存活证据。"""
+    """冲突对机械校验：id 存在、a≠b、双方挂证、主体一致。"""
     problems: list[str] = []
     if pair.a_id == pair.b_id:
         problems.append("冲突双方 id 相同")
@@ -88,6 +88,12 @@ def validate_conflict(pair: ConflictPair, dossier: Dossier) -> list[str]:
             problems.append(f"结论不存在: {cid}")
         elif not dossier.evidences_of(cid):
             problems.append(f"结论 {cid} 无存活证据，不构成可裁决冲突")
+    if not problems:
+        from app.core.conflict_pairing import subject_mismatch_reason
+
+        mismatch = subject_mismatch_reason(dossier, pair.a_id, pair.b_id)
+        if mismatch:
+            problems.append(mismatch)
     return problems
 
 

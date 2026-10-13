@@ -1,22 +1,57 @@
-"""编队减员显影：有人未交付时必须写进报告首屏，不得装成全员到齐。"""
+"""编队减员显影：有人未交付时必须写进报告首屏，不得装成全员到齐。
+
+未交付含两类：
+- 抛错 / 超时（run_panel 的 _failures）；
+- 空交付：调用成功但 0 条结论（刀六漏洞：此前只认前者）。
+"""
 
 from __future__ import annotations
 
 import re
+from typing import Any
 
-from app.core.evidence import Dossier
+from app.core.evidence import Conclusion, Dossier
 
 
 def _short_reason(err: str) -> str:
     text = (err or "").strip()
     if not text:
         return "失败"
+    if re.search(r"^empty\b|零结论|空交付", text, re.I):
+        return "空交付"
     if re.search(r"timeout|超时", text, re.I):
         return "超时"
     if re.search(r"RateLimit|额度|quota", text, re.I):
         return "额度/限流"
+    if re.search(r"JSON|json|找不到 JSON", text, re.I):
+        return "非JSON"
     head = text.split(":", 1)[0].strip()
     return head[:24] if head else "失败"
+
+
+def failures_from_panel_results(
+    roster: list[str],
+    results: dict[str, Any],
+) -> dict[str, str]:
+    """合并 exception 失败与空交付 → 未交付字典。"""
+    roster = [str(x) for x in roster if str(x).strip()]
+    fails = {
+        str(k): str(v)
+        for k, v in (results.get("_failures") or {}).items()
+        if k
+    }
+    for name in roster:
+        if name in fails:
+            continue
+        cons = results.get(name)
+        if cons is None:
+            fails[name] = "empty: 未返回结论"
+        elif isinstance(cons, list) and len(cons) == 0:
+            fails[name] = "empty: 零结论交付"
+        elif not isinstance(cons, list):
+            # 防御：非列表当未交付
+            fails[name] = "empty: 未返回结论"
+    return fails
 
 
 def panel_attrition_record(roster: list[str],
@@ -60,3 +95,13 @@ def apply_panel_attrition(dossier: Dossier, roster: list[str],
     dossier.panel = list(rec["delivered"])
     dossier.accounting["panel_attrition"] = rec
     return rec
+
+
+def author_count_label(con: Conclusion) -> str:
+    """刀十二：结论行署名人数脚注。"""
+    n = len(con.author_names())
+    if n <= 0:
+        return "（无署名）"
+    if n == 1:
+        return "（仅 1 人署名）"
+    return f"（{n} 人署名）"

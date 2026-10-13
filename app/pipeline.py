@@ -455,10 +455,15 @@ def run_case(spec: RunSpec | None = None,
         results = run_panel(dossier, analysts, on_done=_on_analyst_done)
         for name, err in results.get("_failures", {}).items():
             chain.append("analyst_failed", name, {"error": err})
-        from app.core.panel_attrition import apply_panel_attrition
+        from app.core.panel_attrition import (
+            apply_panel_attrition, failures_from_panel_results,
+        )
 
-        attrition = apply_panel_attrition(
-            dossier, roster_names, results.get("_failures") or {})
+        fail_map = failures_from_panel_results(roster_names, results)
+        for name, err in fail_map.items():
+            if name not in (results.get("_failures") or {}):
+                chain.append("analyst_empty", name, {"error": err})
+        attrition = apply_panel_attrition(dossier, roster_names, fail_map)
         if attrition:
             chain.append("panel_attrition", "pipeline", {
                 "n_roster": attrition.get("n_roster"),
@@ -471,11 +476,15 @@ def run_case(spec: RunSpec | None = None,
                               e.relation.value, e.author, e.note,
                               e.conclusion_id)
         dossier.evidences.sort(key=_ev_key)
-        if results.get("_failures") and not majority_conclusions(dossier):
+        # 硬失败（抛错）且无人产出才炸；空交付只显影减员，仍出报告。
+        exc_fails = results.get("_failures") or {}
+        if exc_fails and not majority_conclusions(dossier):
             raise RuntimeError(
-                f"全部分析师研判失败: {results['_failures']}")
+                f"全部分析师研判失败: {exc_fails}")
         prog.note(n_conclusions=len(dossier.conclusions),
-                  n_failures=len(results.get("_failures") or {}))
+                  n_failures=len(exc_fails),
+                  n_empty=sum(1 for e in fail_map.values()
+                              if str(e).startswith("empty")))
 
     with prog.stage("citation", "引文逐字核对"):
         rejected = _reject_failed_citations(dossier, chain)
@@ -613,7 +622,7 @@ def run_case(spec: RunSpec | None = None,
             if k in ("corpus_select", "query_rewrite", "slot_disclosures",
                      "repair_accept_rate", "panel_attrition",
                      "unused_topic_segments", "subquestion_status",
-                     "premise", "second_pass")}
+                     "premise", "second_pass", "conflict_drops")}
     dossier.accounting = {
         **kept,
         "elapsed_s": round(time.monotonic() - t0, 1),
@@ -715,7 +724,13 @@ def _run_collaboration(dossier: Dossier, ctx: CollabCtx) -> None:
     chain.append("merged", "coordinator", {"n_active": len(active)})
 
     pairs = coordinator.detect_conflicts(dossier, active)
-    chain.append("conflicts_detected", "coordinator", {"n_pairs": len(pairs)})
+    drops_acc = (dossier.accounting or {}).get("conflict_drops") or {}
+    chain.append("conflicts_detected", "coordinator", {
+        "n_pairs": len(pairs),
+        "n_candidates": drops_acc.get("n_candidates"),
+        "n_dropped": drops_acc.get("n_dropped"),
+        "conflict_drops_note": drops_acc.get("note") or "",
+    })
 
     for pair in pairs:
         rebuts = coordinator.run_rebuttals(dossier, pair)      # 内部单侧降级
@@ -807,11 +822,15 @@ def render_report_md(dossier: Dossier, chain: HashChain, rejected: list[dict]) -
     if not majors:
         lines.append("（无结论——检查资料覆盖或分析师输出）")
     majors.sort(key=lambda c: c.confidence, reverse=True)
+    from app.core.panel_attrition import author_count_label
+
     for con in majors:
         lines.append(f"### {con.statement}")
         lines.append("")
         lines.append(f"- 置信度：**{con.confidence:.2f}**（{con.confidence_parts}）")
-        lines.append(f"- 研判方：{'、'.join(con.author_names()) or 'N/A'}")
+        lines.append(
+            f"- 研判方：{'、'.join(con.author_names()) or 'N/A'}"
+            f"{author_count_label(con)}")
         _render_evidence_table(lines, dossier, con)
         lines.append("")
 
@@ -819,8 +838,10 @@ def render_report_md(dossier: Dossier, chain: HashChain, rejected: list[dict]) -
     if insuff:
         lines += ["## 证据不足（未进入主表）", ""]
         for con in insuff:
-            lines.append(f"- {con.statement}（研判方："
-                         f"{'、'.join(con.author_names()) or 'N/A'}）")
+            lines.append(
+                f"- {con.statement}（研判方："
+                f"{'、'.join(con.author_names()) or 'N/A'}"
+                f"{author_count_label(con)}）")
         lines.append("")
 
     _render_question_preflight(lines, dossier)
@@ -1022,9 +1043,17 @@ def _render_triage_ledger(lines: list[str], dossier: Dossier) -> None:
 
 
 def _render_conflicts_section(lines: list[str], dossier: Dossier) -> None:
-    if not dossier.conflicts:
+    drop_note = str(
+        ((dossier.accounting or {}).get("conflict_drops") or {}).get("note")
+        or "").strip()
+    if not dossier.conflicts and not drop_note:
         return
     lines += ["## 分歧识别与消解", ""]
+    if drop_note:
+        lines += [f"**配对丢弃**：{drop_note}", ""]
+    if not dossier.conflicts:
+        lines += ["（无进入裁决的冲突对）", ""]
+        return
     for c in dossier.conflicts:
         pair_lines = [
             f"### 冲突：{c.get('topic') or '结论对立'}",
@@ -1057,14 +1086,18 @@ def _render_conflicts_section(lines: list[str], dossier: Dossier) -> None:
 
 
 def _render_dissent_section(lines: list[str], dossier: Dossier) -> None:
+    from app.core.panel_attrition import author_count_label
+
     dissents = dissent_conclusions(dossier)
     if not dissents:
         return
     lines += ["## 少数意见（依规保留）", ""]
     for con in dissents:
-        lines.append(f"- 「{con.statement}」（研判方："
-                     f"{'、'.join(con.author_names()) or 'N/A'}）——"
-                     "经仲裁证据加权后列为少数意见，原始证据保留可查")
+        lines.append(
+            f"- 「{con.statement}」（研判方："
+            f"{'、'.join(con.author_names()) or 'N/A'}"
+            f"{author_count_label(con)}）——"
+            "经仲裁证据加权后列为少数意见，原始证据保留可查")
     lines.append("")
 
 
