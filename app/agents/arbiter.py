@@ -49,12 +49,23 @@ class Coordinator:
                           conclusion_ids: list[str]) -> list[str]:
         """同义结论归并成组；返回活跃结论 id（多数结论）清单。
 
-        多人组物化：新建组结论继承成员全部证据（证据转挂）与全体署名，
-        成员结论标 status="merged" 保留溯源。失败降级返回原清单。
+        两段：① LLM 语义归并（判「语义相同或高度相近」）；② 机械归并补一轮
+        （core/merge_mechanical：同主体×同议题×同极性，零 LLM）。第②段专治
+        模型判得保守时「24 条结论归并 0 组」——客户拿到没去重的清单、
+        一致性分量被单署名压死。多人组物化：新建组结论继承成员全部证据
+        （证据转挂、同引文去重）与全体署名，成员标 status="merged" 保留溯源。
+        LLM 段失败只降级掉①，②照常。
         """
         active = [i for i in conclusion_ids if self._is_active(dossier, i)]
         if len(active) < 2:
+            # 早退也必须记账：否则「没有归并记录」与「没跑归并」在产物里长一样
+            dossier.accounting["mechanical_merge"] = {
+                "n_llm_groups": 0, "n_mech_groups": 0, "n_members_absorbed": 0,
+                "n_cross_author_groups": 0,
+                "note": f"活跃结论仅 {len(active)} 条，未进入归并环节",
+            }
             return active
+        groups: list = []
         try:
             messages = [
                 {"role": "system", "content": MERGE_SYSTEM},
@@ -64,9 +75,10 @@ class Coordinator:
                 self.client.chat(self.model, messages, json_mode=True).content)
             groups = [g for g in data.get("groups") or [] if isinstance(g, dict)]
         except Exception:
-            return active  # 降级：不归并，全部保留
+            groups = []           # 降级：只掉语义归并，机械闸仍补
 
         merged_ids: list[str] = []
+        llm_group_ids: list[str] = []
         seen: set[str] = set()
         for group in groups:
             member_ids = [str(m) for m in group.get("member_ids") or []
@@ -80,30 +92,69 @@ class Coordinator:
             members = [dossier.conclusion(m) for m in member_ids]
             statement = str(group.get("statement") or "").strip() \
                 or members[0].statement
-            group_con = Conclusion.create(
-                statement=statement,
-                authors=sorted({a for m in members for a in m.author_names()}),
-            )
-            dossier.conclusions.append(group_con)
-            # 证据转挂 + 同引文去重：不同分析师摘了同一段原话时只保留一条
-            # （独立同证的"一致"信号由 confidence 的 agreement 分量体现，
-            # 不该在证据计数里重复膨胀）
-            seen_quote: set[tuple] = set()
-            for member in members:
-                for ev in dossier.evidences_of(member.id):
-                    signature = (ev.quote.strip(), tuple(sorted(ev.segment_ids)),
-                                 ev.relation, ev.level)
-                    if signature in seen_quote:
-                        continue  # 重复引文：留在成员上作溯源，不转挂
-                    seen_quote.add(signature)
-                    ev.conclusion_id = group_con.id
-                    group_con.evidence_ids.append(ev.id)
-                member.status = "merged"
-                member.group_id = group_con.id  # 守恒闸按此回溯成员
+            group_con = self._materialize(dossier, members, statement)
             merged_ids.append(group_con.id)
+            llm_group_ids.append(group_con.id)
         # LLM 漏掉的结论兜底收回（不允许任何结论无组丢失）
         merged_ids.extend(i for i in active if i not in seen)
-        return merged_ids
+        return self._mechanical_pass(dossier, merged_ids, llm_group_ids)
+
+    @staticmethod
+    def _materialize(dossier: Dossier, members: list[Conclusion],
+                     statement: str) -> Conclusion:
+        """成员结论 → 组结论：新建代表、证据转挂 + 同引文去重、成员标 merged。"""
+        group_con = Conclusion.create(
+            statement=statement,
+            authors=sorted({a for m in members for a in m.author_names()}),
+        )
+        dossier.conclusions.append(group_con)
+        # 证据转挂 + 同引文去重：不同分析师摘了同一段原话时只保留一条
+        # （独立同证的"一致"信号由 confidence 的 agreement 分量体现，
+        # 不该在证据计数里重复膨胀）
+        seen_quote: set[tuple] = set()
+        for member in members:
+            for ev in dossier.evidences_of(member.id):
+                signature = (ev.quote.strip(), tuple(sorted(ev.segment_ids)),
+                             ev.relation, ev.level)
+                if signature in seen_quote:
+                    continue  # 重复引文：留在成员上作溯源，不转挂
+                seen_quote.add(signature)
+                ev.conclusion_id = group_con.id
+                group_con.evidence_ids.append(ev.id)
+            member.status = "merged"
+            member.group_id = group_con.id  # 守恒闸按此回溯成员
+        return group_con
+
+    @staticmethod
+    def _mechanical_pass(dossier: Dossier, active_ids: list[str],
+                         llm_group_ids: list[str]) -> list[str]:
+        """机械归并补一轮；组结论用成员原句做代表（不造新句，防概括漂移）。"""
+        from app.core.merge_mechanical import (
+            enabled, mechanical_groups, merge_stats)
+
+        if not enabled():
+            dossier.accounting["mechanical_merge"] = {
+                "n_llm_groups": len(llm_group_ids), "n_mech_groups": 0,
+                "n_members_absorbed": 0, "n_cross_author_groups": 0,
+                "note": "机械归并已停用（VERITAS_MECH_MERGE=0，A/B 对照组）"}
+            return active_ids
+        groups = mechanical_groups(dossier, active_ids)
+        absorbed: set[str] = set()
+        new_groups: list[str] = []
+        for member_ids in groups:
+            members = [dossier.conclusion(m) for m in member_ids
+                       if dossier.conclusion(m) is not None]
+            if len(members) < 2:
+                continue
+            group_con = Coordinator._materialize(dossier, members,
+                                                 members[0].statement)
+            absorbed.update(m.id for m in members)
+            new_groups.append(group_con.id)
+        dossier.accounting["mechanical_merge"] = merge_stats(
+            dossier, groups, llm_group_ids)
+        if not absorbed:
+            return active_ids
+        return [i for i in active_ids if i not in absorbed] + new_groups
 
     # -- 冲突检测 ----------------------------------------------------------
 

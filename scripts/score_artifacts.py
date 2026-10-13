@@ -20,7 +20,9 @@ app.core.audit.audit_all（全部机械闸即时重算，不落盘）+ 置信度
     .venv/bin/python scripts/score_artifacts.py --check /tmp/base.json   # 退化则 exit 1
 
 判读口径（越小越好）：high/medium 灯数、warrant 黄灯、未引用议题段、单署名结论数、
-秒与 token；（越大越好）：引用覆盖率、置信度最大值、子问已答数。
+秒与 token；（越大越好）：引用覆盖率、置信度最大值、子问已答数、**会签条数**
+（多人共同署名的结论——榜单痛点「独立判断或简单投票」的正面回答）。
+「归并」列是机械归并组数，不计好坏：0 组说明三个视角各说各话，太多组要防错并。
 """
 
 from __future__ import annotations
@@ -42,7 +44,8 @@ from app.core.coverage_gap import (  # noqa: E402
 from app.core.evidence import Dossier  # noqa: E402
 
 # 越大越好的指标（diff 时按方向判退化）
-_HIGHER_BETTER = {"conf_max", "conf_median", "cited_share", "subq_answered"}
+_HIGHER_BETTER = {"conf_max", "conf_median", "cited_share", "subq_answered",
+                  "multi_author"}
 # 越小越好的指标
 _LOWER_BETTER = {"flags_high", "flags_medium", "warrant_flags", "unused_topic",
                  "single_author", "subq_unanswered", "subq_gap", "n_rejected",
@@ -113,6 +116,9 @@ def score_artifact(path: Path) -> dict:
     by_kind = {k: v for k, v in sorted(summary["by_kind"].items()) if v}
     insufficient = sum(1 for c in dossier.conclusions
                        if c.status == "insufficient")
+    mech = (dossier.accounting or {}).get("mechanical_merge") or {}
+    n_multi_author = sum(1 for p in parts
+                         if int(p.get("n_authors", 0) or 0) >= 2)
     return {
         "artifact": str(path.relative_to(ROOT)) if path.is_relative_to(ROOT)
                     else str(path),
@@ -126,6 +132,9 @@ def score_artifact(path: Path) -> dict:
         "n_conclusions": len(dossier.conclusions),
         "n_insufficient": insufficient,
         "n_majority": len(majority),
+        # 协同是否真的发生：会签条数（榜单痛点「独立判断或简单投票」的正面回答）
+        "multi_author": n_multi_author,
+        "mech_groups": mech.get("n_mech_groups"),
         "n_dissent": len(dissent_conclusions(dossier)),
         "n_rejected": len(dossier.rejected),
         "panel": dossier.panel,
@@ -168,6 +177,8 @@ def score_all(paths: list[Path]) -> list[dict]:
 _COLS = [
     ("产物", "artifact", 42),
     ("结论", "n_majority", 5),
+    ("会签", "multi_author", 4),
+    ("归并", "mech_groups", 4),
     ("不足", "n_insufficient", 4),
     ("红", "flags_high", 3),
     ("黄", "flags_medium", 3),

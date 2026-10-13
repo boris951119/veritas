@@ -622,7 +622,8 @@ def run_case(spec: RunSpec | None = None,
             if k in ("corpus_select", "query_rewrite", "slot_disclosures",
                      "repair_accept_rate", "panel_attrition",
                      "unused_topic_segments", "subquestion_status",
-                     "premise", "second_pass", "conflict_drops")}
+                     "premise", "second_pass", "conflict_drops",
+                     "mechanical_merge")}
     dossier.accounting = {
         **kept,
         "elapsed_s": round(time.monotonic() - t0, 1),

@@ -56,6 +56,8 @@ def test_replay_is_reproducible(tmp_path):
     assert first["flags_high"] == 0            # 桩案卷不该出红灯
     assert first["warrant_flags"] == 1         # 理由与主张脱节要亮
     assert first["single_author"] == 1         # 单人署名要数出来
+    assert first["multi_author"] == 0          # 会签条数（协同是否发生）
+    assert first["mech_groups"] is None        # 旧产物没这字段，不得瞎猜 0
 
 
 def test_zero_usable_conclusion_is_shown(tmp_path):
