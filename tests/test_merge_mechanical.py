@@ -209,3 +209,8 @@ def test_pipeline_persists_merge_record(tmp_path):
     assert len(group) == 1, "两条同主体同议题结论应并成一条两人会签"
     assert group[0].confidence_parts["n_authors"] == 2
     assert group[0].confidence > 0.3, "会签后一致性分量应把置信度抬出单署名区间"
+
+    # 披露必须上屏：首屏一行说清几条会签，结论行说清并了几条独立结论
+    md = (tmp_path / "out" / "report.md").read_text(encoding="utf-8")
+    assert "协同归并" in md and "1 条为多人共同署名" in md
+    assert "由 2 条独立结论归并" in md

@@ -22,7 +22,7 @@ import os
 from typing import Any
 
 from app.core.conflict_pairing import extract_subject, polarity_of
-from app.core.evidence import Dossier
+from app.core.evidence import Conclusion, Dossier
 
 # 归并键比冲突配对的议题维**更窄**：conflict_pairing 把「回款/应收账款/坏账/
 # 计提」算同一维（配成对让模型判对立是安全的，判错了只是多看一眼），但归并是
@@ -82,6 +82,19 @@ def mechanical_groups(dossier: Dossier, active_ids: list[str]
             continue
         buckets.setdefault(key, []).append(cid)
     return [ids for ids in buckets.values() if len(ids) >= 2]
+
+
+def merged_member_count(dossier: Dossier, conclusion_id: str) -> int:
+    """这条组结论并了几条独立结论（成员数）。单人结论返回 0。"""
+    return sum(1 for c in dossier.conclusions
+               if c.status == "merged" and c.group_id == conclusion_id)
+
+
+def merge_label(dossier: Dossier, con: Conclusion) -> str:
+    """结论行披露：署名人数说不清「几个人说的」还是「同一个人说了几遍」，
+    所以成员条数必须单独显影——归并是协同的产物，藏着就等于没做。"""
+    n = merged_member_count(dossier, con.id)
+    return f"（由 {n} 条独立结论归并）" if n >= 2 else ""
 
 
 def merge_stats(dossier: Dossier, groups: list[list[str]],

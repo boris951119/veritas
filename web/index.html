@@ -507,6 +507,7 @@ openai/glm-5.3" oninput="previewAssignment()"></textarea>
         <div class="meta" id="heroMeta"></div>
         <div class="corpus-banner hidden" id="corpusSelect"></div>
         <div class="corpus-banner hidden" id="panelAttrition" style="border-color:var(--warn);color:var(--warn)"></div>
+        <div class="corpus-banner hidden" id="mergeBanner"></div>
         <div class="retrieval-bound" id="retrievalBound">检索为字面 BM25，命中词表时在原问上补充同义词。词表外的说法仍可能未进入本次材料；未进入不等于已审完全库。假引文与无源数字仍会被闸拦住。向量重排未启用。</div>
         <div class="sub hidden" id="subquestionStatus" style="margin-top:8px"></div>
       </div>
@@ -1466,6 +1467,25 @@ function render(){
       pa.classList.add("hidden");
     }
   }
+  const mb=$("#mergeBanner");
+  if(mb){
+    const mm=acc.mechanical_merge||{};
+    const mnote=String(mm.note||"").trim();
+    const majors=(d.conclusions||[]).filter(c=>c.status==="majority");
+    const signed=majors.filter(c=>{
+      const a=(c.authors&&c.authors.length)?c.authors:[c.author];
+      return (a||[]).filter(Boolean).length>=2;
+    }).length;
+    if(mnote||signed){
+      mb.innerHTML=`协同归并：主表 ${majors.length} 条中 <b>${signed}</b> 条多人共同署名`
+        +(mnote?"　·　"+esc(mnote):"");
+      mb.style.borderColor=signed?"var(--good)":"var(--warn)";
+      mb.style.color=signed?"var(--good)":"var(--warn)";
+      mb.classList.remove("hidden");
+    }else{
+      mb.innerHTML="";mb.classList.add("hidden");
+    }
+  }
   const sq=$("#subquestionStatus");
   if(sq){
     const items=acc.subquestion_status||[];
@@ -1567,7 +1587,7 @@ function renderChains(d){
         <div class="conf"><b style="color:${confColor(con.confidence)}">${con.confidence.toFixed(2)}</b>
           <div class="bar"><i style="width:${(con.confidence*100).toFixed(0)}%;background:${confColor(con.confidence)}"></i></div></div>
         <div class="chips">${chips}</div>
-        <div class="who">研判视角：${esc(zhRoles(con.authors&&con.authors.length?con.authors:[con.author]))}${authorSignLabel(con)}</div>
+        <div class="who">研判视角：${esc(zhRoles(con.authors&&con.authors.length?con.authors:[con.author]))}${authorSignLabel(con)}${esc(mergeLabel(con))}</div>
         <div class="editrow">
           <input type="text" id="edit-${esc(con.id)}" value="${esc(con.statement)}" placeholder="改写这条判断">
           <button class="mini" onclick="editCon('${esc(con.id)}')">保存改写</button>
@@ -1617,6 +1637,14 @@ function authorSignLabel(con){
   if(n<=0) return "（无署名）";
   if(n===1) return "（仅 1 人署名）";
   return `（${n} 人署名）`;
+}
+function mergedMemberCount(id){
+  const cs=(D&&D.dossier&&D.dossier.conclusions)||[];
+  return cs.filter(c=>c.status==="merged"&&c.group_id===id).length;
+}
+function mergeLabel(con){
+  const n=mergedMemberCount(con.id);
+  return n>=2?`（由 ${n} 条独立结论归并）`:"";
 }
 function renderDissents(d){
   const ds=d.conclusions.filter(c=>c.status==="dissent");

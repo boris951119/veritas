@@ -769,6 +769,18 @@ def render_report_md(dossier: Dossier, chain: HashChain, rejected: list[dict]) -
             f"**编队减员**：{attrition_note}",
             "",
         ]
+    mech = acc.get("mechanical_merge") or {}
+    if mech:
+        # 协同是否真的发生，写在首屏：0 条会签就是 0 条，不藏
+        _majors = majority_conclusions(dossier)
+        n_signed = sum(1 for c in _majors if len(c.author_names()) >= 2)
+        lines += [
+            "**协同归并**："
+            f"主表 {len(_majors)} 条中 **{n_signed} 条为多人共同署名**"
+            + (f"；{str(mech.get('note') or '').strip()}"
+               if str(mech.get("note") or "").strip() else ""),
+            "",
+        ]
     lines += [
         f"**资料**：{len(dossier.sources)} 份信源 / "
         f"{sum(len(s.segments) for s in dossier.sources)} 个段落",
@@ -823,6 +835,7 @@ def render_report_md(dossier: Dossier, chain: HashChain, rejected: list[dict]) -
     if not majors:
         lines.append("（无结论——检查资料覆盖或分析师输出）")
     majors.sort(key=lambda c: c.confidence, reverse=True)
+    from app.core.merge_mechanical import merge_label
     from app.core.panel_attrition import author_count_label
 
     for con in majors:
@@ -831,7 +844,7 @@ def render_report_md(dossier: Dossier, chain: HashChain, rejected: list[dict]) -
         lines.append(f"- 置信度：**{con.confidence:.2f}**（{con.confidence_parts}）")
         lines.append(
             f"- 研判方：{'、'.join(con.author_names()) or 'N/A'}"
-            f"{author_count_label(con)}")
+            f"{author_count_label(con)}{merge_label(dossier, con)}")
         _render_evidence_table(lines, dossier, con)
         lines.append("")
 
