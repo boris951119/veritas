@@ -4,7 +4,7 @@
 内联脚本量出来的，**没存盘就不可复放**——本脚本把同一套口径钉成一条命令，
 零 LLM、零网络、零写入。
 
-它测四件事：
+它测五件事：
 
 1. **越权/缺失断言**：结论里出现全称量词（全部/所有/无一/均…）或"不存在类"表述
    （未发现/未检索到/无相关…）的条数——这两类正是「没找到 ≠ 不存在」的幻觉高危区。
@@ -16,6 +16,8 @@
    `obligations()` 走主题组展开或整题兜底（2026-10-13 修复——此前直接返回空 ⇒
    该产物没有任何完整性判据，开放题早退隐形）。来源偏弱时 `ledger_limitation()`
    必须留下声明，本脚本把它计入「弱判据产物数」。
+5. **第四分量的净效应**：同一批结论，「落盘置信度」与「再乘一个推理链因子」
+   之后的对比——加分量必然压分，压多少就是这批结论的链到底有多断。
 
 用法：
     .venv/bin/python scripts/measure_baseline.py                # 全部产物
@@ -34,6 +36,7 @@ from __future__ import annotations
 import argparse
 import json
 import re
+import statistics
 import sys
 from pathlib import Path
 
@@ -83,6 +86,102 @@ def _artifacts(items: list[str]) -> list[Path]:
             if f.is_file():
                 out.append(f)
     return out
+
+
+def chain_effect(dossier: Dossier) -> dict:
+    """第四分量（推理链完整性）的**净效应**：同一批结论，三分量积 vs 四分量积。
+
+    为什么要单独量：加一个乘法分量必然让分数变低，但「变低多少」才是
+    产品语言——它等于「原来这些结论的链有多断」。改前取产物**落盘时已存的
+    置信度**，改后只在它之上多乘一个链因子，不换任何其他公式，
+    所以这个差值就是第四分量本身的价钱，不含别的变量。
+    """
+    from app.core.chain_integrity import chain_integrity
+    from app.core.confidence import chain_factor_of
+
+    before: list[float] = []
+    after: list[float] = []
+    scores: list[float] = []
+    unknown = 0
+    broken: dict[str, int] = {}
+    for con in dossier.conclusions:
+        if con.status == "merged":
+            continue
+        p = con.confidence_parts or {}
+        if not p or p.get("note") == "无证据支撑":
+            continue
+        base = float(con.confidence or 0.0)
+        rep = chain_integrity(dossier, con.id)
+        s = rep.score
+        if s is None:
+            unknown += 1
+        else:
+            scores.append(round(s, 4))
+        before.append(round(base, 4))
+        after.append(round(min(1.0, base * chain_factor_of(s)), 4))
+        for check in rep.broken:
+            broken[check] = broken.get(check, 0) + 1
+
+    def _median(vals: list[float]) -> float | None:
+        return round(statistics.median(vals), 4) if vals else None
+
+    med_before, med_after = _median(before), _median(after)
+    return {
+        "n_scored": len(scores), "n_unknown": unknown,
+        "chain_median": _median(scores),
+        "conf_median_before": med_before,
+        "conf_median_after": med_after,
+        "conf_median_delta": (round(med_after - med_before, 4)
+                              if med_before is not None
+                              and med_after is not None else None),
+        "conf_mean_delta_pct": (
+            round((statistics.fmean(after) / statistics.fmean(before) - 1) * 100, 1)
+            if before and statistics.fmean(before) > 0 else None),
+        "broken_by_check": dict(sorted(broken.items(), key=lambda x: -x[1])),
+        "chain_scores": scores,
+        # 逐条留清单，聚合时池化再取中位（对各份的中位再取中位是错的）
+        "conf_before": before, "conf_after": after,
+    }
+
+
+def _print_chain_effect(ok: list[dict]) -> None:
+    """第四分量的净效应（改前/改后同为存量三分量明细，只多乘链因子）。"""
+    from app.core.chain_integrity import CHECK_LABEL_CN
+
+    eff = [r.get("chain_effect") or {} for r in ok]
+    scores = [s for e in eff for s in e.get("chain_scores", [])]
+    before = [v for e in eff for v in e.get("conf_before", [])]
+    after = [v for e in eff for v in e.get("conf_after", [])]
+    n_unknown = sum(int(e.get("n_unknown") or 0) for e in eff)
+    print(f"\n推理链完整性（第四分量）：参与计分 {len(scores)} 条 / "
+          f"无从判定 {n_unknown} 条")
+    if not scores:
+        print("  （没有可计分的结论——存量产物缺 confidence_parts）")
+        return
+    dist: dict[float, int] = {}
+    for s in scores:
+        dist[s] = dist.get(s, 0) + 1
+    print(f"  链完整性中位 {statistics.median(scores):.4f} · 满分 "
+          f"{dist.get(1.0, 0)} 条（{dist.get(1.0, 0)/len(scores):.1%}）· "
+          f"有断链 {len(scores) - dist.get(1.0, 0)} 条")
+    print("  分布 " + " ".join(f"{k:.2f}×{v}" for k, v in sorted(dist.items())))
+    broken: dict[str, int] = {}
+    for e in eff:
+        for k, v in (e.get("broken_by_check") or {}).items():
+            broken[k] = broken.get(k, 0) + v
+    if broken:
+        print("  断得最多的环 " + "、".join(
+            f"{CHECK_LABEL_CN.get(k, k)} {v}" for k, v in
+            sorted(broken.items(), key=lambda x: -x[1])[:4]))
+    if before and after and len(before) == len(after):
+        mb, ma = statistics.median(before), statistics.median(after)
+        mean_rel = ((statistics.fmean(after) / statistics.fmean(before) - 1) * 100
+                    if statistics.fmean(before) > 0 else None)
+        med_rel = ((ma / mb - 1) * 100) if mb > 0 else None
+        print(f"  置信度中位 {mb:.4f} → {ma:.4f}"
+              + (f"（{med_rel:+.1f}%）" if med_rel is not None else "")
+              + (f" · 均值 {mean_rel:+.1f}%" if mean_rel is not None else "")
+              + "  ← 这就是「链有多断」的价钱")
 
 
 def measure(path: Path) -> dict:
@@ -137,6 +236,7 @@ def measure(path: Path) -> dict:
         "ledger_sources": sorted({str(s.get("source") or "") for s in ledger}),
         "ledger_weak": bool(ledger_limitation(ledger)),
         "passed_samples": passed,
+        "chain_effect": chain_effect(dossier),
     })
     return rows
 
@@ -175,6 +275,7 @@ def _print(rows: list[dict], failed: list[tuple[str, str]], show_passed: int) ->
     for r in weak[:6]:
         print(f"   弱判据 {r['artifact'][:52]:52s} "
               f"判据 {r['n_obligations']} 条·来源 {'/'.join(r['ledger_sources'])}")
+    _print_chain_effect(ok)
     if show_passed:
         print(f"\n全绿放行样本（前 {show_passed} 条）：")
         for r in ok:

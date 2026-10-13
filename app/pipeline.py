@@ -640,7 +640,7 @@ def run_case(spec: RunSpec | None = None,
         "tokens": int(getattr(client, "total_tokens_used", 0) or 0),
         "n_calls": n_calls,
         "budget": guard.summary() if guard else "",
-        "confidence_note": "规则融合分（强度×覆盖×一致性），不是命中率",
+        "confidence_note": "规则融合分（强度×覆盖×一致性×链完整性），不是命中率",
         "steps": [
             {"id": s.get("id"), "label": s.get("label"),
              "elapsed_s": s.get("elapsed_s")}
@@ -858,7 +858,8 @@ def render_report_md(dossier: Dossier, chain: HashChain, rejected: list[dict]) -
     for con in majors:
         lines.append(f"### {con.statement}")
         lines.append("")
-        lines.append(f"- 置信度：**{con.confidence:.2f}**（{con.confidence_parts}）")
+        lines.append(f"- 置信度：**{con.confidence:.2f}**"
+                     f"{confidence_label(con.confidence_parts)}")
         lines.append(
             f"- 研判方：{'、'.join(con.author_names()) or 'N/A'}"
             f"{author_count_label(con)}{merge_label(dossier, con)}")
@@ -926,6 +927,42 @@ _KIND_LABEL = {
     "warrant_theme": "理由与主张无共同主题词",
     "scope": "声称范围却无覆盖声明",
 }
+
+
+def confidence_label(parts: dict) -> str:
+    """置信度分量 → 一行可读表述（榜单硬需求 3「给分并说明依据」）。
+
+    四分量各自命名清楚，第四分量（推理链完整性）还要说清断在哪一环——
+    只报一个乘积数字，等于把依据又藏回黑箱。
+    """
+    from app.core.chain_integrity import CHECK_LABEL_CN
+
+    p = parts or {}
+    if not p:
+        return ""
+    chain = p.get("chain")
+    detail = p.get("chain_detail") or {}
+    applicable = detail.get("applicable") or []
+    if chain is None:
+        # 无从判定（链上一环都没触发）与存量产物缺键是两回事，分开说：
+        # 前者是「这条结论没东西可核」，后者是「这份产物落盘时还没这个分量」
+        chain_txt = ("链完整性 无从判定" if detail.get("unknown")
+                     else "链完整性 —（旧口径产物，未计该分量）")
+    else:
+        broken = "、".join(CHECK_LABEL_CN.get(k, k)
+                           for k in (detail.get("broken") or []))
+        # 明说「核了几环」：只触发一环的结论不能写成「六环全闭合」
+        chain_txt = (f"链完整性 {chain:.2f}〔核 {len(applicable)} 环｜"
+                     f"{('断：' + broken) if broken else '全闭合'}〕")
+    bits = [f"强度 {p.get('strength', 0):.2f}",
+            f"覆盖 {p.get('coverage', 0):.2f}",
+            f"一致性 {p.get('agreement', 0):.2f}",
+            chain_txt,
+            f"{p.get('n_evidence', 0)} 条证据"]
+    note = str(p.get("note") or "").strip()
+    if note:
+        bits.append(note)
+    return "（" + " · ".join(bits) + "）"
 
 
 def _render_flags_section(lines: list[str], dossier: Dossier) -> None:

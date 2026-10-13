@@ -1,13 +1,19 @@
 """置信度量化（榜单硬需求 3：按信源可信度、证据数量与一致性、
 推理链完整性给分并说明依据）。
 
-三分量，全部可解释、可增量重算：
+四分量，全部可解释、可增量重算：
 - strength   证据强度：等级权 × 信源可信度 × 因果加成 × 人工权重 的均值；
+             （对应榜单「信源可信度」）
 - coverage   证据覆盖：条数边际递减，饱和于 4 条；单条有基本覆盖下限；
+             （对应榜单「数据数量」）
 - agreement  跨智能体一致性：结论署名数 / 分析师编队人数（归并组被多个
              分析师独立得出 → 加成；单人结论不打到 0，floor 0.5）。
+             （对应榜单「一致性」）
+- chain      推理链完整性：引文是否逐字命中、理由是否支撑主张、数字是否可溯源、
+             声称范围有无声明、时点有无锚定、因果有无机制——六环按**适用项**
+             计通过率（对应榜单「推理链完整性」，此前只有黄灯不进分）。
 
-综合 = strength × coverage × agreement_factor。
+综合 = strength × coverage × agreement_factor × chain_factor。
 人工修改（删证据/改权重/改信源可信度）后调 recompute_conclusion()
 只重算受影响结论——周 3 工作台的「修改后重算」走同一入口。
 """
@@ -28,6 +34,22 @@ _CAUSATION_BONUS = 1.15       # 因果证据加成（封顶 1）
 _COVERAGE_SATURATION = 4      # 覆盖分饱和所需证据条数
 _COVERAGE_FLOOR = 0.5         # 单条证据的覆盖分下限（有证据就有基本覆盖）
 _AGREEMENT_FLOOR = 0.5        # 单人结论的一致性因子下限
+_CHAIN_FLOOR = 0.55           # 链全断时的因子下限（压分不清零，语义仍归人）
+_CHAIN_UNKNOWN = 0.75         # 无从判定时的因子（不给满分也不按断链罚）
+
+
+def chain_factor_of(chain_score: float | None) -> float:
+    """链完整性 → 置信度因子（0-1）。
+
+    `None` = 无从判定：REA 那条「unknown 不许当 pass」的规矩——既不给
+    满分（0.75 < 1），也不按断链罚（0.75 > 0.55）。
+    注意这是**防御分支**：实际链上只要结论挂了证据，quote_hits 环必进分母，
+    所以有证据的结论永远拿得到分数；而「无证据」在进这里之前就已经返回 0。
+    留着它是为了让语义口子收紧后不塌——将来分母口径一变，未知档仍走 0.75。
+    """
+    if chain_score is None:
+        return _CHAIN_UNKNOWN
+    return _CHAIN_FLOOR + (1 - _CHAIN_FLOOR) * chain_score
 
 
 def evidence_score(ev: EvidenceNode, dossier: Dossier) -> float:
@@ -60,12 +82,19 @@ def evidence_strength_of(conclusion_id: str, dossier: Dossier) -> float:
 
 
 def conclude_confidence(conclusion_id: str, dossier: Dossier,
-                        n_panel: int = 1) -> tuple[float, dict]:
-    """结论置信度 = strength × coverage × agreement_factor。"""
+                        n_panel: int = 1,
+                        chain_ctx: dict | None = None) -> tuple[float, dict]:
+    """结论置信度 = strength × coverage × agreement_factor × chain_factor。"""
     con = dossier.conclusion(conclusion_id)
     evs = dossier.evidences_of(conclusion_id)
     if con is None or not evs:
+        # 链上无从下手的结论（典型：证据被人工删空）记 unknown 而不是 0——
+        # 「没证据」这件事由 strength/coverage 承担罚分，链分量不许重复计罚，
+        # 更不许在渲染层冒出「0.00〔六环全闭合〕」这种自相矛盾。
         return 0.0, {"strength": 0.0, "coverage": 0.0, "agreement": 0.0,
+                     "chain": None,
+                     "chain_detail": {"applicable": [], "broken": [],
+                                      "score": None, "unknown": True},
                      "n_evidence": len(evs), "note": "无证据支撑"}
     scores = [evidence_score(e, dossier) for e in evs]
     strength = sum(scores) / len(scores)
@@ -76,23 +105,34 @@ def conclude_confidence(conclusion_id: str, dossier: Dossier,
     panel = max(1, int(n_panel))
     agreement = min(1.0, n_authors / panel)
     agreement_factor = _AGREEMENT_FLOOR + (1 - _AGREEMENT_FLOOR) * agreement
+    # 第四分量：推理链完整性（六环按适用项计通过率；无从判定走未知档，
+    # 既不白捡满分也不按断链罚——见 chain_integrity 模块文档）
+    from app.core.chain_integrity import chain_context, chain_integrity
+
+    ctx = chain_ctx if chain_ctx is not None else chain_context(dossier)
+    report = chain_integrity(dossier, conclusion_id, ctx)
+    chain_score = report.score
+    chain_factor = chain_factor_of(chain_score)
     parts = {
         "strength": round(strength, 4),
         "coverage": round(coverage, 4),
         "agreement": round(agreement, 4),
+        "chain": (None if chain_score is None else round(chain_score, 4)),
+        "chain_detail": report.to_parts(),
         "n_evidence": n,
         "n_authors": n_authors,
         "levels": sorted({e.level.value for e in evs}),
         "min_evidence_score": round(min(scores), 4),
     }
-    conf = min(1.0, strength * coverage * agreement_factor)
+    conf = min(1.0, strength * coverage * agreement_factor * chain_factor)
     return round(conf, 4), parts
 
 
 def recompute_conclusion(conclusion_id: str, dossier: Dossier,
-                         n_panel: int = 1) -> float:
+                         n_panel: int = 1,
+                         chain_ctx: dict | None = None) -> float:
     """人工修改后的增量重算入口（工作台每改一处只重算受影响结论）。"""
-    conf, parts = conclude_confidence(conclusion_id, dossier, n_panel)
+    conf, parts = conclude_confidence(conclusion_id, dossier, n_panel, chain_ctx)
     con = dossier.conclusion(conclusion_id)
     if con is not None:
         con.confidence = conf
@@ -101,6 +141,9 @@ def recompute_conclusion(conclusion_id: str, dossier: Dossier,
 
 
 def recompute_all(dossier: Dossier, n_panel: int = 1) -> None:
-    """全量回填（管线收口与报告前调用）。"""
+    """全量回填（管线收口与报告前调用）。链上下文只扫一遍闸，避免 O(n²)。"""
+    from app.core.chain_integrity import chain_context
+
+    ctx = chain_context(dossier)
     for con in dossier.conclusions:
-        recompute_conclusion(con.id, dossier, n_panel)
+        recompute_conclusion(con.id, dossier, n_panel, chain_ctx=ctx)

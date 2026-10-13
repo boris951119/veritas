@@ -556,6 +556,9 @@ const FLAG_CN={calc:"计算复算不符",provenance:"来源外数字",counting:"
   unit_mismatch:"人民币与美元口径混用",source_unverified:"信源出处未核验",
   level_consistency:"证据等级与信源类型不符",causation_support:"因果标注缺乏机制词",
   warrant_theme:"理由与主张无共同主题词",scope:"声称范围却无覆盖声明"};
+const CHAIN_CN={quote_hits:"引文逐字命中",warrant_theme:"理由支撑主张",
+  number_traceable:"数字可溯源",scope_declared:"范围有声明",
+  as_of_anchored:"时点已锚定",causation_mechanism:"因果有机制"};
 const ROLE_CN={mainstream:"主流视角",redteam:"质疑视角",technologist:"技术视角",
   coordinator:"协调员",pipeline:"系统",chair:"汇总",human:"人工"};
 const CASE_CN={"demo-solid-state":"固态电池量产前景","bi-delivery-risk":"数据中台交付风险",
@@ -1555,8 +1558,13 @@ function renderChains(d){
   $("#chains").innerHTML=majors.map(con=>{
     const evs=d.evidences.filter(e=>e.conclusion_id===con.id);
     const p=con.confidence_parts||{};
-    const chips=["证据强度 "+(p.strength??"—"),"覆盖 "+(p.coverage??"—"),"一致性 "+(p.agreement??"—"),
-      `${p.n_evidence??evs.length} 条证据`].map(t=>`<span class="chip">${esc(t)}</span>`).join("");
+    const f2=v=>v==null?"—":Number(v).toFixed(2);
+    const cd=p.chain_detail||{};
+    const chainTxt=p.chain==null?(cd.unknown?"链·无从判定":"链·旧口径未计")
+      :("链 "+p.chain.toFixed(2)+"〔核 "+((cd.applicable||[]).length)+" 环｜"
+        +((cd.broken||[]).length?"断："+cd.broken.map(k=>CHAIN_CN[k]||k).join("、"):"全闭合")+"〕");
+    const chips=["证据强度 "+f2(p.strength),"覆盖 "+f2(p.coverage),"一致性 "+f2(p.agreement),
+      chainTxt,`${p.n_evidence??evs.length} 条证据`].map(t=>`<span class="chip">${esc(t)}</span>`).join("");
     const evHtml=evs.map(ev=>{
       const segs=ev.segment_ids.map(sid=>{
         const seg=findSeg(d,sid);

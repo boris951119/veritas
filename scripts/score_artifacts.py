@@ -44,8 +44,11 @@ from app.core.coverage_gap import (  # noqa: E402
 from app.core.evidence import Dossier  # noqa: E402
 
 # 越大越好的指标（diff 时按方向判退化）
+# ⚠️ 2026-10-13 置信度加了第四分量（推理链完整性），conf_median/conf_max 的
+# **刻度整体下移约 15%**（实测见 measure_baseline.py 第 5 件事）。跨这个改动比
+# 基线必须先 `--save` 重存一份，否则会把「链开始计分」读成「答案变差」。
 _HIGHER_BETTER = {"conf_max", "conf_median", "cited_share", "subq_answered",
-                  "multi_author"}
+                  "multi_author", "chain_median"}
 # 越小越好的指标
 _LOWER_BETTER = {"flags_high", "flags_medium", "flags_not_evaluated",
                  "warrant_flags", "scope_flags", "unused_topic",
@@ -86,6 +89,18 @@ def _resolve(items: list[str]) -> list[Path]:
             out.append(p)
         else:
             raise SystemExit(f"产物路径不存在：{raw}（不静默跳过）")
+    return out
+
+
+def _chain_broken(parts: list[dict]) -> dict:
+    """统计一批 confidence_parts 里推理链断在哪几环（键用中文名，直接可读）。"""
+    from app.core.chain_integrity import CHECK_LABEL_CN
+
+    out: dict[str, int] = {}
+    for p in parts:
+        for check in ((p.get("chain_detail") or {}).get("broken") or []):
+            name = CHECK_LABEL_CN.get(check, check)
+            out[name] = out.get(name, 0) + 1
     return out
 
 
@@ -149,6 +164,18 @@ def score_artifact(path: Path) -> dict:
         "clean": summary["clean"],
         "flags_by_kind": by_kind,
         "warrant_flags": by_kind.get("warrant_theme", 0),
+        # 推理链完整性（第四分量）：中位数 + 断在哪一环。三种情形必须分开：
+        # 有分数=计了；chain=None 且带 chain_detail=链上无从判定；
+        # 整个键都不存在=这份产物是旧口径落盘，不能混进「无从判定」冒充测过
+        "chain_median": (round(statistics.median(
+            [p["chain"] for p in parts if p.get("chain") is not None]), 4)
+            if any(p.get("chain") is not None for p in parts) else None),
+        "chain_unknown": sum(1 for p in parts
+                             if "chain" in p and p.get("chain") is None),
+        "chain_stamped": sum(1 for p in parts if p.get("chain") is not None),
+        "chain_legacy": sum(1 for p in parts if "chain" not in p),
+        "chain_broken": {k: v for k, v in sorted(
+            _chain_broken(parts).items(), key=lambda x: -x[1])},
         # 范围诚实闸亮灯数：声称了范围却没声明覆盖的结论条数
         "scope_flags": by_kind.get("scope", 0),
         "conf_max": round(max(confs), 4) if confs else 0.0,
@@ -195,6 +222,7 @@ _COLS = [
     ("warrant", "warrant_flags", 7),
     ("范围", "scope_flags", 4),
     ("置信max", "conf_max", 8),
+    ("链中位", "chain_median", 7),
     ("单署", "single_author", 4),
     ("覆盖", "cited_share", 6),
     ("未引", "unused_topic", 4),

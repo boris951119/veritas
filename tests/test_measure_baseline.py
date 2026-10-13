@@ -98,3 +98,61 @@ def test_broken_artifact_raises_not_silently(tmp_path):
     bad.write_text("{not json", encoding="utf-8")
     with pytest.raises(Exception):
         measure(bad)
+
+
+# ------------------------------------------------- 第四分量的净效应（第 5 件事）
+
+def _as_legacy_artifact(d: Dossier) -> Dossier:
+    """把案卷扮成「加分量之前落盘」的存量产物：置信度=三分量积，parts 无链键。
+
+    净效应测量的前提就是改前值来自存量口径；直接拿现在的 recompute_all 结果
+    当改前，等于把链因子乘两遍，量出来的价钱是假的。
+    """
+    from app.core.confidence import conclude_confidence
+
+    for con in d.conclusions:
+        _, parts = conclude_confidence(con.id, d, n_panel=1)
+        if parts.get("note"):
+            continue
+        conf = (parts["strength"] * parts["coverage"]
+                * (0.5 + 0.5 * parts["agreement"]))
+        con.confidence = round(min(1.0, conf), 4)
+        con.confidence_parts = {k: v for k, v in parts.items()
+                                if not k.startswith("chain")}
+    return d
+
+
+def test_chain_effect_prices_a_broken_link():
+    """断链的结论必须被量出降价——量不出差价就说明这条尺子是空的。"""
+    from scripts.measure_baseline import chain_effect
+
+    d = _as_legacy_artifact(_dossier(
+        "各客户项目是否存在人员流失风险？回款风险呢？", _UNIV_STATEMENT))
+    e = chain_effect(d)
+    assert e["n_scored"] == 1 and e["n_unknown"] == 0
+    assert e["conf_before"] != e["conf_after"]
+    assert e["conf_after"][0] < e["conf_before"][0]
+    assert "scope_declared" in e["broken_by_check"]
+
+
+def test_chain_effect_does_not_penalize_a_closed_chain():
+    """反向对照：链上触发的环全闭合 ⇒ 一分不扣（否则惩罚的是叙述长度不是断链）。"""
+    from scripts.measure_baseline import chain_effect
+
+    d = _as_legacy_artifact(_dossier(
+        "各客户项目是否存在人员流失风险？回款风险呢？", _CLEAN_STATEMENT))
+    e = chain_effect(d)
+    assert e["broken_by_check"] == {}
+    assert e["conf_after"] == e["conf_before"]
+    assert e["chain_median"] == 1.0
+
+
+def test_chain_effect_skips_conclusions_without_evidence():
+    """没证据的结论走「无从判定」，不进净效应样本（它们的 0 分由前三分量承担）。"""
+    from scripts.measure_baseline import chain_effect
+
+    d = _as_legacy_artifact(_dossier(
+        "各客户项目是否存在人员流失风险？回款风险呢？", _CLEAN_STATEMENT,
+        cited=False))
+    e = chain_effect(d)
+    assert e["conf_before"] == [] and e["n_scored"] == 0

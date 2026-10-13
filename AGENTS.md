@@ -58,7 +58,7 @@ python3 -m venv .venv
 .venv/bin/python -m pytest tests -q
 ```
 
-**通过判据**：`415 passed`（或更多，零 failed；未装 mcp 时少 1 条属正常）。测试全 stub，无需密钥。
+**通过判据**：`532 passed`（或更多，零 failed；未装 mcp 时少 1 条属正常）。测试全 stub，无需密钥、不产生任何真实模型调用（测试期有守卫）。
 
 ## 第 3 步：离线演示（断网/无 key 时的完整演示兜底）
 
@@ -151,7 +151,7 @@ python3 -m venv .venv
 | PDF 信源摄取报 pypdf 缺失 | `pip install pypdf`（PDF 是可选格式，demo 案例不含 PDF 不影响演示） |
 | 要开源版式增强（跨页表等） | `pip install -r requirements-docling.txt` 后设 `VERITAS_PDF_BACKEND=docling`；失败自动回退 pypdf；默认 U 盘包不装 Docling |
 | venv 激活后命令找不到 | 直接用绝对路径调 python：`.venv\Scripts\python`（Win）/ `.venv/bin/python`（Mac） |
-| 测试出现 failed | 把失败摘要原样反馈给开发者；在修好前用第 3 步离线演示兜底（未装 mcp 时 MCP 协议测试自动跳过，415 passed ± 1 skipped 属正常） |
+| 测试出现 failed | 把失败摘要原样反馈给开发者；在修好前用第 3 步离线演示兜底（未装 mcp 时 MCP 协议测试自动跳过，532 passed ± 1 skipped 属正常） |
 
 ## 仓库速览（供智能体理解上下文）
 
