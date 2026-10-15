@@ -1,5 +1,8 @@
 # AGENTS.md — veritas 现场环境部署指引（供 AI 智能体执行）
 
+> **换工具接手先读 `docs/HANDOFF.md`**——当前进度、未决问题、下一步顺序、五个已知的坑都在那里；
+> 本文件只讲怎么把系统跑起来。收工或换工具前，让当前工具「更新 HANDOFF 并提交」。
+
 目标：在一台**没有开发环境**的电脑上（主场景 Windows 10/11，次场景
 macOS/Linux），从零把 veritas 跑起来。按步骤执行，每步都有明确的
 通过判据；失败按「故障排查」处理。本目录即仓库根（含 `app/`、`tests/`、
@@ -190,3 +193,5 @@ python3 -m venv .venv
   `cases/bi-delivery-risk/`（数据中台交付风险企业情报，信源已脱敏；
   由 `scripts/build_bi_case.py` 从外部语料构建）；manifest.yaml 声明信源类型与可信度
 - 路线图：`ROADMAP.md`；架构说明：`README.md`
+- **跨工具交接**：`docs/HANDOFF.md`（当前进度／未决／下一步／坑）；官方评分口径与场景重判七条见
+  `docs/contest-briefing-2026-10-14.md`、`docs/scenario-review-2026-10-14.md`，宣讲会长文转写在 `docs/contest-transcript-2026-10-14.txt`
