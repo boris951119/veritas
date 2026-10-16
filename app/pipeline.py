@@ -1292,6 +1292,37 @@ def _render_excluded_sources(lines: list[str], dossier: Dossier) -> None:
         lines.append("")
 
 
+def run_official_case(case_dir: Path, questions: list[dict], out_dir: Path,
+                      settings: Settings | None = None,
+                      roster: list | None = None,
+                      deps: RunDeps | None = None) -> list[PipelineResult]:
+    """一案多题：官方文档只载入一次，每题各跑一遍，再导出四份 JSON。
+
+    不读取证据样例或结论样例里的答案字段。
+    """
+    from app.export.official import export_official
+    from app.ingest.official_case import load_official_case
+
+    base = load_official_case(case_dir)
+    deps = deps or RunDeps()
+    results: list[PipelineResult] = []
+    runs: list[tuple[dict, Dossier]] = []
+    for question in questions:
+        snap = Dossier.from_dict(base.to_dict())
+        snap.question = str(question["question"])
+        result = run_case(RunSpec(
+            dossier=snap,
+            out_dir=Path(out_dir) / "questions" / str(question["question_id"]),
+            settings=settings,
+            roster=roster,
+            probe=False if deps.client is not None or deps.analysts is not None else None,
+        ), deps)
+        results.append(result)
+        runs.append((question, result.dossier))
+    export_official(runs, out_dir)
+    return results
+
+
 def main() -> int:
     # Windows 防线：stdout 被重定向/管道时 Python 落回 GBK 代码页，
     # print 中文报告会 UnicodeEncodeError（token-burner 实证教训）——
@@ -1313,6 +1344,9 @@ def main() -> int:
     parser.add_argument("--fetch-links", action="store_true",
                         help="抓取链接清单文件中的网页为信源（默认关；"
                              "逐条披露成败，抓回内容过全套机械闸）")
+    parser.add_argument("--questions", default=None,
+                        help="官方案卷问题清单 JSON（仅 question_id 与 question；"
+                             "默认 <case>/questions.json）")
     args = parser.parse_args()
 
     settings = Settings.from_env()
@@ -1327,10 +1361,23 @@ def main() -> int:
         except (ValueError, OSError) as exc:
             raise SystemExit(f"编队配置加载失败: {exc}")
 
+    case_dir = Path(args.case_dir)
+    out_dir = Path(args.out or (case_dir / "out"))
+    if (case_dir / "raw_documents.json").is_file():
+        from app.ingest.official_case import load_question_list
+
+        qpath = Path(args.questions) if args.questions else (case_dir / "questions.json")
+        if not qpath.is_file():
+            raise SystemExit(
+                "官方案卷需要问题清单（--questions 或 questions.json），"
+                "且只读取 question_id 与 question")
+        questions = load_question_list(qpath)
+        run_official_case(case_dir, questions, out_dir, settings=settings, roster=roster)
+        print(f"官方提交物已写入 {out_dir}")
+        return 0
+
     result = run_case(RunSpec(
-        case_dir=Path(args.case_dir),
-        out_dir=Path(args.out or (Path(args.case_dir) / "out")),
-        roster=roster))
+        case_dir=case_dir, out_dir=out_dir, roster=roster))
     print(result.report_md)
     print(f"报告与日志已写入 {result.out_dir}")
     return 0
