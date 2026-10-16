@@ -194,6 +194,10 @@ class CollectResult:
     depth_capped: bool = False
     max_files: int = 500
     max_depth: int = 3
+    # 工具名单外的隐藏目录：不入卷但披露（C-5）；元素为
+    # {rel, n_files, files_capped}
+    hidden_dirs: tuple[dict, ...] = ()
+    hidden_dirs_overflow: bool = False
 
     @property
     def truncated(self) -> bool:
@@ -204,12 +208,34 @@ class CollectResult:
         return len(self.files)
 
 
+# 工具/缓存目录：静默跳过且不披露（不是材料）。含 .fetched/.corpus——
+# 真有文件，若报成「有材料未入卷」每跑一次冒假警报。
+# 与 _is_artifact_dir 分立：本名单专管「隐藏/工具目录」披露豁免，
+# 不得改 _is_artifact_dir 现有语义（C-5 禁止项）。
+_TOOL_SKIP_DIRS = frozenset({
+    ".git", ".svn", ".hg", ".venv", ".env", ".idea", ".vscode",
+    ".pytest_cache", ".mypy_cache", ".ruff_cache", ".tox", ".eggs",
+    ".cache", ".npm", ".yarn",
+    ".fetched", ".corpus",
+    "node_modules",
+})
+
+# 隐藏目录披露封顶：目录条数 / 单目录内计数
+_MAX_HIDDEN_DIRS_DISCLOSE = 50
+_MAX_HIDDEN_FILES_COUNT = 5000
+
+
 def _is_artifact_dir(name: str) -> bool:
     # 产物目录（out/out_offline/out_ab_*）与缓存绝不入卷——
     # 自产文件被输入层吃回会形成滚雪球（归一化 diff 验收抓到的
     # 真实回归：72 信源/73218 段，每跑一次演示膨胀一轮）
     return name == "out" or name.startswith("out_") \
         or name in ("history", ".fetched", ".corpus")
+
+
+def _is_tool_skip_dir(name: str) -> bool:
+    """工具/缓存目录：静默跳过、不入卷、不披露。"""
+    return name in _TOOL_SKIP_DIRS
 
 
 def _count_ingestible(d: Path) -> int:
@@ -223,7 +249,8 @@ def _count_ingestible(d: Path) -> int:
         if p.name.startswith("."):
             continue
         if p.is_dir():
-            if p.name == "__pycache__" or _is_artifact_dir(p.name):
+            if p.name == "__pycache__" or _is_artifact_dir(p.name) \
+                    or _is_tool_skip_dir(p.name):
                 continue
             n += _count_ingestible(p)
         else:
@@ -231,21 +258,56 @@ def _count_ingestible(d: Path) -> int:
     return n
 
 
+def _count_ingestible_capped(d: Path, cap: int) -> tuple[int, bool]:
+    """有界计数可摄取文件；达 cap 即停，返回 (已计数量, 是否触顶)。"""
+    n = 0
+    capped = False
+
+    def walk(x: Path) -> None:
+        nonlocal n, capped
+        if n >= cap:
+            capped = True
+            return
+        try:
+            children = sorted(x.iterdir(), key=lambda c: c.name)
+        except OSError:
+            return
+        for p in children:
+            if n >= cap:
+                capped = True
+                return
+            if p.is_dir():
+                if p.name == "__pycache__" or _is_artifact_dir(p.name) \
+                        or _is_tool_skip_dir(p.name):
+                    continue
+                # 嵌套隐藏目录仍计入（父目录已整体不入卷，只为披露总数）
+                walk(p)
+            else:
+                if p.name.startswith("."):
+                    continue
+                n += 1
+
+    walk(d)
+    return n, capped
+
+
 def _collect_files(case_dir: Path, max_files: int = 500,
                    max_depth: int = 3) -> CollectResult:
     """有界遍历案例目录 → CollectResult(files, 封顶元数据)。
 
     子目录此前被静默忽略——主办方自己解压成文件夹的场景同样常见；
-    隐藏目录与 __pycache__ 跳过，数量/深度封顶（假定输入敌意）。
+    工具/缓存目录静默跳过；名单外隐藏目录不入卷但披露文件数（C-5）。
     封顶后仍继续遍历以计数未入卷文件——披露「取前 N、另有 M」，
     不再静默丢材料。排序语义不变（按名）。"""
     out: list[tuple[Path, str]] = []
     skipped = 0
     files_capped = False
     depth_capped = False
+    hidden_dirs: list[dict] = []
+    hidden_dirs_overflow = False
 
     def walk(d: Path, prefix: str, depth: int) -> None:
-        nonlocal skipped, files_capped, depth_capped
+        nonlocal skipped, files_capped, depth_capped, hidden_dirs_overflow
         try:
             children = sorted(d.iterdir(), key=lambda x: x.name)
         except OSError:
@@ -253,12 +315,27 @@ def _collect_files(case_dir: Path, max_files: int = 500,
         for p in children:
             if depth == 0 and p.name == "manifest.yaml":
                 continue
+            if p.is_dir() and (
+                    p.name == "__pycache__" or _is_artifact_dir(p.name)
+                    or _is_tool_skip_dir(p.name)):
+                continue  # 工具/产物：静默，不披露
             if p.name.startswith("."):
-                continue  # 隐藏文件/目录一律不入卷(.DS_Store/.expected.json 等
-                # 系统或工具元数据不是用户内容——macOS 拖目录的真实场景)
-            if p.is_dir():
-                if p.name == "__pycache__" or _is_artifact_dir(p.name):
+                if p.is_file():
+                    continue  # 隐藏文件（.DS_Store 等）保持静默，本单不披露
+                # 名单外隐藏目录：不入卷，披露目录名 + 可摄取文件数
+                rel = f"{prefix}{p.name}"
+                if len(hidden_dirs) >= _MAX_HIDDEN_DIRS_DISCLOSE:
+                    hidden_dirs_overflow = True
                     continue
+                n_files, fcap = _count_ingestible_capped(
+                    p, _MAX_HIDDEN_FILES_COUNT)
+                if n_files <= 0 and not fcap:
+                    continue  # 空目录不造噪音
+                hidden_dirs.append({
+                    "rel": rel, "n_files": n_files, "files_capped": fcap,
+                })
+                continue
+            if p.is_dir():
                 if depth + 1 > max_depth:
                     depth_capped = True
                     skipped += _count_ingestible(p)
@@ -276,6 +353,8 @@ def _collect_files(case_dir: Path, max_files: int = 500,
         files=out, skipped=skipped,
         files_capped=files_capped, depth_capped=depth_capped,
         max_files=max_files, max_depth=max_depth,
+        hidden_dirs=tuple(hidden_dirs),
+        hidden_dirs_overflow=hidden_dirs_overflow,
     )
 
 
@@ -591,6 +670,40 @@ def load_case(case_dir: Path, fetch_links: bool = False,
             "file": "",
             "route": "dir_truncated",
             "reason": detail,
+        })
+    for hd in collected.hidden_dirs:
+        rel = str(hd.get("rel") or "")
+        n_files = int(hd.get("n_files") or 0)
+        fcap = bool(hd.get("files_capped"))
+        if fcap:
+            detail = (f"隐藏目录 {rel} 含至少 {n_files} 个可摄取文件未入卷"
+                      "（另有更多未计；工具目录外的隐藏目录不收录）")
+        else:
+            detail = (f"隐藏目录 {rel} 含 {n_files} 个可摄取文件未入卷"
+                      "（工具目录外的隐藏目录不收录）")
+        dossier.ingest_notes.append({
+            "file": rel,
+            "kind": "hidden_dir_skipped",
+            "detail": detail,
+            "n_files": n_files,
+            "files_capped": fcap,
+        })
+        dossier.triage.append({
+            "file": rel,
+            "route": "hidden_dir_skipped",
+            "reason": detail,
+        })
+    if collected.hidden_dirs_overflow:
+        overflow = "另有更多隐藏目录未计（披露目录数已达上限）"
+        dossier.ingest_notes.append({
+            "file": "",
+            "kind": "hidden_dir_skipped",
+            "detail": overflow,
+        })
+        dossier.triage.append({
+            "file": "",
+            "route": "hidden_dir_skipped",
+            "reason": overflow,
         })
     total = len(files)
     for i, (path, rel) in enumerate(files, 1):
