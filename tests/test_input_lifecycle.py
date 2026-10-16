@@ -231,3 +231,47 @@ def test_report_discloses_collisions_and_unadopted():
     assert "未采信信源" in md and "SRC3" in md
     stale = [f for f in audit_temporal(d) if f["kind"] == "stale"]
     assert stale  # 时效闸也覆盖该场景
+
+
+# -- C-4 报告章名三分支 ---------------------------------------------------------
+
+
+def test_c4_chapter_with_collisions_keeps_conflict_title():
+    """有对撞 → 章名保持「资料内数字冲突」。"""
+    d = _two_source_collision_dossier()
+    md = render_report_md(d, HashChain(), [])
+    assert "## 资料内数字冲突（事实层对撞）" in md
+    assert "跨信源" in md
+    assert "未采信数字分类计数" in md
+
+
+def test_c4_chapter_drops_only_uses_non_conflict_title():
+    """零对撞但有未采信数字 → 章名改「台账未采信…」，不得出现冲突字样。"""
+    d = Dossier(question="伤亡")
+    src = Source.create("SRC1", SourceType.NEWS, id="SRC1")
+    src.segments.append(Segment(
+        id="SRC1#s1", source_id="SRC1", text="事故造成死亡", index=0))
+    src.segments.append(Segment(
+        id="SRC1#s2", source_id="SRC1", text="12人。", index=1))
+    d.add_source(src)
+    facts, stats = _scan(d)
+    assert sum(stats["dropped"].values()) >= 1
+    assert find_collisions(d, facts=facts) == []
+    d.accounting["fact_ledger_stats"] = stats
+    md = render_report_md(d, HashChain(), [])
+    assert "## 台账未采信数字分类计数" in md
+    assert "资料内数字冲突" not in md
+    assert "冲突" not in md
+
+
+def test_c4_chapter_absent_when_no_collision_no_drop():
+    """零对撞且零未采信 → 整章不打。"""
+    d = Dossier(question="回款")
+    _seg(d, "SRC1", "客户B回款率40%。")
+    _, stats = _scan(d)
+    assert sum(stats["dropped"].values()) == 0
+    assert find_collisions(d) == []
+    d.accounting["fact_ledger_stats"] = stats
+    md = render_report_md(d, HashChain(), [])
+    assert "资料内数字冲突" not in md
+    assert "台账未采信数字分类计数" not in md

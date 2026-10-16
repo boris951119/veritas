@@ -1210,7 +1210,11 @@ def _render_fact_collisions(lines: list[str], dossier: Dossier) -> None:
     has_drop = any(int(v or 0) > 0 for v in dropped.values())
     if not collisions and not has_drop:
         return
-    lines += ["## 资料内数字冲突（事实层对撞）", ""]
+    # 三分支章名：有对撞保留「冲突」；仅未采信改名，避免读者以为有冲突没列
+    if collisions:
+        lines += ["## 资料内数字冲突（事实层对撞）", ""]
+    else:
+        lines += ["## 台账未采信数字分类计数", ""]
     lines.append(f"- {format_dropped_disclosure(stats)}")
     for c in collisions:
         detail = "；".join(
