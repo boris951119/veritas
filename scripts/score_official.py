@@ -12,7 +12,7 @@ from pathlib import Path
 
 
 DISCLAIMER = "仅第一阶段精确匹配＝官方分的下界，未含语义匹配"
-# 第二行口径由 R-C12-2 ④ 钉死，与首行免责声明分开，避免只改首行就丢掉「空题剔除」。
+# 第二行口径：按金标遍历，双方为空的侧不进平均。
 EMPTY_EXCLUDED_NOTE = "未含语义匹配，且双方为空的侧已剔除"
 
 
@@ -185,8 +185,11 @@ def score_submission(evidence_path: Path, conclusions_path: Path,
     p_src, r_src = precision_recall(_pairs(evidence), _pairs(gold_evidence))
     f_src = f1(p_src, r_src)
 
-    sub_by_q = {str(row.get("question_id") or ""): row for row in conclusions}
+    grouped: dict[str, list[dict]] = {}
+    for row in conclusions:
+        grouped.setdefault(str(row.get("question_id") or ""), []).append(row)
     gold_ids = {str(row.get("question_id") or "") for row in gold_conclusions}
+    repeated_questions = sum(1 for rows in grouped.values() if len(rows) > 1)
     sup_p: list[tuple[float, int]] = []
     sup_r: list[tuple[float, int]] = []
     conf_p: list[tuple[float, int]] = []
@@ -197,14 +200,23 @@ def score_submission(evidence_path: Path, conclusions_path: Path,
     bare_supporting = 0
     for gold in gold_conclusions:
         qid = str(gold.get("question_id") or "")
-        if qid not in sub_by_q:
+        rows = grouped.get(qid) or []
+        if not rows:
             missing_questions += 1
             row: dict = {}
         else:
-            row = sub_by_q[qid]
-            # 硬档只数提交里确实有、且支撑列表为空的结论。整题没交已经按 0 进分母，不再算裸结论。
-            if not (row.get("supporting_facts") or []):
-                bare_supporting += 1
+            # 硬档在合并前逐行判定。整题没交已经按 0 进分母，不再算裸结论。
+            for one in rows:
+                if not (one.get("supporting_facts") or []):
+                    bare_supporting += 1
+            # 只有一行时不并集：一行内部的重复段落对要留给一对一消耗，避免改掉已验收的上帝提交读数。
+            if len(rows) == 1:
+                row = rows[0]
+            else:
+                row = {
+                    "supporting_facts": _union_facts(rows, "supporting_facts"),
+                    "conflicting_facts": _union_facts(rows, "conflicting_facts"),
+                }
         sub_sup = _pairs([row], "supporting_facts")
         gold_sup = _gold_fact_pairs([gold], "supporting_facts", index, unresolved) if gold else []
         sub_conf = _pairs([row], "conflicting_facts")
@@ -230,7 +242,7 @@ def score_submission(evidence_path: Path, conclusions_path: Path,
     score_241 = score_recall_sup(r_sup)
     if bare_supporting:
         score_241 = 0
-    extra_questions = sum(1 for qid in sub_by_q if qid not in gold_ids)
+    extra_questions = sum(1 for qid in grouped if qid not in gold_ids)
     return {
         "Precision_src": p_src,
         "Recall_src": r_src,
@@ -250,8 +262,25 @@ def score_submission(evidence_path: Path, conclusions_path: Path,
         "missing_questions": missing_questions,
         "bare_supporting": bare_supporting,
         "extra_questions": extra_questions,
+        "repeated_questions": repeated_questions,
         "recall_src_ceiling": recall_src_ceiling_line(gold_evidence, raw_documents_path),
     }
+
+
+def _union_facts(rows: list[dict], key: str) -> list[dict]:
+    """同一题多行的事实按 (doc_id, para_id) 取并集，顺序取第一次出现。"""
+    seen: set[tuple[str, str]] = set()
+    out: list[dict] = []
+    for row in rows:
+        for item in row.get(key) or []:
+            if not isinstance(item, dict):
+                continue
+            pair = (str(item.get("doc_id") or ""), str(item.get("para_id") or ""))
+            if pair in seen:
+                continue
+            seen.add(pair)
+            out.append({"doc_id": pair[0], "para_id": pair[1]})
+    return out
 
 
 def _empty_both_side(gold_n: int, submitted_n: int) -> int:
@@ -302,6 +331,7 @@ def format_report(metrics: dict) -> str:
     missing = int(metrics.get("missing_questions") or 0)
     extra = int(metrics.get("extra_questions") or 0)
     bare = int(metrics.get("bare_supporting") or 0)
+    repeated = int(metrics.get("repeated_questions") or 0)
     lines = [
         DISCLAIMER,
         EMPTY_EXCLUDED_NOTE,
@@ -314,6 +344,8 @@ def format_report(metrics: dict) -> str:
     ]
     if bare:
         lines.append(f"{bare} 条结论提交了但无支撑证据（官方 2.4.1 硬档）")
+    if repeated:
+        lines.append(f"{repeated} 道题在提交里重复出现（已按并集合并）")
     for key in (
         "Precision_src", "Recall_src", "F1_src", "score_2_2_1",
         "Precision_sup", "Recall_sup", "score_2_4_1", "score_2_4_2",

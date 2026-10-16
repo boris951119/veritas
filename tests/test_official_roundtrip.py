@@ -653,6 +653,215 @@ def test_unresolvable_fact_id_scores_zero(tmp_path):
     assert "2 条金标 fact_id 无法解析" in format_report(metrics)
 
 
+def _question_dossier(tmp_path: Path, name: str, text: str, para_id: str, *, with_evidence: bool):
+    from app.core.evidence import Conclusion, EvidenceNode
+    case = tmp_path / name
+    case.mkdir()
+    _write_docs(case, [{
+        "doc_id": "doc_001",
+        "title": "t",
+        "publish_time": "2024-01-02",
+        "content": text,
+        "source_credibility": 0.4,
+        "content_url": "",
+        "paragraphs": [_para(para_id, 0, len(text))],
+    }])
+    dossier = load_official_case(case)
+    if with_evidence:
+        con = Conclusion.create("有支撑", author="m", id=f"CON-{name}")
+        dossier.conclusions.append(con)
+        dossier.add_evidence(EvidenceNode.create(
+            con.id, text, [para_id], id=f"EV-{name}"))
+    return dossier
+
+
+def test_three_questions_drop_bare_and_keep_gold_denominator(tmp_path, capsys):
+    """3 题里 1 题零采纳：不写进提交，评分按金标 3 题计召回，硬档不触发。"""
+    q1 = _question_dossier(tmp_path, "q1", "第一题引用原文足够长", "doc_001#p1", with_evidence=True)
+    q2 = _question_dossier(tmp_path, "q2", "第二题引用原文足够长", "doc_001#p2", with_evidence=True)
+    q3 = _question_dossier(tmp_path, "q3", "第三题没有采纳证据啊", "doc_001#p3", with_evidence=False)
+    runs = [
+        ({"question_id": "q1", "question": "一"}, q1),
+        ({"question_id": "q2", "question": "二"}, q2),
+        ({"question_id": "q3", "question": "三"}, q3),
+    ]
+    paths = export_official(runs, tmp_path / "out")
+    conclusions = json.loads(paths["conclusions"].read_text(encoding="utf-8"))
+    assert [row["question_id"] for row in conclusions] == ["q1", "q2"]
+    notes = paths["notes"].read_text(encoding="utf-8")
+    assert "未写入结论提交的 question_id：q3" in notes
+    printed = capsys.readouterr().out
+    assert "未写入结论提交的 question_id：q3" in printed
+
+    samples = [
+        {"fact_id": "fact_001", "doc_id": "doc_001", "para_id": "doc_001#p1", "quote": "甲"},
+        {"fact_id": "fact_002", "doc_id": "doc_001", "para_id": "doc_001#p2", "quote": "乙"},
+        {"fact_id": "fact_003", "doc_id": "doc_001", "para_id": "doc_001#p3", "quote": "丙"},
+    ]
+    gold_c = [
+        {"question_id": qid, "supporting_facts": [_gold_fact(fid)], "conflicting_facts": []}
+        for qid, fid in (("q1", "fact_001"), ("q2", "fact_002"), ("q3", "fact_003"))
+    ]
+    metrics = score_submission(
+        paths["evidence"],
+        paths["conclusions"],
+        _dump(tmp_path / "gold_evidence.json", samples),
+        _dump(tmp_path / "gold_conclusions.json", gold_c),
+        samples_path=_dump(tmp_path / "evidence_samples.json", samples),
+    )
+    assert metrics["score_2_4_1"] != 0
+    assert abs(metrics["Recall_sup"] - (2 / 3)) < 1e-9
+    report = format_report(metrics)
+    assert "提交缺 1 道题（按金标遍历，这些题记 0 分）" in report
+    assert "无支撑证据" not in report
+
+
+def test_two_questions_keep_bare_conclusion(tmp_path, capsys):
+    """2 题里 1 题零采纳：门不生效，两条都写出。"""
+    q1 = _question_dossier(tmp_path, "a", "第一题引用原文足够长", "doc_001#p1", with_evidence=True)
+    q2 = _question_dossier(tmp_path, "b", "第二题没有采纳证据啊", "doc_001#p2", with_evidence=False)
+    paths = export_official([
+        ({"question_id": "q1", "question": "一"}, q1),
+        ({"question_id": "q2", "question": "二"}, q2),
+    ], tmp_path / "out")
+    conclusions = json.loads(paths["conclusions"].read_text(encoding="utf-8"))
+    assert [row["question_id"] for row in conclusions] == ["q1", "q2"]
+    assert conclusions[1]["supporting_facts"] == []
+    notes = paths["notes"].read_text(encoding="utf-8")
+    assert "本次题数 2 ≤2" in notes
+    assert "未丢弃 question_id：（无）" in notes
+    assert "未写入结论提交" not in notes
+    assert "本次题数 2 ≤2" in capsys.readouterr().out
+
+
+def test_nonempty_support_is_not_dropped_at_three(tmp_path):
+    """反空挂：3 题里原先会空的那题只要有一条支撑，就照旧写出。"""
+    q1 = _question_dossier(tmp_path, "c1", "第一题引用原文足够长", "doc_001#p1", with_evidence=True)
+    q2 = _question_dossier(tmp_path, "c2", "第二题引用原文足够长", "doc_001#p2", with_evidence=True)
+    q3 = _question_dossier(tmp_path, "c3", "第三题引用原文足够长", "doc_001#p3", with_evidence=True)
+    paths = export_official([
+        ({"question_id": "q1", "question": "一"}, q1),
+        ({"question_id": "q2", "question": "二"}, q2),
+        ({"question_id": "q3", "question": "三"}, q3),
+    ], tmp_path / "out")
+    conclusions = json.loads(paths["conclusions"].read_text(encoding="utf-8"))
+    assert [row["question_id"] for row in conclusions] == ["q1", "q2", "q3"]
+    assert all(row["supporting_facts"] for row in conclusions)
+    assert "未写入结论提交的 question_id：（无）" in paths["notes"].read_text(encoding="utf-8")
+
+
+def test_global_evidence_dedup_changes_precision(tmp_path):
+    """两题引用同一段：evidence.json 只留 1 行，精确率高于未去重的重复提交。"""
+    text = "两题共用的这一段原文足够长"
+    case = tmp_path / "shared"
+    case.mkdir()
+    _write_docs(case, [{
+        "doc_id": "doc_001",
+        "title": "t",
+        "publish_time": "2024-01-02",
+        "content": text,
+        "source_credibility": 0.4,
+        "content_url": "",
+        "paragraphs": [_para("doc_001#p1", 0, len(text))],
+    }])
+    from app.core.evidence import Conclusion, EvidenceNode
+    left = load_official_case(case)
+    right = load_official_case(case)
+    for tag, dossier in (("L", left), ("R", right)):
+        con = Conclusion.create("共用", author="m", id=f"CON-{tag}")
+        dossier.conclusions.append(con)
+        dossier.add_evidence(EvidenceNode.create(con.id, text, ["doc_001#p1"], id=f"EV-{tag}"))
+    paths = export_official([
+        ({"question_id": "q1", "question": "一"}, left),
+        ({"question_id": "q2", "question": "二"}, right),
+    ], tmp_path / "out")
+    evidence = json.loads(paths["evidence"].read_text(encoding="utf-8"))
+    assert len(evidence) == 1
+    assert "去重 1 行" in paths["notes"].read_text(encoding="utf-8")
+    gold = [{"doc_id": evidence[0]["doc_id"], "para_id": evidence[0]["para_id"], "quote": text}]
+    empty_c = _dump(tmp_path / "empty_c.json", [])
+    gold_c = _dump(tmp_path / "gold_c.json", [])
+    gold_ev = _dump(tmp_path / "gold_ev.json", gold)
+    deduped = score_submission(paths["evidence"], empty_c, gold_ev, gold_c)
+    duplicated = _dump(tmp_path / "dup_evidence.json", [evidence[0], dict(evidence[0])])
+    before = score_submission(duplicated, empty_c, gold_ev, gold_c)
+    assert deduped["Precision_src"] == 1.0
+    assert before["Precision_src"] == 0.5
+    assert deduped["Precision_src"] != before["Precision_src"]
+
+
+def _duplicate_qid_submission(order: str) -> list[dict]:
+    hit = {"question_id": "q1", "supporting_facts": [
+        {"doc_id": "doc_001", "para_id": "doc_001#p1"},
+    ], "conflicting_facts": []}
+    bare = {"question_id": "q1", "supporting_facts": [], "conflicting_facts": []}
+    q2 = {"question_id": "q2", "supporting_facts": [
+        {"doc_id": "doc_001", "para_id": f"doc_001#p{i}"} for i in range(3, 7)
+    ], "conflicting_facts": []}
+    q1_rows = [bare, hit] if order == "bare-first" else [hit, bare]
+    return q1_rows + [q2]
+
+
+def test_duplicate_question_rows_merge_independent_of_order(tmp_path):
+    """同一题两行无论先后，五项读数相同，硬档不被并集吃掉。"""
+    samples = [
+        {"fact_id": f"fact_{i:03d}", "doc_id": "doc_001", "para_id": f"doc_001#p{i}", "quote": "甲"}
+        for i in range(1, 7)
+    ]
+    gold_c = [
+        {"question_id": "q1", "supporting_facts": [
+            _gold_fact("fact_001"), _gold_fact("fact_002"),
+        ], "conflicting_facts": []},
+        {"question_id": "q2", "supporting_facts": [
+            _gold_fact(f"fact_{i:03d}") for i in range(3, 7)
+        ], "conflicting_facts": []},
+    ]
+    gold_ev = _dump(tmp_path / "gold_ev.json", samples)
+    gold_path = _dump(tmp_path / "gold_c.json", gold_c)
+    samples_path = _dump(tmp_path / "samples.json", samples)
+    evidence = _dump(tmp_path / "evidence.json", samples)
+    reports = {}
+    for order in ("bare-first", "hit-first"):
+        metrics = score_submission(
+            evidence,
+            _dump(tmp_path / f"{order}.json", _duplicate_qid_submission(order)),
+            gold_ev, gold_path, samples_path=samples_path,
+        )
+        five = (
+            metrics["score_2_2_1"], metrics["score_2_4_1"], metrics["score_2_4_2"],
+            metrics["score_2_5_1"], metrics["score_2_5_2"],
+        )
+        report = format_report(metrics)
+        reports[order] = (metrics, five, report)
+        assert metrics["score_2_4_1"] == 0
+        assert abs(metrics["Recall_sup"] - (5 / 6)) < 1e-9
+        assert abs(metrics["Precision_sup"] - 1.0) < 1e-9
+        assert "1 条结论提交了但无支撑证据（官方 2.4.1 硬档）" in report
+        assert "1 道题在提交里重复出现（已按并集合并）" in report
+    assert reports["bare-first"][1] == reports["hit-first"][1]
+    assert reports["bare-first"][2] == reports["hit-first"][2]
+
+
+def test_single_question_row_has_no_repeat_line(tmp_path):
+    """反例：每题只交一行时，不出现重复题披露。"""
+    samples = [
+        {"fact_id": "fact_001", "doc_id": "doc_001", "para_id": "doc_001#p1", "quote": "甲"},
+    ]
+    gold_c = [{"question_id": "q1", "supporting_facts": [_gold_fact("fact_001")], "conflicting_facts": []}]
+    submitted = [{"question_id": "q1", "supporting_facts": [
+        {"doc_id": "doc_001", "para_id": "doc_001#p1"},
+    ], "conflicting_facts": []}]
+    metrics = score_submission(
+        _dump(tmp_path / "evidence.json", samples),
+        _dump(tmp_path / "conclusions.json", submitted),
+        _dump(tmp_path / "gold_ev.json", samples),
+        _dump(tmp_path / "gold_c.json", gold_c),
+        samples_path=_dump(tmp_path / "samples.json", samples),
+    )
+    assert "重复出现" not in format_report(metrics)
+    assert metrics["score_2_4_1"] == 6
+
+
 def test_unparseable_publish_time_left_blank(tmp_path):
     """g) 空、相对时间、站名不推断日期，披露计数为 3。"""
     docs = []

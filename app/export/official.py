@@ -64,9 +64,11 @@ def _segment_locator(dossier: Dossier, segment_id: str) -> tuple[str, str] | Non
     return doc_id, seg.id
 
 
-def _evidence_rows(dossier: Dossier) -> list[dict]:
+def _evidence_rows(dossier: Dossier,
+                   seen: set[tuple[str, str, str]]) -> tuple[list[dict], int]:
+    """seen 由 export_official 持有，跨题共用。返回 (新行, 被去重掉的行数)。"""
     rows: list[dict] = []
-    seen: set[tuple[str, str, str]] = set()
+    dropped = 0
     for ev in dossier.evidences:
         for sid in ev.segment_ids:
             loc = _segment_locator(dossier, sid)
@@ -75,6 +77,7 @@ def _evidence_rows(dossier: Dossier) -> list[dict]:
             doc_id, para_id = loc
             key = (doc_id, para_id, ev.quote)
             if key in seen:
+                dropped += 1
                 continue
             seen.add(key)
             rows.append({
@@ -85,7 +88,20 @@ def _evidence_rows(dossier: Dossier) -> list[dict]:
                 "argument": _empty_argument(),
                 "entities": None,
             })
-    return rows
+    return rows, dropped
+
+
+def _bare_gate_line(n_questions: int, dropped_ids: list[str]) -> str:
+    ids = "、".join(dropped_ids) if dropped_ids else "（无）"
+    if n_questions >= 3:
+        return (
+            f"裸结论闸：本次题数 {n_questions} ≥3，"
+            f"未写入结论提交的 question_id：{ids}。"
+        )
+    return (
+        f"裸结论闸：本次题数 {n_questions} ≤2，"
+        f"裸结论照旧提交，未丢弃 question_id：{ids}。"
+    )
 
 
 def _supporting_facts(dossier: Dossier) -> list[dict]:
@@ -201,20 +217,35 @@ def export_official(runs: list[tuple[dict, Dossier]], out_dir: Path) -> dict[str
     confidence: list[dict] = []
     conflicts: list[dict] = []
     omission_notes: list[str] = []
+    seen: set[tuple[str, str, str]] = set()
+    deduped = 0
+    dropped_ids: list[str] = []
+    n_questions = len(runs)
     for question, dossier in runs:
         qid = str(question["question_id"])
-        evidence.extend(_evidence_rows(dossier))
-        conclusions.append({
-            "question_id": qid,
-            "question": str(question["question"]),
-            "conclusion": _conclusion_text(dossier),
-            "supporting_facts": _supporting_facts(dossier),
-            "conflicting_facts": [],
-        })
+        rows, dropped = _evidence_rows(dossier, seen)
+        evidence.extend(rows)
+        deduped += dropped
+        supporting = _supporting_facts(dossier)
+        # 题数 ≥3 才丢裸结论：2.3 是 15/N，N=2 时丢一题比 2.4.1 归零更亏。
+        if n_questions >= 3 and not supporting:
+            dropped_ids.append(qid)
+        else:
+            conclusions.append({
+                "question_id": qid,
+                "question": str(question["question"]),
+                "conclusion": _conclusion_text(dossier),
+                "supporting_facts": supporting,
+                "conflicting_facts": [],
+            })
         confidence.extend(_confidence_rows(qid, dossier))
-        rows, omitted = _conflict_rows(qid, dossier)
-        conflicts.extend(rows)
+        conflict_rows, omitted = _conflict_rows(qid, dossier)
+        conflicts.extend(conflict_rows)
         omission_notes.extend(omitted)
+    gate_line = _bare_gate_line(n_questions, dropped_ids)
+    dedup_line = f"evidence.json 去重 {deduped} 行（键 doc_id, para_id, quote）。"
+    print(gate_line)
+    print(dedup_line)
 
     paths = {
         "evidence": out_dir / "evidence.json",
@@ -237,5 +268,7 @@ def export_official(runs: list[tuple[dict, Dossier]], out_dir: Path) -> dict[str
                       "resolution_type 仅由 method 映射表得到，未另算证据强度",
         }, ensure_ascii=False, indent=2),
         encoding="utf-8")
-    paths["notes"].write_text(_FIELD_NOTES, encoding="utf-8")
+    paths["notes"].write_text(
+        _FIELD_NOTES + "\n## 本次导出\n" + gate_line + "\n" + dedup_line + "\n",
+        encoding="utf-8")
     return paths
