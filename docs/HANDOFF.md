@@ -34,7 +34,7 @@
 3. 优先级最高的动手项（若结论成立）：**把「独立信源簇」做成数据结构**（约 1 天、零 token）——
    覆盖分量、冲突判定、篡改检测、孤证显影四件事都踩在它上面。
 
-## 4. 六个已知的坑（新工具必须先知道）
+## 4. 七个已知的坑（新工具必须先知道）
 
 1. **别把推演当事实**。`docs/scenario-review-2026-10-14.md` 每条标了 [实测]/[推演]；
    2026-10-14 当天就有两次判断过头被更正（多智能体其实只差 2–3 分；「转载吹高置信度」一度被错误划掉）。
@@ -59,6 +59,12 @@
    `conflict_recall=1.0` 测的是刻意植入、措辞对齐的窄题冲突，不代表舆情真实措辞分布。
    图上位置：`docs/architecture-map-2026-10-12.html` ① 带「切段与断行愈合」（已由绿改黄）、
    ⑤ 缺口带「时间定向＋台账漏检」、指标承诺新增灰行「数字冲突漏检率·未量」、病因表第 5 条改为双向失效。
+7. **工作台「添加文件夹」会静默覆盖材料**（2026-10-16 实测新发现，工单 C-6 待修）。
+   `import_case.py:41` 对 >4 段相对路径**截掉最后一段＝文件名**，两份深层文件塌成同一路径后
+   `write_bytes` 后者覆盖前者，而接口照样返回 `n_written=2`、`skipped=[]`。探针实证：
+   上传 `top/a/b/c/一月报告.txt`＋`二月报告.txt` → 磁盘只剩一份 `top/a/b/c`，内容是一月的对手，**零报错零披露**。
+   遍历侧（`_collect_files`）的深度洞已由 C-1/C-5 收口，**导入侧这条还没有**——
+   别把「7 道召回口子全部已披露」这句话讲到上传链路上，它不成立。
 
 ## 5. 待 Cursor 修复工单（Qoder 出验收，双方不口头交接）
 
@@ -299,6 +305,69 @@
     `test_no_hidden_dir_no_disclosure`。
   - `pytest` 尾行：`545 passed in 4.13s`（538＋C-4×3＋C-5×4，零 failed）；
     `git diff --stat cases/` 为空。
+
+### C-6｜导入侧静默丢件＋静默覆盖（②1）与「可摄取」口径虚高（②2）
+
+- **本单不依赖官方材料**：改的是路径校验与披露出口，不碰判定、不碰统计口径。
+- **现状（已实测复现，非推演）**：`app/ingest/import_case.py:41` 对超过 `MAX_DEPTH + 1` 段的相对路径做
+  `parts = parts[: MAX_DEPTH + 1]`——**截掉的是最后一段，也就是文件名**。于是深层目录里的多个文件塌成同一条
+  rel，`:146` 的 `path = case_dir / rel` 与 `:152` 的 `path.write_bytes(data)` 让后一份**覆盖**前一份
+  （新建案卷 `write_imported_case` 在 `:220` 同一逻辑）。探针实跑（临时案卷，两份 5 段路径）：
+
+  ```
+  上传：top/a/b/c/一月报告.txt、top/a/b/c/二月报告.txt
+  接口返回 n_written = 2   skipped = []          ← 账面说"两份都进来了"
+  磁盘实际落盘: top/a/b/c  内容='二月回款25万'    ← 只剩一份，一月整份没了，零报错零披露
+  ```
+
+  触发入口是工作台最常用的「添加文件夹」：`web/index.html:865` 用 `f.webkitRelativePath || f.name` 当文件名上传，
+  主办方给解压后的目录树时天然 ≥4 层。另两类拒收（dot 前缀、单文件 >20MB）只进 API 返回值的 `skipped`，
+  而 `web/index.html:884` 只读 `n_written`，`ingest_notes`/`triage`/报告都不写——**与 C-1/C-5 同一类洞，只是发生在导入不在遍历**。
+- **为什么选「拒收」不选「加后缀保文件」（决策依据，实测）**：遍历侧深度只到 4 段——
+  `_collect_files` 实跑同一棵树的结果是 `入卷: top/a/b/c.md / top/a/b.md / top/a.md`，
+  而 `top/a/b/c/d.md`（5 段）已 `depth_capped=True, skipped=1` 被 `dir_truncated` 披露。
+  所以把 5 段路径**改名写到磁盘也进不了卷**：白占 `MAX_FILES` 名额与体积，成为永不入卷的僵尸文件；
+  要真救就得同时压平目录，那案卷结构与主办方原目录对不上，核对原文与删除入口都得再解释一套改名规则。
+  **本单口径＝承认丢件但让它可见**（与已验收的 C-5「不收录但披露」一致）。
+- **要求（②1，四处落点缺一不可）**：
+  1. `safe_relpath`：深度超限改为**返回 `None` 拒收**，绝不返回丢掉文件名的路径；**禁止**加后缀改名、禁止搬平目录。
+  2. 拒收必须**分原因**，不许笼统报"不合法"：`deep_path`（层级超限）／`hidden_path`（dot 前缀目录或文件）／
+     `oversize`（单文件 >20MB），文案带**原相对路径**（导入侧是用户自己选的清单，出文件名不涉隐私，
+     与 C-5 隐藏目录"不列文件名"的口径**故意不同**，别顺手统一）。
+  3. 披露落三处：① 返回值加 `refused: [{name, reason}]` 与 `n_refused`（保留现有 `skipped` 兼容读法或直接替换，
+     但 `write_imported_case` 与 `append_imported_files` **两条路径口径必须一致**）；
+     ② 写一条 `ingest_notes`＋`triage`，新 `kind/route = import_refused`（`triage.py` 补 ROUTE_LABEL／ORDER）；
+     ③ 工作台导入结果显影「N 份未入卷（原因…）」，`web/index.html` 不得再只读 `n_written`。
+  4. 报告侧：`import_refused` 要落到「摄取披露」章（`app/pipeline.py:1268` 那条渲染路径能吃到 `ingest_notes`，
+     别新写渲染分支）。
+- **要求（②2，计数口径对齐）**：`_count_ingestible`／`_count_ingestible_capped`
+  （`app/ingest/case_loader.py:241/:261`）现在数的是"目录内所有非隐藏文件"，**不按扩展名过滤**——
+  隐藏目录里放 500 张 .png 会报「500 个可摄取文件未入卷」，与 `readers.UNSUPPORTED_EXTS` 打架。
+  改为**复用 `app/ingest/readers.py` 的后缀路由表**（不许另抄一份名单），只计真能摄取的；
+  其中"存在但当前不支持的格式"另起一句「另有 N 个格式暂不支持」，不混进可摄取数。
+  C-5 已验收的行为不许回退：仍是**达 cap 早停**、仍是目录名不列文件名。
+- **明确禁止**：① 不动 `_collect_files` 的 500／深度 3 两道封顶；② 不动 `MAX_FILES=500`、`MAX_BYTES_*`
+  与超限抛错（明确抛错不算静默）；③ 不加 LLM、不改判定与统计口径；④ 不改 `cases/` 任何字节；
+  ⑤ 写入侧与解析侧**必须同一套规则**——`safe_relpath`／`resolve_case_file`／`remove_case_files` 三处的深度与
+  dot 判定若不一致，须在回写里说明并给出「导入→删除→再导入」闭环证据，否则会出现"导进来删不掉"。
+- **要求补的测试（零 LLM，`tmp_path`）**：
+  a) 5 段路径两份（`top/a/b/c/一月.txt`＋`二月.txt`）→ `n_written=0`、`n_refused=2`、`reason=deep_path`，
+     且磁盘上**不得**出现无扩展名的 `top/a/b/c` 文件（专防覆盖回归）；
+  b) 4 段路径 `top/a/b/c.md` → 正常入卷、零拒收（防改得过严，边界与遍历侧对齐）；
+  c) `.DS_Store`、`.git/config` → `reason=hidden_path`，披露出原路径；
+  d) 单文件 >20MB → `reason=oversize`；
+  e) `.materials/` 放 3 个 .png → C-5 的 `n_files` **不再计为 3**（png 不在支持后缀内），不支持格式单列；
+     `.materials/` 放 3 个 .md → 仍 `n_files=3`（防把披露改成零）；
+  f) 闭环：a) 里被拒的文件不得出现在 `resolve_case_file` 认可路径或工作台删除清单中。
+- **验收判据（Qoder 独立复放）**：① `pytest tests -q` 0 失败；② 我把上面那条现状探针原样重跑，
+  必须变成 `n_written=0 / n_refused=2 / 磁盘零残留`；③ 自建目录逐项复放 a–f；
+  ④ 全仓 `cases/` 零 diff、36 份 `report.json` 无新条目；⑤ 读 diff 确认 `_collect_files` 封顶、
+  `MAX_FILES`、`resolve_case_file` 未被顺手改动，且**没有任何重命名/压平逻辑**；
+  ⑥ 实跑一次「添加文件夹」链路（`_ing_payload`/`append_imported_files`）确认拒收披露落到返回体与 `ingest_notes`。
+- **尾巴（本单不做，写死触发条件）**：**C 方案＝两侧深度一起抬到 5**，让深层目录真入卷。
+  触发条件：拿到「主办方材料是解压后的几级目录」这个数——若普遍 ≥4 层则本单的拒收会变成真漏，
+  必须改抬深度。这条挂在向主办方的提问上，不排工期。
+- **状态**：待 Cursor 开工。｜ **验收**：未做。
 
 ## 6. 索引
 
