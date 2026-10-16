@@ -30,17 +30,47 @@ PANEL_JSON = """{"conclusions": [
 ]}"""
 
 
-class ScriptedClient:
-    """按脚本队列响应；队列项可为文本、异常或 callable(messages)->str。"""
+def _analyst_name_from_messages(messages) -> str:
+    """从系统提示词首句「你是一名{persona}。」反查 DEFAULT_ROSTER 的 name。"""
+    for msg in messages or []:
+        if not isinstance(msg, dict) or msg.get("role") != "system":
+            continue
+        content = str(msg.get("content") or "")
+        if not content.startswith("你是一名"):
+            continue
+        rest = content[len("你是一名"):]
+        for name, persona in DEFAULT_ROSTER:
+            if rest.startswith(persona + "。"):
+                return name
+    raise KeyError("无法从 messages 识别分析师身份")
 
-    def __init__(self, responses):
-        self.responses = list(responses)
+
+class ScriptedClient:
+    """按脚本队列响应；队列项可为文本、异常或 callable(messages)->str。
+
+    by_name 非空时按分析师名各取各的队列（身份只从 messages 认）；
+    未传或空则仍走 responses.pop(0)。
+    """
+
+    def __init__(self, responses=None, by_name: dict | None = None):
+        self.responses = list(responses or [])
+        self.by_name = (
+            {name: list(queue) for name, queue in by_name.items()}
+            if by_name else None
+        )
         self.calls: list[dict] = []
 
     def chat(self, model, messages, json_mode=False):
         self.calls.append({"model": model, "messages": messages,
                            "json_mode": json_mode})
-        item = self.responses.pop(0)
+        if self.by_name is not None:
+            name = _analyst_name_from_messages(messages)
+            queue = self.by_name.get(name)
+            if not queue:
+                raise KeyError(f"分析师 {name!r} 没有剩余脚本响应")
+            item = queue.pop(0)
+        else:
+            item = self.responses.pop(0)
         if callable(item):
             item = item(messages)
         if isinstance(item, Exception):
@@ -107,7 +137,11 @@ def test_panel_single_failure_degrades(tmp_path):
     from app.ingest.case_loader import load_case
 
     dossier = load_case(tmp_path)
-    client = ScriptedClient([PANEL_JSON, RuntimeError("429 网关抖动"), PANEL_JSON])
+    client = ScriptedClient(by_name={
+        "mainstream": [PANEL_JSON],
+        "redteam": [RuntimeError("429 网关抖动")],
+        "technologist": [PANEL_JSON],
+    })
     panel = build_panel(client=client, model="m")
     results = run_panel(dossier, panel)
     assert set(results["_failures"]) == {"redteam"}
