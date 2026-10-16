@@ -69,24 +69,47 @@ class Collision:
         return len({f.source_id for f in self.facts}) > 1
 
 
-def extract_facts(dossier: Dossier) -> list[Fact]:
-    """全部段落 → 事实清单（顺序稳定：信源序 × 段序 × 数字序）。"""
+# 未采信数字分类计数的原因枚举（固定六键）。
+# 真分母＝「本该对撞的数字对」机械不可知——只能披露「这些数字没进台账、因为……」，
+# 不得把不可知包装成比率类指标。
+_DROP_REASONS = (
+    "year", "clause_ref", "ordinal", "no_metric", "metric_rejected", "entity_stop",
+)
+
+
+def _empty_dropped() -> dict[str, int]:
+    return {k: 0 for k in _DROP_REASONS}
+
+
+def _scan(dossier: Dossier) -> tuple[list[Fact], dict]:
+    """一次全卷扫描 → (入台账事实, fact_ledger_stats)。
+
+    判定路径与改前逐字等价：该 continue 的仍不进 facts，只是按原因计数。
+    不把裸数塞进台账。stats 键：n_numbers / n_facts / dropped。
+    """
     facts: list[Fact] = []
+    dropped = _empty_dropped()
+    n_numbers = 0
     for src in dossier.sources:
         date = str(src.meta.get("published_at") or src.meta.get("year") or "")
         for seg in src.segments:
             text = seg.text
             for num in extract_nums(text):
+                n_numbers += 1
                 if _YEAR_RE.fullmatch(num.raw) or _YEAR_RE.fullmatch(num.raw.rstrip("年")):
+                    dropped["year"] += 1
                     continue  # 年份不是经营事实
                 after = text[num.end: num.end + 1]
                 if after and after in _CLAUSE_TAIL:
+                    dropped["clause_ref"] += 1
                     continue  # 条款/页码/期号引用
                 if num.start > 0 and text[num.start - 1] == "第":
-                    continue  # 序数（第3.1条/第2期）
+                    dropped["ordinal"] += 1
+                    continue  # 序数（第3次/第2轮）
                 head = text[: num.start]
                 m = _ENTITY_METRIC.search(head)
                 if not m:
+                    dropped["no_metric"] += 1
                     continue  # 没有指标词的裸数（计数量词等）不进台账
                 raw_entity, raw_metric = m.group(1), m.group(2)
                 if raw_entity and not any(c.isascii() and c.isalnum()
@@ -101,19 +124,41 @@ def extract_facts(dossier: Dossier) -> list[Fact]:
                 while entity and entity[-1] in _METRIC_FILLER:
                     entity = entity[:-1]
                 if len(metric) < 2 or metric in _METRIC_STOP:
+                    dropped["metric_rejected"] += 1
                     continue
                 if entity and entity in _ENTITY_STOP:
+                    dropped["entity_stop"] += 1
                     continue
                 facts.append(Fact(
                     entity=entity, metric=metric, value=num.scaled,
                     raw=num.raw, source_id=src.id, seg_id=seg.id, date=date))
-    return facts
+    stats = {
+        "n_numbers": n_numbers,
+        "n_facts": len(facts),
+        "dropped": dropped,
+    }
+    return facts, stats
 
 
-def find_collisions(dossier: Dossier) -> list[Collision]:
-    """同 (实体小写, 指标) 下数值不可调和（>1% 容差）→ 对撞清单。"""
+def extract_facts(dossier: Dossier) -> list[Fact]:
+    """全部段落 → 事实清单（顺序稳定：信源序 × 段序 × 数字序）。
+
+    签名不变；内部走 ``_scan`` 取 [0]。要分类计数请用 ``_scan``。
+    """
+    return _scan(dossier)[0]
+
+
+def format_dropped_disclosure(stats: dict) -> str:
+    """报告/链上一行文案：未采信数字分类计数（字段名与文案禁用比率类指标词）。"""
+    dropped = stats.get("dropped") or _empty_dropped()
+    bits = "、".join(f"{k} {dropped.get(k, 0)}" for k in _DROP_REASONS)
+    return (f"未采信数字分类计数：共 {int(stats.get('n_numbers') or 0)} 个数字，"
+            f"入台账 {int(stats.get('n_facts') or 0)} 条；{bits}")
+
+def _collisions_from_facts(facts: list[Fact]) -> list[Collision]:
+    """已扫描事实 → 对撞清单（不再二次扫卷）。"""
     groups: dict[tuple[str, str], list[Fact]] = {}
-    for f in extract_facts(dossier):
+    for f in facts:
         groups.setdefault((f.entity.lower(), f.metric), []).append(f)
     out: list[Collision] = []
     for (entity, metric), fs in groups.items():
@@ -126,6 +171,17 @@ def find_collisions(dossier: Dossier) -> list[Collision]:
                                  facts=sorted(fs, key=lambda x: (x.source_id, x.seg_id))))
     out.sort(key=lambda c: (not c.cross_source, c.entity, c.metric))
     return out
+
+
+def find_collisions(dossier: Dossier,
+                    facts: list[Fact] | None = None) -> list[Collision]:
+    """同 (实体小写, 指标) 下数值不可调和（>1% 容差）→ 对撞清单。
+
+    ``facts`` 若已由 ``_scan`` 取得可传入，避免 pipeline 路径二次全扫。
+    """
+    if facts is None:
+        facts = extract_facts(dossier)
+    return _collisions_from_facts(facts)
 
 
 def facts_block(dossier: Dossier) -> str:

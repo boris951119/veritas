@@ -48,7 +48,7 @@ from app.core.discourse_check import (
 )
 from app.core.dup_check import duplicate_map, near_dup_pairs
 from app.core.evidence import Dossier
-from app.core.fact_ledger import extract_facts, find_collisions
+from app.core.fact_ledger import _scan, find_collisions
 from app.core.hashchain import HashChain
 from app.core.material import pack_material, set_material_budget
 from app.core.numeric_check import audit_conservation, audit_counting, audit_numeric
@@ -265,11 +265,16 @@ def run_case(spec: RunSpec | None = None,
             "n_candidates": premise_rec.get("n_candidates"),
             "note": premise_rec.get("note"),
         })
-        collisions = find_collisions(dossier)
+        # 一次 _scan 同时拿 facts + 未采信数字分类计数（禁止再调 extract_facts
+        # 造成第三次全扫；改前此处 find_collisions + extract_facts = 2 次）
+        facts, fact_stats = _scan(dossier)
+        dossier.accounting["fact_ledger_stats"] = fact_stats
+        collisions = find_collisions(dossier, facts=facts)
         chain.append("fact_ledger", "pipeline", {
-            "n_facts": len(extract_facts(dossier)),
+            "n_facts": fact_stats["n_facts"],
             "n_collisions": len(collisions),
             "cross_source": sum(1 for c in collisions if c.cross_source),
+            "fact_ledger_stats": fact_stats,
         })
         chain.append("injection_scan", "pipeline",
                      {"n_suspects": len(scan_injections(dossier))})
@@ -327,7 +332,8 @@ def run_case(spec: RunSpec | None = None,
                       hint="请先补齐下面几项，再开始研判")
         kept = {k: v for k, v in (dossier.accounting or {}).items()
                 if k in ("corpus_select", "query_rewrite", "slot_disclosures",
-                         "panel_attrition", "repair_accept_rate", "premise")}
+                         "panel_attrition", "repair_accept_rate", "premise",
+                         "fact_ledger_stats")}
         dossier.accounting = {
             **kept,
             "elapsed_s": round(time.monotonic() - t0, 1),
@@ -633,7 +639,7 @@ def run_case(spec: RunSpec | None = None,
                      "unused_topic_segments", "subquestion_status",
                      "obligation_limitation",
                      "premise", "second_pass", "conflict_drops",
-                     "mechanical_merge")}
+                     "mechanical_merge", "fact_ledger_stats")}
     dossier.accounting = {
         **kept,
         "elapsed_s": round(time.monotonic() - t0, 1),
@@ -1185,13 +1191,27 @@ def _render_dissent_section(lines: list[str], dossier: Dossier) -> None:
 
 
 def _render_fact_collisions(lines: list[str], dossier: Dossier) -> None:
-    """资料内数字冲突（事实层对撞，独立于结论级冲突）：分析师漏看也兜底。"""
-    from app.core.fact_ledger import find_collisions
+    """资料内数字冲突（事实层对撞，独立于结论级冲突）：分析师漏看也兜底。
 
-    collisions = find_collisions(dossier)
-    if not collisions:
+    章旁一行写「未采信数字分类计数」（真分母机械不可知，只披露分类计数）。
+    优先用 accounting 里已落盘的 stats；否则一次 _scan 兼得对撞与计数。
+    """
+    from app.core.fact_ledger import (
+        _collisions_from_facts, _scan, format_dropped_disclosure,
+    )
+
+    stats = (dossier.accounting or {}).get("fact_ledger_stats")
+    if stats is None:
+        facts, stats = _scan(dossier)
+        collisions = _collisions_from_facts(facts)
+    else:
+        collisions = find_collisions(dossier)
+    dropped = stats.get("dropped") or {}
+    has_drop = any(int(v or 0) > 0 for v in dropped.values())
+    if not collisions and not has_drop:
         return
     lines += ["## 资料内数字冲突（事实层对撞）", ""]
+    lines.append(f"- {format_dropped_disclosure(stats)}")
     for c in collisions:
         detail = "；".join(
             f"`{f.source_id}` 说 **{f.entity or '（未指明主体）'}{f.metric}** {f.raw}"

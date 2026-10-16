@@ -5,7 +5,9 @@ import re
 from app.core.evidence import (
     Conclusion, Dossier, EvidenceNode, Segment, Source, SourceType,
 )
-from app.core.fact_ledger import extract_facts, facts_block, find_collisions
+from app.core.fact_ledger import (
+    _scan, extract_facts, facts_block, find_collisions, format_dropped_disclosure,
+)
 from app.core.relevance import classify_sources, unadopted_sources
 from app.core.temporal_check import audit_temporal
 from app.core.hashchain import HashChain
@@ -70,6 +72,61 @@ def test_facts_block_injected_only_with_collisions():
     d = _two_source_collision_dossier()
     block = facts_block(d)
     assert "数字冲突" in block and "SRC1" in block and "SRC2" in block
+
+
+def test_split_metric_number_counts_no_metric_and_stays_out():
+    """指标词与数字分到两段 → no_metric≥1，且该数不入 facts（C-2 主靶复现）。"""
+    d = Dossier(question="伤亡情况如何？")
+    src = Source.create("SRC1", SourceType.NEWS, id="SRC1")
+    src.segments.append(Segment(
+        id="SRC1#s1", source_id="SRC1", text="事故造成死亡", index=0))
+    src.segments.append(Segment(
+        id="SRC1#s2", source_id="SRC1", text="12人，另有伤者。", index=1))
+    d.add_source(src)
+    facts, stats = _scan(d)
+    assert stats["dropped"]["no_metric"] >= 1
+    assert not any(f.raw == "12" or abs(f.value - 12) < 1e-9 for f in facts)
+    assert stats["n_numbers"] == stats["n_facts"] + sum(stats["dropped"].values())
+    # 报告出口能读到「未采信数字分类计数」
+    d.accounting["fact_ledger_stats"] = stats
+    md = render_report_md(d, HashChain(), [])
+    assert "未采信数字分类计数" in md
+    assert "no_metric" in md
+
+
+def test_dropped_reasons_year_clause_ordinal_are_disjoint():
+    """年份 / 条款引用 / 序数 各进自己的桶，不许混类。"""
+    d = Dossier(question="合同进度")
+    _seg(d, "Y", "2026年发布。")                 # → year
+    _seg(d, "C", "合同第3.1条约定付款。")         # → clause_ref（after=条）
+    _seg(d, "O", "第3次会议召开。")               # → ordinal（after=次，非条款尾）
+    facts, stats = _scan(d)
+    dropped = stats["dropped"]
+    assert dropped["year"] >= 1
+    assert dropped["clause_ref"] >= 1
+    assert dropped["ordinal"] >= 1
+    # 守恒：每个数字恰好进一个桶或入台账
+    assert stats["n_numbers"] == stats["n_facts"] + sum(dropped.values())
+    # 三个种子数字不得串桶：year 段只有年份、clause 段只有条款数、ordinal 段只有序数
+    assert dropped["year"] == 1
+    assert dropped["clause_ref"] == 1
+    assert dropped["ordinal"] == 1
+    assert facts == []
+
+
+def test_all_numbers_facted_means_dropped_sum_zero():
+    """全部数字正常入台账时 dropped 合计为 0（防空转假披露）。"""
+    d = Dossier(question="回款与营收")
+    _seg(d, "SRC1", "客户B回款率40%。")
+    _seg(d, "SRC2", "客户C营收1200万元。")
+    facts, stats = _scan(d)
+    assert stats["n_facts"] >= 2
+    assert stats["n_numbers"] == stats["n_facts"]
+    assert sum(stats["dropped"].values()) == 0
+    assert set(stats["dropped"]) == {
+        "year", "clause_ref", "ordinal", "no_metric", "metric_rejected", "entity_stop",
+    }
+    assert "未采信数字分类计数" in format_dropped_disclosure(stats)
 
 
 # -- 时序核对（时效闸 + as-of 闸） -------------------------------------------------
