@@ -291,7 +291,7 @@
       <td class="n">must-keep <b>30 / 30</b><br>平均 Recall 100% · 7.7s</td>
       <td class="cmd">.venv/bin/python scripts/run_recall_real.py</td><td class="c"><span class="tag warn">黄</span></td></tr>
 
-    <tr><td><b>敌意输入拦得住</b></td><td>路径穿越/解压炸弹/条目数/嵌套四道边界、指令注入（含模型产出回流二阶扫描）、缓存投毒、密级越权、自产文件不回吃；失败一律明确降级并写进报告。<b>口径边界：遍历封顶（500 文件／深度 3）10-15 起有披露与用例（<code>tests/test_collect_files_cap.py</code>，3 条）；仍无披露的是隐藏目录</b></td>
+    <tr><td><b>敌意输入拦得住</b></td><td>路径穿越/解压炸弹/条目数/嵌套四道边界、指令注入（含模型产出回流二阶扫描）、缓存投毒、密级越权、自产文件不回吃；失败一律明确降级并写进报告。<b>口径边界：遍历封顶（500 文件／深度 3）10-15 起有披露与用例（<code>tests/test_collect_files_cap.py</code>，3 条）；隐藏目录 10-16 起<b>不入卷但有披露</b>（<code>hidden_dir_skipped</code>，用例 <code>tests/test_hidden_dir_disclosure.py</code>，4 条）——披露≠召回，材料仍没读</b></td>
       <td class="n">40 项对抗用例全过<br>零 LLM · 约 0.5s</td>
       <td class="cmd">pytest tests/test_input_defense.py tests/test_compound_input.py -q</td><td class="c"><span class="tag ok">绿</span></td></tr>
 
@@ -357,13 +357,13 @@
           <b>［未验·待量］</b>真实舆情语料里定长退化切的发生率：0 条数据。</div></div>
 
       <div class="node"><div class="head">输入分诊账本 <span class="en">triage · ROUTE_LABEL</span> <span class="tag ok">绿</span></div>
-        <div class="does">每文件一条路由记录＋理由，报告整章渲染。<b>真实路由 15 个</b>：入卷研判 / 压缩包拆封 / 不支持格式 / 链接抓取 / 链接未抓取 / 图片披露 / 图片转写 / 版式解析入卷 / 空文件 / 解析失败 / 格式暂不支持 / 零相关排除 / 重复排除 / 兜底升档。</div>
+        <div class="does">每文件一条路由记录＋理由，报告整章渲染。<b>真实路由 16 个</b>（与 <code>triage.py ROUTE_LABEL</code> 逐字对齐）：入卷研判 / 压缩包拆封 / 不支持格式 / 链接抓取 / 链接未抓取 / 图片披露 / 图片转写 / 版式解析入卷 / 空文件 / 解析失败 / 格式暂不支持 / 目录遍历封顶 / 隐藏目录未入卷 / 零相关排除 / 重复排除 / 兜底升档。</div>
         <div class="issue">「读了什么、没读什么、为什么」账面可见——可审计的地基。<b>口径要说清：</b>后三类（零相关/重复/兜底升档）是<b>渲染期从 ② 收窄层派生</b>进来的，账本跨两层，不是纯输入层日志。相关性人工裁决入链（<code>POST /api/source/relevance</code>）。</div></div>
 
-      <div class="node warn"><div class="head">这一会的 7 道召回口子 <span class="en">recall holes · 6 道已披露，1 道仍静默</span> <span class="tag warn">黄</span></div>
-        <div class="does">①超 500 文件 / 超深度 3（<b>10-15 起已披露</b>，<code>dir_truncated</code>）／材料放<b>隐藏目录</b>（仍静默，见下） ②图片未 OCR（离线、无视觉端点、<code>VERITAS_OCR=0</code>）③老办公格式 ④7z·rar ⑤压缩包四道边界超出部分 ⑥链接默认不抓 ⑦扫描件 PDF 零文字层＋解析失败。</div>
-        <div class="issue"><b>口径改严谨了：</b>除隐藏目录外，每个 <code>return</code> 前都写了披露——这是「诚实边界」，不是「召回保证」。<b>仍静默的一道：<code>case_loader.py:256</code> <code>p.name.startswith(".")</code> 直接 <code>continue</code>，不写披露</b>——设计意图明确（.DS_Store／.expected.json 不是用户内容），但主办方把材料放进 <code>.materials/</code> 就会无声消失；<b>答辩口径别把这句讲成「全部丢件都有披露」</b>。<br>
-          丢掉的量级取决于甲方材料长什么样，我们现在<b>没有任何一条实测数据说明它丢了什么</b>。样例集到手后要做的第一件事：拿真数据跑一遍分诊账本，把 ① 的丢件率量出来。</div></div>
+      <div class="node warn"><div class="head">这一会的 7 道召回口子 <span class="en">recall holes · 7 道均已披露，口子本身仍在</span> <span class="tag warn">黄</span></div>
+        <div class="does">①超 500 文件 / 超深度 3（<b>10-15 起已披露</b>，<code>dir_truncated</code>）／材料放<b>隐藏目录</b>（<b>10-16 C-5 起已披露</b>，<code>hidden_dir_skipped</code>：目录名＋文件数，不列文件名） ②图片未 OCR（离线、无视觉端点、<code>VERITAS_OCR=0</code>）③老办公格式 ④7z·rar ⑤压缩包四道边界超出部分 ⑥链接默认不抓 ⑦扫描件 PDF 零文字层＋解析失败。</div>
+        <div class="issue"><b>「漏了但知道漏了」这句现在才敢对 7 道一起说：</b>每个 <code>return</code> 前都写了披露——但这是<b>诚实边界，不是召回保证</b>。隐藏目录<b>仍不入卷</b>（<code>case_loader.py:322</code> 起：工具名单 <code>_TOOL_SKIP_DIRS:215</code> 静默、名单外写 <code>:686</code>/<code>:693</code> 一条 note＋triage，封顶 50 目录/5000 文件），<b>披露≠召回</b>，材料照样没读。根级隐藏<b>文件</b>（.DS_Store 等）仍静默——设计意图明确，属工具元数据。<br>
+          验收记录见 <code>docs/HANDOFF.md</code> §5 C-5（探针复放：5005 文件目录 0.2s 早停返回、36 份存量产物零新增披露）。丢件<b>量级仍［未量］</b>——样例集到手第一件事：拿真数据跑分诊账本，把 ① 的丢件率量出来。</div></div>
     </div>
   </div>
 

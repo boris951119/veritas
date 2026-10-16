@@ -6,17 +6,18 @@
 > **纪律**：每次收工或换工具前，对当前工具说一句「更新 HANDOFF 并提交」——
 > 记忆不会跨工具走，**只有进了 git 的文件才算同步**。
 
-最后更新：2026-10-15 · 分支 `cursor/knife11-second-pass-and-gates` · C-2 待 Qoder 验收（未提交）
+最后更新：2026-10-16 · 分支 `cursor/knife11-second-pass-and-gates` · C-4/C-5 待 Qoder 验收（未提交）
 
 ## 1. 现在在哪儿
 
 - 最近提交：`56f1e7e feat(可信度): 推理链完整性进分`——置信度从三分量升为**四分量**
   （强度 × 覆盖 × 一致性 × **链完整性**），六环判定复用各道零 LLM 机械闸的输出，分数与警示同源。
-- 测试：`pytest tests -q` = **538 passed**（含 C-1/C-2 各＋3），零失败零跳过，约 3.7 秒；测试期有禁真调用守卫
-  （`tests/conftest.py` 上膛，忘塞桩的测试当场炸，不会偷花云端 key）。
+- 测试：`pytest tests -q` = **545 passed**（C-1/C-2 已验；本轮 C-4＋3、C-5＋4），零失败零跳过，约 4 秒；
+  测试期有禁真调用守卫（`tests/conftest.py` 上膛，忘塞桩的测试当场炸，不会偷花云端 key）。
 - 实测净效应：34 份存量产物 294 条可计分结论，链中位 0.75、满分仅 40.1%；
   置信度中位 0.2133 → 0.1813（**−15.0%**）。复放命令：`python scripts/measure_baseline.py`。
-- **主线仍「等官方材料」**；例外是 §5 工单（C-1 已验收通过，C-2 已改完待验，C-3 不开工）。
+- **主线仍「等官方材料」**；例外是 §5 工单（C-1/C-2/C-4/C-5 已通过验收，C-3/C-2b 不开工）。
+  输入层「漏了但知道漏了」自 2026-10-16 起对 **7 道召回口子全部成立**（披露≠召回，口子本身仍在）。
 
 ## 2. 在等什么
 
@@ -100,6 +101,8 @@
   **两个尾巴（不阻断合并）**：a) 渲染行前缀是空反引号（`"file": ""` 套通用模板），看着像漏字段，宜改成不带文件名的句式；
   b) **隐藏目录仍是静默跳过**（`case_loader.py:256` `startswith(".")` 无披露）——设计意图明确（.DS_Store/.expected.json），
   但材料放 `.xxx/` 会无声消失。**因此本单不得连带宣布「召回口子全部已披露」**，图上那句已改为把隐藏目录列为例外。
+  （**2026-10-16 更新**：此尾巴由 §5 **C-5** 收口——名单外隐藏目录已写 `hidden_dir_skipped` 并落到报告「摄取披露」章，
+  图上「7 道口子」节点已改成「7 道均已披露，口子本身仍在」；**披露≠召回**，材料依旧不入卷，别把这句讲成已解决。）
 - **Cursor 回写**：
   - 动了哪些文件：`app/ingest/case_loader.py`（`CollectResult`＋封顶后继续计数＋`load_case` 写
     `kind=dir_truncated` / `route=dir_truncated`）、`app/ingest/triage.py`（ROUTE_LABEL/ORDER）、
@@ -205,6 +208,97 @@
   且真实发生率［未量］——等样例集到手先量，再决定是修还是只披露。
 
 
+
+### C-4｜报告章名误导（R-2 收口，呈现层，零判定风险）
+
+- **现状（已实测复现）**：`app/pipeline.py:1211` 的早退条件被 C-2 放宽成
+  `if not collisions and not has_drop: return`，于是**零对撞但有未采信数字**时也会打出
+  `app/pipeline.py:1213` 的「## 资料内数字冲突（事实层对撞）」。
+  实跑 `cases/demo-solid-state`：对撞 **0** 条、未采信 **7** 个，报告却出现这一章，
+  底下只有一行分类计数——读者会读成"有冲突没列出来"。
+  **改名安全性已 grep 过**：全仓库只有 `tests/test_input_lifecycle.py:230` 断言该字符串，
+  而那条属"有对撞"路径（同断言还查「跨信源」），保留原章名即不受影响；
+  `prompts.py:55`／`chair.py:110` 只是措辞引用不解析报告；`web/` 无命中（工作台不解析章名）。
+- **要求（只动呈现，三分支）**：
+  1. 有对撞 → 章名保持「## 资料内数字冲突（事实层对撞）」，分类计数行仍在本章内。
+  2. 零对撞但有未采信数字 → 章名改为「## 台账未采信数字分类计数」，**不得**出现"冲突"字样。
+  3. 零对撞且零未采信 → 整章不打（C-2 之前的行为，必须保住）。
+- **明确禁止**：不改 `_scan`／`format_dropped_disclosure`／判定逻辑；不改统计口径；
+  不动 `tests/test_input_lifecycle.py:230` 既有断言；不改 `cases/` 任何字节。
+- **要求补的测试**：三分支各一条（第 2 条必须断言 md 里**不含**「资料内数字冲突」，
+  防只改文案不改条件）。
+- **验收判据（Qoder 独立复放）**：① `pytest tests -q` 0 失败；② 实跑 `demo-solid-state` 的
+  `_render_fact_collisions` 确认章名变；③ 实跑 `bi-delivery-risk`（有真对撞）确认原章名保留；
+  ④ `git diff --stat cases/` 为空；⑤ 读 diff 确认只动呈现分支与测试。
+- **状态**：**已验收通过**（Qoder 独立复放，2026-10-16）。｜ **验收**：五条判据逐条复放，全过——
+  ① `pytest tests -q` = **545 passed，0 failed**（与回写一致）；
+  ② 探针实跑 `cases/demo-solid-state`：对撞 **0**、未采信 **7** → 章名变「## 台账未采信数字分类计数」，
+     整章不出现"冲突"二字；③ 探针实跑 `cases/bi-delivery-risk`：对撞 **4** → 原章名
+     「## 资料内数字冲突（事实层对撞）」保留；双零目录（无数字）→ 函数返回空、整章不打；
+     `accounting` 命中与未命中两条分支章名一致（无分叉）；
+  ④ `git diff --stat cases/` 为空；⑤ `app/pipeline.py` diff 仅 5 行＝章名三分支，
+     `_scan`／`format_dropped_disclosure`／统计口径／早退条件均未动，测试三条都走
+     `render_report_md` 真实出口（不是单测私有 helper），含"不含冲突字样"反向断言。
+- **Cursor 回写**：
+  - 动了哪些文件：`app/pipeline.py`（`_render_fact_collisions` 三分支章名）、
+    `tests/test_input_lifecycle.py`（三用例）。
+  - 新增用例名：`test_c4_chapter_with_collisions_keeps_conflict_title` /
+    `test_c4_chapter_drops_only_uses_non_conflict_title` /
+    `test_c4_chapter_absent_when_no_collision_no_drop`。
+  - `pytest` 尾行：见 C-5 回写（两单同跑 `545 passed in 4.13s`）。
+
+### C-5｜隐藏目录仍静默跳过（不收录，但必须披露）
+
+- **口径已拍（2026-10-15 用户认可"不收录但披露"）**：隐藏目录里的材料**仍不入卷**，
+  但不得静默消失——这是 C-1 收口后输入层剩下的**唯一**静默丢件口
+  （`case_loader.py:256` `p.name.startswith(".")` 直接 `continue`，无 `ingest_notes`）。
+- **要求**：
+  1. 引入**工具目录名单**（`.git` `.venv` `node_modules` `.idea` `.vscode` `.pytest_cache` 等）：
+     这些继续静默跳过**且不披露**（不是材料）。
+     **特别点名 `.fetched` 与 `.corpus` 必须进此名单**——它们是抓取缓存与语料索引，真含文件，
+     若报成"有材料未入卷"就每跑一次冒一条假警报，披露立刻变噪音。
+  2. 名单外的隐藏目录 → 一条 `ingest_notes`＋一条 `triage`：出**目录名**与其中可摄取文件数，
+     **不得逐个列文件名**（隐私与噪音）。
+  3. 计数必须封顶（建议目录数 ≤50、文件数 ≤5000），超限文案写"另有更多未计"——
+     否则一个巨型隐藏目录能把报告撑爆。
+  4. 根级隐藏**文件**（`.DS_Store` 等）不在本单范围，保持现状静默。
+- **明确禁止**：① 不许改成入卷（会复活 `.DS_Store`／`.expected.json` 回吃的老问题）；
+  ② 不许动 `_is_artifact_dir` 现有名单与 C-1 的 `dir_truncated` 逻辑；
+  ③ 不许放宽 500／深度 3 两道封顶；④ 不加 LLM；⑤ 不改 `cases/` 任何字节。
+- **要求补的测试（零 LLM，`tmp_path`）**：a) `.materials/` 放 3 个 txt → 出一条披露，
+  文案含目录名、不含文件名；b) `.git/` 放大量文件 → **不出**披露；
+  c) `.fetched/index.json` 存在 → **不出**披露（假警报回归保护）；d) 无隐藏目录 → 零披露。
+- **验收判据（Qoder 独立复放）**：① `pytest tests -q` 0 失败；② 自建探针目录逐项复放 a-d
+  （含一个 5000 文件级隐藏目录测封顶）；③ 全量扫 `cases/*/out*/report.json` 无新披露条目；
+  ④ 读 diff 确认 `dir_truncated` 与 `_is_artifact_dir` 未被顺手改动。
+- **状态**：**已验收通过**（Qoder 独立复放，2026-10-16）。｜ **验收**：四条判据逐条复放，全过——
+  ① `pytest tests -q` = **545 passed，0 failed**；
+  ② **自建**探针目录复放 a–d（不复用 Cursor 用例）：`.materials` 放 3 个 txt → 恰好 **1** 条披露、
+     `sources` 仍 **1**（确认仍未入卷）、detail 里 `a.txt`/`b.txt`/`secret_payload` 一个都没出现；
+     `.git` 放 20 文件 → 0 披露；`.fetched/index.json` → 0 披露（假警报保护成立）；空目录 → 0 披露。
+     封顶两测：**5005** 文件的隐藏目录 → `n_files=5000, files_capped=True`，**0.2s** 返回（早停真生效，
+     不是数完再截）；**55** 个隐藏目录 → **50** 条＋1 条 overflow。
+  ③ 存量零噪音：**36** 份 `cases/*/out*/report.json` 里 `hidden_dir_skipped`／`dir_truncated` 条目 **0**；
+     六个真实案例目录直接跑 `_collect_files`，`hidden_dirs` 全为空。
+  ④ diff 读毕：`_is_artifact_dir` 本体语义未改（遍历处仅并列调用新的 `_is_tool_skip_dir`），
+     500／深度 3 未放宽，`dir_truncated` 分支未动；隐藏**文件**保持静默；空隐藏目录不造条目。
+- **验收尾巴（两条，不影响本单通过）**：
+  1. 文案里的"可摄取文件数"实为**目录内非隐藏文件数**，不按扩展名过滤——与 C-1
+     `_count_ingestible` 同口径（不是回归），但**对外别说成"材料数"**。
+  2. `_TOOL_SKIP_DIRS` 未含 `.qoder`／`.aone` 这类本机工具目录；若样例集目录里出现会冒一条披露，
+     属**噪音不属漏检**，材料到手后按需补名单即可。
+  3. 报告「摄取披露」章里目录名出现两次（通用模板前缀 `` `.materials` `` ＋ detail 正文「隐藏目录 .materials …」），
+     读者视角略重复；纯排版问题，不改结论、不阻断合并。
+- **Cursor 回写**：
+  - 动了哪些文件：`app/ingest/case_loader.py`（`_TOOL_SKIP_DIRS`／隐藏目录计数封顶／
+    `CollectResult.hidden_dirs`／`load_case` 写 `hidden_dir_skipped`）、
+    `app/ingest/triage.py`（ROUTE）、`tests/test_hidden_dir_disclosure.py`（新建四用例）。
+  - 新增用例名：`test_materials_hidden_dir_disclosed_without_filenames` /
+    `test_git_hidden_dir_no_disclosure` /
+    `test_fetched_cache_no_false_alarm` /
+    `test_no_hidden_dir_no_disclosure`。
+  - `pytest` 尾行：`545 passed in 4.13s`（538＋C-4×3＋C-5×4，零 failed）；
+    `git diff --stat cases/` 为空。
 
 ## 6. 索引
 
