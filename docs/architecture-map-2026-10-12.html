@@ -141,7 +141,7 @@
       <div class="name">① 信源进入<span class="en">app/ingest/</span>
         <span class="who">事件随时间演进 · 比赛每专题几十篇 · 真实业务日均几十万条</span></div>
       <div class="boxes">
-        <div class="box"><b>目录有界遍历</b><small>封顶 <b>500 文件 / 深度 3</b>；工具与产物目录静默跳过，名单外<b>隐藏目录不入卷但披露</b>。超封顶与隐藏目录都写 <code>ingest_notes</code>＋<code>triage</code>，用例 <code>test_collect_files_cap.py</code>(3)＋<code>test_hidden_dir_disclosure.py</code>(4)。<b>披露≠召回</b>：超限那份材料照样没读</small></div>
+        <div class="box"><b>目录有界遍历</b><small>封顶 <b>500 文件 / 深度 3</b>（<code>case_loader.py:352</code>，按名排序 <code>:370</code>，<b>现为硬编码、无 env／manifest 可配</b>）；工具与产物目录静默跳过，名单外<b>隐藏目录不入卷但披露</b>。超封顶与隐藏目录都写 <code>ingest_notes</code>＋<code>triage</code>，用例 <code>test_collect_files_cap.py</code>(3)＋<code>test_hidden_dir_disclosure.py</code>(4)。<b>披露≠召回</b>：超限那份材料照样没读——官方单专题 ≤2000 篇，<b>这道口子必然触发</b>（工单 C-7，已实测定价、待拍 A／B／C）</small></div>
         <div class="box"><b>格式路由与拒绝</b><small>图片 / 老办公格式 / 压缩包嗅探三条岔路；每个丢弃分支都先写披露再 return</small></div>
         <div class="box"><b>压缩包安全拆封</b><small>四道边界：单件 20MB · 总量 200MB · 500 条目 · 嵌套深度=1；条目回主流程同权处理</small></div>
         <div class="box warn"><b>链接清单 → 抓取/缓存</b><small>默认<b>只披露不抓取</b>＝链接内容 0 召回；开启后逐条抓取，缓存带 HMAC 内容哈希防投毒</small></div>
@@ -168,9 +168,9 @@
       <div class="name">③ 收成"本次案卷"<span class="en">app/core/ 检索与预检</span>
         <span class="who">100 条里 90 条是抄的且滞后——先聚簇再研判，顺序错了语义就错了</span></div>
       <div class="boxes">
-        <div class="box"><b>大库选料</b><small>阈值默认 50：库内 N 份 / 纳入 M 份，未入选≠已审完全库</small></div>
+        <div class="box"><b>大库选料</b><small>阈值默认 50：库内 N 份 / 纳入 M 份，未入选≠已审完全库。<b>按相关性取就在这一层</b>（<code>corpus_store.py:225 select()</code>，份数上限 <code>_MAX_SOURCES=50</code>）。<b>［实测·合成］</b>2000 份建库 15.8s／103MB，而 <code>create()</code> 每次先删旧库＝<b>无增量缓存、每跑必付</b>（<code>corpus_store.py:89</code>）</small></div>
         <div class="box"><b>BM25 段级精排</b><small>纯 Python；真实语料 30/30 must-keep 全中</small></div>
-        <div class="box"><b>预算装箱</b><small>跨信源轮转 8 万字，装不下的段落全部披露不静默丢</small></div>
+        <div class="box"><b>预算装箱</b><small>跨信源轮转 8 万字（<code>config.py:111</code>），装箱器层面装不下的段落全部披露不静默丢。<b>［实测·合成］</b>默认 8 万字只放得进 <b>20 份／116 段</b>；抬到 32 万字即撞 <code>_MAX_SOURCES=50 × 6 段</code> 硬顶（64 万字仍是 50 份）。<b>口径边界：「披露了」只到装箱器为止</b>——发出去之后超模型窗口仍会被服务端静默剪掉（红格 C-9）</small></div>
         <div class="box warn"><b>问句同义拓展</b><small>主路径已改；本地 14B 8/8 <code>ok</code>，云端验收未做</small></div>
         <div class="box warn"><b>议题预检 · 前提核对</b><small>闸侧已收口；槽位判定 ≠ 答题正确</small></div>
         <div class="box gray"><b>逐题答题纸形态</b><small>官方评测给「原始数据＋问题清单，逐题交证据与结论」；<code>Dossier.question</code> 是单字符串，全仓库无 <code>questions</code></small></div>
@@ -295,9 +295,13 @@
       <td class="n">40 项对抗用例全过<br>零 LLM · 约 0.5s</td>
       <td class="cmd">pytest tests/test_input_defense.py tests/test_compound_input.py -q</td><td class="c"><span class="tag ok">绿</span></td></tr>
 
-    <tr><td><b>输入层丢件率</b></td><td><b>尚未承诺</b>：① 有 7 道会真丢材料的口（遍历封顶、图片未 OCR、老格式、7z/rar、压缩包边界外、链接未抓、扫描件零文字层），全部有披露但<b>没有一条实测丢件率</b>。样例集到手后用分诊账本量。<b>10-16 主办方口径给了一个量级</b>：单专题 ≤2000 篇——<i>按这个数推</i>（非实测），<b>500 封顶那道口子上界可达 3/4 材料进不了案卷</b>，且现按文件名排序取前 500、相关性不参与 → 工单 C-7 立项</td>
-      <td class="n">未量<br>（披露齐全 ≠ 丢件率已知）</td>
-      <td class="cmd">产物 <code>triage</code> 章 ＋ <code>ingest_notes</code></td><td class="c"><span class="tag gray">灰</span></td></tr>
+    <tr><td><b>输入层丢件率</b></td><td><b>尚未承诺——真材料丢件率仍未量</b>：① 有 7 道会真丢材料的口（遍历封顶、图片未 OCR、老格式、7z/rar、压缩包边界外、链接未抓、扫描件零文字层），全部有披露但<b>没有一条用真数据量过</b>，样例集到手后用分诊账本量。<b>10-16 两件事定了</b>：① 主办方口径＝单专题 <b>≤2000 篇</b>（&gt; 500 封顶，且现按文件名取前 500、相关性在<b>这一层</b>不参与 → 那道口子必然触发）；② <b>三道天花板的代价与收益已在合成材料上量过</b>（<code>scripts/measure_capacity.py</code>，2000 份×3000 字，零 LLM，两次复放逐项一致）：<b>抬①500→2000 只多看见 1 份（20→21）</b>，代价是建库 3.3s→15.8s、库 25.5→103.1MB，且 <code>create()</code> 每次先删旧库＝<b>无增量缓存、每跑必付</b>；<b>真天花板在选料层</b>——默认 8 万字预算只放 <b>20 份（库内 1%）</b>进案卷，预算抬到 32 万字即撞 <code>_MAX_SOURCES=50 × 每源 6 段</code> 硬顶（64 万字仍是 50 份）。<b>结论：要一起抬的是「预算＋份数上限」，不是遍历封顶。</b>工单 C-7 已按此改口径（<code>docs/HANDOFF.md</code> §5「C-7 前置实测」），待拍 A／B／C</td>
+      <td class="n">真材料：<b>未量</b><br>天花板：<b>［实测·合成］</b>20 份／8 万字<br>（披露齐全 ≠ 丢件率已知）</td>
+      <td class="cmd"><code>python scripts/measure_capacity.py</code> ＋ 产物 <code>triage</code>/<code>ingest_notes</code></td><td class="c"><span class="tag gray">灰</span></td></tr>
+
+    <tr><td><b>发出去的材料＝模型看到的材料？</b></td><td><b>红（10-16 实测出的新洞，登记为 C-9）</b>：装箱按<b>字</b>算预算（<code>config.py:111</code>＝8 万字），模型按 <b>token</b> 吃（中文实测 <b>≈0.69 tok/字</b>），中间<b>没有任何校验，也没有任何披露</b>。本机 Ollama <code>num_ctx=16384</code>（原生 40960）实测<b>只吃得下约 2.2 万字</b>；把暗号放在提示词的<b>系统头／议题行／资料末</b>三处走生产路径复放：<b>8 万字那次系统代号与议题代号双双丢失、只有末段读到</b>＝服务端<b>剪头保尾且不报错</b>。后果不是"少看一段"，而是模型在<b>没有纪律、没有议题</b>的状态下作答；报告却照样写「本次纳入 M 份」。抬到原生 40960 仍只到约 5 万字，且单次 <b>274 秒</b>（<code>llm_timeout_seconds=300</code> 几乎贴脸）。<b>小案例跑不出这道口子</b>（材料远在窗口内），大库场景必然触发</td>
+      <td class="n">［实测·本机 14B］<br>窗口≈2.2 万字<br>预算 8 万字＝<b>超发 3.6×</b><br>披露：<b>0 条</b></td>
+      <td class="cmd"><code>python scripts/probe_context_window.py</code>（暗号复述法，可开箱重放）</td><td class="c"><span class="tag bad">红</span></td></tr>
 
     <tr><td><b>数字冲突漏检率</b></td><td><b>尚未承诺，且当前不可承诺</b>：对撞台账只记「检出了什么」，<b>没有"没检出什么"的出口</b>——同主体同议题、措辞不同（死亡/遇难）或被切段分家的两条数字，冲突静默消失。口径边界：私有 gold 的 <code>conflict_recall=1.0</code> 测的是<b>刻意植入、措辞对齐</b>的窄题冲突，不代表舆情真实措辞分布</td>
       <td class="n">未量<br>（无漏检披露，故无分母）</td>
@@ -376,9 +380,9 @@
         <div class="does">①超 500 文件 / 超深度 3（<b>10-15 起已披露</b>，<code>dir_truncated</code>）／材料放<b>隐藏目录</b>（<b>10-16 C-5 起已披露</b>，<code>hidden_dir_skipped</code>：目录名＋份数，不列文件名；C-6 起份数按可摄取／暂不支持／图片分三档） ②图片未 OCR（离线、无视觉端点、<code>VERITAS_OCR=0</code>）③老办公格式 ④7z·rar ⑤压缩包四道边界超出部分 ⑥链接默认不抓 ⑦扫描件 PDF 零文字层＋解析失败。</div>
         <div class="issue"><b>「漏了但知道漏了」这句现在才敢对 7 道一起说：</b>每个 <code>return</code> 前都写了披露——但这是<b>诚实边界，不是召回保证</b>。
           <b>上传链路自 10-16 C-6 起也归这句管</b>（深层路径不再静默覆盖，改拒收＋<code>import_refused</code> 披露，见上一格）——
-          但这句<b>不含</b>对撞台账（台账只记检出了什么，没有「没检出什么」的出口，见 ⑤ 带），别说成「系统所有漏检都有账面」。<br>
+          但这句<b>不含</b>对撞台账（台账只记检出了什么，没有「没检出什么」的出口，见 ⑤ 带），别说成「系统所有漏检都有账面」。<b>10-16 又添第二个例外（C-9，在出口层不在输入层）</b>：字数超过模型窗口时服务端<b>剪头保尾且不报错</b>，连「研判议题」本身都可能没到达模型，而账面全显示"已纳入"——所以这句的准确说法是<b>「输入层 7 道漏了都留痕」</b>，不是「每一层都留痕」。<br>
           隐藏目录<b>仍不入卷</b>（<code>case_loader.py:383</code> 起：工具名单 <code>_TOOL_SKIP_DIRS:215</code> 静默、名单外写 <code>:743</code>/<code>:752</code> 一条 note＋triage，封顶 50 目录/5000 文件），<b>披露≠召回</b>，材料照样没读。根级隐藏<b>文件</b>（.DS_Store 等）仍静默——设计意图明确，属工具元数据。<br>
-          验收记录见 <code>docs/HANDOFF.md</code> §5 C-5（探针复放：5005 文件目录 0.2s 早停返回、36 份 <code>report.json</code> 零新增披露）。丢件<b>量级仍［未量］</b>——样例集到手第一件事：拿真数据跑分诊账本，把 ① 的丢件率量出来。</div></div>
+          验收记录见 <code>docs/HANDOFF.md</code> §5 C-5（探针复放：5005 文件目录 0.2s 早停返回、36 份 <code>report.json</code> 零新增披露）。<b>真材料丢件量级仍［未量］</b>——样例集到手第一件事：拿真数据跑分诊账本，把 ① 的丢件率量出来。<b>但三道上限的代价与收益已先［实测·合成］</b>（≤2000 篇这个数逼出来的）：<b>抬 ① 只多看见 1 份</b>（20→21），真正卡召回的是<b>选料层的 8 万字预算＋50 份硬顶</b>（实测默认口径只有库内 1% 进得了案卷）——详见 <code>docs/HANDOFF.md</code> §5「C-7 前置实测」。<b>别再把它说成「按相关性取还是按配额取二选一」</b>：相关性选料早已存在于 <code>corpus_store.py:225 select()</code>，①只决定谁有资格进候选池，③决定进池后谁进提示词，三闸串接不互斥。</div></div>
     </div>
   </div>
 
@@ -423,6 +427,12 @@
       <div class="node"><div class="head">模型纪律画像探测 <span class="en">llm/profile</span> <span class="tag ok">绿</span></div>
         <div class="does">接任何网关前 1 次微型调用，机械判分给模型打「纪律遵从」档；noncompliant 改注强化规则＋启用修复环。</div>
         <div class="issue">实测热态 11.6s。<b>提醒：</b>记过的 218s 是本地 14B <b>冷启动加载</b>，不是浪费，别当成本账优化。</div></div>
+
+      <div class="node bad"><div class="head">模型窗口这道闸没人管 <span class="en">C-9 · 新发现，未修</span> <span class="tag bad">红</span></div>
+        <div class="does">提示词由「纪律＋议题＋资料清单」拼成后交给网关；<b>装箱按字（8 万字）、模型按 token（中文实测 ≈0.69 tok/字）</b>，中间无校验。</div>
+        <div class="issue"><b>［实测·本机 14B］</b>Ollama <code>num_ctx=16384</code> 只吃得下约 <b>2.2 万字</b>；暗号三放（系统头／议题行／资料末）走生产路径：8 万字那次<b>系统代号与议题代号都丢了</b>，只剩末段——服务端<b>剪头保尾且不报错</b>。
+          即模型可能<b>在没有纪律、没有议题的情况下作答</b>，而报告照样写「本次纳入 M 份」。<b>全仓无 <code>num_ctx</code>、无 token 计数、无截断披露</b>（<code>app/llm/model_client.py:512</code> 只带 <code>max_tokens</code>）。
+          抬到原生 40960 仍只约 5 万字，且单次 <b>274s</b> 贴住 <code>llm_timeout_seconds=300</code>。<b>小案例跑不出来</b>——材料远在窗口内；大库场景必触发。修复方向甲／乙／丙见 <code>docs/HANDOFF.md</code> §5「C-9 前置实测」，复放 <code>python scripts/probe_context_window.py</code>。</div></div>
 
       <div class="node warn"><div class="head">三分析师独立研判 <span class="en">agents/panel · second_pass</span> <span class="tag warn">黄</span></div>
         <div class="does">主流 / 红队 / 技术推进硬隔离；per-agent 模型可异构。刀十一：首轮引文闸后对未用议题相关段再定向一轮。</div>
@@ -589,7 +599,7 @@
     ⑤ <b>「添加文件夹」收到 4 层以上目录会拒收并披露</b>（<code>import_case.py:65</code>，工单 C-6 已合并）——修复前它会截掉文件名、两份深层材料互相覆盖且零报错，本页 ① 带那格留了当时的探针实证。
     <b>主办方口径＝材料最深 3 级</b>，正常收料不会触发这条拒收；真要不丢深层目录得两侧深度一起抬，那条（C-8）已随这个数撤销。<br><br>
     <b>本图怎么验的：</b>绿/黄/红/灰全部按产物或脚本输出，不按感觉；<b>文档口径的绿不算绿</b>——每个格子回指代码行号或产物字段，写行号前逐行 <code>sed -n</code> 核过。
-    2026-10-16 复放：<code>pytest tests -q</code> = 553 passed（C-6 两轮已合并）；<code>scripts/measure_baseline.py</code> 输出即指标表实测值。
+    2026-10-16 复放：<code>pytest tests -q</code> = 553 passed（C-6 两轮已合并）；<code>scripts/measure_baseline.py</code> 输出即指标表实测值；<code>scripts/measure_capacity.py</code> 全程 21.9s、两次复放逐项一致（输入层三道天花板定价，见 ① 带「7 道召回口子」格与「输入层丢件率」行）；<code>scripts/probe_context_window.py</code> 本机 14B 实跑＝20000 字三代号全中、80000 字系统代号与议题代号丢（红格 C-9）。同日修正：<code>case_loader</code> 排序行号旧引 <code>:345</code> 为误，实为 <code>:352</code>（上限）／<code>:370</code>（按名排序）。
     锚点：<code>out_local14b_knife1/conflict_subject_gate_replay.*</code>、<code>out_local14b_knife11/report_attrition_replay.md</code>、<code>SCORECARD_local14b.md</code>、<code>eval/recall_real_report.md</code>。<br>
     <b>分工与验收规则（已进 git，不靠口头）：</b><code>docs/dev-protocol.md</code>——Qoder＝架构师（出单、<b>独立复放验收不采信自述</b>、review、同步本页与 HANDOFF、一工单一 commit），
     Cursor＝执行工程师（按单实现；开发中发现问题按协议 §3 分流：本单内就地修并写偏离、<b>会改结论的一律停手交拍板</b>、新洞只登记不顺手修）。
