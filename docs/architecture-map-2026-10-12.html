@@ -580,9 +580,15 @@
     ① <b>别把推演当事实。</b><code>docs/scenario-review-2026-10-14.md</code> 每条标了 [实测]/[推演]；10-14 当天就有两次判断过头被更正（多智能体其实只差 2–3 分；「转载吹高置信度」一度被错误划掉）。<br>
     ② <b>置信度刻度变了。</b>跨 2026-10-14 比 <code>score_artifacts.py --check</code> 基线前，必须先 <code>--save</code> 重存，否则 −15% 的刻度下移会被读成「答案变差」。<br>
     ③ <b>演示时别把「人工修改」讲成「改答案」。</b>官方原话「不能人工对答案进行修正」；正确框定＝可审计的审校（human 事件入链、改完自动重算、断链环节同步变化）。<br>
-    ④ <b>存量 <code>cases/*/out</code> 是旧口径落盘</b>，工作台对它显示「链·旧口径未计」——这不是 bug，是没测过就不写；任何一次人工修改会走 <code>recompute_all</code> 按新口径重盖章并留痕。<br><br>
-    <b>本图怎么验的：</b>绿/黄/红/灰全部按产物或脚本输出，不按感觉。2026-10-16 复放：<code>pytest tests -q</code> = 545 passed；<code>scripts/measure_baseline.py</code> 输出即指标表实测值。
+    ④ <b>存量 <code>cases/*/out</code> 是旧口径落盘</b>，工作台对它显示「链·旧口径未计」——这不是 bug，是没测过就不写；任何一次人工修改会走 <code>recompute_all</code> 按新口径重盖章并留痕。<br>
+    ⑤ <b>演示当天别直接用「添加文件夹」收深层目录材料</b>——<code>import_case.py:41</code> 会把 5 段以上路径截掉文件名并互相覆盖（本页 ① 带红格有实测），
+    现阶段先把材料压平到 ≤3 层目录再上传；工单 C-6 修完这条限制即解除。<br><br>
+    <b>本图怎么验的：</b>绿/黄/红/灰全部按产物或脚本输出，不按感觉；<b>文档口径的绿不算绿</b>——每个格子回指代码行号或产物字段，写行号前逐行 <code>sed -n</code> 核过。
+    2026-10-16 复放：<code>pytest tests -q</code> = 545 passed；<code>scripts/measure_baseline.py</code> 输出即指标表实测值。
     锚点：<code>out_local14b_knife1/conflict_subject_gate_replay.*</code>、<code>out_local14b_knife11/report_attrition_replay.md</code>、<code>SCORECARD_local14b.md</code>、<code>eval/recall_real_report.md</code>。<br>
+    <b>分工与验收规则（已进 git，不靠口头）：</b><code>docs/dev-protocol.md</code>——Qoder＝架构师（出单、<b>独立复放验收不采信自述</b>、review、同步本页与 HANDOFF、一工单一 commit），
+    Cursor＝执行工程师（按单实现；开发中发现问题按协议 §3 分流：本单内就地修并写偏离、<b>会改结论的一律停手交拍板</b>、新洞只登记不顺手修）。
+    工单台账与队列门禁在 <code>docs/HANDOFF.md</code> §5／§5.0。
     <b>跨工具接手先读 <code>docs/HANDOFF.md</code></b>；收工前让当前工具「更新 HANDOFF 并提交」——记忆不跨工具走，进了 git 的文件才算同步。
   </div>
 
