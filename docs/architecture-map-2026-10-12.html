@@ -252,8 +252,10 @@
       <div class="mech"><b>机械保证：</b>修改可审计、可还原，且<b>还原本身也留痕</b>（一键重置同样入链）。演示话术必须框定为审校，讲成「改答案」是自爆。</div>
       <div class="anchor">甲方红线（56:32）：「我需要看到您提交结果的整个过程，不能人工对答案进行修正」。</div></div>
 
-    <div class="claim gray"><h3>独立信源簇：知道哪些是抄的 <span class="tag gray">主张已立，结构未做</span></h3>
-      <div class="say">一条真信源被 90 家转载，现行覆盖分量会把 coverage 0.500 → 1.000，即置信度整体<b>虚高 100%</b>。多源一致在舆情场景里很可能就是转载堆量——而 <code>EvidenceLevel.A</code> 的定义把「多源一致」写成了<b>加分条件</b>。</div>
+    <div class="claim gray"><h3>独立信源簇：知道哪些是抄的 <span class="tag gray">主张已立，结构未做；优先级已下调</span></h3>
+      <div class="say">一条真信源被 90 家转载，现行覆盖分量会把 coverage 0.500 → 1.000，即置信度整体<b>虚高 100%</b>。多源一致在舆情场景里很可能就是转载堆量——而 <code>EvidenceLevel.A</code> 的定义把「多源一致」写成了<b>加分条件</b>。
+        <b>但「很可能」这三个字已被官方样例集压低（2026-10-16 实测）</b>：六案 486 篇里近重复只有 <b>22 对＝4.5%</b>，
+        最大的一案（吉隆 137 篇）也只有 5 对——机制真实，<b>发生率不是常态而是少数</b>。复放 <code>scripts/probe_source_dedup.py</code>。</div>
       <div class="mech"><b>要做的：</b>簇成为数据结构（所属簇 / 第几代 / 事件时点），四个出口同时成立——按独立簇数计条数、跨簇进冲突队列、簇内改数即篡改检测、孤证显影「12 条证据 · 来自 1 个独立信源」。<b>约 1 天、零 token。</b></div>
       <div class="anchor">答辩最能打的画面：「来自 3 个独立信源 · 含 2 代更新 · 最早出处：新华社 09-25 14:02」。</div></div>
   </div>
@@ -327,7 +329,7 @@
       <td class="n">恒兴 371,325 token ÷ 22 次 ≈ <b>1.7 万/次</b>（≈ 整个案卷体积）；chat 侧<b>无任何缓存</b>；墙钟约 <b>14 分钟</b>一问</td>
       <td class="cmd">产物 <code>accounting</code> 字段</td><td class="c"><span class="tag bad">红</span></td></tr>
 
-    <tr><td><b>覆盖不被转载吹高</b></td><td><b>尚未承诺</b>：转载堆量会把 coverage 0.500 → 1.000（虚高 100%），<code>near_dup</code> 只亮黄牌不进分量。修在它上面＝② 独立信源簇</td>
+    <tr><td><b>覆盖不被转载吹高</b></td><td><b>尚未承诺</b>：转载堆量会把 coverage 0.500 → 1.000（虚高 100%），<code>near_dup</code> 只亮黄牌不进分量。修在它上面＝② 独立信源簇。<b>发生率已实测＝4.5%</b>（官方六案 22 对／486 篇，<code>scripts/probe_source_dedup.py</code>）→ 机制真、面窄，优先级下调</td>
       <td class="n">公式实算可复放<br>0.5 → 1.0（饱和于 4 条）</td>
       <td class="cmd">读 <code>app/core/confidence.py:35</code>（<code>_COVERAGE_FLOOR=0.5</code>）<br>＋ <code>docs/scenario-review-2026-10-14.md</code> §2</td><td class="c"><span class="tag gray">灰</span></td></tr>
 
@@ -507,9 +509,14 @@
   <div class="band">
     <div class="bandhead"><h2>⑤ 缺口带 — 场景重判后新增，全是「没做」不是「做到了」</h2><span class="meta">对应 docs/scenario-review-2026-10-14.md 七条</span></div>
     <div class="grid">
-      <div class="node gray"><div class="head">独立信源簇（优先级最高） <span class="en">簇 / 第几代 / 事件时点</span> <span class="tag gray">未做</span></div>
+      <div class="node gray"><div class="head">独立信源簇（<b>优先级已下调</b>，见右） <span class="en">簇 / 第几代 / 事件时点</span> <span class="tag gray">未做</span></div>
         <div class="does">把「独立信源簇」做成数据结构：约 1 天、零 token。四个出口同时受益——覆盖按独立簇计条数、跨簇进冲突队列、簇内改数即篡改检测、孤证显影。</div>
-        <div class="issue"><b>不做这一条，置信度覆盖分量在舆情场景里就是错的</b>（90 家转载 → coverage 0.500→1.000）。材料到手后动手顺序第 3 步。</div></div>
+        <div class="issue"><b>机制成立，发生率已被实测压低（2026-10-16）</b>：90 家转载 → coverage 0.500→1.000 这条推演没错，
+          但官方六案 486 篇里生产闸 <code>near_dup_pairs</code> 只抓到 <b>22 对＝4.5%</b>（其中 6 对是 Jaccard=1.000 的原样转载），
+          阈值从 0.5 放到 0.15 也只涨到 17 对 → <b>它不再是任何工单的前置条件</b>。
+          复放 <code>PYTHONPATH=. .venv/bin/python scripts/probe_source_dedup.py</code>（约 1s）。
+          剩余价值在篡改检测／孤证显影，不在召回；「吃掉多少分」仍待 C-12 的评分器。
+          <b>口径边界</b>：量的是字面同源，改写式洗稿测不出（隐藏测试集若含洗稿语料须重跑本探针，别照抄 4.5%）。</div></div>
 
       <div class="node gray"><div class="head">时间定向（治假冲突）＋台账漏检（10-15 新查，更致命） <span class="en">fact_ledger · temporal</span> <span class="tag gray">部分</span></div>
         <div class="does"><code>find_collisions()</code> 现在按（实体,指标）分组、差 &gt;1% 就算对撞、<b>完全不看 date</b>；<code>Fact.date</code> 字段已存在但只用于展示。</div>
@@ -554,7 +561,7 @@
     <tr><td class="c"><b style="color:var(--warn)">3</b></td><td><b>封面曾说谎 / 空交付曾不显影</b><br>披露已修，质量下半仍在</td><td>③ panel（刀六已补）</td>
       <td>旧：technologist 0 条却印「研判编队：mainstream、redteam、technologist」。新：空交付进减员首屏（knife11 离线复放点名 technologist）。整格仍黄：置信度 &gt;0.27 与第三人真交卷未验</td></tr>
     <tr><td class="c"><b style="color:var(--gray)">4</b></td><td><b>转载把置信度吹高</b><br>多源 ≠ 独立，簇未成结构</td><td>⑤ 缺口带 · ② 覆盖分量</td>
-      <td>［实测·公式］90 家转载同稿 → coverage <b>0.500 → 1.000</b>，置信度整体虚高 100%（<code>app/core/confidence.py</code> 算得，可复放）。<code>near_dup</code> 只亮黄牌，不进计数不进分量。rumor 案例 near_dup 命中 0 对是<b>语料太假</b>（三份改写不同的稿子），不是缺陷不成立</td></tr>
+      <td>［实测·公式］90 家转载同稿 → coverage <b>0.500 → 1.000</b>，置信度整体虚高 100%（<code>app/core/confidence.py</code> 算得，可复放）。<code>near_dup</code> 只亮黄牌，不进计数不进分量。rumor 案例 near_dup 命中 0 对是<b>语料太假</b>（三份改写不同的稿子），不是缺陷不成立。<b>但发生率已在官方真语料上量出（10-16）＝22 对／486 篇＝4.5%</b>（<code>scripts/probe_source_dedup.py</code>）：机制真、面窄，「独立信源簇」已从最高优先级降为独立改进项</td></tr>
     <tr><td class="c"><b style="color:var(--gray)">5</b></td><td><b>台账双向失效</b><br>既制造假冲突逼模型解释，又<b>静默漏掉真冲突</b>（漏检不留痕）</td><td>⑤ 缺口带 · 时间定向＋台账漏检</td>
       <td>［实测］<code>fact_ledger.find_collisions()</code> 按（实体,指标）分组、差 &gt;1% 即对撞、完全不看 <code>date</code>；<code>Fact.date</code> 只在展示用（字段定义 <code>app/core/fact_ledger.py:56</code>，分组逻辑 <code>app/core/fact_ledger.py:112-124</code>）。对撞清单还注入提示词要求结论正面回应。<br>
       <b>10-15 补的另一半（用户「两条新闻伤亡不同」案例）：</b>指标词只在<b>同段数字前</b>取（<code>:87</code> <code>head = text[: num.start]</code>，<code>:89</code> 取不到即「裸数不进台账」）；分组键是<b>字面</b>（实体,指标），纯中文实体被并进指标、<code>entity</code> 置空（<code>:96</code>），且<b>无伤亡词表</b>（grep 零命中）。→ 同主体同议题、措辞不同的两条新闻<b>永不撞</b>，冲突静默消失、报告不披露。漏检率［未验·待量］</td></tr>
@@ -585,11 +592,12 @@
 
   <h2 class="sec-title">7. 材料到手后的动手顺序（已与用户对齐）</h2>
   <div class="note" style="margin-top:0">
-    <b>当前处于「等官方材料」状态——材料到齐前不动代码。</b>在等什么：① 榜单验收标准（硬指标，未达即废榜）；② 评分标准细则（每项给几分）；③ 样例集（含人工抽取的证据/观点/结论字段，结构未知）。接榜确认函已于 2026-10-14 提交，材料走邮件。
+    <b>「等官方材料」状态已于 2026-10-16 结束——样例集与《评分标准》均已到手，用户拍板「全部解除，按新优先级连做」。</b>材料在<b>仓库外</b>（<code>~/Desktop/veritas-testcases/</code>，官方下发件不入仓库）。《评分标准》原本作为 OLE 对象藏在宣讲 PPT 第 14 页，已逐字提取存盘为 <code>docs/contest-scoring-rubric-2026-10-13.md</code>。实测规模：六案 486 篇／1,389,545 字／184 条金标／18 题（复放 <code>scripts/probe_official.py</code>）。当前队列＝<b>C-12 → C-14 → C-13</b>（见 <code>docs/HANDOFF.md</code> §5.0）。
     <ol class="next">
-      <li>先花半小时<b>读样例集 JSON 字段结构</b>——它决定要不要做「逐题答题纸」改造（缺口带 ②）。</li>
-      <li>按七条结论往「人的研判十格对照表」上<b>贴分值</b>，产出三样：数据流图、评分项×环节对照表、环节缺陷表。颗粒度硬边界＝能回答「扣分能不能落到这个环节」为止。</li>
-      <li>优先级最高的动手项：<b>把「独立信源簇」做成数据结构</b>（约 1 天、零 token）——覆盖分量、冲突判定、篡改检测、孤证显影四件事都踩在它上面。</li>
+      <li><b>C-12（队列第一）</b>：官方样例集「进得来、出得去」——摄取适配层保全 <code>para_id</code>（2.2.1 那 7 分的直接开关）＋四份提交 JSON 导出＋只算精确匹配的下界评分器。<b>要的是「能量出来」不是「量出来高」</b>，跑出低分是合格结果。</li>
+      <li><b>C-14（队列第二）</b>：冲突消解记录对齐官方五级枚举＋<code>basis</code>＋重启条件（3.3＝10 分），并按用户口径让<b>票数只在证据强度势均力敌（差 ≤0.20）时当破平器</b>——强度差得开时票数一票不算。</li>
+      <li><b>C-13（队列第三）</b>：推理树补中间结论节点＋结论→结论依赖边＋依赖传播重算（3.1.3＝10 分，主观分最大单项），顺带解锁加分项 4.1.1 的「间接传导」。</li>
+      <li>~~优先级最高的动手项：把「独立信源簇」做成数据结构~~ → <b>已被实测降级</b>：同源污染只有 4.5%（<code>scripts/probe_source_dedup.py</code>），不再是任何单的前置；剩余价值在篡改检测／孤证显影。</li>
     </ol>
   </div>
 
@@ -603,7 +611,7 @@
     <b>主办方口径＝材料最深 3 级</b>，正常收料不会触发这条拒收；真要不丢深层目录得两侧深度一起抬，那条（C-8）已随这个数撤销。<br><br>
     <b>本图怎么验的：</b>绿/黄/红/灰全部按产物或脚本输出，不按感觉；<b>文档口径的绿不算绿</b>——每个格子回指代码行号或产物字段，写行号前逐行 <code>sed -n</code> 核过。
     2026-10-16 复放：<code>pytest tests -q</code> = <b>559 passed，连跑 5 次次次绿</b>（C-9 已合并 <code>1885131</code>；入库前一版为 553）；<code>scripts/measure_baseline.py</code> 输出即指标表实测值；<code>scripts/measure_capacity.py</code> 全程 21.9s、两次复放逐项一致（输入层三道天花板定价，见 ① 带「7 道召回口子」格与「输入层丢件率」行）；<code>scripts/probe_context_window.py</code> 本机 14B 实跑＝20000 字三代号全中、80000 字系统代号与议题代号丢（<b>黄格 C-9</b>，丙＝出口披露已入库、超发本身未修）。<br>
-    <b>2026-10-16 官方样例集到手后新增的复放</b>：<code>scripts/probe_official.py</code>（六案 486 篇／1,389,545 字／184 条金标／18 题，六个探针逐条可重算；<code>OFFICIAL_CASES</code> 指向不存在目录时 <b>exit 2</b>，不会静默吐假数）——它推翻了本页两处旧口径：<b>① 「&gt;500 封顶必然触发」错</b>（六案 52～137 篇，500 封顶 <b>0/6</b>；真正 6/6 触发的是 <code>corpus_index.py:39</code> 的 <code>_MAX_SOURCES=50</code>）；<b>② 「材料装不下」错</b>（六案理论最小必读量 4,826～19,591 字，全部 ＜ ≈2.4 万字窗口，即 <b>96%～99% 装进去的是无关内容</b>，问题在召回不在窗口）。C-9 第二轮独立复放另测：热路径 <code>Settings.from_env</code>／<code>from_json</code> <b>双 0</b>、真路径 <code>est=19399</code>／<code>overflow=3015</code>（对 19,378 锚点偏差 <b>0.11%</b>）、flake <b>3/20</b>（Cursor 报 2/20、HEAD 基线 6/20，判据 ≤6；<b>根因未除，转 C-10</b>）。<br>
+    <b>2026-10-16 官方样例集到手后新增的复放</b>：<code>scripts/probe_official.py</code>（六案 486 篇／1,389,545 字／184 条金标／18 题，六个探针逐条可重算；<code>OFFICIAL_CASES</code> 指向不存在目录时 <b>exit 2</b>，不会静默吐假数）——它推翻了本页两处旧口径：<b>① 「&gt;500 封顶必然触发」错</b>（六案 52～137 篇，500 封顶 <b>0/6</b>；真正 6/6 触发的是 <code>corpus_index.py:39</code> 的 <code>_MAX_SOURCES=50</code>）；<b>② 「材料装不下」错</b>（六案理论最小必读量 4,826～19,591 字，全部 ＜ ≈2.4 万字窗口，即 <b>96%～99% 装进去的是无关内容</b>，问题在召回不在窗口）。<code>scripts/probe_source_dedup.py</code>（约 1s，同一套 <code>OFFICIAL_CASES</code>／<b>exit 2</b> 约定）推翻了第三处：<b>③ 「必须先建独立信源簇，票数才有资格进权重」错</b>——生产闸 <code>near_dup_pairs</code> 在六案上只抓到 <b>22 对／486 篇＝4.5%</b>（6 对 Jaccard=1.000 原样转载），且 40 字粗指纹阈值从 0.5 放到 0.15 也只从 9 对涨到 17 对 → <b>不是阈值卡太严的假象</b>；URL 去重则确认无用（完全相同 URL 只 <b>3 组</b>）。C-9 第二轮独立复放另测：热路径 <code>Settings.from_env</code>／<code>from_json</code> <b>双 0</b>、真路径 <code>est=19399</code>／<code>overflow=3015</code>（对 19,378 锚点偏差 <b>0.11%</b>）、flake <b>3/20</b>（Cursor 报 2/20、HEAD 基线 6/20，判据 ≤6；<b>根因未除，转 C-10</b>）。<br>
     同日修正：<code>case_loader</code> 排序行号旧引 <code>:345</code> 为误，实为 <code>:352</code>（上限）／<code>:370</code>（按名排序）。
     锚点：<code>out_local14b_knife1/conflict_subject_gate_replay.*</code>、<code>out_local14b_knife11/report_attrition_replay.md</code>、<code>SCORECARD_local14b.md</code>、<code>eval/recall_real_report.md</code>。<br>
     <b>分工与验收规则（已进 git，不靠口头）：</b><code>docs/dev-protocol.md</code>——Qoder＝架构师（出单、<b>独立复放验收不采信自述</b>、review、同步本页与 HANDOFF、一工单一 commit），
