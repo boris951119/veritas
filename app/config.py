@@ -110,6 +110,14 @@ class Settings:
     # 常态语料（几万字）远低于默认值=零影响；超大输入时保产出。
     material_char_budget: int = 80_000
 
+    # 模型上下文窗口（token）：发送前估算提示词是否超窗并披露（C-9 丙）。
+    # 默认 16384＝本机 Ollama qwen3-14b Modelfile 实测；<=0 关闭检查
+    # （关时报告须写「未检查」，不许静默当没超）。VERITAS_MODEL_CTX_TOKENS。
+    model_context_tokens: int = 16384
+    # 中文字符／token 密度倒数：探针实测 ≈0.69 tok/字 → 1/0.69≈1.45。
+    # 来源 scripts/probe_context_window.py（2026-10-16）。VERITAS_ZH_CHARS_PER_TOKEN。
+    zh_chars_per_token: float = 1.45
+
     # 语料收窄阈值：信源数达到该值才走索引选料（默认 50=自动；
     # 0=强制关闭，小案例到不了阈值则整卷研判、不建 .corpus）。
     # 收窄后研判只看见 hydrate 出的小案卷，并披露「库内 N / 本次 M」。
@@ -210,6 +218,17 @@ class Settings:
             s.second_pass_enabled = False
         elif second_env in ("1", "true", "on", "yes"):
             s.second_pass_enabled = True
+        ctx_env = (os.environ.get("VERITAS_MODEL_CTX_TOKENS") or "").strip()
+        if ctx_env.lstrip("-").isdigit():
+            s.model_context_tokens = int(ctx_env)
+        zh_env = (os.environ.get("VERITAS_ZH_CHARS_PER_TOKEN") or "").strip()
+        if zh_env:
+            try:
+                zh_val = float(zh_env)
+                if zh_val > 0:
+                    s.zh_chars_per_token = zh_val
+            except ValueError:
+                pass
         return s.validate()
 
     @classmethod
@@ -233,6 +252,14 @@ class Settings:
             val = data.get(key)
             if isinstance(val, int) and not isinstance(val, bool) and val > 0:
                 setattr(s, key, val)
+        # model_context_tokens 允许 0（关闭检查）；正整数覆盖默认
+        ctx = data.get("model_context_tokens")
+        if isinstance(ctx, int) and not isinstance(ctx, bool) and ctx >= 0:
+            s.model_context_tokens = ctx
+        zh = data.get("zh_chars_per_token")
+        if isinstance(zh, (int, float)) and not isinstance(zh, bool) \
+                and float(zh) > 0:
+            s.zh_chars_per_token = float(zh)
         select_min = data.get("corpus_select_min_sources")
         if isinstance(select_min, int) and not isinstance(select_min, bool) \
                 and select_min >= 0:

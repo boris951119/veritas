@@ -16,6 +16,7 @@ import json
 import re
 from dataclasses import dataclass, field
 
+from app.config import Settings
 from app.core.evidence import (
     Conclusion,
     Dossier,
@@ -41,6 +42,13 @@ class Agent:
     model: str
     role: str = AGENT_ROLE_ANALYST
     profile_tier: str = "standard"  # 模型画像档位（probe 后由管线回填）
+    # 构造时钉一份 Settings。analyze 热路径不得再 Settings.from_env()
+    # （from_json 读盘会落进编队并行窗口，放大 ScriptedClient 抢答竞态）。
+    settings: Settings | None = None
+
+    def __post_init__(self) -> None:
+        if self.settings is None:
+            self.settings = Settings.from_env()
 
 
 def extract_json(text: str) -> dict:
@@ -70,9 +78,57 @@ class Analyst(Agent):
             {"role": "user", "content": render_segments_block(
                 dossier, focus_segment_ids=focus_segment_ids)},
         ]
+        # C-9 丙：发送前窗口估算披露（不截断、不收窄预算）。
+        # settings 在构造时已钉死，这里不再读配置。
+        self._disclose_prompt_window(dossier, messages, self.settings)
         response = self.client.chat(self.model, messages, json_mode=True)
         data = extract_json(response.content)
         return self._materialize(data, dossier)
+
+    @staticmethod
+    def _disclose_prompt_window(dossier: Dossier, messages: list[dict],
+                                settings) -> None:
+        """超窗 → ingest_notes+triage；关闭检查 → accounting 记未检查。"""
+        from app.core.prompt_guard import estimate_prompt_window
+
+        rec = estimate_prompt_window(
+            messages,
+            window_tokens=int(settings.model_context_tokens),
+            zh_chars_per_token=float(settings.zh_chars_per_token),
+        )
+        if not rec.get("checked"):
+            dossier.accounting.setdefault("prompt_window", {
+                "status": "unchecked",
+                "detail": rec.get("detail") or "模型窗口未检查",
+            })
+            return
+        if int(rec.get("overflow_tokens") or 0) <= 0:
+            return
+        # 多分析师同卷只写一条，避免三倍噪音
+        if any(n.get("kind") == "prompt_over_window"
+               for n in dossier.ingest_notes):
+            return
+        detail = str(rec["detail"])
+        dossier.ingest_notes.append({
+            "file": "",
+            "kind": "prompt_over_window",
+            "detail": detail,
+            "est_tokens": rec["est_tokens"],
+            "window_tokens": rec["window_tokens"],
+            "overflow_tokens": rec["overflow_tokens"],
+            "total_chars": rec["total_chars"],
+        })
+        dossier.triage.append({
+            "file": "",
+            "route": "prompt_over_window",
+            "reason": detail,
+        })
+        dossier.accounting["prompt_window"] = {
+            "status": "overflow",
+            "est_tokens": rec["est_tokens"],
+            "window_tokens": rec["window_tokens"],
+            "overflow_tokens": rec["overflow_tokens"],
+        }
 
     # ------------------------------------------------------------------
 

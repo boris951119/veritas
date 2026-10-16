@@ -333,7 +333,7 @@ def run_case(spec: RunSpec | None = None,
         kept = {k: v for k, v in (dossier.accounting or {}).items()
                 if k in ("corpus_select", "query_rewrite", "slot_disclosures",
                          "panel_attrition", "repair_accept_rate", "premise",
-                         "fact_ledger_stats")}
+                         "fact_ledger_stats", "prompt_window")}
         dossier.accounting = {
             **kept,
             "elapsed_s": round(time.monotonic() - t0, 1),
@@ -639,7 +639,8 @@ def run_case(spec: RunSpec | None = None,
                      "unused_topic_segments", "subquestion_status",
                      "obligation_limitation",
                      "premise", "second_pass", "conflict_drops",
-                     "mechanical_merge", "fact_ledger_stats")}
+                     "mechanical_merge", "fact_ledger_stats",
+                     "prompt_window")}
     dossier.accounting = {
         **kept,
         "elapsed_s": round(time.monotonic() - t0, 1),
@@ -888,6 +889,7 @@ def render_report_md(dossier: Dossier, chain: HashChain, rejected: list[dict]) -
     _render_conflicts_section(lines, dossier)
     _render_dissent_section(lines, dossier)
     _render_fact_collisions(lines, dossier)
+    _render_prompt_window(lines, dossier)
     _render_excluded_sources(lines, dossier)
 
     if rejected:
@@ -1226,6 +1228,23 @@ def _render_fact_collisions(lines: list[str], dossier: Dossier) -> None:
     lines.append("")
 
 
+def _render_prompt_window(lines: list[str], dossier: Dossier) -> None:
+    """模型窗口出口披露（C-9）：超窗一条；关闭检查写「未检查」。"""
+    notes = [n for n in dossier.ingest_notes
+             if n.get("kind") == "prompt_over_window"]
+    pw = (dossier.accounting or {}).get("prompt_window") or {}
+    if notes:
+        lines += ["## 模型窗口出口披露", ""]
+        for n in notes:
+            lines.append(f"- {n.get('detail') or ''}")
+        lines.append("")
+        return
+    if pw.get("status") == "unchecked":
+        lines += ["## 模型窗口出口披露", ""]
+        lines.append(f"- 未检查：{pw.get('detail') or 'model_context_tokens≤0'}")
+        lines.append("")
+
+
 def _render_excluded_sources(lines: list[str], dossier: Dossier) -> None:
     """丢弃必须可见：预算裁剪、零相关/重复排除、摄取失败三类披露。"""
     from app.core.dup_check import duplicate_map
@@ -1255,7 +1274,9 @@ def _render_excluded_sources(lines: list[str], dossier: Dossier) -> None:
             entries.append((src.id, src.title,
                             f"与 {dups[src.id]} 内容完全重复——不重复进入研判，"
                             "防止一致性虚增"))
-    ingest = [n for n in dossier.ingest_notes if n.get("kind") != "corpus_select"]
+    # 出口披露单列，不混进摄取披露章
+    ingest = [n for n in dossier.ingest_notes
+              if n.get("kind") not in ("corpus_select", "prompt_over_window")]
     if not entries and not ingest:
         return
     lines += ["## 未采信信源（未进入分析师视野）", ""]
