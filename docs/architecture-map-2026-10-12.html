@@ -141,7 +141,7 @@
       <div class="name">① 信源进入<span class="en">app/ingest/</span>
         <span class="who">事件随时间演进 · 比赛每专题几十篇 · 真实业务日均几十万条</span></div>
       <div class="boxes">
-        <div class="box"><b>目录有界遍历</b><small>封顶 <b>500 文件 / 深度 3</b>（<code>case_loader.py:352</code>，按名排序 <code>:370</code>，<b>现为硬编码、无 env／manifest 可配</b>）；工具与产物目录静默跳过，名单外<b>隐藏目录不入卷但披露</b>。超封顶与隐藏目录都写 <code>ingest_notes</code>＋<code>triage</code>，用例 <code>test_collect_files_cap.py</code>(3)＋<code>test_hidden_dir_disclosure.py</code>(4)。<b>披露≠召回</b>：超限那份材料照样没读——官方单专题 ≤2000 篇，<b>这道口子必然触发</b>（工单 C-7，已实测定价、待拍 A／B／C）</small></div>
+        <div class="box"><b>目录有界遍历</b><small>封顶 <b>500 文件 / 深度 3</b>（<code>case_loader.py:352</code>，按名排序 <code>:370</code>，<b>现为硬编码、无 env／manifest 可配</b>）；工具与产物目录静默跳过，名单外<b>隐藏目录不入卷但披露</b>。超封顶与隐藏目录都写 <code>ingest_notes</code>＋<code>triage</code>，用例 <code>test_collect_files_cap.py</code>(3)＋<code>test_hidden_dir_disclosure.py</code>(4)。<b>披露≠召回</b>：超限那份材料照样没读——官方单专题 ≤2000 篇，<b>这道口子必然触发</b>（工单 C-7；已实测定价，<b>10-16 已拍＝只做 C：封顶变可配、默认值不变，工单已出待 Cursor</b>——定位要诚实：<b>这单不解决召回</b>，只防现场被自己的上限挡死）</small></div>
         <div class="box"><b>格式路由与拒绝</b><small>图片 / 老办公格式 / 压缩包嗅探三条岔路；每个丢弃分支都先写披露再 return</small></div>
         <div class="box"><b>压缩包安全拆封</b><small>四道边界：单件 20MB · 总量 200MB · 500 条目 · 嵌套深度=1；条目回主流程同权处理</small></div>
         <div class="box warn"><b>链接清单 → 抓取/缓存</b><small>默认<b>只披露不抓取</b>＝链接内容 0 召回；开启后逐条抓取，缓存带 HMAC 内容哈希防投毒</small></div>
@@ -295,7 +295,7 @@
       <td class="n">40 项对抗用例全过<br>零 LLM · 约 0.5s</td>
       <td class="cmd">pytest tests/test_input_defense.py tests/test_compound_input.py -q</td><td class="c"><span class="tag ok">绿</span></td></tr>
 
-    <tr><td><b>输入层丢件率</b></td><td><b>尚未承诺——真材料丢件率仍未量</b>：① 有 7 道会真丢材料的口（遍历封顶、图片未 OCR、老格式、7z/rar、压缩包边界外、链接未抓、扫描件零文字层），全部有披露但<b>没有一条用真数据量过</b>，样例集到手后用分诊账本量。<b>10-16 两件事定了</b>：① 主办方口径＝单专题 <b>≤2000 篇</b>（&gt; 500 封顶，且现按文件名取前 500、相关性在<b>这一层</b>不参与 → 那道口子必然触发）；② <b>三道天花板的代价与收益已在合成材料上量过</b>（<code>scripts/measure_capacity.py</code>，2000 份×3000 字，零 LLM，两次复放逐项一致）：<b>抬①500→2000 只多看见 1 份（20→21）</b>，代价是建库 3.3s→15.8s、库 25.5→103.1MB，且 <code>create()</code> 每次先删旧库＝<b>无增量缓存、每跑必付</b>；<b>真天花板在选料层</b>——默认 8 万字预算只放 <b>20 份（库内 1%）</b>进案卷，预算抬到 32 万字即撞 <code>_MAX_SOURCES=50 × 每源 6 段</code> 硬顶（64 万字仍是 50 份）。<b>结论：要一起抬的是「预算＋份数上限」，不是遍历封顶。</b>工单 C-7 已按此改口径（<code>docs/HANDOFF.md</code> §5「C-7 前置实测」），待拍 A／B／C</td>
+    <tr><td><b>输入层丢件率</b></td><td><b>尚未承诺——真材料丢件率仍未量</b>：① 有 7 道会真丢材料的口（遍历封顶、图片未 OCR、老格式、7z/rar、压缩包边界外、链接未抓、扫描件零文字层），全部有披露但<b>没有一条用真数据量过</b>，样例集到手后用分诊账本量。<b>10-16 两件事定了</b>：① 主办方口径＝单专题 <b>≤2000 篇</b>（&gt; 500 封顶，且现按文件名取前 500、相关性在<b>这一层</b>不参与 → 那道口子必然触发）；② <b>三道天花板的代价与收益已在合成材料上量过</b>（<code>scripts/measure_capacity.py</code>，2000 份×3000 字，零 LLM，两次复放逐项一致）：<b>抬①500→2000 只多看见 1 份（20→21）</b>，代价是建库 3.3s→15.8s、库 25.5→103.1MB，且 <code>create()</code> 每次先删旧库＝<b>无增量缓存、每跑必付</b>；<b>真天花板在选料层</b>——默认 8 万字预算只放 <b>20 份（库内 1%）</b>进案卷，预算抬到 32 万字即撞 <code>_MAX_SOURCES=50 × 每源 6 段</code> 硬顶（64 万字仍是 50 份）。<b>结论：抬①单做无用（只多 1 份）；而②要抬就得先过模型窗口这道硬墙——C-9 实测本机 14B 只吃得下约 2.2 万字，连默认 8 万都是超发。</b><b>10-16 已拍：C-7 只做 C（500／深度变可配、默认不变），预算不动，窗口先加出口披露。</b>记录见 <code>docs/HANDOFF.md</code> §5「C-7 前置实测」</td>
       <td class="n">真材料：<b>未量</b><br>天花板：<b>［实测·合成］</b>20 份／8 万字<br>（披露齐全 ≠ 丢件率已知）</td>
       <td class="cmd"><code>python scripts/measure_capacity.py</code> ＋ 产物 <code>triage</code>/<code>ingest_notes</code></td><td class="c"><span class="tag gray">灰</span></td></tr>
 
@@ -432,7 +432,7 @@
         <div class="does">提示词由「纪律＋议题＋资料清单」拼成后交给网关；<b>装箱按字（8 万字）、模型按 token（中文实测 ≈0.69 tok/字）</b>，中间无校验。</div>
         <div class="issue"><b>［实测·本机 14B］</b>Ollama <code>num_ctx=16384</code> 只吃得下约 <b>2.2 万字</b>；暗号三放（系统头／议题行／资料末）走生产路径：8 万字那次<b>系统代号与议题代号都丢了</b>，只剩末段——服务端<b>剪头保尾且不报错</b>。
           即模型可能<b>在没有纪律、没有议题的情况下作答</b>，而报告照样写「本次纳入 M 份」。<b>全仓无 <code>num_ctx</code>、无 token 计数、无截断披露</b>（<code>app/llm/model_client.py:512</code> 只带 <code>max_tokens</code>）。
-          抬到原生 40960 仍只约 5 万字，且单次 <b>274s</b> 贴住 <code>llm_timeout_seconds=300</code>。<b>小案例跑不出来</b>——材料远在窗口内；大库场景必触发。修复方向甲／乙／丙见 <code>docs/HANDOFF.md</code> §5「C-9 前置实测」，复放 <code>python scripts/probe_context_window.py</code>。</div></div>
+          抬到原生 40960 仍只约 5 万字，且单次 <b>274s</b> 贴住 <code>llm_timeout_seconds=300</code>。<b>小案例跑不出来</b>——材料远在窗口内；大库场景必触发。修复方向甲／乙／丙见 <code>docs/HANDOFF.md</code> §5「C-9 前置实测」；<b>10-16 已拍＝先做丙（只加出口披露），工单已出、待 Cursor 实现，本格保持红直到独立复放验收</b>。复放 <code>python scripts/probe_context_window.py</code>。</div></div>
 
       <div class="node warn"><div class="head">三分析师独立研判 <span class="en">agents/panel · second_pass</span> <span class="tag warn">黄</span></div>
         <div class="does">主流 / 红队 / 技术推进硬隔离；per-agent 模型可异构。刀十一：首轮引文闸后对未用议题相关段再定向一轮。</div>
