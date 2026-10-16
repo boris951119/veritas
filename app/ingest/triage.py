@@ -12,6 +12,7 @@
 - layout_parsed      版式引擎入卷（Docling 等，派生低可信，meta.parser）
 - empty              空文件/扫描件（零段落不入卷）
 - invalid_parse      解析失败（披露，不炸 run）
+- dir_truncated      目录遍历封顶（超 max_files / max_depth，披露未入卷数）
 
 分诊是确定性代码不是 skill：skill 注册表只放「教模型的提示词纪律」，
 守门判定永远归代码（可复现、可审计、不可被注入）。
@@ -31,6 +32,7 @@ ROUTE_LABEL: dict[str, str] = {
     "empty": "空文件",
     "invalid_parse": "解析失败",
     "unsupported_format": "格式暂不支持",
+    "dir_truncated": "目录遍历封顶",
     # 派生路由（零相关/重复在渲染期出现，同表统一标签）
     "zero": "零相关排除",
     "dup": "重复排除",
@@ -43,4 +45,5 @@ ROUTE_ORDER: dict[str, int] = {
     "links_disclosed": 6, "image_disclosed": 7,
     "zero": 8, "dup": 9, "empty": 10,
     "invalid_parse": 11, "archive_unsupported": 12, "unsupported_format": 13,
+    "dir_truncated": 14,
 }

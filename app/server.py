@@ -394,7 +394,7 @@ def create_app(cases_root: Path | None = None) -> FastAPI:
                 if (d / sub / "report.json").is_file():
                     out_dir = sub
                     break
-            n_files = len(_collect_files(d))
+            n_files = len(_collect_files(d).files)
             man = load_yaml_robust(d / "manifest.yaml") or {}
             imported = bool(man.get("imported")) or d.name.startswith("user-")
             try:

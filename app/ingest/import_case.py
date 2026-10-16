@@ -119,7 +119,7 @@ def append_imported_files(
         raise CaseImportError("找不到这套资料")
     if not items:
         raise CaseImportError("没有收到文件")
-    already = _collect_files(case_dir)
+    already = _collect_files(case_dir).files
     existing = len(already)
     kept: list[tuple[str, bytes]] = []
     skipped: list[str] = []

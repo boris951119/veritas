@@ -184,27 +184,73 @@ def _pdf_probe(path: Path) -> dict:
     return out
 
 
+@dataclass(frozen=True)
+class CollectResult:
+    """有界遍历结果：入卷文件 + 封顶截断元数据（零则未触发）。"""
+
+    files: list[tuple[Path, str]]
+    skipped: int = 0
+    files_capped: bool = False
+    depth_capped: bool = False
+    max_files: int = 500
+    max_depth: int = 3
+
+    @property
+    def truncated(self) -> bool:
+        return self.skipped > 0 and (self.files_capped or self.depth_capped)
+
+    @property
+    def taken(self) -> int:
+        return len(self.files)
+
+
+def _is_artifact_dir(name: str) -> bool:
+    # 产物目录（out/out_offline/out_ab_*）与缓存绝不入卷——
+    # 自产文件被输入层吃回会形成滚雪球（归一化 diff 验收抓到的
+    # 真实回归：72 信源/73218 段，每跑一次演示膨胀一轮）
+    return name == "out" or name.startswith("out_") \
+        or name in ("history", ".fetched", ".corpus")
+
+
+def _count_ingestible(d: Path) -> int:
+    """统计目录下可摄取文件数（同隐藏/产物过滤，无深度上限——仅供封顶披露）。"""
+    n = 0
+    try:
+        children = sorted(d.iterdir(), key=lambda x: x.name)
+    except OSError:
+        return 0
+    for p in children:
+        if p.name.startswith("."):
+            continue
+        if p.is_dir():
+            if p.name == "__pycache__" or _is_artifact_dir(p.name):
+                continue
+            n += _count_ingestible(p)
+        else:
+            n += 1
+    return n
+
+
 def _collect_files(case_dir: Path, max_files: int = 500,
-                   max_depth: int = 3) -> list[tuple[Path, str]]:
-    """有界遍历案例目录 → [(路径, 相对路径)]。
+                   max_depth: int = 3) -> CollectResult:
+    """有界遍历案例目录 → CollectResult(files, 封顶元数据)。
 
     子目录此前被静默忽略——主办方自己解压成文件夹的场景同样常见；
-    隐藏目录与 __pycache__ 跳过，数量/深度封顶（假定输入敌意）。"""
+    隐藏目录与 __pycache__ 跳过，数量/深度封顶（假定输入敌意）。
+    封顶后仍继续遍历以计数未入卷文件——披露「取前 N、另有 M」，
+    不再静默丢材料。排序语义不变（按名）。"""
     out: list[tuple[Path, str]] = []
-
-    def _is_artifact_dir(name: str) -> bool:
-        # 产物目录（out/out_offline/out_ab_*）与缓存绝不入卷——
-        # 自产文件被输入层吃回会形成滚雪球（归一化 diff 验收抓到的
-        # 真实回归：72 信源/73218 段，每跑一次演示膨胀一轮）
-        return name == "out" or name.startswith("out_") \
-            or name in ("history", ".fetched", ".corpus")
+    skipped = 0
+    files_capped = False
+    depth_capped = False
 
     def walk(d: Path, prefix: str, depth: int) -> None:
-        if depth > max_depth or len(out) >= max_files:
+        nonlocal skipped, files_capped, depth_capped
+        try:
+            children = sorted(d.iterdir(), key=lambda x: x.name)
+        except OSError:
             return
-        for p in sorted(d.iterdir(), key=lambda x: x.name):
-            if len(out) >= max_files:
-                break
+        for p in children:
             if depth == 0 and p.name == "manifest.yaml":
                 continue
             if p.name.startswith("."):
@@ -213,17 +259,32 @@ def _collect_files(case_dir: Path, max_files: int = 500,
             if p.is_dir():
                 if p.name == "__pycache__" or _is_artifact_dir(p.name):
                     continue
+                if depth + 1 > max_depth:
+                    depth_capped = True
+                    skipped += _count_ingestible(p)
+                    continue
                 walk(p, f"{prefix}{p.name}/", depth + 1)
             else:
-                out.append((p, prefix + p.name))
+                if len(out) >= max_files:
+                    files_capped = True
+                    skipped += 1
+                else:
+                    out.append((p, prefix + p.name))
 
     walk(case_dir, "", 0)
-    return out
+    return CollectResult(
+        files=out, skipped=skipped,
+        files_capped=files_capped, depth_capped=depth_capped,
+        max_files=max_files, max_depth=max_depth,
+    )
 
 
 def count_case_files(case_dir: Path) -> int:
-    """案例目录内可摄取文件数（不含产物目录）。供选料阈值预判。"""
-    return len(_collect_files(Path(case_dir)))
+    """案例目录内可摄取文件数（不含产物目录；封顶后＝实际入卷上限）。
+
+    供选料阈值预判——与 load_case 看到的是同一截断后的数；
+    若触发封顶，披露里的 taken 与此返回值对齐。"""
+    return len(_collect_files(Path(case_dir)).files)
 
 
 def peek_case_question(case_dir: Path) -> str:
@@ -510,7 +571,27 @@ def load_case(case_dir: Path, fetch_links: bool = False,
 
         _ingest_one(path, rel, _dc_replace(spec, preloaded=(title, text)))
 
-    files = _collect_files(case_dir)
+    collected = _collect_files(case_dir)
+    files = collected.files
+    if collected.truncated:
+        detail = (f"按文件名排序取前 {collected.taken}，"
+                  f"另有 {collected.skipped} 个文件/更深层目录未入卷")
+        dossier.ingest_notes.append({
+            "file": "",
+            "kind": "dir_truncated",
+            "detail": detail,
+            "taken": collected.taken,
+            "skipped": collected.skipped,
+            "max_files": collected.max_files,
+            "max_depth": collected.max_depth,
+            "files_capped": collected.files_capped,
+            "depth_capped": collected.depth_capped,
+        })
+        dossier.triage.append({
+            "file": "",
+            "route": "dir_truncated",
+            "reason": detail,
+        })
     total = len(files)
     for i, (path, rel) in enumerate(files, 1):
         if on_file is not None:
