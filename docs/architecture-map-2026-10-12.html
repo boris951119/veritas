@@ -114,7 +114,7 @@
   <div class="sub">多智能体可信研判与证据链溯源 · 榜单《多智能体可信研判与证据链溯源》（发榜方：拓尔思 TRS）
     · <b>2026-10-15 重排</b>：上半为对外总览（总体架构图 / 核心技术主张 / 关键指标承诺），
     下半为对内问题带（红黄框与刀口表，评审不必看）。
-    页内所有数字今天复放过：测试 <b>532 passed</b> · <code>scripts/measure_baseline.py</code> 实跑输出 · 代码规模 <b>app 16,136 行 + web 1,885 行</b>。</div>
+    页内数字最近一次复放：<b>2026-10-16</b> 测试 <b>545 passed</b> · <code>scripts/measure_baseline.py</code> 实跑输出 · 代码规模 <b>app 16,415 行 + web 1,885 行</b>。</div>
 
   <div class="legend">
     <span><span class="dot" style="background:var(--ok)"></span>实测可用，可对外演示</span>
@@ -141,7 +141,7 @@
       <div class="name">① 信源进入<span class="en">app/ingest/</span>
         <span class="who">事件随时间演进 · 比赛每专题几十篇 · 真实业务日均几十万条</span></div>
       <div class="boxes">
-        <div class="box warn"><b>目录有界遍历</b><small>封顶 <b>500 文件 / 深度 3</b>；隐藏文件与产物目录一律跳过。<b>这两道封顶零测试</b>（<code>tests/</code> 内无 <code>max_files</code>/<code>max_depth</code> 用例）</small></div>
+        <div class="box"><b>目录有界遍历</b><small>封顶 <b>500 文件 / 深度 3</b>；工具与产物目录静默跳过，名单外<b>隐藏目录不入卷但披露</b>。超封顶与隐藏目录都写 <code>ingest_notes</code>＋<code>triage</code>，用例 <code>test_collect_files_cap.py</code>(3)＋<code>test_hidden_dir_disclosure.py</code>(4)。<b>披露≠召回</b>：超限那份材料照样没读</small></div>
         <div class="box"><b>格式路由与拒绝</b><small>图片 / 老办公格式 / 压缩包嗅探三条岔路；每个丢弃分支都先写披露再 return</small></div>
         <div class="box"><b>压缩包安全拆封</b><small>四道边界：单件 20MB · 总量 200MB · 500 条目 · 嵌套深度=1；条目回主流程同权处理</small></div>
         <div class="box warn"><b>链接清单 → 抓取/缓存</b><small>默认<b>只披露不抓取</b>＝链接内容 0 召回；开启后逐条抓取，缓存带 HMAC 内容哈希防投毒</small></div>
@@ -264,7 +264,7 @@
       <th style="width:20%" class="c">实测值</th><th style="width:28%">复放命令</th><th style="width:8%" class="c">状态</th></tr>
 
     <tr><td><b>测试全绿，零密钥</b></td><td>全部桩化，测试期有<b>禁真调用守卫</b>（忘塞桩的测试当场炸，不会偷花云端 key）</td>
-      <td class="n">532 passed<br>0 failed / 0 skipped</td>
+      <td class="n">545 passed<br>0 failed / 0 skipped</td>
       <td class="cmd">.venv/bin/python -m pytest tests -q</td><td class="c"><span class="tag ok">绿</span></td></tr>
 
     <tr><td><b>编造引文进不了正式证据池</b></td><td>零模型、毫秒级、可复现；打回清单随报告落盘。不承诺「模型不编」，承诺「编了必被检出」</td>
@@ -338,15 +338,15 @@
   <div class="band">
     <div class="bandhead"><h2>① 输入层 — 假定材料是敌意的</h2><span class="meta">app/ingest/ 1,848 行 · 机制全绿，但这一带有 7 道会真丢材料的口（见末格）</span></div>
     <div class="grid">
-      <div class="node"><div class="head">有界遍历与格式路由 <span class="en">_collect_files · _process_file</span> <span class="tag ok">绿（10-15 C-1 修复并验收）</span></div>
-        <div class="does">封顶 <b>500 文件 / 深度 3</b>，跳过隐藏文件、<code>__pycache__</code> 与 <code>out*</code>/<code>history</code>/<code>.corpus</code> 产物目录（自产文件回吃会滚雪球，归一化 diff 抓到过真实回归：72 信源/73218 段）。</div>
-        <div class="issue"><b>原来黄在哪、现在凭什么绿：</b>封顶触发曾<b>静默丢材料</b>且零测试（<code>case_loader.py</code> 两处 <code>return/break</code> 不写披露，而压缩包那条 <code>archive.py:180</code> 是写的）。
-          现在 <code>_collect_files</code> 返回 <code>CollectResult</code>（封顶后继续遍历只为计数），披露 <code>kind/route=dir_truncated</code>「按文件名排序取前 N，另有 M 个未入卷」进 <code>ingest_notes</code>＋<code>triage</code>，<code>count_case_files</code> 与 <code>taken</code> 对齐（预判不再和索引一起骗）。
-          <b>验收是独立复放不是采信自述</b>：<code>pytest tests -q</code> = 535 passed；探针目录 503 文件＋第 4 层藏文件 → <code>taken=500/skipped=5</code> 披露各 1 条；两个反例不产假披露（<code>depth_capped=True</code> 但 <code>skipped=0</code> 时不披露）；<b>存量 34 份产物 <code>dir_truncated</code> 命中 0</b>＝没溢到正常路径；<code>pipeline.py:1205</code> 端到端渲染确认披露落到报告而非只进内存。</div></div>
+      <div class="node"><div class="head">有界遍历与格式路由 <span class="en">_collect_files · _process_file</span> <span class="tag ok">绿（10-15 C-1 ＋ 10-16 C-5 修复并验收）</span></div>
+        <div class="does">封顶 <b>500 文件 / 深度 3</b>；工具/缓存目录（<code>.git</code>/<code>.venv</code>/<code>.fetched</code>/<code>.corpus</code>/<code>node_modules</code> 等，<code>_TOOL_SKIP_DIRS</code>）静默跳过，<b>名单外的隐藏目录不入卷但出一条披露</b>（目录名＋文件数，不列文件名）；产物目录 <code>out*</code>/<code>history</code> 不回吃（自产文件回吃会滚雪球，归一化 diff 抓到过真实回归：72 信源/73218 段）。</div>
+        <div class="issue"><b>原来黄在哪、现在凭什么绿：</b>封顶触发与隐藏目录都曾<b>静默丢材料</b>且零测试（<code>case_loader.py</code> 两处 <code>return/break</code> 不写披露，而压缩包那条 <code>archive.py:180</code> 是写的）。
+          现在 <code>_collect_files</code> 返回 <code>CollectResult</code>（封顶后继续遍历只为计数），披露 <code>kind/route=dir_truncated</code>「按文件名排序取前 N，另有 M 个未入卷」＋<code>hidden_dir_skipped</code> 两条道都进 <code>ingest_notes</code>＋<code>triage</code>，<code>count_case_files</code> 与 <code>taken</code> 对齐（预判不再和索引一起骗）。
+          <b>验收是独立复放不是采信自述</b>：C-1（10-15）535 passed；探针 503 文件＋第 4 层藏文件 → <code>taken=500/skipped=5</code> 披露各 1 条，两个反例不产假披露。C-5（10-16）545 passed；<b>5005</b> 文件的隐藏目录 → <code>n_files=5000 files_capped=True</code> 且 <b>0.2s</b> 返回（达顶早停，不是数完再截）、<b>55</b> 个隐藏目录 → 50 条＋1 条 overflow、<code>.git</code>/<code>.fetched</code> 零假警报；<b>全仓 36 份 <code>report.json</code>（其中 34 份有结论）<code>dir_truncated</code>/<code>hidden_dir_skipped</code> 命中 0</b>、六个真实案例目录 <code>hidden_dirs</code> 全空＝没溢到正常路径；<code>pipeline.py:1268</code>「摄取披露」章端到端确认披露落到报告而非只进内存。<b>注意口径：披露≠召回</b>——隐藏目录里的材料依旧没读，且文案的"可摄取文件数"不按扩展名过滤，别对外说成"材料数"。</div></div>
 
       <div class="node"><div class="head">拆封 · 链接 · 抽取 <span class="en">archive / links / readers / pdf_backend</span> <span class="tag ok">绿</span></div>
         <div class="does">zip/tar 四道边界（单件 20MB、总量 200MB、500 条目、嵌套=1）；链接默认只披露，开启才抓取且缓存带 HMAC 内容哈希；七类 reader＋PDF 可插拔后端，docling 失败自动回退并标派生低可信 0.3。</div>
-        <div class="issue">40 项对抗用例全过（零 LLM，约 0.5s，<code>test_input_defense</code>＋<code>test_compound_input</code>）——覆盖注入与围栏、密级过滤、去重、链接、压缩包四边界、子目录与隐藏目录跳过、产物目录不回吃。<b>7z/rar、.doc/.xls/.ppt/.rtf 明确不支持并写进报告</b>：不支持也要披露。</div></div>
+        <div class="issue">40 项对抗用例全过（零 LLM，约 0.5s，<code>test_input_defense</code>＋<code>test_compound_input</code>）——覆盖注入与围栏、密级过滤、去重、链接、压缩包四边界、子目录遍历与隐藏目录（<b>10-16 起：不入卷但披露</b>，另 4 条用例在 <code>test_hidden_dir_disclosure.py</code>）、产物目录不回吃。<b>7z/rar、.doc/.xls/.ppt/.rtf 明确不支持并写进报告</b>：不支持也要披露。</div></div>
 
       <div class="node warn"><div class="head">切段与断行愈合 <span class="en">text_heal · segment</span> <span class="tag warn">黄（10-15 由绿改黄）</span></div>
         <div class="does">目标 500 字 / 上限 650 字；「一、」「（一）」「第X章」强制起新段且聚合禁跨节——按章节下钻不把两节粘成一块。</div>
@@ -363,7 +363,7 @@
       <div class="node warn"><div class="head">这一会的 7 道召回口子 <span class="en">recall holes · 7 道均已披露，口子本身仍在</span> <span class="tag warn">黄</span></div>
         <div class="does">①超 500 文件 / 超深度 3（<b>10-15 起已披露</b>，<code>dir_truncated</code>）／材料放<b>隐藏目录</b>（<b>10-16 C-5 起已披露</b>，<code>hidden_dir_skipped</code>：目录名＋文件数，不列文件名） ②图片未 OCR（离线、无视觉端点、<code>VERITAS_OCR=0</code>）③老办公格式 ④7z·rar ⑤压缩包四道边界超出部分 ⑥链接默认不抓 ⑦扫描件 PDF 零文字层＋解析失败。</div>
         <div class="issue"><b>「漏了但知道漏了」这句现在才敢对 7 道一起说：</b>每个 <code>return</code> 前都写了披露——但这是<b>诚实边界，不是召回保证</b>。隐藏目录<b>仍不入卷</b>（<code>case_loader.py:322</code> 起：工具名单 <code>_TOOL_SKIP_DIRS:215</code> 静默、名单外写 <code>:686</code>/<code>:693</code> 一条 note＋triage，封顶 50 目录/5000 文件），<b>披露≠召回</b>，材料照样没读。根级隐藏<b>文件</b>（.DS_Store 等）仍静默——设计意图明确，属工具元数据。<br>
-          验收记录见 <code>docs/HANDOFF.md</code> §5 C-5（探针复放：5005 文件目录 0.2s 早停返回、36 份存量产物零新增披露）。丢件<b>量级仍［未量］</b>——样例集到手第一件事：拿真数据跑分诊账本，把 ① 的丢件率量出来。</div></div>
+          验收记录见 <code>docs/HANDOFF.md</code> §5 C-5（探针复放：5005 文件目录 0.2s 早停返回、36 份 <code>report.json</code> 零新增披露）。丢件<b>量级仍［未量］</b>——样例集到手第一件事：拿真数据跑分诊账本，把 ① 的丢件率量出来。</div></div>
     </div>
   </div>
 
@@ -495,7 +495,10 @@
           <b>④ 反向也坏</b>——<code>find_collisions()</code> 有 <code>Fact.date</code> 字段但分组与 1% 容差比对<b>全程不用</b>（只在 <code>:142</code> 渲染显示）。真撞上时同样无法证明是同一事件，同地同名两次事故会被判成假对撞。<b>漏检与假对撞同时存在，收紧一头会放大另一头。</b><br>
           <b>为什么这条比"假冲突"更致命：</b>假冲突污染分析师提示词，还能靠仲裁和人工显影发现；<b>漏检不产生任何痕迹</b>——台账是「检出了什么」的清单，不是「没检出什么」的清单。对外承诺的「漏了但知道漏了」<b>在 fact_ledger 这一环不成立</b>，说口径时别把这句覆盖到台账上。
           <b>［未验·待量］</b>因措辞分裂导致的漏检率、定长退化切的发生率——都要样例集到手后用「读样例集→金标段召回报告」那条脚本填数。
-          <b>修的方向：</b>分母可见性<b>已落地并验收</b>（工单 C-2：六桶分类计数进链进报告，判定逻辑未动）。
+          <b>修的方向：</b>分母可见性<b>已落地并验收</b>（工单 C-2：六桶分类计数进链进报告，判定逻辑未动）；
+          出口文案误导也已收口（工单 C-4，10-16 验收：<b>零对撞时章名改「台账未采信数字分类计数」</b>，
+          实跑 demo-solid-state 对撞 0/未采信 7 复现、bi-delivery-risk 对撞 4 保留原标题、双零整章不打——
+          读者不会再读成"有冲突没列出来"）。
           <b>但今天实测出一条本单治不了的：</b>措辞分裂<b>不落进 <code>no_metric</code>，而是落进 facts</b>——探针里「伤亡／死亡12人」因上文粘连凑够 4 个连续汉字，直接生成畸形指标 <code>metric=伤亡死亡</code> 入台账；bi 语料 161 条 facts 的指标全是字面碎片（「末零售客户规模」「据口径不一致导致」）。<b>两条新闻「死亡12人」vs「遇难12人」各占一个 key、永不相撞，而分类计数对此完全无声</b>——要治得做指标归一化／词表＝判定改造，挂在簇改造后另开工单（暂记 C-2b）。</div></div>
 
       <div class="node gray"><div class="head">人的研判十格：四格空白 <span class="en">ten-cells</span> <span class="tag gray">未做</span></div>
@@ -536,7 +539,7 @@
     <tr><td>二</td><td>修复环连败熔断＋接受率入账</td><td class="c">1 小时</td><td class="c"><span class="tag ok">已过</span></td><td>509s → 38.9s；attempted 2 / accepted 0 / stopped_early</td></tr>
     <tr><td>三</td><td>案卷复用＋前缀缓存</td><td class="c">0.5 天</td><td class="c"><span class="tag warn">搁置</span></td><td>待云端额度恢复验证网关是否返回 <code>cached_tokens</code>；token 未降（病因＝红框成本格）</td></tr>
     <tr><td>四</td><td>成绩单作者判／盲判分列</td><td class="c">2 小时</td><td class="c"><span class="tag warn">半</span></td><td>已按 9.5 计并分列；<b>盲判栏仍空</b>，未填前不得对外报 10/10</td></tr>
-    <tr><td>五</td><td>交件口径对齐</td><td class="c">1 小时</td><td class="c"><span class="tag warn">半</span></td><td>文档写 13,700 行 / 415 测；<b>当前实为 532 测</b>——本页已更新，<code>docs/proposal-formal.md</code> §5 仍滞后，对外前须同步</td></tr>
+    <tr><td>五</td><td>交件口径对齐</td><td class="c">1 小时</td><td class="c"><span class="tag warn">半</span></td><td>文档写 13,700 行 / 415 测；<b>当前实为 app 16,415 行 / 545 测</b>（2026-10-16 复测）——本页已更新，<code>docs/proposal-formal.md</code>:147/:151 仍写旧数，对外前须同步</td></tr>
     <tr><td>六</td><td>编队减员显影进首屏（含空交付）</td><td class="c">1 小时</td><td class="c"><span class="tag ok">已过</span></td><td>空交付＋抛错均显影；单测 7 条；knife11 离线复放点名 technologist；空交付不炸管线</td></tr>
     <tr><td>七</td><td>理由—主张相关性闸</td><td class="c">0.5 天</td><td class="c"><span class="tag ok">已合</span></td><td>bi 11 命中 / 恒兴 0 误伤；假警报由刀十收口</td></tr>
     <tr><td>八</td><td>含议题词却零引用的段落列出</td><td class="c">0.5 天</td><td class="c"><span class="tag ok">已合</span></td><td>实测列出 SRC2#s5、SRC6#s6；恒兴 0 噪音</td></tr>
@@ -568,7 +571,7 @@
     ② <b>置信度刻度变了。</b>跨 2026-10-14 比 <code>score_artifacts.py --check</code> 基线前，必须先 <code>--save</code> 重存，否则 −15% 的刻度下移会被读成「答案变差」。<br>
     ③ <b>演示时别把「人工修改」讲成「改答案」。</b>官方原话「不能人工对答案进行修正」；正确框定＝可审计的审校（human 事件入链、改完自动重算、断链环节同步变化）。<br>
     ④ <b>存量 <code>cases/*/out</code> 是旧口径落盘</b>，工作台对它显示「链·旧口径未计」——这不是 bug，是没测过就不写；任何一次人工修改会走 <code>recompute_all</code> 按新口径重盖章并留痕。<br><br>
-    <b>本图怎么验的：</b>绿/黄/红/灰全部按产物或脚本输出，不按感觉。今日复放：<code>pytest tests -q</code> = 532 passed；<code>scripts/measure_baseline.py</code> 输出即指标表实测值。
+    <b>本图怎么验的：</b>绿/黄/红/灰全部按产物或脚本输出，不按感觉。2026-10-16 复放：<code>pytest tests -q</code> = 545 passed；<code>scripts/measure_baseline.py</code> 输出即指标表实测值。
     锚点：<code>out_local14b_knife1/conflict_subject_gate_replay.*</code>、<code>out_local14b_knife11/report_attrition_replay.md</code>、<code>SCORECARD_local14b.md</code>、<code>eval/recall_real_report.md</code>。<br>
     <b>跨工具接手先读 <code>docs/HANDOFF.md</code></b>；收工前让当前工具「更新 HANDOFF 并提交」——记忆不跨工具走，进了 git 的文件才算同步。
   </div>
