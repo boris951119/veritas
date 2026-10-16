@@ -238,8 +238,31 @@ def _is_tool_skip_dir(name: str) -> bool:
     return name in _TOOL_SKIP_DIRS
 
 
+def _file_ingest_class(path: Path) -> str:
+    """后缀分档（仅隐藏目录披露文案用）：ingestible / unsupported / image / other。
+
+    复用 ``readers.READERS``／``UNSUPPORTED_EXTS`` 与本模块 ``_IMAGE_EXTS``，不另抄名单；
+    **不**改 READERS／image_disclosed 语义（R-C6-1 (b)）。
+    """
+    from app.ingest.readers import READERS, UNSUPPORTED_EXTS
+
+    suf = path.suffix.lower()
+    if suf in _IMAGE_EXTS:
+        return "image"
+    if suf in READERS:
+        return "ingestible"
+    if suf in UNSUPPORTED_EXTS:
+        return "unsupported"
+    return "other"
+
+
 def _count_ingestible(d: Path) -> int:
-    """统计目录下可摄取文件数（同隐藏/产物过滤，无深度上限——仅供封顶披露）。"""
+    """统计目录内非隐藏文件数（无后缀过滤、无深度上限）。
+
+    专供 ``dir_truncated`` 超深分支的 skipped 累加——与封顶分支
+    ``skipped += 1``（每个未入卷文件）同一口径（R-C6-1 (a)）。
+    后缀分档只留在 ``_count_ingestible_capped``／隐藏目录披露。
+    """
     n = 0
     try:
         children = sorted(d.iterdir(), key=lambda x: x.name)
@@ -258,14 +281,22 @@ def _count_ingestible(d: Path) -> int:
     return n
 
 
-def _count_ingestible_capped(d: Path, cap: int) -> tuple[int, bool]:
-    """有界计数可摄取文件；达 cap 即停，返回 (已计数量, 是否触顶)。"""
-    n = 0
+def _count_ingestible_capped(
+    d: Path, cap: int,
+) -> tuple[int, int, int, int, bool]:
+    """有界计数 → (可摄取, 暂不支持, 图片, 非隐藏文件数, 是否触顶)。
+
+    仅供隐藏目录披露文案；达 cap 早停。后缀路由复用 readers／_IMAGE_EXTS。
+    """
+    n_ok = 0
+    n_unsup = 0
+    n_image = 0
+    n_seen = 0
     capped = False
 
     def walk(x: Path) -> None:
-        nonlocal n, capped
-        if n >= cap:
+        nonlocal n_ok, n_unsup, n_image, n_seen, capped
+        if n_seen >= cap:
             capped = True
             return
         try:
@@ -273,22 +304,49 @@ def _count_ingestible_capped(d: Path, cap: int) -> tuple[int, bool]:
         except OSError:
             return
         for p in children:
-            if n >= cap:
+            if n_seen >= cap:
                 capped = True
                 return
             if p.is_dir():
                 if p.name == "__pycache__" or _is_artifact_dir(p.name) \
                         or _is_tool_skip_dir(p.name):
                     continue
-                # 嵌套隐藏目录仍计入（父目录已整体不入卷，只为披露总数）
                 walk(p)
             else:
                 if p.name.startswith("."):
                     continue
-                n += 1
+                n_seen += 1
+                kind = _file_ingest_class(p)
+                if kind == "ingestible":
+                    n_ok += 1
+                elif kind == "unsupported":
+                    n_unsup += 1
+                elif kind == "image":
+                    n_image += 1
 
     walk(d)
-    return n, capped
+    return n_ok, n_unsup, n_image, n_seen, capped
+
+
+def _hidden_dir_detail(rel: str, n_files: int, n_unsup: int, n_image: int,
+                       fcap: bool) -> str:
+    """隐藏目录披露文案：有图时禁止「含 0 个可摄取文件未入卷」。"""
+    chunks: list[str] = []
+    if n_files > 0:
+        if fcap:
+            chunks.append(f"含至少 {n_files} 个可摄取文件未入卷（另有更多未计）")
+        else:
+            chunks.append(f"含 {n_files} 个可摄取文件未入卷")
+    if n_unsup > 0:
+        chunks.append(f"另有 {n_unsup} 个格式暂不支持")
+    if n_image > 0:
+        chunks.append(f"另有 {n_image} 个图片文件（未 OCR）")
+    if fcap and n_files <= 0:
+        chunks.append("另有更多未计")
+    if not chunks:
+        chunks.append("有文件未入卷")
+    return (f"隐藏目录 {rel} {'；'.join(chunks)}"
+            "（工具目录外的隐藏目录不收录）")
 
 
 def _collect_files(case_dir: Path, max_files: int = 500,
@@ -327,12 +385,14 @@ def _collect_files(case_dir: Path, max_files: int = 500,
                 if len(hidden_dirs) >= _MAX_HIDDEN_DIRS_DISCLOSE:
                     hidden_dirs_overflow = True
                     continue
-                n_files, fcap = _count_ingestible_capped(
-                    p, _MAX_HIDDEN_FILES_COUNT)
-                if n_files <= 0 and not fcap:
+                n_files, n_unsup, n_image, n_seen, fcap = (
+                    _count_ingestible_capped(p, _MAX_HIDDEN_FILES_COUNT))
+                if n_seen <= 0 and not fcap:
                     continue  # 空目录不造噪音
                 hidden_dirs.append({
-                    "rel": rel, "n_files": n_files, "files_capped": fcap,
+                    "rel": rel, "n_files": n_files,
+                    "n_unsupported": n_unsup, "n_images": n_image,
+                    "files_capped": fcap,
                 })
                 continue
             if p.is_dir():
@@ -674,18 +734,17 @@ def load_case(case_dir: Path, fetch_links: bool = False,
     for hd in collected.hidden_dirs:
         rel = str(hd.get("rel") or "")
         n_files = int(hd.get("n_files") or 0)
+        n_unsup = int(hd.get("n_unsupported") or 0)
+        n_image = int(hd.get("n_images") or 0)
         fcap = bool(hd.get("files_capped"))
-        if fcap:
-            detail = (f"隐藏目录 {rel} 含至少 {n_files} 个可摄取文件未入卷"
-                      "（另有更多未计；工具目录外的隐藏目录不收录）")
-        else:
-            detail = (f"隐藏目录 {rel} 含 {n_files} 个可摄取文件未入卷"
-                      "（工具目录外的隐藏目录不收录）")
+        detail = _hidden_dir_detail(rel, n_files, n_unsup, n_image, fcap)
         dossier.ingest_notes.append({
             "file": rel,
             "kind": "hidden_dir_skipped",
             "detail": detail,
             "n_files": n_files,
+            "n_unsupported": n_unsup,
+            "n_images": n_image,
             "files_capped": fcap,
         })
         dossier.triage.append({
@@ -704,6 +763,31 @@ def load_case(case_dir: Path, fetch_links: bool = False,
             "file": "",
             "route": "hidden_dir_skipped",
             "reason": overflow,
+        })
+    # 导入侧拒收（manifest.import_refused）→ 摄取披露章可读
+    # 标签与 import_case._REASON_LABEL 对齐；此处内联避免循环导入
+    _import_refuse_label = {
+        "deep_path": "路径层级超限",
+        "hidden_path": "隐藏路径",
+        "oversize": "单文件过大",
+    }
+    for item in manifest.get("import_refused") or []:
+        if not isinstance(item, dict):
+            continue
+        name = str(item.get("name") or "（无名）")
+        reason = str(item.get("reason") or "")
+        label = _import_refuse_label.get(reason, reason or "拒收")
+        detail = f"导入拒收（{label}）：{name}"
+        dossier.ingest_notes.append({
+            "file": name,
+            "kind": "import_refused",
+            "detail": detail,
+            "reason": reason,
+        })
+        dossier.triage.append({
+            "file": name,
+            "route": "import_refused",
+            "reason": detail,
         })
     total = len(files)
     for i, (path, rel) in enumerate(files, 1):

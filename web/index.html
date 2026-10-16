@@ -880,9 +880,18 @@ async function importMaterialFiles(files){
       title:j.title||(prev&&prev.title)||j.case,has_result:!!(prev&&prev.has_result)},
       ...CASES.filter(c=>c.name!==j.case)];
     renderCaseList();renderIngest();
+    const nr=j.n_refused||0;
+    const refusedBits=(j.refused||[]).slice(0,3).map(x=>{
+      if(typeof x==="string") return x;
+      const lab={deep_path:"路径过深",hidden_path:"隐藏路径",oversize:"单文件过大"}[x.reason]||x.reason||"";
+      return (x.name||"")+(lab?"·"+lab:"");
+    }).filter(Boolean);
+    const refusedHint=nr
+      ?` ${nr} 份未入卷（${refusedBits.join("；")}${nr>3?"…":""}）`
+      :"";
     toast(j.appended
-      ?`已追加 ${j.n_written||0} 份；现共 ${j.n_sources||0} 份入卷。`
-      :`已读入 ${j.n_sources||0} 份、切成 ${j.n_segments||0} 段。导错可勾选删除。`,4200);
+      ?`已追加 ${j.n_written||0} 份；现共 ${j.n_sources||0} 份入卷。${refusedHint}`
+      :`已读入 ${j.n_sources||0} 份、切成 ${j.n_segments||0} 段。${refusedHint||"导错可勾选删除。"}`,4200);
   }catch(e){toast("添加失败")}
 }
 function dossierQs(){
