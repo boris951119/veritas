@@ -295,7 +295,7 @@
       <td class="n">40 项对抗用例全过<br>零 LLM · 约 0.5s</td>
       <td class="cmd">pytest tests/test_input_defense.py tests/test_compound_input.py -q</td><td class="c"><span class="tag ok">绿</span></td></tr>
 
-    <tr><td><b>输入层丢件率</b></td><td><b>尚未承诺</b>：① 有 7 道会真丢材料的口（遍历封顶、图片未 OCR、老格式、7z/rar、压缩包边界外、链接未抓、扫描件零文字层），全部有披露但<b>没有一条实测丢件率</b>。样例集到手后用分诊账本量</td>
+    <tr><td><b>输入层丢件率</b></td><td><b>尚未承诺</b>：① 有 7 道会真丢材料的口（遍历封顶、图片未 OCR、老格式、7z/rar、压缩包边界外、链接未抓、扫描件零文字层），全部有披露但<b>没有一条实测丢件率</b>。样例集到手后用分诊账本量。<b>10-16 主办方口径给了一个量级</b>：单专题 ≤2000 篇——<i>按这个数推</i>（非实测），<b>500 封顶那道口子上界可达 3/4 材料进不了案卷</b>，且现按文件名排序取前 500、相关性不参与 → 工单 C-7 立项</td>
       <td class="n">未量<br>（披露齐全 ≠ 丢件率已知）</td>
       <td class="cmd">产物 <code>triage</code> 章 ＋ <code>ingest_notes</code></td><td class="c"><span class="tag gray">灰</span></td></tr>
 
@@ -351,8 +351,12 @@
           <b>一月份整份消失、零报错、报告零披露</b>。另两类拒收（dot 前缀、单文件 &gt;20MB）只进返回值 <code>skipped</code>，
           而 <code>web/index.html:884</code> 只读 <code>n_written</code>——界面不知道，报告也不知道。<br>
           <b>为什么不"改名保文件"</b>：遍历侧深度只到 4 段（实跑 <code>_collect_files</code>：<code>top/a/b/c.md</code> 入卷、<code>top/a/b/c/d.md</code> 已 <code>depth_capped</code> 披露），
-          5 段路径改名写进磁盘也<b>永远不成信源</b>，只白占 500 名额与体积＝僵尸文件。→ 口径＝<b>拒收＋分原因披露</b>（与 C-5 同族），
-          真要不丢得两侧深度一起抬，那要先知道主办方目录钻几层。<b>工单 C-6（含 ②2「可摄取文件数」按扩展名对齐）待 Cursor 开工。</b></div></div>
+          5 段路径改名写进磁盘也<b>永远不成信源</b>，只白占 500 名额与体积＝僵尸文件。→ 口径＝<b>拒收＋分原因披露</b>（与 C-5 同族）。<br>
+          <b>C-6 进度（10-16 架构师复放）：</b>Cursor 已在工作树实现（超深一律 <code>deep_path</code> 拒收、<code>hidden_path</code>/<code>oversize</code> 分原因、
+          拒收账写 <code>manifest.import_refused</code> 再进「摄取披露」章、<code>resolve_case_file</code> 同源拒收）。复放判据 ①–⑥ 全过——
+          <b>但打回一条 R-C6-1：修复把后缀过滤同时用到超深目录计数上（<code>case_loader.py:366</code>），
+          「深层目录全是图片」时 <code>skipped=0</code> → 整条 <code>dir_truncated</code> 披露消失＝C-1 回退</b>（实测：5 个 .md → 有披露；5 个 .png → <code>notes=[]</code>）。
+          <b>红格维持</b>：不通过不合并，已合并代码仍是覆盖行为。另：主办方口径「材料最深 3 级」→ 本单拒收不会误伤真材料，抬深度那条（C-8）撤销。</div></div>
 
       <div class="node"><div class="head">拆封 · 链接 · 抽取 <span class="en">archive / links / readers / pdf_backend</span> <span class="tag ok">绿</span></div>
         <div class="does">zip/tar 四道边界（单件 20MB、总量 200MB、500 条目、嵌套=1）；链接默认只披露，开启才抓取且缓存带 HMAC 内容哈希；七类 reader＋PDF 可插拔后端，docling 失败自动回退并标派生低可信 0.3。</div>
@@ -372,7 +376,7 @@
 
       <div class="node warn"><div class="head">这一会的 7 道召回口子 <span class="en">recall holes · 7 道均已披露，口子本身仍在</span> <span class="tag warn">黄</span></div>
         <div class="does">①超 500 文件 / 超深度 3（<b>10-15 起已披露</b>，<code>dir_truncated</code>）／材料放<b>隐藏目录</b>（<b>10-16 C-5 起已披露</b>，<code>hidden_dir_skipped</code>：目录名＋文件数，不列文件名） ②图片未 OCR（离线、无视觉端点、<code>VERITAS_OCR=0</code>）③老办公格式 ④7z·rar ⑤压缩包四道边界超出部分 ⑥链接默认不抓 ⑦扫描件 PDF 零文字层＋解析失败。</div>
-        <div class="issue"><b>「漏了但知道漏了」这句现在才敢对 7 道一起说：</b>每个 <code>return</code> 前都写了披露——但这是<b>诚实边界，不是召回保证</b>，且<b>只说遍历/摄取侧</b>：工作台<b>导入侧另有一道红洞</b>（深层路径静默覆盖，见上一格，工单 C-6 待修），答辩时别把这句扩到上传链路。隐藏目录<b>仍不入卷</b>（<code>case_loader.py:322</code> 起：工具名单 <code>_TOOL_SKIP_DIRS:215</code> 静默、名单外写 <code>:686</code>/<code>:693</code> 一条 note＋triage，封顶 50 目录/5000 文件），<b>披露≠召回</b>，材料照样没读。根级隐藏<b>文件</b>（.DS_Store 等）仍静默——设计意图明确，属工具元数据。<br>
+        <div class="issue"><b>「漏了但知道漏了」这句现在才敢对 7 道一起说：</b>每个 <code>return</code> 前都写了披露——但这是<b>诚实边界，不是召回保证</b>，且<b>只说遍历/摄取侧</b>：工作台<b>导入侧另有一道红洞</b>（深层路径静默覆盖，见上一格；工单 C-6 已实现但验收打回、未合并），答辩时别把这句扩到上传链路。隐藏目录<b>仍不入卷</b>（<code>case_loader.py:322</code> 起：工具名单 <code>_TOOL_SKIP_DIRS:215</code> 静默、名单外写 <code>:686</code>/<code>:693</code> 一条 note＋triage，封顶 50 目录/5000 文件），<b>披露≠召回</b>，材料照样没读。根级隐藏<b>文件</b>（.DS_Store 等）仍静默——设计意图明确，属工具元数据。<br>
           验收记录见 <code>docs/HANDOFF.md</code> §5 C-5（探针复放：5005 文件目录 0.2s 早停返回、36 份 <code>report.json</code> 零新增披露）。丢件<b>量级仍［未量］</b>——样例集到手第一件事：拿真数据跑分诊账本，把 ① 的丢件率量出来。</div></div>
     </div>
   </div>
@@ -581,10 +585,10 @@
     ② <b>置信度刻度变了。</b>跨 2026-10-14 比 <code>score_artifacts.py --check</code> 基线前，必须先 <code>--save</code> 重存，否则 −15% 的刻度下移会被读成「答案变差」。<br>
     ③ <b>演示时别把「人工修改」讲成「改答案」。</b>官方原话「不能人工对答案进行修正」；正确框定＝可审计的审校（human 事件入链、改完自动重算、断链环节同步变化）。<br>
     ④ <b>存量 <code>cases/*/out</code> 是旧口径落盘</b>，工作台对它显示「链·旧口径未计」——这不是 bug，是没测过就不写；任何一次人工修改会走 <code>recompute_all</code> 按新口径重盖章并留痕。<br>
-    ⑤ <b>演示当天别直接用「添加文件夹」收深层目录材料</b>——<code>import_case.py:41</code> 会把 5 段以上路径截掉文件名并互相覆盖（本页 ① 带红格有实测），
-    现阶段先把材料压平到 ≤3 层目录再上传；工单 C-6 修完这条限制即解除。<br><br>
+    ⑤ <b>演示当天别用「添加文件夹」收超深目录</b>——<code>import_case.py:41</code> 会把 5 段以上路径截掉文件名并互相覆盖（本页 ① 带红格有实测）。
+    <b>10-16 主办方口径＝材料最深 3 级</b>，正常收料不会触发这条；但工单 C-6 修复<b>复放打回、未合并</b>，红格仍在，现场别手动塞 4 层以上目录。<br><br>
     <b>本图怎么验的：</b>绿/黄/红/灰全部按产物或脚本输出，不按感觉；<b>文档口径的绿不算绿</b>——每个格子回指代码行号或产物字段，写行号前逐行 <code>sed -n</code> 核过。
-    2026-10-16 复放：<code>pytest tests -q</code> = 545 passed；<code>scripts/measure_baseline.py</code> 输出即指标表实测值。
+    2026-10-16 复放：<code>pytest tests -q</code> = 545 passed（已合并口径；工作树含未合并 C-6 为 552）；<code>scripts/measure_baseline.py</code> 输出即指标表实测值。
     锚点：<code>out_local14b_knife1/conflict_subject_gate_replay.*</code>、<code>out_local14b_knife11/report_attrition_replay.md</code>、<code>SCORECARD_local14b.md</code>、<code>eval/recall_real_report.md</code>。<br>
     <b>分工与验收规则（已进 git，不靠口头）：</b><code>docs/dev-protocol.md</code>——Qoder＝架构师（出单、<b>独立复放验收不采信自述</b>、review、同步本页与 HANDOFF、一工单一 commit），
     Cursor＝执行工程师（按单实现；开发中发现问题按协议 §3 分流：本单内就地修并写偏离、<b>会改结论的一律停手交拍板</b>、新洞只登记不顺手修）。
