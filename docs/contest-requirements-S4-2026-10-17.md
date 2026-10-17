@@ -8,7 +8,7 @@
 复放（零依赖，直接解 `word/document.xml`，段落＋表格按文档顺序输出）：
 
 ```bash
-.venv/bin/python /tmp/s4/extract_docx.py "<docx 路径>"
+.venv/bin/python scripts/extract_docx.py "<docx 路径>"
 ```
 
 > 提取件只记**官方原话里的数与句**；判断与工单在 `docs/HANDOFF.md`。
