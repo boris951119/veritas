@@ -729,9 +729,71 @@ def test_two_questions_keep_bare_conclusion(tmp_path, capsys):
     assert conclusions[1]["supporting_facts"] == []
     notes = paths["notes"].read_text(encoding="utf-8")
     assert "本次题数 2 ≤2" in notes
-    assert "未丢弃 question_id：（无）" in notes
+    assert "保留的 question_id：q2" in notes
     assert "未写入结论提交" not in notes
     assert "本次题数 2 ≤2" in capsys.readouterr().out
+
+
+def test_c14_j_bare_line_lists_kept_ids_and_none(tmp_path):
+    """j) ≤2 时列出保留的裸题；两题都有支撑时仍写（无）。判定不变。"""
+    q1 = _question_dossier(tmp_path, "ja", "第一题引用原文足够长", "doc_001#p1", with_evidence=True)
+    q2 = _question_dossier(tmp_path, "jb", "第二题没有采纳证据啊", "doc_001#p2", with_evidence=False)
+    paths = export_official([
+        ({"question_id": "q1", "question": "一"}, q1),
+        ({"question_id": "q2", "question": "二"}, q2),
+    ], tmp_path / "out-bare")
+    conclusions = json.loads(paths["conclusions"].read_text(encoding="utf-8"))
+    assert [row["question_id"] for row in conclusions] == ["q1", "q2"]
+    notes = paths["notes"].read_text(encoding="utf-8")
+    assert "保留的 question_id：q2" in notes
+    assert "未写入结论提交" not in notes
+
+    both = [
+        (_question_dossier(tmp_path, "jc", "第三题引用原文足够长", "doc_001#p1", with_evidence=True), "q1"),
+        (_question_dossier(tmp_path, "jd", "第四题引用原文足够长", "doc_001#p2", with_evidence=True), "q2"),
+    ]
+    paths_full = export_official([
+        ({"question_id": qid, "question": qid}, dossier) for dossier, qid in both
+    ], tmp_path / "out-full")
+    full_notes = paths_full["notes"].read_text(encoding="utf-8")
+    assert "保留的 question_id：（无）" in full_notes
+    assert "未写入结论提交" not in full_notes
+    src = Path("app/export/official.py").read_text(encoding="utf-8")
+    start = src.index("if n_questions >= 3:")
+    branch = src[start:src.index("kept = ", start)]
+    assert "未写入结论提交的 question_id：{ids}。" in branch
+
+
+def test_c14_k_duplicate_rows_five_scores_unchanged(tmp_path):
+    """k) 同一题两行换序，五项仍是 7/0/6/0/0。评分器本单不改。"""
+    samples = [
+        {"fact_id": f"fact_{i:03d}", "doc_id": "doc_001", "para_id": f"doc_001#p{i}", "quote": "甲"}
+        for i in range(1, 7)
+    ]
+    gold_c = [
+        {"question_id": "q1", "supporting_facts": [
+            _gold_fact("fact_001"), _gold_fact("fact_002"),
+        ], "conflicting_facts": []},
+        {"question_id": "q2", "supporting_facts": [
+            _gold_fact(f"fact_{i:03d}") for i in range(3, 7)
+        ], "conflicting_facts": []},
+    ]
+    gold_ev = _dump(tmp_path / "gold_ev.json", samples)
+    gold_path = _dump(tmp_path / "gold_c.json", gold_c)
+    samples_path = _dump(tmp_path / "samples.json", samples)
+    evidence = _dump(tmp_path / "evidence.json", samples)
+    expected = (7, 0, 6, 0, 0)
+    for order in ("bare-first", "hit-first"):
+        metrics = score_submission(
+            evidence,
+            _dump(tmp_path / f"{order}.json", _duplicate_qid_submission(order)),
+            gold_ev, gold_path, samples_path=samples_path,
+        )
+        five = (
+            metrics["score_2_2_1"], metrics["score_2_4_1"], metrics["score_2_4_2"],
+            metrics["score_2_5_1"], metrics["score_2_5_2"],
+        )
+        assert five == expected
 
 
 def test_nonempty_support_is_not_dropped_at_three(tmp_path):

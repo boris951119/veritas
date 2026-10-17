@@ -10,15 +10,8 @@ import json
 from pathlib import Path
 
 from app.core.confidence import _AGREEMENT_FLOOR, chain_factor_of
+from app.core.conflicts import METHOD_TO_RESOLUTION_TYPE
 from app.core.evidence import Dossier
-
-# C-14 会把这张表移进 app/core/conflicts.py 作为唯一口径。
-# 导出层只此一份，conflicts.py 里不要再抄一张。
-METHOD_TO_RESOLUTION_TYPE = {
-    "arbitration": "其他",
-    "tie": "其他",
-    "evidence_weight": "语义可信度",
-}
 
 _ARGUMENT_KEYS = ("时间", "主体", "地点", "内容", "影响", "数值口径")
 _EMPTY_ARGUMENT = {key: "" for key in _ARGUMENT_KEYS}
@@ -91,16 +84,18 @@ def _evidence_rows(dossier: Dossier,
     return rows, dropped
 
 
-def _bare_gate_line(n_questions: int, dropped_ids: list[str]) -> str:
+def _bare_gate_line(n_questions: int, dropped_ids: list[str],
+                    kept_bare_ids: list[str] | None = None) -> str:
     ids = "、".join(dropped_ids) if dropped_ids else "（无）"
     if n_questions >= 3:
         return (
             f"裸结论闸：本次题数 {n_questions} ≥3，"
             f"未写入结论提交的 question_id：{ids}。"
         )
+    kept = "、".join(kept_bare_ids) if kept_bare_ids else "（无）"
     return (
         f"裸结论闸：本次题数 {n_questions} ≤2，"
-        f"裸结论照旧提交，未丢弃 question_id：{ids}。"
+        f"裸结论照旧提交，保留的 question_id：{kept}。"
     )
 
 
@@ -220,6 +215,7 @@ def export_official(runs: list[tuple[dict, Dossier]], out_dir: Path) -> dict[str
     seen: set[tuple[str, str, str]] = set()
     deduped = 0
     dropped_ids: list[str] = []
+    kept_bare_ids: list[str] = []
     n_questions = len(runs)
     for question, dossier in runs:
         qid = str(question["question_id"])
@@ -231,6 +227,8 @@ def export_official(runs: list[tuple[dict, Dossier]], out_dir: Path) -> dict[str
         if n_questions >= 3 and not supporting:
             dropped_ids.append(qid)
         else:
+            if not supporting:
+                kept_bare_ids.append(qid)
             conclusions.append({
                 "question_id": qid,
                 "question": str(question["question"]),
@@ -242,7 +240,7 @@ def export_official(runs: list[tuple[dict, Dossier]], out_dir: Path) -> dict[str
         conflict_rows, omitted = _conflict_rows(qid, dossier)
         conflicts.extend(conflict_rows)
         omission_notes.extend(omitted)
-    gate_line = _bare_gate_line(n_questions, dropped_ids)
+    gate_line = _bare_gate_line(n_questions, dropped_ids, kept_bare_ids)
     dedup_line = f"evidence.json 去重 {deduped} 行（键 doc_id, para_id, quote）。"
     print(gate_line)
     print(dedup_line)

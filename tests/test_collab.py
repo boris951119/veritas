@@ -14,7 +14,9 @@ from app.core.conflicts import (
     apply_resolution,
     validate_conflict,
 )
-from app.core.evidence import Conclusion, Dossier, EvidenceNode, Segment, Source, SourceType
+from app.core.evidence import (
+    Conclusion, Dossier, EvidenceLevel, EvidenceNode, Segment, Source, SourceType,
+)
 from app.pipeline import run_case
 from app.pipeline import RunDeps, RunSpec
 
@@ -101,7 +103,8 @@ def _dossier_with_two_conclusions() -> Dossier:
         d.conclusions.append(con)
         d.add_evidence(EvidenceNode.create(
             f"CON-{i}", "全固态电芯的中试良率尚不足百分之四十", ["SRC1#s1"],
-            id=f"EV-{i}"))
+            id=f"EV-{i}",
+            level=EvidenceLevel.A if i == 0 else EvidenceLevel.C))
     return d
 
 
@@ -289,18 +292,19 @@ def test_run_case_full_collaboration_pipeline(tmp_path):
     result = run_case(RunSpec(case_dir=tmp_path, out_dir=tmp_path / "out"),
              RunDeps(client=client))
 
-    # 归并：6 条 → 2 组（每组 3 分析师署名）
+    # 归并：6 条 → 2 组（每组 3 分析师署名）。
+    # 两组都只挂这一份信源，等级 A/B、可信度先验下强度差 ≤0.20，
+    # 独立信源数相同 → C-14 破平为 tie（不再沿用 LLM 指定的甲方）。
     assert len(result.dossier.conflicts) == 1
     pair = ConflictPair.from_dict(result.dossier.conflicts[0])
-    assert pair.resolution.winner_id == pair.a_id
-    # 败方组降为少数意见，胜方挂 dissent 记录
-    losers = [c for c in result.dossier.conclusions if c.status == "dissent"]
-    assert losers and losers[0].id == pair.b_id
+    assert pair.resolution.winner_id == "tie"
+    assert pair.resolution.decision_path == "tie"
+    assert not any(c.status == "dissent" for c in result.dossier.conclusions)
     events = [r.event for r in result.chain.records]
     assert {"merged", "conflicts_detected", "conflict_resolved"} <= set(events)
     assert result.chain.verify_chain().ok
     md = result.report_md
-    assert "分歧识别与消解" in md and "少数意见（依规保留）" in md
+    assert "分歧识别与消解" in md and "未决（tie" in md
     # report.json 可回读且含冲突记录
     from app.core.evidence import Dossier as D
     reloaded = D.from_json(tmp_path / "out" / "report.json")

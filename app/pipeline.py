@@ -1162,11 +1162,28 @@ def _render_conflicts_section(lines: list[str], dossier: Dossier) -> None:
                 "evidence_weight": "程序按证据强度否决票数",
                 "tie": "证据势均力敌（未决）",
                 "arbitration": "仲裁",
+                "source_majority": "独立信源数破平",
             }.get(method, method)
             pair_lines += [f"- **裁决**：{winner_text}",
                            f"- 裁决方式：{method_cn}",
                            f"- 理由：{res.get('rationale', '')}",
                            f"- 证据强度对比：{res.get('evidence_weight')}"]
+            if res.get("resolution_type"):
+                pair_lines.append(f"- 消解类型：{res.get('resolution_type')}")
+            basis = res.get("basis") if isinstance(res.get("basis"), dict) else {}
+            path = res.get("decision_path") or basis.get("decision_path") or ""
+            if path:
+                pair_lines.append(f"- 判定路径：{path}")
+            if basis.get("type_applies"):
+                pair_lines.append(f"- 类型为何适用：{basis['type_applies']}")
+            if basis.get("loser_excluded"):
+                pair_lines.append(f"- 冲突侧为何被排除：{basis['loser_excluded']}")
+            if res.get("重启条件"):
+                pair_lines.append(f"- 重启条件：{res.get('重启条件')}")
+            if path == "source_majority":
+                pair_lines.append(
+                    "- 破平说明：依据用户口径 2026-10-16＋官方 decks:325 "
+                    "可扩展条款，未经 A/B")
             rebuts = res.get("rebuts") or {}
             if rebuts:
                 pair_lines.append("- 质证摘要：" + "；".join(
