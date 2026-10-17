@@ -266,6 +266,9 @@ class Dossier:
     panel: list[str] = field(default_factory=list)  # 参与研判的分析师名
     # 被引文核对打回的证据清单（EvidenceRef dict + problems；持久化供工作台展示）
     rejected: list[dict] = field(default_factory=list)
+    # 物化时引用段落不存在／未给出 segment_id 的静默丢弃留痕（与 rejected 分家：
+    # pipeline 会对 rejected 整体赋值，解析期写进 rejected 会被盖掉）
+    parse_drops: list[dict] = field(default_factory=list)
     # 摄取阶段披露：解析失败/空文件/扫描件/含图未解析（输入夹层「标」职能）
     ingest_notes: list[dict] = field(default_factory=list)
     # 输入分诊账本：每个文件（含压缩包条目）一条 {file, route, reason}——
@@ -333,6 +336,7 @@ class Dossier:
             "conclusions": [c.to_dict() for c in self.conclusions],
             "conflicts": self.conflicts,
             "rejected": self.rejected,
+            "parse_drops": self.parse_drops,
             "ingest_notes": self.ingest_notes,
             "triage": self.triage,
             "synthesis": self.synthesis,
@@ -349,6 +353,7 @@ class Dossier:
             conclusions=[Conclusion.from_dict(c) for c in d.get("conclusions") or []],
             conflicts=list(d.get("conflicts") or []),
             rejected=list(d.get("rejected") or []),
+            parse_drops=list(d.get("parse_drops") or []),
             ingest_notes=list(d.get("ingest_notes") or []),
             triage=list(d.get("triage") or []),
             synthesis=dict(d.get("synthesis") or {}),

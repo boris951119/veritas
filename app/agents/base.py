@@ -157,7 +157,24 @@ class Analyst(Agent):
                 if not isinstance(ev, dict):
                     continue
                 seg_ids = [str(ev.get("segment_id") or "").strip()]
-                if not seg_ids[0] or dossier.segment(seg_ids[0]) is None:
+                # 丢件必须可见（协议 §6 纪律 2）。两格分家，不许合成一条 reason。
+                if not seg_ids[0]:
+                    dossier.parse_drops.append({
+                        "conclusion_id": con.id,
+                        "author": self.name,
+                        "segment_id": "",
+                        "quote_head": str(ev.get("quote") or "")[:60],
+                        "reason": "未给出 segment_id",
+                    })
+                    continue
+                if dossier.segment(seg_ids[0]) is None:
+                    dossier.parse_drops.append({
+                        "conclusion_id": con.id,
+                        "author": self.name,
+                        "segment_id": seg_ids[0],
+                        "quote_head": str(ev.get("quote") or "")[:60],
+                        "reason": f"引用段落不存在（segment_id={seg_ids[0]}）",
+                    })
                     continue
                 try:
                     relation = RelationKind(str(ev.get("relation") or "correlation"))

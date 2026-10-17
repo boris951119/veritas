@@ -714,6 +714,7 @@ def _reject_failed_citations(dossier: Dossier, chain: HashChain) -> list[dict]:
         "n_verified": sum(1 for e in dossier.evidences if e.verified),
         "n_rejected": len(rejected),
         "n_conclusions_dropped": len(empties),
+        "n_parse_dropped": len(dossier.parse_drops or []),
     })
     return rejected
 
@@ -873,14 +874,23 @@ def render_report_md(dossier: Dossier, chain: HashChain, rejected: list[dict]) -
         _render_evidence_table(lines, dossier, con)
         lines.append("")
 
+    cause_ids = {
+        str(r.get("conclusion_id") or "")
+        for r in (list(rejected or []) + list(dossier.parse_drops or []))
+        if r.get("conclusion_id")
+    }
     insuff = [c for c in dossier.conclusions if c.status == "insufficient"]
     if insuff:
         lines += ["## 证据不足（未进入主表）", ""]
         for con in insuff:
-            lines.append(
+            line = (
                 f"- {con.statement}（研判方："
                 f"{'、'.join(con.author_names()) or 'N/A'}"
-                f"{author_count_label(con)}）")
+                f"{author_count_label(con)}）"
+            )
+            if con.id not in cause_ids:
+                line += " —— 成因缺失（异常）"
+            lines.append(line)
         lines.append("")
 
     _render_question_preflight(lines, dossier)
@@ -897,6 +907,18 @@ def render_report_md(dossier: Dossier, chain: HashChain, rejected: list[dict]) -
         for r in rejected:
             lines.append(f"- `{r['evidence_id']}`：{'; '.join(r['problems'])}"
                          f"（引文：{r['quote'][:60]}…）")
+        lines.append("")
+
+    parse_drops = list(dossier.parse_drops or [])
+    if parse_drops:
+        lines += ["## 引用未落地的证据（段落不存在／未编号）", ""]
+        for r in parse_drops:
+            lines.append(
+                f"- `{r.get('conclusion_id')}`／{r.get('author') or 'N/A'}："
+                f"{r.get('reason')}"
+                f"（segment_id={r.get('segment_id') or '（空）'}；"
+                f"引文：{str(r.get('quote_head') or '')}…）"
+            )
         lines.append("")
 
     _render_flags_section(lines, dossier)
