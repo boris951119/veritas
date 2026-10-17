@@ -180,7 +180,7 @@ def _conflict_rows(question_id: str, dossier: Dossier) -> tuple[list[dict], list
         if restart is None:
             restart = res.get("重启条件")
         omissions = []
-        if basis in (None, ""):
+        if basis is None or basis == "" or basis == {}:
             omissions.append("basis")
             basis = ""
         if rtype in (None, ""):

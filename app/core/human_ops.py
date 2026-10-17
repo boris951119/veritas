@@ -9,9 +9,12 @@ from app.agents.arbiter import Coordinator
 from app.core.conflicts import (
     ConflictPair,
     Resolution,
+    _stamp,
     apply_resolution,
+    mechanical_decision_path,
     validate_conflict,
 )
+from app.core.dup_check import duplicate_map, near_dup_pairs
 from app.core.evidence import Dossier
 
 
@@ -67,6 +70,10 @@ def override_resolution(dossier: Dossier, conflict_id: str,
                          if pair.resolution else {}),
         rebuts=(pair.resolution.rebuts if pair.resolution else {}),
     )
+    exact = duplicate_map(dossier)
+    near = near_dup_pairs(dossier)
+    path = mechanical_decision_path(pair, dossier, pair.resolution, exact, near)
+    _stamp(pair.resolution, pair, dossier, path, exact, near)
     err = apply_resolution(pair, dossier)
     if err:
         raise ValueError(str(err.get("problems") or err))

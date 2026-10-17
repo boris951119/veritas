@@ -35,14 +35,21 @@ RESOLUTION_METHODS = frozenset({
 _OFFICIAL_RESOLUTION_TYPES = frozenset({
     "多数投票", "来源优先级", "时效性", "语义可信度", "其他",
 })
+# 同一张表同时覆盖 method 与 decision_path。类型以 decision_path 优先
+# （strength 即使 method 仍是 arbitration，也是「语义可信度」）。
+_DECISION_PATHS = frozenset({
+    "strength", "source_majority", "tie", "llm_arbitration",
+})
 METHOD_TO_RESOLUTION_TYPE = {
     "arbitration": "其他",
     "tie": "其他",
     "evidence_weight": "语义可信度",
     "source_majority": "多数投票",
+    "strength": "语义可信度",
+    "llm_arbitration": "其他",
 }
-if set(METHOD_TO_RESOLUTION_TYPE) != set(RESOLUTION_METHODS):
-    raise RuntimeError("method 映射表键集与 method 可能取值集不一致")
+if set(METHOD_TO_RESOLUTION_TYPE) != RESOLUTION_METHODS | _DECISION_PATHS:
+    raise RuntimeError("method 映射表键集与 method／decision_path 取值集不一致")
 if not set(METHOD_TO_RESOLUTION_TYPE.values()) <= _OFFICIAL_RESOLUTION_TYPES:
     raise RuntimeError("method 映射落到了官方五级之外")
 
@@ -163,10 +170,16 @@ def _cited_source_ids(conclusion_id: str, dossier: Dossier) -> list[str]:
     return ids
 
 
-def _source_fold(conclusion_id: str, dossier: Dossier) -> tuple[int, int, int]:
-    """(独立信源数, 精确重复折掉件数, 近似同源折掉件数)。只调 dup_check 两道闸。"""
-    exact = duplicate_map(dossier)
-    pairs = near_dup_pairs(dossier)
+def _source_fold(conclusion_id: str, dossier: Dossier,
+                 exact: dict[str, str] | None = None,
+                 pairs: list | None = None) -> tuple[int, int, int]:
+    """(独立信源数, 精确重复折掉件数, 近似同源折掉件数)。只调 dup_check 两道闸。
+
+    exact／pairs 由调用方传入时不再重算。prefer_stronger_side 每次调用只算一次。
+    """
+    if exact is None or pairs is None:
+        exact = duplicate_map(dossier)
+        pairs = near_dup_pairs(dossier)
     cited = _cited_source_ids(conclusion_id, dossier)
     exact_folded = 0
     folded: list[str] = []
@@ -216,12 +229,16 @@ def _fmt(value: float) -> str:
 
 
 def _stamp(resolution: Resolution, pair: ConflictPair, dossier: Dossier,
-           decision_path: str) -> None:
-    """只补 basis / resolution_type / decision_path，不改 winner、method、rationale。"""
+           decision_path: str, exact: dict[str, str] | None = None,
+           pairs: list | None = None) -> None:
+    """只补 basis / resolution_type / decision_path，不改 winner、method、rationale。
+
+    resolution_type 由 decision_path 查表，不看 method。
+    """
     sa = evidence_strength_of(pair.a_id, dossier)
     sb = evidence_strength_of(pair.b_id, dossier)
-    na, ea, na_near = _source_fold(pair.a_id, dossier)
-    nb, eb, nb_near = _source_fold(pair.b_id, dossier)
+    na, ea, na_near = _source_fold(pair.a_id, dossier, exact, pairs)
+    nb, eb, nb_near = _source_fold(pair.b_id, dossier, exact, pairs)
     exact = ea + eb
     near = na_near + nb_near
     gap = abs(sa - sb)
@@ -263,18 +280,19 @@ def _stamp(resolution: Resolution, pair: ConflictPair, dossier: Dossier,
     basis["loser_excluded"] = loser_excluded
     resolution.basis = basis
     resolution.decision_path = decision_path
-    resolution.resolution_type = METHOD_TO_RESOLUTION_TYPE[resolution.method]
+    resolution.resolution_type = METHOD_TO_RESOLUTION_TYPE[decision_path]
 
 
 def _break_tie_by_sources(resolution: Resolution, pair: ConflictPair,
-                          dossier: Dossier) -> str:
+                          dossier: Dossier, exact: dict[str, str] | None = None,
+                          pairs: list | None = None) -> str:
     """势均力敌时用独立信源数破平。
 
     依据用户口径 2026-10-16＋官方 decks:325 可扩展条款，未经 A/B。
     未验证「数票是否更接近人的判断」。信源数相同则 tie，不按 id 或顺序定胜负。
     """
-    na = independent_source_count(pair.a_id, dossier)
-    nb = independent_source_count(pair.b_id, dossier)
+    na = _source_fold(pair.a_id, dossier, exact, pairs)[0]
+    nb = _source_fold(pair.b_id, dossier, exact, pairs)[0]
     if na == nb:
         resolution.winner_id = "tie"
         resolution.method = "tie"
@@ -295,14 +313,16 @@ def prefer_stronger_side(pair: ConflictPair, dossier: Dossier,
     """
     if resolution is None:
         return resolution
+    exact = duplicate_map(dossier)
+    pairs = near_dup_pairs(dossier)
     if resolution.winner_id == "tie":
-        _stamp(resolution, pair, dossier, "tie")
+        _stamp(resolution, pair, dossier, "tie", exact, pairs)
         return resolution
     weight = resolution.evidence_weight or compute_evidence_weight(pair, dossier)
     resolution.evidence_weight = weight
     winner = resolution.winner_id
     if winner not in (pair.a_id, pair.b_id):
-        _stamp(resolution, pair, dossier, "llm_arbitration")
+        _stamp(resolution, pair, dossier, "llm_arbitration", exact, pairs)
         return resolution
     loser = pair.b_id if winner == pair.a_id else pair.a_id
     w_win = float(weight.get(winner, 0.0))
@@ -317,11 +337,37 @@ def prefer_stronger_side(pair: ConflictPair, dossier: Dossier,
         )
         path = "strength"
     elif abs(w_win - w_lose) <= _WEIGHT_MARGIN:
-        path = _break_tie_by_sources(resolution, pair, dossier)
+        path = _break_tie_by_sources(resolution, pair, dossier, exact, pairs)
     else:
         path = "strength"
-    _stamp(resolution, pair, dossier, path)
+    _stamp(resolution, pair, dossier, path, exact, pairs)
     return resolution
+
+
+def mechanical_decision_path(pair: ConflictPair, dossier: Dossier,
+                             resolution: Resolution,
+                             exact: dict[str, str] | None = None,
+                             pairs: list | None = None) -> str:
+    """按现有强度差／信源数规则读出路径，不改 winner／method／rationale。
+
+    人工改判用它盖章：人指定的胜方保留，类型跟机械路径走。
+    """
+    if resolution.winner_id == "tie":
+        return "tie"
+    weight = resolution.evidence_weight or compute_evidence_weight(pair, dossier)
+    if resolution.winner_id not in (pair.a_id, pair.b_id):
+        return "llm_arbitration"
+    winner = resolution.winner_id
+    loser = pair.b_id if winner == pair.a_id else pair.a_id
+    w_win = float(weight.get(winner, 0.0))
+    w_lose = float(weight.get(loser, 0.0))
+    if w_lose > w_win + _WEIGHT_MARGIN or abs(w_win - w_lose) > _WEIGHT_MARGIN:
+        return "strength"
+    na = _source_fold(pair.a_id, dossier, exact, pairs)[0]
+    nb = _source_fold(pair.b_id, dossier, exact, pairs)[0]
+    if na == nb:
+        return "tie"
+    return "source_majority"
 
 
 def compute_evidence_weight(pair: ConflictPair, dossier: Dossier) -> dict:

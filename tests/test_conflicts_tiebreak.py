@@ -120,10 +120,12 @@ def test_d_near_dup_collapses_to_two_sources():
 
 
 def test_e_method_map_is_exhaustive_and_unique():
-    """e) 映射表键集等于 method 取值集，导出层没有第二份表。"""
-    assert set(METHOD_TO_RESOLUTION_TYPE) == set(RESOLUTION_METHODS)
-    for method in RESOLUTION_METHODS:
-        assert METHOD_TO_RESOLUTION_TYPE[method] in _OFFICIAL_RESOLUTION_TYPES
+    """e) 一张表同时覆盖 method 与 decision_path，导出层没有第二份。"""
+    from app.core.conflicts import _DECISION_PATHS
+
+    assert set(METHOD_TO_RESOLUTION_TYPE) == set(RESOLUTION_METHODS) | set(_DECISION_PATHS)
+    for key in set(RESOLUTION_METHODS) | set(_DECISION_PATHS):
+        assert METHOD_TO_RESOLUTION_TYPE[key] in _OFFICIAL_RESOLUTION_TYPES
     src = Path("app/export/official.py").read_text(encoding="utf-8")
     assert "METHOD_TO_RESOLUTION_TYPE =" not in src
     assert '"evidence_weight"' not in src

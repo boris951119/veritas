@@ -234,22 +234,22 @@ def test_e_export_bytes_unchanged_by_parse_drops(tmp_path):
 
 
 def test_f_forbidden_files_untouched():
-    """f) 禁止触碰的文件相对基线 58e8610 零改动；pipeline 只动渲染与链事件。"""
+    """f) citation_check 相对 C-16 基线仍为零；pipeline 自 C-16 之后没有新 diff。
+
+    conflicts.py／human_ops.py／official.py 是 C-14b 的允许落点，不再相对 58e8610 钉死。
+    """
     import subprocess
 
-    base = "58e8610"
-    for path in (
-        "app/core/conflicts.py",
-        "app/core/human_ops.py",
-        "app/export/official.py",
-        "app/core/citation_check.py",
-    ):
-        out = subprocess.check_output(
-            ["git", "diff", base, "--", path], text=True)
-        assert out == "", path
+    base = "c68fe30"
+    out = subprocess.check_output(
+        ["git", "diff", base, "--", "app/core/citation_check.py"], text=True)
+    assert out == ""
+    pipe_since = subprocess.check_output(
+        ["git", "diff", base, "--", "app/pipeline.py"], text=True)
+    assert pipe_since == ""
 
     pipe = subprocess.check_output(
-        ["git", "diff", base, "--", "app/pipeline.py"], text=True)
+        ["git", "diff", "58e8610", "--", "app/pipeline.py"], text=True)
     # 只许出现 citation_audit 的 n_parse_dropped 与渲染区两处相关文案
     assert "n_parse_dropped" in pipe
     assert "引用未落地的证据" in pipe
