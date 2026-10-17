@@ -2339,9 +2339,9 @@ git status 里没有官方样例集任何文件。
   - e) **测试真空已填**：`test_d` 里必须有一条 **insufficient 数 ≥1** 的断言（当前是 0，跑绿也不算测到）；
   - f) **零分数变化**：沿用 C-16 判据 e（同一 dossier 加／不加 `parse_drops` 四份提交 JSON 逐字节相同）＋六案上帝 `7/6/6/7/6` ×6、白卷 `0/0/0/0/0` ×6；
   - g) **边界不许漂**：`git diff <本单基线> -- app/core/{conflicts,human_ops,citation_check}.py app/export/official.py app/pipeline.py cases/` 全空（本单不该再碰 `pipeline.py`）；
-  - k) 回归：`pytest tests -q` 连跑 5 次全绿，passed ≥ **599＋新增用例数**（基线以 §1「入库版本 `c68fe30`，599 passed」为准）。
+  - k) 回归：`pytest tests -q` 连跑 5 次全绿，passed ≥ **605＋新增用例数**（基线以 §1「入库版本 `bb35fb9`（C-14b 收口），605 passed」为准）。
 - **工时**：约 0.15 天（共用函数＋三处复用 0.08、第三格 0.02、测试钉实 0.05）。
-- **撞车点**：`app/agents/{base,repair,ingress}.py`、`app/core/evidence.py`（若函数落这里）、`tests/`。**与 C-14b、C-13 都不撞**（不碰 `conflicts.py`／`human_ops.py`／`official.py`／`pipeline.py`）。排 C-14b 之后、C-13 之前。
+- **撞车点**：`app/agents/{base,repair,ingress}.py`、`app/core/evidence.py`（若函数落这里）、`tests/`。**与 C-14b（已收口 `bb35fb9`）、C-14c、C-18、C-13 都不撞**（不碰 `conflicts.py`／`human_ops.py`／`official.py`／`pipeline.py`／`answer_slots.py`）。排在最前，之后依序 C-18 → C-17 → C-14c → C-13。
 - **开工提示词**：
 
 ```
@@ -2351,7 +2351,7 @@ git status 里没有官方样例集任何文件。
 只做三件：1) 把两格 reason 的留痕抽成一处共用函数，base／repair／ingress 三个调用点复用，author 各取各的身份；2) 补第三格——证据条目不是 dict 时的独立 reason，不许并进前两格；外层 item 非法导致整条结论消失那种不在本单范围；3) 把 test_d 钉实：显式造一条有 insufficient 的跑，断"全部有成因"，并且别再拿被自己改写的 out_offline 当历史基准（首选把 demo 产物写到 tmp_path）。
 不许放宽阈值、不许动 segment() 语义、不许动 empties 判定与 rejected 赋值语义、不许碰 conflicts.py／human_ops.py／export/official.py／pipeline.py／citation_check.py、四份提交 JSON 必须仍逐字节相同。
 判据 a/b/c/d/e/f/g/k 逐条自己跑再回写，尤其 b（grep 字面量恰一处）和 c（第三格文案不与前两格混）。
-基线：docs/HANDOFF.md §1「入库版本 c68fe30，599 passed」，连跑 5 次全绿；样例集不许入库、不许真调模型。
+基线：docs/HANDOFF.md §1「入库版本 bb35fb9，605 passed」（C-14b 刚收口，别再用 c68fe30/599），连跑 5 次全绿；样例集不许入库、不许真调模型。
 不要提交，不要 push，验收归 Qoder。
 ```
 
