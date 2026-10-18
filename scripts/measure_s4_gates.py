@@ -713,13 +713,16 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--no-align", dest="align", action="store_false",
                         help="不做窗口对齐，按固定预算跑（复放旧读数时用）")
     parser.add_argument("--case", default=None, help="solo 只跑案名含该子串的案例（默认刘翔）")
+    parser.add_argument("--all", dest="all_cases", action="store_true",
+                        help="solo 用：跑全部六案（要和 panel 侧凑成同样的 18 个题级单元才有 A/B 分母，"
+                             "默认只跑刘翔一案）")
     parser.add_argument("--submitted", action="store_true",
                         help="calib 用：金标对齐的对象改成**提交物 conclusions.json 每题那一行**"
                              "（达标行「消解后一致率」真正被评的东西），而不是 report.json 的内部结论集")
     parser.add_argument("--from", dest="from_dir", default=None,
                         help="calib 读取的 time 产物目录（默认最近一次）")
     args = parser.parse_args(argv)
-    if args.mode == "solo" and not args.case:
+    if args.mode == "solo" and not args.case and not args.all_cases:
         args.case = "刘翔"
     OUT.mkdir(parents=True, exist_ok=True)
     return {"budget": cmd_budget, "time": cmd_time, "solo": cmd_solo,
