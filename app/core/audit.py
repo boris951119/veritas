@@ -41,7 +41,7 @@ KIND_LABEL: dict[str, str] = {
     "level_tone": "措辞强度超过证据等级",
     "level_consistency": "证据等级与信源类型不符",
     "causation_support": "因果标注缺乏机制词支撑",
-    "warrant_theme": "理由与主张无共同主题词",
+    "warrant_theme": "理由与主张脱节",
     "stale": "引用旧时点资料",
     "as_of": "结论未锚定时点",
     "injection": "疑似指令注入内容",

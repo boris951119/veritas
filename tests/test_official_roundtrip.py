@@ -239,16 +239,22 @@ def _dump(path: Path, payload) -> Path:
 
 
 def _gold_fact(fact_id: str, *, conflict: bool = False) -> dict:
-    """金标真实键集：没有 para_id。换形只靠同案 evidence_samples。"""
+    """金标内部标签，不是提交字段。
+
+    附录 A.3 的提交字段不含 verdict_label 与 resolution_type
+    （grep -c "verdict_label\\|resolution_type" docs/contest-scoring-rubric-2026-10-13.md == 0）。
+    不提交这两项是必填齐全、非必填不编造。
+    金标真实键集没有 para_id。换形只靠同案 evidence_samples。
+    """
     row = {
         "fact_id": fact_id,
         "doc_id": "doc_001",
         "quote": "引用原文",
         "fact_des": "事实描述",
-        "verdict_label": "conflict" if conflict else "support",
+        "verdict_label": "partial_support" if conflict else "full_support",
     }
     if conflict:
-        row["resolution_type"] = "来源优先级"
+        row["resolution_type"] = "Source_Priority"
     return row
 
 

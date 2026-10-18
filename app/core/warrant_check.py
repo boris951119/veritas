@@ -1,14 +1,18 @@
-"""理由—主张主题词闸（零 LLM）：主张里的议题主题词须在所引段落出现。
+"""理由—主张脱节闸（零 LLM）：两条规则取并集，任一成立即亮黄灯。
 
+① 主张命中的议题主题词须在同一段落出现；② 主张与所引段落取词不得零交集。
 拦的是「账目截止日 → 不存在人员流失」这类：引文真、数字真，但推不出主张。
-只亮黄灯，不删结论。
+只亮黄灯，不删结论；措辞一致而语义不支撑的假支撑两条都查不出（见 docs/proposal.md 局限性）。
 """
 
 from __future__ import annotations
 
+import re
+
 from app.core.evidence import Dossier
 
-# 议题侧常见主题词（主张命中其一，则所引段落须命中同一词或其同义组）
+# 议题侧常见主题词。主张闸的「主题词脱节」半边读这张表；
+# premise_check、coverage_gap、chain_integrity、gate_applicability 也用它。
 _THEME_GROUPS: tuple[tuple[str, ...], ...] = (
     ("延期", "延迟", "滞后", "进度"),
     ("回款", "应收账款", "应收"),
@@ -38,17 +42,32 @@ def _themes_in(text: str) -> set[str]:
     return hit
 
 
+_CJK = re.compile(r"[\u4e00-\u9fff]+")
+_LATIN = re.compile(r"[A-Za-z]{3,}")
+_DIGITS = re.compile(r"\d+")
+
+
+def _tokens(text: str) -> set[str]:
+    """中文二元组、不少于 3 个字母的拉丁词、数字串。没有可调阈值。"""
+    q = text or ""
+    out: set[str] = set()
+    for run in _CJK.findall(q):
+        for i in range(len(run) - 1):
+            out.add(run[i:i + 2])
+    for word in _LATIN.findall(q):
+        out.add(word.lower())
+    out.update(_DIGITS.findall(q))
+    return out
+
+
 def audit_warrant_theme(dossier: Dossier) -> list[dict]:
-    """主张主题词 ∩ 所引段落主题词 = ∅ → 黄灯。"""
+    """主题词脱节或措辞零交集，任一成立即黄灯。否定式放行在两条之前。"""
     flags: list[dict] = []
     for con in dossier.conclusions:
-        claim_themes = _themes_in(con.statement or "")
-        if not claim_themes:
-            continue
         evs = dossier.evidences_of(con.id)
         if not evs:
             continue
-        # 只看所引段落。说明是模型复述主张，写进「人员流失」就会把闸放行。
+        # 只看所引段落。说明是模型复述主张，写进主张里的词就会把闸放行。
         blob_parts: list[str] = []
         for ev in evs:
             hit_seg = False
@@ -60,22 +79,33 @@ def audit_warrant_theme(dossier: Dossier) -> list[dict]:
             if not hit_seg:
                 blob_parts.append(ev.quote or "")
         blob = "\n".join(blob_parts)
-        support = _themes_in(blob)
-        missing = claim_themes - support
-        if (missing and _denies(con.statement or "") and _rebuts(blob)):
-            missing = set()
-        missing_list = sorted(missing)
-        if not missing_list:
+        statement = con.statement or ""
+        if _denies(statement) and _rebuts(blob):
+            continue
+        values: list[str] = []
+        details: list[str] = []
+        claim_themes = _themes_in(statement)
+        if claim_themes:
+            missing = sorted(claim_themes - _themes_in(blob))
+            if missing:
+                joined = "、".join(missing)
+                values.extend(missing)
+                details.append(
+                    f"主题词脱节：结论主张含主题词「{joined}」，"
+                    "所引段落未出现同一主题词"
+                )
+        claim_tokens = _tokens(statement)
+        if claim_tokens and not (claim_tokens & _tokens(blob)):
+            values.append("零交集")
+            details.append("措辞零交集：结论主张与所引段落取词没有交集")
+        if not details:
             continue
         flags.append({
             "kind": "warrant_theme",
             "severity": "medium",
             "conclusion_id": con.id,
-            "value": "、".join(missing_list),
-            "detail": (
-                f"结论主张含主题词「{'、'.join(missing_list)}」，"
-                "但所引段落中无共同主题词——理由与主张可能脱节"
-            ),
+            "value": "、".join(values),
+            "detail": "；".join(details),
         })
     return flags
 
