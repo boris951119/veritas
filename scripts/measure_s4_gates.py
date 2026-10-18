@@ -140,18 +140,43 @@ def _read_report(q_dir: Path) -> dict:
             "dossier": data}
 
 
+def _exported_rows(case_run: Path) -> list[dict]:
+    """提交物 `confidence.json` 的原始行（案级、只含 majority 态）。缺文件＝空表。"""
+    f = case_run / "confidence.json"
+    if not f.is_file():
+        return []
+    return [r for r in json.loads(f.read_text(encoding="utf-8"))
+            if isinstance(r, dict) and isinstance(r.get("score"), (int, float))]
+
+
 def _exported_scores(case_run: Path) -> dict[str, float]:
     """取**提交物**里的置信度行（`confidence.json` 在案级，只交 majority 态）。
 
     缺这个文件＝这份产物早于导出层，返回空表而不是拿 report 的字段凑数。"""
-    f = case_run / "confidence.json"
+    return {str(r["conclusion_id"]): float(r["score"])
+            for r in _exported_rows(case_run) if r.get("conclusion_id") is not None}
+
+
+def _submitted_conclusions(case_run: Path) -> dict[str, dict]:
+    """取**官方真正收到的那份结论**（`conclusions.json`，每题一行、由 `_conclusion_text` 生成）。
+
+    这是「消解后一致率」这条达标行的被评对象——它跟 `report.json` 里的内部结论集**不是一个集合**
+    （内部每题可有多条、含 `insufficient`／`dissent` 态，提交层每题只交一条 headline）。"""
+    f = case_run / "conclusions.json"
     if not f.is_file():
         return {}
-    out: dict[str, float] = {}
+    out: dict[str, dict] = {}
+    by_q: dict[str, list[float]] = {}
+    for r in _exported_rows(case_run):
+        by_q.setdefault(str(r.get("question_id")), []).append(float(r["score"]))
     for row in json.loads(f.read_text(encoding="utf-8")):
-        if isinstance(row, dict) and row.get("conclusion_id") is not None \
-                and isinstance(row.get("score"), (int, float)):
-            out[str(row["conclusion_id"])] = float(row["score"])
+        if not isinstance(row, dict) or row.get("question_id") is None:
+            continue
+        qid = str(row["question_id"])
+        scores = by_q.get(qid) or []
+        out[qid] = {"statement": str(row.get("conclusion") or ""),
+                    "n_facts": len(row.get("supporting_facts") or []),
+                    "max_score": max(scores) if scores else None}
     return out
 
 
@@ -508,19 +533,24 @@ def cmd_calib(args) -> int:
     gate = lock_local()
     st = settings_for(None)
     client = ModelClientFactory(st).create()
-    print(f"[calib] {gate} 读取 {src}", flush=True)
+    print(f"[calib] {gate} 读取 {src} 对齐口径＝"
+          f"{'提交物 conclusions.json 每题那一行' if getattr(args, 'submitted', False) else 'report.json 内部结论集（每题多条）'}",
+          flush=True)
     stamp = time.strftime("%Y%m%d-%H%M%S")
     out_dir = OUT / f"calib-{stamp}"
     out_dir.mkdir(parents=True, exist_ok=True)
     rows = []
     conf_hist: list[float] = []
     n_noscore = 0
+    n_sub_missing = 0
     for case_dir in case_dirs():
         case_run = src / case_dir.name
         if not case_run.is_dir():
             continue
         gold_rows = json.loads((case_dir / "conclusions.json").read_text(encoding="utf-8"))
         band_by_id = _exported_scores(case_run)
+        submitted_by_q = (_submitted_conclusions(case_run)
+                          if getattr(args, "submitted", False) else {})
         gold_by_q: dict[str, str] = {}
         for g in gold_rows:
             gold_by_q.setdefault(str(g.get("question_id")), str(g.get("conclusion") or ""))
@@ -537,11 +567,23 @@ def cmd_calib(args) -> int:
             noscore = [c["id"] for c in ours if c["id"] not in band_by_id]
             n_noscore += len(noscore)
             conf_hist.extend(band_by_id[c["id"]] for c in ours if c["id"] in band_by_id)
-            verdict = judge_one(client, MODEL, gold, ours)
-            by_id = band_by_id
-            matched_conf = [by_id[m] for m in verdict["matched"] if m in by_id]
+            if submitted_by_q:
+                # 达标行「消解后一致率」的被评对象＝官方收到的那一行（每题一条 headline），
+                # 不是 report 里的内部结论集（每题可多条、含 insufficient／dissent）。两套不许混，
+                # 所以这里是**另一条独立读数**，用 align_scope 标着，内部那版照旧跑得到。
+                sub = submitted_by_q.get(qid) or {"statement": "", "max_score": None, "n_facts": 0}
+                target = [{"id": f"SUB::{qid}", "statement": sub["statement"],
+                           "status": "submitted"}]
+                verdict = judge_one(client, MODEL, gold, target)
+                matched_conf = [sub["max_score"]] if sub["max_score"] is not None else []
+                n_sub_missing += (0 if sub["statement"].strip() else 1)
+            else:
+                verdict = judge_one(client, MODEL, gold, ours)
+                matched_conf = [band_by_id[m] for m in verdict["matched"]
+                                if m in band_by_id]
             rows.append({"case": case_dir.name, "qid": qid, "n_ours": len(ours),
-                         "n_band_rows": len(by_id), "n_no_band_row": len(noscore),
+                         "align_scope": "submitted" if submitted_by_q else "internal",
+                         "n_band_rows": len(band_by_id), "n_no_band_row": len(noscore),
                          "gold_chars": len(gold),
                          "agreement": verdict["agreement"],
                          "matched": verdict["matched"],
@@ -556,9 +598,11 @@ def cmd_calib(args) -> int:
                   flush=True)
             _append_jsonl(out_dir / "rows.jsonl", rows[-1])
 
+    scope = "submitted" if getattr(args, "submitted", False) else "internal"
     table = _band_table(rows, conf_hist)
     summary = {"run_dir": str(out_dir), "source": str(src), "rows": rows,
-               "bands": table, "n_units": len(rows),
+               "bands": table, "n_units": len(rows), "align_scope": scope,
+               "n_sub_empty": n_sub_missing,
                "n_ours": len(conf_hist), "n_no_band_row": n_noscore,
                "conf_stats": _conf_stats(conf_hist)}
     (out_dir / "summary.json").write_text(
@@ -570,7 +614,9 @@ def cmd_calib(args) -> int:
         rate = "—" if b["n"] == 0 else f"{b['agree'] / b['n'] * 100:.0f}%"
         print(f"{b['label']:<14}{b['n']:>8}{b['agree']:>6}{b['partial']:>8}"
               f"{b['disagree']:>7}{rate:>9}")
-    print(f"\n标注单元 n={summary['n_units']}（官方六案每题一条金标结论＝上限 18）；"
+    print(f"\n对齐口径＝{summary['align_scope']}"
+          + (f"；提交层交空白的那题 {summary['n_sub_empty']} 个" if scope == "submitted" else ""))
+    print(f"标注单元 n={summary['n_units']}（官方六案每题一条金标结论＝上限 18）；"
           f"分档口径＝提交物 `confidence.json` 的行（只含 majority 态），"
           f"计入 {summary['n_ours']} 条、无分档行 {summary['n_no_band_row']} 条"
           f"（minority／conflict 态，导出层本就不交），分布见 {out_dir / 'calib.md'}")
@@ -667,6 +713,9 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--no-align", dest="align", action="store_false",
                         help="不做窗口对齐，按固定预算跑（复放旧读数时用）")
     parser.add_argument("--case", default=None, help="solo 只跑案名含该子串的案例（默认刘翔）")
+    parser.add_argument("--submitted", action="store_true",
+                        help="calib 用：金标对齐的对象改成**提交物 conclusions.json 每题那一行**"
+                             "（达标行「消解后一致率」真正被评的东西），而不是 report.json 的内部结论集")
     parser.add_argument("--from", dest="from_dir", default=None,
                         help="calib 读取的 time 产物目录（默认最近一次）")
     args = parser.parse_args(argv)
