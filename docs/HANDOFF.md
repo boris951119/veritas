@@ -2650,7 +2650,7 @@ git status 里没有官方样例集任何文件。
 **新增硬判据（第二轮用）**：
 - h) **新机可用**：把工作树复制到 `/tmp/<x>`，`rm -rf /tmp/<x>/cases/*/out*`，在该目录内跑 `pytest tests -q` ⇒ **全绿、零 skip**（复放命令我第一轮已跑过，照抄即可）；同时 `pytest tests -q -rs` 的 skip 计数必须为 0。
 - i) **回滚不留痕（R-C16b-1 的正判据）**：走 `run_repair_round`（**不许直接调 `_apply_repair`**）造一次被拒的修复 ⇒ `parse_drops` 条数**与修复前逐字相同**、`report_md` **不含**「引用未落地的证据」节；**反例防空转**：另造一次**被接受**且确实丢掉一条证据的修复 ⇒ 留痕必须**恰 1 条**且报告出现该节。
-- j) **统计对照已摘除**：`grep -rn 'Path("cases")' tests/test_parse_drops.py` **零命中**、`grep -rn 'glob("\*/out\*' tests/test_parse_drops.py` 零命中（用例不再读案卷目录；注释与文档串里提到 `cases/` 无所谓，我只查真读文件的那两行），且 298／10／5／5 与 34 这两个数出现在本单记录里而不是代码里。
+- j) **统计对照已摘除**：`grep -rnF 'Path("cases")' tests/test_parse_drops.py` 与 `grep -rnF 'glob("*/out*' tests/test_parse_drops.py` **都零命中**——⚠ **两条都是**改前实测 **各恰 1 处**（同一行 `tests/test_parse_drops.py:264`）⇒ 这是「1 ⇒ 0」的减法判据；⚠ **必须带 `-F`**：模式里有 `*`，不加 `-F` 时它是正则量词，我第一版写成 `grep -rn 'glob("\*/out\*'` 实测**改前就 0 命中＝空判据**（本轮第三次踩同一类错，见本页末）。注释与文档串里提 `cases/` 无所谓，这两条只钉真读文件那一行；298／10／5／5 与 34 这两个数改由本单记录存档。
 
 其余判据（a／b1／b2／c／d／e／f／g／k）第一轮已过，**第二轮按协议逐条重跑，不许只验新修的两条**。基线仍是 606＋新增（当前工作树 609）。
 
@@ -2661,13 +2661,14 @@ git status 里没有官方样例集任何文件。
 第一轮 a/b1/b2/c/d/e/f/g/k 我已逐条复放通过，只修两条尾巴，一条代码一条测试：
 1) R-C16b-1（代码）：app/agents/repair.py 里 _snapshot/_rollback 不撤 parse_drops，被拒绝的修复尝试会留下"丢件"记录而该结论证据完好（我走 run_repair_round 复放出来的：修复前 证据1/留痕0 ⇒ 修复后 证据1/留痕1，报告出现「引用未落地的证据」节）。最小修法＝_snapshot 记 n_parse_drops，_rollback 里 del dossier.parse_drops[n:]。不许改成"接受才写"、不许动接受判定顺序与条件、不许改 _apply_repair 的调用形状。
 2) R-C16b-2（测试，根因在我单里）：tests/test_parse_drops.py 的 test_d 仍从 cases/*/out*/report.json 数 34 份和 298/10/5/5——实测这些文件一份都不在 git 里（git ls-files cases | grep -c 'out.*/report.json' 输出 0），所以是新机器上必红的断言，基线也一样红，但 AGENTS.md 第 2 步对外承诺换机器全绿。修法＝把这段统计对照整段从测试里删掉（数字移到工单记录，已经写在那一节里），test_d 只保留序列化 round-trip 和你第一轮新增的 tmp_path 悬空引用那两段。不许改成 pytest.skip，不许在测试里造 34 份假留档。
-新增三条判据自己先跑：h) 把工作树复制到 /tmp 下一个目录、rm -rf 那里的 cases/*/out*，在该目录跑 pytest tests -q 必须全绿零 skip（pytest -rs 的 skip 数必须为 0）；i) 正判据走 run_repair_round（不许直接调 _apply_repair）造一次"被拒"的修复 ⇒ parse_drops 与修复前逐字相同、报告不含「引用未落地的证据」节，另造一次"被接受且确实丢一条证据"的修复 ⇒ 留痕恰 1 条且该节出现（这条反例是防止你把留痕整体删干净）；j) grep -rn 'Path("cases")' tests/test_parse_drops.py 与 grep -rn 'glob("\\*/out\\*' tests/test_parse_drops.py 都零命中（注释里提一句 cases/ 无所谓，只查真读文件那两行）。
+新增三条判据自己先跑：h) 把工作树复制到 /tmp 下一个目录、rm -rf 那里的 cases/*/out*，在该目录跑 pytest tests -q 必须全绿零 skip（pytest -rs 的 skip 数必须为 0）；i) 正判据走 run_repair_round（不许直接调 _apply_repair）造一次"被拒"的修复 ⇒ parse_drops 与修复前逐字相同、报告不含「引用未落地的证据」节，另造一次"被接受且确实丢一条证据"的修复 ⇒ 留痕恰 1 条且该节出现（这条反例是防止你把留痕整体删干净；两格我都实测可构造，被拒格＝只交一条悬空证据，被接受格＝一条好证据＋一条悬空且消掉原数字旗，跑出来 accepted=1／证据 1 条／留痕恰 1 条）；j) 两条 grep 都零命中、且都必须带 -F（模式里有星号，不加 -F 它当正则量词用，改前就 0 命中＝空判据，我自己第一版就写错成这样）：grep -rnF 'Path("cases")' tests/test_parse_drops.py 与 grep -rnF 'glob("*/out*' tests/test_parse_drops.py；这两条改前实测各恰 1 处（同一行 tests/test_parse_drops.py:264），所以要的是 1⇒0 的减法，别只把一处删掉剩下另一处。
 其余边界照旧：不许放宽阈值、不许动 segment() 语义、不许动 empties 判定与 rejected 赋值语义、不许碰 conflicts.py／human_ops.py／export/official.py／pipeline.py／citation_check.py、四份提交 JSON 必须仍逐字节相同、conftest 守卫不动。
 第一轮已过的那批判据（a/b1/b2/c/d/e/f/g/k）这一轮逐条重跑一遍再回写，别只报新修的两条。基线 606＋新增用例数，连跑 5 次全绿。样例集不许入库、不许真调模型。
 不要提交，不要 push，验收归 Qoder。
 ```
 
 - **2026-10-18 晚交工前修单两处（都是我的错，留痕）**：① **判据 b 是空判据**——我写「字面量恰一处」当改后证据，实测**改前就已恰一处**（`base.py:167`），执行方什么都不做也能跑绿 ⇒ 换成 b1/b2 两条带**改前基线数**（各 2 处）的判别式。② **基线数 stale**——单里 k 与提示词都写 `bb35fb9／605 passed`，那档已被 C-22 顶掉，§1 现记 **606**；不改的话执行方会把回归下限读低 1 条。
+  ③ **同日第三踩（写第二轮判据 j 时，验收当场自查抓到、没流到执行方）**：我把 grep 写成 `grep -rn 'glob("\*/out\*'`，以为转义了——**`-rn` 不带 `-F` 时 `*` 是正则量词**，实测**改前就 0 命中＝又是一条空判据**，与 ① 同一类。规矩补进协议 §5：**判据里的 grep 只要模式含 `*`／`(`／`[` 这类字面量，一律 `-F`，并且必须贴"改前命中数"**（这次改前＝1，要的是 1⇒0）。
 
 ### C-17｜「零结论交付」必须分得清是哪种零：空交付要留原始响应节选＋形态分类，整条结论消失的那一格也要留痕（2026-10-17 出单，**队列第三**，0.2 天）
 
