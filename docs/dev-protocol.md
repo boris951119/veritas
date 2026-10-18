@@ -209,6 +209,13 @@
 - **一工单一 commit**（代码＋测试），标题带单号：`fix(scope): …（工单 C-x）`。
 - **文档另起一笔**：`docs(交接+方案): …`，同一笔里同步 HANDOFF 状态行与本文件提到的图。
 - commit message 讲「为什么」并带实测数字；**不 push、不 `--no-verify`、不 amend 已提交内容**。
+- **合 main 的节奏**：一条工作分支**攒到 3 张以上收口单、或距上次合并满 3 天**就该合一次，别把七天的量堆成一次"很久没 review"的大合并
+  （2026-10-19 那次＝`main` 停在 10-12，中间 **85 commits／103 files** 从没进过 main，其中含判定口径变更，main 读者看不到）。
+  合并方式＝**fast-forward**（`git merge-base --is-ancestor main HEAD` 为真时 `git merge --ff-only`），**只在本地合，仍然不 push**。
+- **整批 review 固定查三项**（缺一就是没做完）：① **两格环境在干净 `git clone` 上复放**（装／不装可选依赖各一格，加连跑 3 次看 flake）＋部署文档的第 3／第 5 步也真跑一遍；
+  ② **引用体检**＝把所有开放单正文与队列行的 `file:line` 逐条开文件核对（本次 73 条，只漂 1 条；漂移会直接把执行方指错地方）；
+  ③ **卫生**＝密钥／未入库产物（`out*/`、`.corpus`、`.fetched`、`cases/user-*/` 在 `git ls-files` 里必须 0 条）／官方样例集字节／本批新增二进制。
+  review 改掉的每处口径都要落 commit 并进 HANDOFF 顶部编号项（本次＝⑮）。
 - `CLAUDE.md` 是指向 `AGENTS.md` 的符号链接（同一份内容），改 `AGENTS.md` 即同步，不必也不许复制出第二份。
 
 ## 8. 图与文档同步（方案总览的口径纪律）

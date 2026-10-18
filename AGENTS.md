@@ -72,12 +72,15 @@ python3 -m venv .venv
 .venv\Scripts\python scripts\demo_offline.py
 ```
 
-**通过判据**：先后打印**两个案例**的完整研判报告（含多分析师归并、
+**通过判据**：先后打印**三个案例**的完整研判报告（含多分析师归并、
 冲突消解、少数意见、防篡改校验 ✅），产物分别写入
-`cases/demo-solid-state/out_offline/`（固态电池科研情报）与
-`cases/bi-delivery-risk/out_offline/`（数据中台交付风险企业情报，
-各含 `report.json` / `report.md` / `chain.jsonl`）。桩客户端离线模拟了
-三分析师协同全流程，演示「系统长什么样」足够用。
+`cases/demo-solid-state/out_offline/`（固态电池科研情报）、
+`cases/bi-delivery-risk/out_offline/`（数据中台交付风险企业情报）与
+`cases/rumor-vs-official/out_offline/`（自媒体票数 vs 官方通报，
+程序按证据强度翻案），各含 `report.json` / `report.md` / `chain.jsonl`。
+桩客户端离线模拟了三分析师协同全流程，演示「系统长什么样」足够用。
+（2026-10-19 在干净 `git clone` 上实测：`grep -c '^# 研判报告'` ＝ **3**，
+三个 `out_offline/` 目录齐全，跑完 `git status` 仍干净——产物全在 `.gitignore` 内。）
 
 ## 第 4 步：在线真实研判（需要 API key）
 
