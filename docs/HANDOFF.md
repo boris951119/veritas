@@ -342,7 +342,7 @@ C-13＝推理树补中间结论层＋依赖边＋依赖传播（1 天，对着�
    实测早已确定的一条：URL 去重没用（486 篇／226 域名／**完全相同 URL 只 3 组**），必须文本级聚类——
    而文本级聚类**已经有现成实现**（`dup_check._shingles` ＋ Jaccard），所以本项剩下的价值在篡改检测／孤证显影，不在召回。
 
-## 4. 七个已知的坑（新工具必须先知道）
+## 4. 八个已知的坑（新工具必须先知道）
 
 1. **别把推演当事实**。`docs/scenario-review-2026-10-14.md` 每条标了 [实测]/[推演]；
    2026-10-14 当天就有两次判断过头被更正（多智能体其实只差 2–3 分；「转载吹高置信度」一度被错误划掉）。
@@ -376,6 +376,13 @@ C-13＝推理树补中间结论层＋依赖边＋依赖传播（1 天，对着�
    **这条给协作留下的教训**：第一轮修复把
    「只认可摄取后缀」的计数同时用到了遍历封顶的超深分支上，**深层目录全是图片时 `dir_truncated` 整条消失＝C-1 回退**，
    而全量测试当时仍 552 绿（存量封顶用例清一色 `.md`）——**改共享计数函数必须逐调用分支复放，不能只看新文案那条**。
+8. **`pytest tests -q` 在"新机器"上目前会红一条，红的原因不在代码**（2026-10-18 C-16b 验收发现，本机专属基线）：
+   `tests/test_parse_drops.py::test_d` 从 `cases/*/out*/report.json` 数"34 份历史留档／活结论 298／零证据 10／打回 5"。
+   实测**这些文件一份都不在 git 里**（`git ls-files cases | grep -c 'out.*/report\.json'` ＝ **0**；`out_offline` 另被 `.gitignore:29` 忽略），
+   它们是我本机做实验留下的目录（`out_ab_*`／`out_hetero_*`／`out_local14b*`…）。把 `cases/*/out*` 删净复跑，**改前改后两版都红**：
+   `assert 0 == 34`（基线 `76c86ec`）／`assert 0 >= 34`（第一轮工作树）⇒ **`AGENTS.md` 第 2 步「换机器 553/606 passed 零 failed」这句对外承诺，现在在这台机器之外不成立**。
+   这一格正在 C-16b 第二轮里摘除（修法＝统计对照从用例里删掉、数字移到工单；判据 h 固定跑「删净未入库产物的复制树」）。
+   **接手前须知**：在这条修好之前，别拿"我本机 pytest 全绿"当"部署机也全绿"的证据，也别为了让它绿而补造 34 份假留档。
 
 ## 5. 待 Cursor 修复工单（Qoder 出验收，双方不口头交接）
 
@@ -449,7 +456,7 @@ C-13＝推理树补中间结论层＋依赖边＋依赖传播（1 天，对着�
 | **C-14** | **冲突消解：票数只当破平器 ＋ 消解记录对齐官方五级枚举**：`evidence_strength_of` 是**均值**（`confidence.py:76-81`）→ **票数在消解侧权重为 0**；`_WEIGHT_MARGIN=0.20` 以下那个势均力敌区间**没有任何机械依据**，直接交回 LLM；`method` 是自造值、无 `basis`、`dissent` 缺「重启条件」 | **材料已到手 → 前置实测已完成**：官方 `decks:311` 要求「须去同源」，实测**同源污染只有 22 对／486 篇＝4.5%**（生产闸 `near_dup_pairs` 口径），且**阈值从 0.5 放到 0.15 只涨 8 对** → **不需要先建独立信源簇，现成两道闸够用**。见下方「C-14 前置实测」 | **已出单→已改完→已验收（判据 a–k 十一条全过、五条偏离逐条核过，复放表见本节末）**。口径由用户 2026-10-16 拍定：「票数占一部分权重，但绝对不是评判标准」→ 强度差 >0.20 按强度定（票数不参与），≤0.20 才比独立信源数，仍相同则 tie。对着评分 **3.3 冲突消解记录＝10 分**。<br>**复放中的真实 A/B**（架构师自跑，`git worktree` 检出 `3af57c7` 跑同一份离线演示）：三案 winner **无一翻转**，两案的 `method` 由 `arbitration`→`source_majority`、`rumor-vs-official` 的否决句**逐字不变**。**遗留四处（根因全在我单里，不判打回）→ 全部折进 C-14b**：R-C14-1 `strength` 支的 `resolution_type` 落「其他」与自己生成的 `type_applies` 打脸（模型本来就选对强侧那一支＝常态）、R-C14-2 `human_ops.py:62` 是**第二个 `Resolution` 构造点**（我单里"唯一构造点"那句是假的）＋空 `basis` dict 从 `basis in (None,"")` 的缝里滑过去**不上报缺失**、R-C14-3 每条冲突重算 4 次两道闸＝**实测 1365 ms／冲突**（最大案 137 信源）、R-C14-4 偏离①之后「少数意见（依规保留）」这段 md **全仓再无用例断言** | **已收口**（2026-10-16 出单、2026-10-17 第一轮通过，代码 `58e8610`，测试 581→592）。尾巴见 C-14b |
 | **C-14b** | **消解记录四处收口**（C-14 复放抓到、根因在我单里）：① `resolution_type` 该由 `decision_path` 优先推导而不是只看 `method`；② 工作台「人工改判」那条路不盖依据＋导出层空 `basis` 不上报缺失；③ 两道闸每次调用重算 4 遍；④ 「少数意见（依规保留）」的 md 断言丢了 | **全部有实测数**：1365 ms／冲突、`omissions=['resolution_type','重启条件']` 独缺 basis、`test_g:190-196` 把 `method=arbitration`＋`path=strength` 钉成期望值 | **已出单（四件，见 §5 该单）**。打在 **3.3 的「依据可核 3 分」＋提交物诚实性**上，且 ① 那一支在真实运行里是常态、离线演示三案恰好一条都没命中 ⇒ 不修就带进答辩 | **已收口**（2026-10-17 第一轮通过，`605 passed ×5`；判据 a/b/c/e/f/k 自建夹具复现、576 格路径分布两棵树逐字相同、四份提交物只有 `conflict_resolution.json` 变 1 行）。**判据 d 半过 ⇒ 四条尾巴折进 C-14c**（人判与机械相反那一格会印假说理、`_stamp` 形参覆写、两份分支规则、三处测试地板） |
 | **C-16** | **用户拍 R-C15-2＝③「改救采纳层」后拆出的第一件**：报告写「资料不足」却查不到为什么不足——`app/agents/base.py:160-161` 在模型给的 `segment_id` 不存在时**静默 `continue` 丢弃整条证据**，结论生来零证据，随后 `app/pipeline.py:705-711` 仍把它标成 insufficient，而 `audit_dossier` 只对现存证据报错 ⇒ **台账零留痕** | **有实测，且推翻了我自己那句前提**：34 份留档 run／活结论 304，零证据 **10 条＝3.3%**，成因**对半**（5 条有打回留痕、5 条没有）；**题级（导出层 `supporting_facts` 会变空那一格）＝0/34** ⇒ 「引文闸枪毙了该采纳的段」只对 5/10，**错的那一半根本没有留痕**。样本全是自有小库案例，0/34 不外推到隐藏集 | **已出单（四件，纯留痕、一条判定不改）**。打在官方 `decks:325`「依据必须可核验」＋主观分 3.3 的「依据可核 3 分」上：评委问「这条为什么不足」，现在答不上来。**③-乙（零采纳时先定向补召）因缺真数暂不发单**——本机 14B 官方六案真跑已在进行中（首案 AI171 每题约 10 分钟，题级发生率待六案齐） | **已收口**（2026-10-17 第一轮复放过，代码 `c68fe30`，`592→599 passed ×5`；判据 a–f＋k 全部自建夹具复现、两棵树上帝／白卷读数逐字相同）。**验收抓到三条尾巴 → 新单 C-16b**：`repair.py:155-156`／`ingress.py:61` 两处同形条件未修（R-C16-1）、`base.py:157` 的 `not isinstance(ev, dict)` 仍静默（R-C16-2）、判据 d 的离线演示格是**真空通过**且「34 份都缺键」跑过一次 pytest 就只剩 31 份（R-C16-3，我的前提 again 不精确） |
-| **C-16b** | **C-16 的同形条件只修了一处**：全仓 grep 显示「`segment_id` 不存在／为空就 `continue`」这条合并条件其实有**三处**——已修的 `base.py`、未修的 **`repair.py:155-156`**（修复环，noncompliant 档真模型必走）、未修的 **`ingress.py:61`**（MCP 第三方入卷）；另加 `base.py:157` 的 `not isinstance(ev, dict)` 一条同段静默丢弃。实测：入卷路径造一条悬空引用 ⇒ `parse_drops==[]`＋结论标 `insufficient`＋报告只剩「成因缺失（异常）」＝**可见但答不出为什么** | **有实测**（架构师复放当场跑出来的三条，见本页顶部 R-C16-1/2/3）；兜底闸有效、缺的是文案与覆盖，不是安全性 | **已出单（三件，0.15 天，仍是纯留痕）**：把两格留痕抽成一处共用函数、三处调用点复用；`not isinstance(ev, dict)` 补第三格 reason；把 `test_d` 的统计对照钉成「样本里必须真有非空 insufficient 且全部有成因」 | **队列第一＝现在可开工**（与 C-18、C-17、C-14c、C-13 都不撞：只碰 `app/agents/{base,repair,ingress}.py`＋`tests/`） |
+| **C-16b** | **C-16 的同形条件只修了一处**：全仓 grep 显示「`segment_id` 不存在／为空就 `continue`」这条合并条件其实有**三处**——已修的 `base.py`、未修的 **`repair.py:155-156`**（修复环，noncompliant 档真模型必走）、未修的 **`ingress.py:61`**（MCP 第三方入卷）；另加 `base.py:157` 的 `not isinstance(ev, dict)` 一条同段静默丢弃。实测：入卷路径造一条悬空引用 ⇒ `parse_drops==[]`＋结论标 `insufficient`＋报告只剩「成因缺失（异常）」＝**可见但答不出为什么** | **有实测**（架构师复放当场跑出来的三条，见本页顶部 R-C16-1/2/3）；兜底闸有效、缺的是文案与覆盖，不是安全性 | **已出单（三件，0.15 天，仍是纯留痕）**：把两格留痕抽成一处共用函数、三处调用点复用；`not isinstance(ev, dict)` 补第三格 reason；把 `test_d` 的统计对照钉成「样本里必须真有非空 insufficient 且全部有成因」 | **第一轮验收＝打回（2026-10-18）**：a／b1／b2／c／d／e／f／g／k **九条我逐条复放通过**（`609 passed`×5，边界 diff 空，共用函数一处 `evidence.py:375-396`），但抓到两条尾巴 ⇒ **第二轮提示词已附单末**。**R-C16b-1（它的改动引入）**＝修复环被拒时 `_rollback` 不撤留痕，虚增"丢件"行（我走 `run_repair_round` 复放：修复前 证据1/留痕0 ⇒ 修复后 证据1/留痕1，而该结论证据完好）；**R-C16b-2（根因在我单里）**＝我要求 3 让 `test_d` 去数 `cases/*/out*` 的 34 份，实测**这些产物一份都不在 git 里**（`git ls-files` 计数 0），删净后改前改后两版同红 ⇒ 新机器上 `pytest` 会红，撞 `AGENTS.md` 第 2 步的对外承诺（已登记为坑 8）。与 C-18／C-17／C-14c／C-13 都不撞：只碰 `app/agents/{base,repair,ingress}.py`＋`app/core/evidence.py`＋`tests/`＋`scripts/demo_offline.py` |
 | **C-17** | **结论级的"报告说不足、台账查不到依据"，且代价大一个量级**：分析师 0 结论时链上只留一句 `empty: 零结论交付`——**五种不同病因（缺 `conclusions` 键／是字符串数组／元素 `statement` 全空／空数组／顶层数组）在台账里塌成同一句话**，第六种（`JSONDecodeError`，模型在 JSON 字符串里写裸换行）只留行号不留内容；`app/agents/base.py:141-143` 那条 `continue` 让**整条结论消失**且零留痕（＝C-16b 明确排除在外的那一格）；`call_log` 只记 `content_chars` 不记内容 ⇒ **模型到底返回了什么，一个字都没留** | **有实测（14B 真跑＋零 LLM 桩）**：刘翔案三题 × 三分析师＝**九次调用全部零结论**（整案 2.3／2.4／2.5 归零）；34 份历史链 `analyst_done 88 / analyst_failed 13`＝**12.9% 的分析师调用没交付**，其中 **8 条是裸换行**；`analyst_empty` 自有历史 **0 次**、第一次触发就在官方案上。**超窗与零结论相关但未证因果**（超 407／767 tok 两题交付 9／17 条，超 1,869／2,184／4,917 tok 三题整题归零）。**14B A/B 已回（2026-10-17，同题 q_003、原始响应留档 `/tmp/c17/raw/`）：V1 装箱 19,000 字（prompt 30,862 字、超窗 1,869 tok）→ 0 条，模型把 `conclusions` 写成了「对象」（`{"date_conflict": {...}}`）而非数组；V2 装箱 8,000 字（prompt 18,460 字、不超窗）→ 同题交 15 条、`conclusions` 是正常数组 ⇒ 超窗与零结论不再只是相关，且多出**第七种形态：`conclusions` 是 dict**（`data.get("conclusions") or []` 之后遍历 dict 拿到的是 key 字符串，`isinstance(item, dict)` 为假 ⇒ 逐条 `continue`，同样塌成那一句 `empty: 零结论交付`）。**六案整案扫描另证：**柬泰边境案也是九次全部 `analyst_empty`（不是孤例）** | **已出单（四件，0.2 天，零判定变更）**：空交付形态分类＋原文节选进案卷（`empty_runs`）、`base.py:142` 那一格进 `parse_drops`（`conclusion_id=""`）、`analyst_failed` 载荷加 `content_head`、报告首屏带形态并新增明细节。**形态至少七格**（A/B 回来后新增：`conclusions` 是 **dict** 而非 list）。**明确禁止放宽 `extract_json`／动装箱预算窗口**——那是判定输入变更，须另立一张并经用户点头（**该单已于同日用户拍板后成立＝C-19**，与本单零重叠） | **队列第三＝C-16b、C-18 之后可开工**（**硬依赖 C-16b**：同改 `app/agents/base.py` 且要复用其共用函数；**与 C-18 撞 `pipeline.py`**（本单只动链事件区与渲染区，C-18 动更早的早退路口 ⇒ C-18 先）；排 **C-13 之前**：同改 `pipeline.py` 渲染区；与 C-14b／C-14c 不撞）。判据 d 是本单最容易写错的一格：`empty_runs` 与空 `conclusion_id` 的留痕**都不许进 `cause_ids`**，否则把 C-16 刚立的不变式糊掉 |
 | **C-18** | **主体澄清闸在非企业案卷上误触发＝一次早退让一整案归零**：`app/core/answer_slots.py:502-548` 的 `_issuers_in_dossier` 拿全文正则扫「…股份有限公司」，≥2 家且题面未点名就出「对象主体未锁定」，`app/pipeline.py:304-336` 见 `clarify` 非空**直接早退、一次模型都不调**（`skipped=[probe,panel,repair,collab,chair]`）⇒ 官方提交层只看到"缺 3 道题" | **14B 六案整案扫描实测**：六案里**只有吉隆口岸泥石流案命中**（8 家公司名、**每家只出现在 1 份信源**，全是新闻里顺带点名的数据方），命中即 **3/3 题 0 交付、五项全 0**；其余五案 0 家。⇒ 命中率＝1/6 案、3/18 题。**我原本想给的"按信源份数设阈值"被自己的实测证伪**：`cases/bi-delivery-risk`（6 份信源）里真正的发行人也是每家 1 份，份数分不开"主体"与"顺带提及" ⇒ 禁止拿它当判据 | **已出单（三件，0.15 天）：口径已拍＝①＋② 附加收紧**（判据形状＝企业题面 AND 标题级机构数≥2 AND 题面未点名），＋早退必须显影到提交层，＋`test_answer_slots.py` 该响的仍响（反向格不许削弱） | **队列第二＝C-16b 收口即开工**（开工提示词已在单内）；撞 `pipeline.py` 早退区 ⇒ 排在 C-17 之前、C-16b 之后 |
 | **C-14c** | **人工改判的类型别再声称"按强度裁决"**（C-14b 复放抓到、根因在我单里）：`mechanical_decision_path` 回答的是"机械会怎么走"（前提＝胜方已被强制到强侧），`human_ops.py:70-76` 却拿它给人给的胜方盖章 ⇒ 人判与机械相反时提交物出现「按证据强度裁决」＋「败方强度 0.5000 ＜ 胜方 0.1500」这种**假不等式**且 `omissions=[]`；另加 `_stamp` 形参覆写、两份分支规则、三处测试地板 | **有实测**（架构师复放当场跑出，`/tmp/c14b/override_probe.py`）：影响面 **0/44** 条历史链事件（`conflict_override` 0 次）＝**只在演示现场点按钮时出现**，但答辩点按钮是高频动作；576 格扫描证 `mechanical` 与 `prefer` 今天逐格等价（漂移是维护风险不是当下 bug） | **已出单（四件，0.15 天）：口径已拍＝①**（路径加 `human_override`、类型落「其他」、说理写"机械判断原为 X"、假不等式加自检）＋变量改名＋规则合一＋三处测试地板 | **队列第四＝C-14b 之后、C-13 之前**（C-13 要读消解记录）；与 C-16b／C-18／C-17 都不撞（只有 `official.py` 一句与 C-18、`pipeline.py` 一行与 C-17 同文件不同区） |
@@ -2585,7 +2592,81 @@ git status 里没有官方样例集任何文件。
 不要提交，不要 push，验收归 Qoder。
 ```
 
-- **状态**：已出单，待开工（**队列第一＝C-14b 已收口，现在可开工**）。｜ **验收**：—
+- **状态**：**第一轮验收＝打回（2026-10-18，架构师独立复放）**，代码留在工作树未提交。｜ **验收**：第一轮不通过（两条尾巴，根因一半在我单里）。
+
+#### Cursor 回写（2026-10-18）
+
+前提：`repair.py:153-156` 与 `ingress.py:58-61` 仍是合并条件（ingress 用 `seg_id`，repair 用 `seg_ids[0]`，谓词同形）。`dossier.segment(` 全仓还有查找用法；「空 id 或段落不存在就丢掉」的合并条件只有这两处，加上已拆开的 `base.py:170`，就是单里那三处。`test_parse_drops.py` 里 `assert len(insuff)==0` 写在成因遍历之后，遍历是空转。
+
+复算 a：`ingest_external_judgment` 悬空 `SRC9#s99` ⇒ `parse_drops == []`，结论 `insufficient`，报告含「成因缺失（异常）」、没有留痕节。复算 b：pytest 一次之后 `cases/*/out*/report.json` 仍是 **3／34**（三份 `out_offline`）。
+
+改前 `dossier.parse_drops.append` **2** 处（`base.py:162`、`:171`）⇒ 改后 **1** 处（`evidence.py` 的 `record_parse_drop`）。改前 `"quote_head": str(ev` **2** 处（`base.py:166`、`:175`）⇒ 改后 **1** 处（同一函数）。第三格真输出：`{'reason': '证据条目不是对象（渲染层拿不到）', 'quote_head': '这不是对象', 'segment_id': ''}`，文案不含前两格。
+
+缺键留档实测是 31 份、活结论 **298**／零证据 10／有打回 5／无打回 5。304 把三份已带键的 `out_offline`（6 条活结论）算了进去；判据改成只数缺键文件，所以断言用 298。`demo_offline.main` 增加可选 `out_root`，测试写到 `tmp_path`。
+
+`pytest tests -q` 五次全绿，末次 `609 passed in 4.84s`（606＋3）。上帝六案 `7/6/6/7/6`，白卷 `0/0/0/0/0`。`conflicts.py`／`human_ops.py`／`citation_check.py`／`official.py`／`pipeline.py`／`cases/` 相对 HEAD 无 diff。
+
+动过：`app/core/evidence.py`、`app/agents/base.py`、`app/agents/repair.py`、`app/agents/ingress.py`、`scripts/demo_offline.py`、`tests/test_parse_drops.py`、`docs/HANDOFF.md`。新增用例：`test_a_three_sites_share_one_reason`、`test_c_non_dict_evidence_has_its_own_reason`、`test_d_ingress_dangling_shows_in_report`。
+#### 架构师验收（2026-10-18 第一轮）＝打回，两条尾巴
+
+**逐条复放结果**（全部我自己跑，没读它的自述当证据）：
+
+| 判据 | 结果 | 我这边实测 |
+|---|---|---|
+| a 三处调用点 | **过** | `test_a_three_sites_share_one_reason` 三处 author＝`分析师甲/修复环乙/入卷丙`（各不相同）、reason 逐字同一条；`ingress` 的 author 确取 `_submitter(payload)["agent"]`（`app/agents/ingress.py:25-33`），`repair` 取 `con.author` |
+| b1/b2 单实现 | **过** | `grep -rn "dossier.parse_drops.append" app/`＝**1**（`app/core/evidence.py:390`）；`grep -rn '"quote_head": str(ev' app/`＝**1**（`:394`）；字面量「未给出 segment_id」1 处且在共用函数体内（`evidence.py:384`） |
+| c 第三格 | **过** | 文案独立（`证据条目不是对象（渲染层拿不到）`），断言里显式排掉前两格；结论仍 `insufficient` |
+| d 入卷闭环 | **过** | `test_d_ingress_dangling_shows_in_report`：留痕节出现、无「成因缺失（异常）」 |
+| e 测试真空已填 | **过** | `test_d` 现含 `assert len(insuff) >= 1`，且那条跑是自建悬空引用（不再是 `== 0` 空转） |
+| f 零分数变化 | **过** | `test_e_export_bytes_unchanged_by_parse_drops` 在；上帝／白卷用例（`tests/test_official_roundtrip.py:307` 等）随全量跑绿 |
+| g 边界未漂 | **过** | `git diff 76c86ec -- app/core/{conflicts,human_ops,citation_check}.py app/export/official.py app/pipeline.py app/core/answer_slots.py cases/` **空** |
+| k 回归 | **过** | `pytest tests -q` 五次全绿，末次 **609 passed**（＝基线 606＋3 条新用例，与它自述一致） |
+
+**R-C16b-1｜修复环被拒时留痕虚增（本轮改动引入，必须修）**：`record_parse_drop` 写在 `_apply_repair` 里，而 `_apply_repair` 的结果可能被 `_rollback` 整团退回（`app/agents/repair.py:124-132`）——`_Snapshot`（`:50-53`）**不含 `parse_drops`**，回滚不撤留痕。我走生产入口复放（探针 `/tmp/c16b_probe_prod.py`，零 LLM、桩客户端）：
+
+```
+修复前：证据 1 条／留痕 0 条
+修复环返回：{'attempted': 1, 'accepted': 0, 'repair_accept_rate': 0.0, ...}
+修复后：证据 1 条／留痕 1 条
+报告：## 引用未落地的证据（段落不存在／未编号）
+      - `CON-1`／analyst_a：引用段落不存在（segment_id=SRC9#s99）（…）
+该结论证据完好（SRC1#s1 存在）⇒ True
+```
+
+⇒ **一条被拒绝、已整团回滚的修复尝试，留下了一条"丢件"记录，而那条结论交付时证据是完整的**；`n_parse_dropped`（`app/pipeline.py:717`）跟着虚高。这不是判定变化（`parse_drops` 不进四份提交物），但本单的立单理由就是「丢件必须可见**且属实**」，虚增与漏报同样破坏可见性；而修复环在 noncompliant 档是常态路径，每条被拒结论每次跑加一行。
+**为什么它的用例没抓到**：`test_a_three_sites_share_one_reason` 直接调 `_apply_repair`（试装即算数），**没走 `run_repair_round` 的接受／拒绝分支**——判据 a 那格我把调用点写成"函数"而不是"入口"，漏了回滚这一格（同族毛病我记在协议里是"共享函数的全部调用点逐分支复放"，这次栽在**被调方自己的回滚分支**）。
+**修法（最小，不许改判定）**：`_snapshot` 加 `n_parse_drops=len(dossier.parse_drops)`，`_rollback` 里 `del dossier.parse_drops[snap.n_parse_drops:]`。**不许**反过来给 `record_parse_drop` 加"接受才写"的重排（那会动 `_apply_repair` 的调用形状与接受判定顺序）。
+
+**R-C16b-2｜`test_d` 的历史对照仍读未入库的本机产物（这条根因在我单里）**：它现在断 `len(hist) >= 34` 与 `(298, 10, 5, 5)`，来源是 `Path("cases").glob("*/out*/report.json")`。实测**这 34 份没有一份在 git 里**：`git ls-files cases | grep -c 'out.*/report\.json'` ＝ **0**（`out_offline` 还被 `.gitignore:29` 显式忽略）。所以那 34 份是**我本机做过的实验目录**（`out_ab_*`／`out_hetero_*`／`out_local14b*`…）。我按"新机器"复放两次（一次改前、一次改后，都是把 `cases/*/out*` 删净）：
+
+```
+改后（工作树）：> assert len(hist) >= 34 → assert 0 >= 34        tests/test_parse_drops.py:265
+改前（76c86ec）：> assert len(hist) == 34 → assert 0 == 34        tests/test_parse_drops.py:164
+```
+
+⇒ **这条不是本轮弄坏的（基线同样红），但它违反了 `AGENTS.md` 第 2 步的对外判据「换一台机器 pytest 全绿」**，而且本单 禁止② 的意图正是"别拿本机产物当基准"。**我单里要求 3 写的那句「扫到的份数 ≥34 且只断言缺键那些的历史数」本身就是错的指令**——我一边禁止拿 `out_offline` 当基准，一边又给了一个新的本机专属数（298）。执行方照单执行，不算它的偏离。
+**修法**：**把这段统计对照从测试里删掉**（它是"改前基线的账"，属于文档读数，不属于用例）——298／10／5／5 与 34 份移到本单记录里存档；`test_d` 只留两段可自证的：① 序列化 round-trip；② 自建悬空引用跑 ⇒ `insufficient ≥1 且全部有成因`（tmp_path，已有）。不许改成 `pytest.skip`，也不许在测试里造 34 份假留档。
+
+**新增硬判据（第二轮用）**：
+- h) **新机可用**：把工作树复制到 `/tmp/<x>`，`rm -rf /tmp/<x>/cases/*/out*`，在该目录内跑 `pytest tests -q` ⇒ **全绿、零 skip**（复放命令我第一轮已跑过，照抄即可）；同时 `pytest tests -q -rs` 的 skip 计数必须为 0。
+- i) **回滚不留痕（R-C16b-1 的正判据）**：走 `run_repair_round`（**不许直接调 `_apply_repair`**）造一次被拒的修复 ⇒ `parse_drops` 条数**与修复前逐字相同**、`report_md` **不含**「引用未落地的证据」节；**反例防空转**：另造一次**被接受**且确实丢掉一条证据的修复 ⇒ 留痕必须**恰 1 条**且报告出现该节。
+- j) **统计对照已摘除**：`grep -rn 'Path("cases")' tests/test_parse_drops.py` **零命中**、`grep -rn 'glob("\*/out\*' tests/test_parse_drops.py` 零命中（用例不再读案卷目录；注释与文档串里提到 `cases/` 无所谓，我只查真读文件的那两行），且 298／10／5／5 与 34 这两个数出现在本单记录里而不是代码里。
+
+其余判据（a／b1／b2／c／d／e／f／g／k）第一轮已过，**第二轮按协议逐条重跑，不许只验新修的两条**。基线仍是 606＋新增（当前工作树 609）。
+
+- **第二轮开工提示词**（直接粘贴给 Cursor）：
+
+```
+读 docs/dev-protocol.md（§3.0 前提核查、§3 问题分流、§3.4 质疑通道、§6 三道纪律）和 docs/HANDOFF.md §5 工单 C-16b 的「架构师验收（第一轮）＝打回」那一节，你是执行工程师。工作树里已经有你第一轮的改动，别推倒重来、别 stash 掉。
+第一轮 a/b1/b2/c/d/e/f/g/k 我已逐条复放通过，只修两条尾巴，一条代码一条测试：
+1) R-C16b-1（代码）：app/agents/repair.py 里 _snapshot/_rollback 不撤 parse_drops，被拒绝的修复尝试会留下"丢件"记录而该结论证据完好（我走 run_repair_round 复放出来的：修复前 证据1/留痕0 ⇒ 修复后 证据1/留痕1，报告出现「引用未落地的证据」节）。最小修法＝_snapshot 记 n_parse_drops，_rollback 里 del dossier.parse_drops[n:]。不许改成"接受才写"、不许动接受判定顺序与条件、不许改 _apply_repair 的调用形状。
+2) R-C16b-2（测试，根因在我单里）：tests/test_parse_drops.py 的 test_d 仍从 cases/*/out*/report.json 数 34 份和 298/10/5/5——实测这些文件一份都不在 git 里（git ls-files cases | grep -c 'out.*/report.json' 输出 0），所以是新机器上必红的断言，基线也一样红，但 AGENTS.md 第 2 步对外承诺换机器全绿。修法＝把这段统计对照整段从测试里删掉（数字移到工单记录，已经写在那一节里），test_d 只保留序列化 round-trip 和你第一轮新增的 tmp_path 悬空引用那两段。不许改成 pytest.skip，不许在测试里造 34 份假留档。
+新增三条判据自己先跑：h) 把工作树复制到 /tmp 下一个目录、rm -rf 那里的 cases/*/out*，在该目录跑 pytest tests -q 必须全绿零 skip（pytest -rs 的 skip 数必须为 0）；i) 正判据走 run_repair_round（不许直接调 _apply_repair）造一次"被拒"的修复 ⇒ parse_drops 与修复前逐字相同、报告不含「引用未落地的证据」节，另造一次"被接受且确实丢一条证据"的修复 ⇒ 留痕恰 1 条且该节出现（这条反例是防止你把留痕整体删干净）；j) grep -rn 'Path("cases")' tests/test_parse_drops.py 与 grep -rn 'glob("\\*/out\\*' tests/test_parse_drops.py 都零命中（注释里提一句 cases/ 无所谓，只查真读文件那两行）。
+其余边界照旧：不许放宽阈值、不许动 segment() 语义、不许动 empties 判定与 rejected 赋值语义、不许碰 conflicts.py／human_ops.py／export/official.py／pipeline.py／citation_check.py、四份提交 JSON 必须仍逐字节相同、conftest 守卫不动。
+第一轮已过的那批判据（a/b1/b2/c/d/e/f/g/k）这一轮逐条重跑一遍再回写，别只报新修的两条。基线 606＋新增用例数，连跑 5 次全绿。样例集不许入库、不许真调模型。
+不要提交，不要 push，验收归 Qoder。
+```
+
 - **2026-10-18 晚交工前修单两处（都是我的错，留痕）**：① **判据 b 是空判据**——我写「字面量恰一处」当改后证据，实测**改前就已恰一处**（`base.py:167`），执行方什么都不做也能跑绿 ⇒ 换成 b1/b2 两条带**改前基线数**（各 2 处）的判别式。② **基线数 stale**——单里 k 与提示词都写 `bb35fb9／605 passed`，那档已被 C-22 顶掉，§1 现记 **606**；不改的话执行方会把回归下限读低 1 条。
 
 ### C-17｜「零结论交付」必须分得清是哪种零：空交付要留原始响应节选＋形态分类，整条结论消失的那一格也要留痕（2026-10-17 出单，**队列第三**，0.2 天）
