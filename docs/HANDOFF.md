@@ -2557,15 +2557,17 @@ git status 里没有官方样例集任何文件。
 - **明确禁止**：① 不许放宽任何阈值／预算，不许动 `segment()` 语义；② **不许把 `cases/*/out_offline/` 当测试基准**——要么产物落 `tmp_path`，要么断言只看改前留档，别一边改写一边拿它当"历史"；③ 不许动 `empties` 判定、`rejected` 赋值语义、C-15 闸与去重键、C-14 消解字段（那是 C-14b）；④ 四份提交 JSON 必须仍逐字节不变（沿用 C-16 判据 e）；⑤ 常规三道纪律：`tests/conftest.py` 守卫不动、样例集不入库、不真调模型。
 - **验收判据（开箱可跑，架构师独立复放）**：
   - a) **三处调用点各有用例**：`repair`／`ingress`／`base` 各造一条悬空引用 ⇒ 三处都产生 `parse_drops` 且 `author` 各不相同、reason 文案与 `base` 逐字一致；
-  - b) **单实现**：`grep -rn "未给出 segment_id" app/` **恰一处**（字面量只许活在共用函数里）；
+  - b) **单实现**：`grep -rn "未给出 segment_id" app/` **恰一处**（字面量只许活在共用函数里），且**那一行必须落在共用函数体内**。⚠ **我出单时这条写过空——改动前实测就已恰 1 处**（`app/agents/base.py:167` 的内联 dict 里），只看计数等于 1 什么都不证明。改下面两条做判别式（都实测过改前基线，开箱可跑）：
+    - b1) `grep -rn "dossier.parse_drops.append" app/` **改前 2 处**（`base.py:162`＋`171`）⇒ **改后恰 1 处**，且在共用函数体内；三个 agent 文件不许再各自 append。
+    - b2) `grep -rn '"quote_head": str(ev' app/` **改前 2 处**（同 `base.py:166`＋`175`）⇒ **改后恰 1 处**（留痕形状字段只许由共用函数造；`app/pipeline.py:920` 那一处是**读方**，本单不动、不计入）。
   - c) **第三格**：证据条目给成字符串 ⇒ 新增一格独立 reason（不与前两格混），且该结论仍 `insufficient`、不变式不再走「成因缺失（异常）」；
   - d) **入卷路径闭环**：MCP `ingest_external_judgment` 悬空引用跑一遍 ⇒ 报告里该条出现在**留痕节**、且**不含**「成因缺失（异常）」字样；
   - e) **测试真空已填**：`test_d` 里必须有一条 **insufficient 数 ≥1** 的断言（当前是 0，跑绿也不算测到）；
   - f) **零分数变化**：沿用 C-16 判据 e（同一 dossier 加／不加 `parse_drops` 四份提交 JSON 逐字节相同）＋六案上帝 `7/6/6/7/6` ×6、白卷 `0/0/0/0/0` ×6；
   - g) **边界不许漂**：`git diff <本单基线> -- app/core/{conflicts,human_ops,citation_check}.py app/export/official.py app/pipeline.py cases/` 全空（本单不该再碰 `pipeline.py`）；
-  - k) 回归：`pytest tests -q` 连跑 5 次全绿，passed ≥ **605＋新增用例数**（基线以 §1「入库版本 `bb35fb9`（C-14b 收口），605 passed」为准）。
+  - k) 回归：`pytest tests -q` 连跑 5 次全绿，passed ≥ **606＋新增用例数**（基线以 §1「入库版本＝C-22 收口后的 `712f2c4`，606 passed」为准；**10-18 晚更正：本单出单时写的是 605/`bb35fb9`，那档已被 C-22 顶掉，别拿 605 当下限**）。
 - **工时**：约 0.15 天（共用函数＋三处复用 0.08、第三格 0.02、测试钉实 0.05）。
-- **撞车点**：`app/agents/{base,repair,ingress}.py`、`app/core/evidence.py`（若函数落这里）、`tests/`。**与 C-14b（已收口 `bb35fb9`）、C-14c、C-18、C-13 都不撞**（不碰 `conflicts.py`／`human_ops.py`／`official.py`／`pipeline.py`／`answer_slots.py`）。排在最前，之后依序 C-18 → C-17 → C-14c → C-13。
+- **撞车点**：`app/agents/{base,repair,ingress}.py`、`app/core/evidence.py`（若函数落这里）、`tests/`。**与 C-14b（已收口 `bb35fb9`）、C-14c、C-18、C-13 都不撞**（不碰 `conflicts.py`／`human_ops.py`／`official.py`／`pipeline.py`／`answer_slots.py`）。**队列第一**，之后依序 C-18 → C-17 → C-14c → C-19 → C-20 → C-21 → C-25 → C-13 → C-23（与 C-7 同批）→ C-24（全序见 §5.0 顶部框）。
 - **2026-10-18 早新测到的一条背景（不扩大本单范围）**：官方六案真跑里，金标命中的 38 条结论有 **20 条是 `insufficient` 态、进不了 `confidence.json`**（见 §1「⑦」）。
   ⚠ ⑧ 作废的是 ⑦ 里那组「一致率 22%／78%」的**对齐口径**，**这条泄漏本身不受影响、仍然成立**，别连着一起丢掉。
   这**不是本单要修的**——本单只管「结论留下、证据掉了要留痕」；`insufficient` 不进置信度提交物是导出层现有设计，改它要另立单并经用户拍。
@@ -2578,12 +2580,13 @@ git status 里没有官方样例集任何文件。
 先复算我单里三条实测：a) 用 ingest_external_judgment 造一条悬空引用，看 parse_drops 是不是空、报告是不是只印「成因缺失（异常）」；b) 跑一次 pytest 后再数 cases/*/out*/report.json 里含 parse_drops 键的份数（我测的是 3 份／34，也就是"历史留档"正在被自己的测试改写）。数不一致就停下来报，别按先验改数。
 只做三件：1) 把两格 reason 的留痕抽成一处共用函数，base／repair／ingress 三个调用点复用，author 各取各的身份；2) 补第三格——证据条目不是 dict 时的独立 reason，不许并进前两格；外层 item 非法导致整条结论消失那种不在本单范围；3) 把 test_d 钉实：显式造一条有 insufficient 的跑，断"全部有成因"，并且别再拿被自己改写的 out_offline 当历史基准（首选把 demo 产物写到 tmp_path）。
 不许放宽阈值、不许动 segment() 语义、不许动 empties 判定与 rejected 赋值语义、不许碰 conflicts.py／human_ops.py／export/official.py／pipeline.py／citation_check.py、四份提交 JSON 必须仍逐字节相同。
-判据 a/b/c/d/e/f/g/k 逐条自己跑再回写，尤其 b（grep 字面量恰一处）和 c（第三格文案不与前两格混）。
-基线：docs/HANDOFF.md §1「入库版本 bb35fb9，605 passed」（C-14b 刚收口，别再用 c68fe30/599），连跑 5 次全绿；样例集不许入库、不许真调模型。
+判据 a/b1/b2/c/d/e/f/g/k 逐条自己跑再回写。b 是我单里修过的一处空判据（改前"未给出 segment_id"就已恰 1 处，光数它等于 1 什么都不证明），判别式改用 b1（改前 dossier.parse_drops.append 2 处⇒改后恰 1 处）和 b2（改前 "quote_head": str(ev 2 处⇒改后恰 1 处），两条都要实测改前改后两个数并贴出来。c（第三格文案不与前两格混）同样要贴真输出。
+基线：docs/HANDOFF.md §1「入库版本＝C-22 收口后的 712f2c4，606 passed」（我 10-18 晚已把本单里旧的 605/bb35fb9 更正掉，别按 605 算下限），连跑 5 次全绿；样例集不许入库、不许真调模型。
 不要提交，不要 push，验收归 Qoder。
 ```
 
 - **状态**：已出单，待开工（**队列第一＝C-14b 已收口，现在可开工**）。｜ **验收**：—
+- **2026-10-18 晚交工前修单两处（都是我的错，留痕）**：① **判据 b 是空判据**——我写「字面量恰一处」当改后证据，实测**改前就已恰一处**（`base.py:167`），执行方什么都不做也能跑绿 ⇒ 换成 b1/b2 两条带**改前基线数**（各 2 处）的判别式。② **基线数 stale**——单里 k 与提示词都写 `bb35fb9／605 passed`，那档已被 C-22 顶掉，§1 现记 **606**；不改的话执行方会把回归下限读低 1 条。
 
 ### C-17｜「零结论交付」必须分得清是哪种零：空交付要留原始响应节选＋形态分类，整条结论消失的那一格也要留痕（2026-10-17 出单，**队列第三**，0.2 天）
 
