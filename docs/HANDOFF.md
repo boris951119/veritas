@@ -247,6 +247,7 @@ C-13＝推理树补中间结论层＋依赖边＋依赖传播（1 天，对着�
   置信度从三分量升为**四分量**（强度 × 覆盖 × 一致性 × **链完整性**），六环判定复用各道零 LLM 机械闸的输出，分数与警示同源。
 - 测试：**入库版本 `pytest tests -q` = 610 passed**（零失败零跳，约 4.5 秒；C-16b 收口轮架构师连跑 5 次全绿，每次 610）。
   ⚠ **但这只是"本机工作树"的数**——`git clone` 出来的干净树**还要看 `mcp` 装没装**（它不在 `requirements.txt`）：装了 ⇒ **`1 failed, 608 passed, 1 skipped`**（红＝`test_mcp_server` 依赖未入库的 `out/report.json`；跳＝`test_premise_check` 依赖未入库的恒兴案卷）；未装 ⇒ **`608 passed, 2 skipped`、0 failed**（多出来的那条跳是 `test_mcp_server.py:23` 的 `importorskip`）。另有两处 `return` 型静默假绿从没跑过。**`AGENTS.md` 第 2 步的"换机器全绿"要等 C-26 才算真兑现**，别再把这几个数当同一个；**现场顺序也别说错**：第 2 步全绿不代表没事，装了 MCP（第 6 步）回头重跑第 2 步才红。
+  ⇒ **上面这组是"入库版本 `4bcf266`"的数**；C-26 第一轮我已在两份干净克隆复放改后数＝装了 mcp **`611 passed`（0 红 0 跳）**、未装 **`610 passed, 1 skipped`**（改动还在工作树、未入库，所以这两行现在只对"打了 C-26 diff 的树"成立）；**唯一还没兑现的是"十题误报率那格在别人机上有覆盖"**——第一轮那格换成了自参照替身夹具、打回，见 §5 工单 C-26「架构师验收（第一轮）」。
   历史：C-1～C-6 落库时 553，C-9 收口后 559，C-10 收口后仍 559，C-12 收口后 575，C-15 收口后 581，C-14 收口后 592（a–k 十一条新用例），C-16 收口后 599（a–f 七条新用例），C-14b 收口后 605（a–f＋k 六条新用例），C-22 收口后 606（判据 l 那格没加用例，多的 1 条＝金标探针用例 `tests/test_warrant_gate_probe.py`），**C-16b 收口后 610（＋4 条：三处共用／第三格／入卷闭环／回滚正反格）**。
   **C-10（已收口）把 `test_panel_single_failure_degrades` 改成按分析师身份取脚本后，flake 根因已除**：
   架构师独立复放该用例 **200/200 全绿**、全量连跑 5 次均为 **559 passed、0 failed**，且 `git diff --stat app/` 为空（零生产代码改动）。
@@ -383,13 +384,18 @@ C-13＝推理树补中间结论层＋依赖边＋依赖传播（1 天，对着�
    根因同一个——**用例读了没入库的本机产物**。`git ls-files cases | grep -cE 'out[^/]*/report\.json'` ＝ **0**、`grep -c 'user-20261008'` ＝ **0**，
    而 `.gitignore:27-37` 明确排除 `cases/*/out*/`、`out_offline/`、`out_local*/`、`cases/user-*/`。四处与各自表现（**环境定义必须是 `git clone`，"复制工作树"会把未入库的 `cases/user-*` 一起带过去、把 skip 掩盖成 pass**——我第一轮就踩了这个）：
    - `tests/test_mcp_server.py:41` 断 `list_cases` 含 `demo-solid-state`，`app/mcp_server.py:141-144` 只认 `out`／`out_offline` ⇒ **真 clone 必红**；
-   - `tests/test_premise_check.py:127-131` 要恒兴案卷（135 份 PDF／7.1 MB）⇒ 真 clone **显式 skip**（看得见，但别人机上那 10 道真题的误报率钉死格等于没测）；
+   - `tests/test_premise_check.py:127-131` 要恒兴案卷（**135 个文件、PDF 只 8 份**，其余是 json／md／jsonl，7.1 MB；"135 份 PDF"是我先写的错数，执行方按实测更正）⇒ 真 clone **显式 skip**（看得见，但别人机上那 10 道真题的误报率钉死格等于没测）；
    - `tests/test_conflict_pairing.py:96-98`、`tests/test_panel_attrition.py:86-88` 用 `if not path.exists(): return` ⇒ **连 skip 都不打，绿灯是假的**（这两处最坏：文档读起来像有覆盖）。
    复放数（我自己跑，**环境有两个可变维度：树必须 `git clone`，以及 `mcp` 装没装——`mcp` 不在 `requirements.txt`，而 `tests/test_mcp_server.py:23` 有 `importorskip`**）：
    装了 mcp ⇒ 干净 clone `81c9897`＝`2 failed, 603 passed, 1 skipped`、`5885eb7`＝`1 failed, 608 passed, 1 skipped`（**本轮摘掉了 `test_parse_drops` 那一处**）；
    未装 mcp ⇒ `608 passed, 2 skipped`、**0 failed**。
    ⇒ **`AGENTS.md` 第 2 步「换机器零 failed」这句对外承诺要分两段看：照第 1～2 步装的机器上是绿的，但照第 6 步 `pip install mcp` 之后回头重跑第 2 步就是真红——"部署当天装了 MCP 测试变红"是一条实测过的路径**，C-26 收口前对外承诺不完整。
    **接手前须知**：别拿"我本机 pytest 全绿"当"部署机也全绿"的证据；也别为了让它绿而补造假留档、或把红改成 skip 交差（判据 a 把 failed 与 skipped 一起管，且两格各有一条减法）。
+   **C-26 第一轮验收后的状态（2026-10-19，改动在工作树、未入库）**：①③④ 三处已按自建夹具摘除，我在两份干净克隆里复放到位——
+   装了 mcp `1 failed, 608 passed, 1 skipped` ⇒ **`611 passed`（0 红 0 跳）**、未装 `608 passed, 2 skipped` ⇒ **`610 passed, 1 skipped`（唯一那条＝`test_mcp_server.py:23`）**；
+   `tests/` 里现在只剩两处 `cases/` 引用（`rumor-vs-official`／`bi-delivery-risk`），都指**入库输入** ⇒ **没有第五处**。
+   **但 ② 被打回**：替身案卷的语料＝「题面＋`extract_entities(题面)`」＝**语料必然包含题面全文**，于是这条用例对「误报」这个失效方向不可证伪（真卷在同一处变异下亮 8 盏黄灯、它亮 0 盏）——
+   ⇒ **「换一台机器 pytest 全绿」这句对外承诺，两格数字已经兑现；但「十题误报率钉死」这格在别人机上目前仍是假的**，第二轮见本页末。
 
 ## 5. 待 Cursor 修复工单（Qoder 出验收，双方不口头交接）
 
@@ -464,7 +470,7 @@ C-13＝推理树补中间结论层＋依赖边＋依赖传播（1 天，对着�
 | **C-14b** | **消解记录四处收口**（C-14 复放抓到、根因在我单里）：① `resolution_type` 该由 `decision_path` 优先推导而不是只看 `method`；② 工作台「人工改判」那条路不盖依据＋导出层空 `basis` 不上报缺失；③ 两道闸每次调用重算 4 遍；④ 「少数意见（依规保留）」的 md 断言丢了 | **全部有实测数**：1365 ms／冲突、`omissions=['resolution_type','重启条件']` 独缺 basis、`test_g:190-196` 把 `method=arbitration`＋`path=strength` 钉成期望值 | **已出单（四件，见 §5 该单）**。打在 **3.3 的「依据可核 3 分」＋提交物诚实性**上，且 ① 那一支在真实运行里是常态、离线演示三案恰好一条都没命中 ⇒ 不修就带进答辩 | **已收口**（2026-10-17 第一轮通过，`605 passed ×5`；判据 a/b/c/e/f/k 自建夹具复现、576 格路径分布两棵树逐字相同、四份提交物只有 `conflict_resolution.json` 变 1 行）。**判据 d 半过 ⇒ 四条尾巴折进 C-14c**（人判与机械相反那一格会印假说理、`_stamp` 形参覆写、两份分支规则、三处测试地板） |
 | **C-16** | **用户拍 R-C15-2＝③「改救采纳层」后拆出的第一件**：报告写「资料不足」却查不到为什么不足——`app/agents/base.py:160-161` 在模型给的 `segment_id` 不存在时**静默 `continue` 丢弃整条证据**，结论生来零证据，随后 `app/pipeline.py:705-711` 仍把它标成 insufficient，而 `audit_dossier` 只对现存证据报错 ⇒ **台账零留痕** | **有实测，且推翻了我自己那句前提**：34 份留档 run／活结论 304，零证据 **10 条＝3.3%**，成因**对半**（5 条有打回留痕、5 条没有）；**题级（导出层 `supporting_facts` 会变空那一格）＝0/34** ⇒ 「引文闸枪毙了该采纳的段」只对 5/10，**错的那一半根本没有留痕**。样本全是自有小库案例，0/34 不外推到隐藏集 | **已出单（四件，纯留痕、一条判定不改）**。打在官方 `decks:325`「依据必须可核验」＋主观分 3.3 的「依据可核 3 分」上：评委问「这条为什么不足」，现在答不上来。**③-乙（零采纳时先定向补召）因缺真数暂不发单**——本机 14B 官方六案真跑已在进行中（首案 AI171 每题约 10 分钟，题级发生率待六案齐） | **已收口**（2026-10-17 第一轮复放过，代码 `c68fe30`，`592→599 passed ×5`；判据 a–f＋k 全部自建夹具复现、两棵树上帝／白卷读数逐字相同）。**验收抓到三条尾巴 → 新单 C-16b**：`repair.py:155-156`／`ingress.py:61` 两处同形条件未修（R-C16-1）、`base.py:157` 的 `not isinstance(ev, dict)` 仍静默（R-C16-2）、判据 d 的离线演示格是**真空通过**且「34 份都缺键」跑过一次 pytest 就只剩 31 份（R-C16-3，我的前提 again 不精确） |
 | **C-16b** | **C-16 的同形条件只修了一处**：全仓 grep 显示「`segment_id` 不存在／为空就 `continue`」这条合并条件其实有**三处**——已修的 `base.py`、未修的 **`repair.py:155-156`**（修复环，noncompliant 档真模型必走）、未修的 **`ingress.py:61`**（MCP 第三方入卷）；另加 `base.py:157` 的 `not isinstance(ev, dict)` 一条同段静默丢弃。实测：入卷路径造一条悬空引用 ⇒ `parse_drops==[]`＋结论标 `insufficient`＋报告只剩「成因缺失（异常）」＝**可见但答不出为什么** | **有实测**（架构师复放当场跑出来的三条，见本页顶部 R-C16-1/2/3）；兜底闸有效、缺的是文案与覆盖，不是安全性 | **已出单（三件，0.15 天，仍是纯留痕）**：把两格留痕抽成一处共用函数、三处调用点复用；`not isinstance(ev, dict)` 补第三格 reason；把 `test_d` 的统计对照钉成「样本里必须真有非空 insufficient 且全部有成因」 | **第一轮验收＝打回（2026-10-18）**：a／b1／b2／c／d／e／f／g／k **九条我逐条复放通过**（`609 passed`×5，边界 diff 空，共用函数一处 `evidence.py:375-396`），但抓到两条尾巴 ⇒ **第二轮提示词已附单末**。**R-C16b-1（它的改动引入）**＝修复环被拒时 `_rollback` 不撤留痕，虚增"丢件"行（我走 `run_repair_round` 复放：修复前 证据1/留痕0 ⇒ 修复后 证据1/留痕1，而该结论证据完好）；**R-C16b-2（根因在我单里）**＝我要求 3 让 `test_d` 去数 `cases/*/out*` 的 34 份，实测**这些产物一份都不在 git 里**（`git ls-files` 计数 0），删净后改前改后两版同红 ⇒ 新机器上 `pytest` 会红，撞 `AGENTS.md` 第 2 步的对外承诺（已登记为坑 8）。与 C-18／C-17／C-14c／C-13 都不撞：只碰 `app/agents/{base,repair,ingress}.py`＋`app/core/evidence.py`＋`tests/`＋`scripts/demo_offline.py`。<br>**第二轮验收＝通过收口（2026-10-19 凌晨，代码落本地 commit）**：a／b1／b2／c／d／e／f／g／i／j／k **十一条我逐条自己复放**（含六案上帝／白卷我重跑一遍：`7/6/6/7/6`×6、`0/0/0/0/0`×6、上限 96.0%／100.0%、`unresolved=0`；`610 passed`×5；禁改六文件＋`cases/`＋`conftest`＋`score_official.py` 零 diff；回滚正反两格走 `run_repair_round` 复现）。**判据 h 不成立＝我的判据写错两处**（没量改前就写"全绿"＋环境定义"复制到 /tmp"会掩盖未入库依赖）⇒ 执行方的 §3.4 质疑**我接受**，残差 1 红＋1 跳＋**2 处静默假绿**（这两处最坏：别人机上从没跑过，绿灯是假的）一次数全，归 **新单 C-26** |
-| **C-26** | **「换一台机器 pytest 全绿」这句对外承诺现在不成立**：四处测试读**未入库**的本机产物——`test_mcp_server.py:41`（`app/mcp_server.py:141-144` 只认 `out`／`out_offline`）真 clone **必红**；`test_premise_check.py:128`（skip 在 `:130`）要 `cases/user-*/`（135 份 PDF／7.1 MB，`.gitignore:37` 排除）真 clone **显式 skip**；**`test_conflict_pairing.py:97` 与 `test_panel_attrition.py:87` 用 `if not path.exists(): return`＝静默假绿，连 skip 都不打**（最坏的一处：文档读起来像有覆盖，实际从没有） | **有实测，改前数已量，且分两格**（mcp 不在 `requirements.txt` ⇒ 环境有"装／未装"两个可变维度）：格一装了 mcp＝`5885eb7` 干净 clone **`1 failed, 608 passed, 1 skipped`**（`81c9897` 是 2 红 1 跳）；格二未装 mcp＝**`608 passed, 2 skipped`、0 failed** ⇒「第 2 步全绿、装了 MCP 回头跑才红」这条路径已实测证实；`git ls-files cases` 里 `out*/report.json` 计数 **0**、`user-20261008` 计数 **0**；`list_cases` 默认根目录下实测 **4** 条（含未入库的恒兴案卷） | **已出单（五件，0.2 天）**：`_cases_root()` 开 `VERITAS_CASES_ROOT`（默认不变）＋三处测试改 tmp 自建夹具＋两处静默 `return` 禁止保留＋`demo_offline.py` 那个没人走的 `out_root` 分支要么钉住要么还原＋`AGENTS.md` 两处 stale 数（`553 passed`）按两格翻新。判据 a 拆 **a1／a2 两格减法**（我第一版写"干净 clone ⇒ 0 failed 0 skipped"在未装 mcp 的机器上不可达，发单前自查抓到） | ✅ **队列第一＝用户 2026-10-19 拍「按照你的建议来」＋「改」（授权碰 `app/mcp_server.py`，范围只 `_cases_root()` 一个函数体）**。开工提示词已附单末，可发 |
+| **C-26** | **「换一台机器 pytest 全绿」这句对外承诺现在不成立**：四处测试读**未入库**的本机产物——`test_mcp_server.py:41`（`app/mcp_server.py:141-144` 只认 `out`／`out_offline`）真 clone **必红**；`test_premise_check.py:128`（skip 在 `:130`）要 `cases/user-*/`（**135 个文件、PDF 只 8 份**／7.1 MB，`.gitignore:37` 排除）真 clone **显式 skip**；**`test_conflict_pairing.py:97` 与 `test_panel_attrition.py:87` 用 `if not path.exists(): return`＝静默假绿，连 skip 都不打**（最坏的一处：文档读起来像有覆盖，实际从没有） | **有实测，改前数已量，且分两格**（mcp 不在 `requirements.txt` ⇒ 环境有"装／未装"两个可变维度）：格一装了 mcp＝`5885eb7` 干净 clone **`1 failed, 608 passed, 1 skipped`**（`81c9897` 是 2 红 1 跳）；格二未装 mcp＝**`608 passed, 2 skipped`、0 failed** ⇒「第 2 步全绿、装了 MCP 回头跑才红」这条路径已实测证实；`git ls-files cases` 里 `out*/report.json` 计数 **0**、`user-20261008` 计数 **0**；`list_cases` 默认根目录下实测 **4** 条（含未入库的恒兴案卷） | **已出单（五件，0.2 天）**：`_cases_root()` 开 `VERITAS_CASES_ROOT`（默认不变）＋三处测试改 tmp 自建夹具＋两处静默 `return` 禁止保留＋`demo_offline.py` 那个没人走的 `out_root` 分支要么钉住要么还原＋`AGENTS.md` 两处 stale 数（`553 passed`）按两格翻新。判据 a 拆 **a1／a2 两格减法**（我第一版写"干净 clone ⇒ 0 failed 0 skipped"在未装 mcp 的机器上不可达，发单前自查抓到） | ✅ **队列第一＝用户 2026-10-19 拍「按照你的建议来」＋「改」（授权碰 `app/mcp_server.py`，范围只 `_cases_root()` 一个函数体）**。**第一轮验收＝九条过、一条打回（2026-10-19）**：a1/a2/b/c/d/f/g/h 我逐条自己复放（两格改后 `611`／`610+1跳` 与它报的数逐字相同），① 生产口与 ③④ demo 钩子都到位；**打回 R-C26-1＝② 的替身案卷语料由 `extract_entities(题面)` 生成⇒语料含题面全文⇒对"误报"不可证伪**（同一处变异下真卷亮 8 盏、它亮 0 盏）⇒ 第二轮提示词已附单末，只改那一格 |
 | **C-17** | **结论级的"报告说不足、台账查不到依据"，且代价大一个量级**：分析师 0 结论时链上只留一句 `empty: 零结论交付`——**五种不同病因（缺 `conclusions` 键／是字符串数组／元素 `statement` 全空／空数组／顶层数组）在台账里塌成同一句话**，第六种（`JSONDecodeError`，模型在 JSON 字符串里写裸换行）只留行号不留内容；`app/agents/base.py:141-143` 那条 `continue` 让**整条结论消失**且零留痕（＝C-16b 明确排除在外的那一格）；`call_log` 只记 `content_chars` 不记内容 ⇒ **模型到底返回了什么，一个字都没留** | **有实测（14B 真跑＋零 LLM 桩）**：刘翔案三题 × 三分析师＝**九次调用全部零结论**（整案 2.3／2.4／2.5 归零）；34 份历史链 `analyst_done 88 / analyst_failed 13`＝**12.9% 的分析师调用没交付**，其中 **8 条是裸换行**；`analyst_empty` 自有历史 **0 次**、第一次触发就在官方案上。**超窗与零结论相关但未证因果**（超 407／767 tok 两题交付 9／17 条，超 1,869／2,184／4,917 tok 三题整题归零）。**14B A/B 已回（2026-10-17，同题 q_003、原始响应留档 `/tmp/c17/raw/`）：V1 装箱 19,000 字（prompt 30,862 字、超窗 1,869 tok）→ 0 条，模型把 `conclusions` 写成了「对象」（`{"date_conflict": {...}}`）而非数组；V2 装箱 8,000 字（prompt 18,460 字、不超窗）→ 同题交 15 条、`conclusions` 是正常数组 ⇒ 超窗与零结论不再只是相关，且多出**第七种形态：`conclusions` 是 dict**（`data.get("conclusions") or []` 之后遍历 dict 拿到的是 key 字符串，`isinstance(item, dict)` 为假 ⇒ 逐条 `continue`，同样塌成那一句 `empty: 零结论交付`）。**六案整案扫描另证：**柬泰边境案也是九次全部 `analyst_empty`（不是孤例）** | **已出单（四件，0.2 天，零判定变更）**：空交付形态分类＋原文节选进案卷（`empty_runs`）、`base.py:142` 那一格进 `parse_drops`（`conclusion_id=""`）、`analyst_failed` 载荷加 `content_head`、报告首屏带形态并新增明细节。**形态至少七格**（A/B 回来后新增：`conclusions` 是 **dict** 而非 list）。**明确禁止放宽 `extract_json`／动装箱预算窗口**——那是判定输入变更，须另立一张并经用户点头（**该单已于同日用户拍板后成立＝C-19**，与本单零重叠） | **队列第三＝C-16b、C-18 之后可开工**（**硬依赖 C-16b**：同改 `app/agents/base.py` 且要复用其共用函数；**与 C-18 撞 `pipeline.py`**（本单只动链事件区与渲染区，C-18 动更早的早退路口 ⇒ C-18 先）；排 **C-13 之前**：同改 `pipeline.py` 渲染区；与 C-14b／C-14c 不撞）。判据 d 是本单最容易写错的一格：`empty_runs` 与空 `conclusion_id` 的留痕**都不许进 `cause_ids`**，否则把 C-16 刚立的不变式糊掉 |
 | **C-18** | **主体澄清闸在非企业案卷上误触发＝一次早退让一整案归零**：`app/core/answer_slots.py:502-548` 的 `_issuers_in_dossier` 拿全文正则扫「…股份有限公司」，≥2 家且题面未点名就出「对象主体未锁定」，`app/pipeline.py:304-336` 见 `clarify` 非空**直接早退、一次模型都不调**（`skipped=[probe,panel,repair,collab,chair]`）⇒ 官方提交层只看到"缺 3 道题" | **14B 六案整案扫描实测**：六案里**只有吉隆口岸泥石流案命中**（8 家公司名、**每家只出现在 1 份信源**，全是新闻里顺带点名的数据方），命中即 **3/3 题 0 交付、五项全 0**；其余五案 0 家。⇒ 命中率＝1/6 案、3/18 题。**我原本想给的"按信源份数设阈值"被自己的实测证伪**：`cases/bi-delivery-risk`（6 份信源）里真正的发行人也是每家 1 份，份数分不开"主体"与"顺带提及" ⇒ 禁止拿它当判据 | **已出单（三件，0.15 天）：口径已拍＝①＋② 附加收紧**（判据形状＝企业题面 AND 标题级机构数≥2 AND 题面未点名），＋早退必须显影到提交层，＋`test_answer_slots.py` 该响的仍响（反向格不许削弱） | **队列第二＝C-16b 收口即开工**（开工提示词已在单内）；撞 `pipeline.py` 早退区 ⇒ 排在 C-17 之前、C-16b 之后 |
 | **C-14c** | **人工改判的类型别再声称"按强度裁决"**（C-14b 复放抓到、根因在我单里）：`mechanical_decision_path` 回答的是"机械会怎么走"（前提＝胜方已被强制到强侧），`human_ops.py:70-76` 却拿它给人给的胜方盖章 ⇒ 人判与机械相反时提交物出现「按证据强度裁决」＋「败方强度 0.5000 ＜ 胜方 0.1500」这种**假不等式**且 `omissions=[]`；另加 `_stamp` 形参覆写、两份分支规则、三处测试地板 | **有实测**（架构师复放当场跑出，`/tmp/c14b/override_probe.py`）：影响面 **0/44** 条历史链事件（`conflict_override` 0 次）＝**只在演示现场点按钮时出现**，但答辩点按钮是高频动作；576 格扫描证 `mechanical` 与 `prefer` 今天逐格等价（漂移是维护风险不是当下 bug） | **已出单（四件，0.15 天）：口径已拍＝①**（路径加 `human_override`、类型落「其他」、说理写"机械判断原为 X"、假不等式加自检）＋变量改名＋规则合一＋三处测试地板 | **队列第四＝C-14b 之后、C-13 之前**（C-13 要读消解记录）；与 C-16b／C-18／C-17 都不撞（只有 `official.py` 一句与 C-18、`pipeline.py` 一行与 C-17 同文件不同区） |
@@ -3816,7 +3822,7 @@ _MAX_SOURCES 除了这三处还有没有第四个消费者（自己 grep 一遍�
   git ls-files cases | grep -c 'user-20261008'           → 0
   .gitignore:27-37 显式忽略 cases/*/out/、out_offline/、out_ab_*/、out_hetero_*/、out_local*/、out_live*/、cases/user-*/
   ```
-- **四处依赖与各自形状**（详见 C-16b 验收节末那张清点表）：① `tests/test_mcp_server.py:41` 断 `list_cases` 里有 `demo-solid-state`，而 `app/mcp_server.py:141-144` 只认 `out/report.json`／`out_offline/report.json` ⇒ **真 clone 必红**；② `tests/test_premise_check.py:127-131` 要 `cases/user-20261008-144308`（**135 份 PDF／7.1 MB，`.gitignore:37 cases/user-*/` 明确排除**）⇒ 真 clone **显式 skip**；③ `tests/test_conflict_pairing.py:96-98` 与 ④ `tests/test_panel_attrition.py:86-88` 用 `if not path.exists(): return` ⇒ **真 clone 里连 skip 都不打，绿灯是假的**（这两处严重度最高：读 HANDOFF 的人会以为"错配会被挡"和"编队减员会显影"有覆盖，实际从没有）。
+- **四处依赖与各自形状**（详见 C-16b 验收节末那张清点表）：① `tests/test_mcp_server.py:41` 断 `list_cases` 里有 `demo-solid-state`，而 `app/mcp_server.py:141-144` 只认 `out/report.json`／`out_offline/report.json` ⇒ **真 clone 必红**；② `tests/test_premise_check.py:127-131` 要 `cases/user-20261008-144308`（**135 个文件、PDF 只 8 份（其余 json／md／jsonl）／7.1 MB，`.gitignore:37 cases/user-*/` 明确排除**；我先写成了"135 份 PDF"，执行方按实测更正）⇒ 真 clone **显式 skip**；③ `tests/test_conflict_pairing.py:96-98` 与 ④ `tests/test_panel_attrition.py:86-88` 用 `if not path.exists(): return` ⇒ **真 clone 里连 skip 都不打，绿灯是假的**（这两处严重度最高：读 HANDOFF 的人会以为"错配会被挡"和"编队减员会显影"有覆盖，实际从没有）。
 - **要求（四件，① 需用户点头才能碰生产）**：
   1. **给 `app/mcp_server.py:29 _cases_root()` 开一个可配口**（`VERITAS_CASES_ROOT`，默认值不变＝`_REPO_ROOT/"cases"`），随后 `tests/test_mcp_server.py` 在 `tmp_path` 自建一个带 `out/report.json` 的假案例目录、把服务指过去 ⇒ 六个工具的签名、权限口径（`clearance` 过滤）、路径穿越校验（`:36-42`）**一个都不许动**，只加"根目录从哪来"。✅ **用户 2026-10-19 已点头授权碰这个文件**，授权范围**只有 `_cases_root()` 那一个函数体**（判据 c 用 diff 兜住）；越出这个函数体就是范围错，按 §3 停手回报。**不要求**把 `VERITAS_CASES_ROOT` 塞进 `Settings`——已核 `_cases_root()` 现在不读 `Settings`（该文件确实用它，但只在 `run_analyst`／`run_judgment` 取网关配置那两处），塞进去等于多造一个消费者与一处漂移；若执行方认为该进 `Settings`，按 §3.4 回报再议。
   2. ③④ 两处 `return` 改成**自建夹具**（tmp_path 里造最小 dossier，复现"跨主体错配应被挡"与"编队减员 0 条交付应显影"这两种形状），**或**在拿不到夹具时至少 `pytest.skip` 显影——**禁止继续 `return`**（假绿比 skip 坏，skip 至少进 `-rs` 账）。
@@ -3859,11 +3865,145 @@ _MAX_SOURCES 除了这三处还有没有第四个消费者（自己 grep 一遍�
 动完把「动了哪些文件＋新增用例名＋两次 pytest 尾行＋判据 a1/a2/b/d 的改前改后四个数」写回工单 C-26 的状态行，不要只写在对话里。不要提交，不要 push，验收归 Qoder。
 ```
 
+- **状态**：**已改完（2026-10-19），待架构师验收**。前提：`_cases_root` 仍是硬写仓库 `cases`，`list_cases` 仍只认 `out`／`out_offline`，穿越校验在 `:36-42`；两处 `if not path.exists(): return` 与一处 `if not case.is_dir():` 属实；十题列表长度 10；`mcp` 不在 `requirements.txt`。恒兴目录被 `cases/user-*/` 排除、体积 7.1MB，但是 **135 个文件里只有 8 份 PDF**（其余是 json／md／jsonl），不是 135 份 PDF。改前 clone（`4bcf266`）格一 `1 failed, 608 passed, 1 skipped`，格二 `608 passed, 2 skipped`；`git ls-files` 的 `out*/report.json` 与 `user-20261008` 都是 0。
+  动过：`app/mcp_server.py`（只动 `_cases_root`）、`tests/test_mcp_server.py`、`tests/test_conflict_pairing.py`、`tests/test_panel_attrition.py`、`tests/test_premise_check.py`、`tests/test_demo_offline_root.py`（新）、`AGENTS.md`、`docs/HANDOFF.md`。新增用例：`test_demo_offline_out_root_writes_reports`。另两处静默 `return` 改名为 `test_saved_cross_subject_pairs_are_blocked`、`test_zero_delivery_analyst_is_marked`。
+  判据 a1：改前 `1 failed, 608 passed, 1 skipped` ⇒ 改后干净 clone `611 passed`（0 failed、0 skipped）。a2：改前 `608 passed, 2 skipped` ⇒ 改后 `610 passed, 1 skipped`，唯一跳是 `tests/test_mcp_server.py:23` 的 `importorskip`。b：`if not path.exists():` 改前 2 ⇒ 改后 0；`if not case.is_dir():` 改前 1 ⇒ 改后 0。d：不设 env 时仍是 4 条，逐字 `bi-delivery-risk/out`、`demo-solid-state/out`、`rumor-vs-official/out_offline`、`user-20261008-144308/out_offline`。本机 `pytest tests -q` 五次全绿，末次 `611 passed in 4.45s`。上帝六案 `7/6/6/7/6`，白卷 `0/0/0/0/0`。未提交。｜ **验收**：**第一轮＝九条过、一条打回（详见下面「架构师验收（第一轮）」）；② 那格返工，其余不许再动。**
+
+- **架构师验收（第一轮，2026-10-19 当场复放，每一条我自己跑）**
+  复放件＝两份干净克隆：`/tmp/c26-before`（HEAD `4bcf266` 原样）与 `/tmp/c26-acc`（HEAD ＋ `git diff` 补丁 ＋ 手工复制 `tests/test_demo_offline_root.py`，因为它是未跟踪新文件）；
+  "未装 mcp"用 `/tmp/nomp2/sitecustomize.py`（`sys.meta_path` 插 finder 对 `mcp`／`mcp.*` 抛 **`ModuleNotFoundError`**，脚本自带自检、抛错种类不对就直接退出）；
+  两份克隆都验过 `app.__file__` 落在克隆里，不是误测工作树。
+
+  | 判据 | 我量到的（改前 ⇒ 改后） | 结论 |
+  |---|---|---|
+  | a1 装了 mcp | `1 failed, 608 passed, 1 skipped` ⇒ **`611 passed`**，`-rs` 里 0 红 0 跳 | ✅ |
+  | a2 未装 mcp | `608 passed, 2 skipped` ⇒ **`610 passed, 1 skipped`**，唯一那条＝`tests/test_mcp_server.py:23: could not import 'mcp'` | ✅ |
+  | b | `grep -rnF 'if not path.exists():'` 2⇒**0**、`grep -rnF 'if not case.is_dir():'` 1⇒**0**（`tests/` 与 `app/` 一起扫，零命中） | ✅ |
+  | c | `app/mcp_server.py` 的 diff 只有 `_cases_root()` 体内 4 行；六个工具名齐（`list_cases/get_report/verify_chain/ingest_external/run_analyst/run_judgment`）；`_out_dir_of` 零 diff；**反向格实测** `get_report("../secret")` 与 `get_report("a/b")` 都回 `{"error": …}`、服务不炸 | ✅ |
+  | d | 本机工作树、不设 env ⇒ `list_cases` 实测 **4 条逐字相同**；设 `VERITAS_CASES_ROOT=/tmp/c26_alt_root` ⇒ 只列 `alt-case/out`（口子真通，不是摆设）；值写成空白串 ⇒ 回退默认 | ✅ |
+  | e | `assert len(questions) == 10` 在、题面一条没少；**但替身案卷不可证伪 ⇒ 见 R-C26-1** | ❌ |
+  | f | 同一份 `/tmp/god/replay2.py` 在两份克隆各跑一遍：六案上帝 **`7/6/6/7/6`**、白卷 **`0/0/0/0/0`**、上限 96.0%／100.0%×5、`0 条金标 fact_id 无法解析`——**改前改后逐字相同** | ✅ |
+  | g | 边界＝7 改 1 新，`app/core/`／`app/agents/`／`pipeline.py`／`app/export/`／`cases/`／`tests/conftest.py` **零 diff**；跑完 `git status --short cases/` 空、克隆里 `out*/report.json` 计数 **0**（新用例只写 `tmp_path`）；未提交、未 push | ✅ |
+  | h | 本机连跑五次 `611／611／611／611／611`（＝入库基线 610 ＋ 1 条新用例） | ✅ |
+
+  顺带把"有没有第五处"数全了：`tests/` 里现在只剩两处 `cases/` 引用——`cases/rumor-vs-official`（入库 5 个文件）与 `cases/bi-delivery-risk`（入库 7 个），**都指入库输入、不是产物** ⇒ 四处依赖归零，**没有第五处**。
+  另核实两处细节：`test_conflict_pairing` 的新夹具是手写四条跨主体结论＋2 组配对、断 `validate_conflict` 返回**非空问题清单**（＝真被挡），`len(cross) >= 2` 是有效非空守卫；`test_panel_attrition` 的新夹具 `assert len(fails) >= 1` 同样是真守卫，且 `"仅 1 人署名"` 走的是 `panel_attrition.py:100-106` 的**按结论署名人数**脚注、不是编队人数，所以 2 人交付的夹具仍能钉这句。
+
+- **R-C26-1（打回；根因在我单里——要求 3 那句"每题一条支撑即可复现误报率断言"我写成了让执行方拿被测函数自己造料）**：
+  ② 的替身案卷 `text = q + "\n" + "\n".join(extract_entities(q))`——**语料整段包含题面原文**，于是任何从题面切出来的 token 必然字面命中；
+  这条 `assert bad == []` 对「**误报**」这个失效方向**不可证伪**（＝我禁的"拿列表跟自己比"换了个形状：语料由抽取器的输出反推）。
+  三种口径同批 10 题（候选实体 35 个）实测：
+
+  | 案卷 | 未变异黄灯 | 变异 B（`_covered` 丢 60% shingle 容错） | 变异 A（删"归母净利润"简称桥接） |
+  |---|---|---|---|
+  | 交付的替身夹具 | 0 | **0 ⇒ 测不出** | **0 ⇒ 测不出** |
+  | 真卷 `cases/user-20261008-144308` | 0 | **8 盏／7 题** | **5 盏** |
+  | 我重写的手写案卷（见下） | 0 | **4 盏／3 题** | 0（我的文案里字面有"归母净利润"，本来就不依赖桥接） |
+
+  ⇒ 改前那条读真卷的用例**能**抓到这两个回归，改后**抓不到**＝这格覆盖面净减，而减掉的正是它唯一的本职（钉死误报率）。
+  次一处：`assert len(questions) >= 1` 守的是题面列表（同函数 `== 10` 已钉死），**没守住真会静默变绿的那格**——`premise_flags` 在空语料时直接返回 `[]`（`test_empty_corpus_is_not_checked_ok` 写明）。我把夹具量过了：35 个候选、575 字、9 `checked_ok`＋1 `exempt_template`，这次没空；但守卫位置错了，按下面第 2 件改。
+
+- **要求 3 欠的那半句，由我补：真卷读数＝架构师本机测量件（不进用例、不进 `scripts/`）**
+  恒兴案卷 = **135 个文件（PDF 只 8 份，其余 json／md／jsonl）／7.1 MB**，`.gitignore:37 cases/user-*/` 排除、`git ls-files` 计数 0 ⇒ 永远不入库。
+  读数（10-19 当场跑，脚本随本条内联，`ast` 直接从用例里取 `questions`、不手抄）：**信源 8／段落 123／语料 30,342 字／候选实体 35／黄灯 0**，status 分布 `checked_ok` 9 ＋ `exempt_template` 1（q9 股东模板题＝免核，不是漏抽）。
+  ```python
+  # 架构机复核件：手写案卷是否等价于真卷、以及它能不能被变异证伪（零 LLM、只读本机案卷）
+  # 用法：PYTHONPATH=. .venv/bin/python /tmp/rev.py ；变异行取消注释即可
+  import ast, sys
+  sys.path.insert(0, ".")
+  from pathlib import Path
+  from app.core.evidence import Dossier, Segment, Source, SourceType
+  import app.core.premise_check as pc
+  from app.ingest.case_loader import load_case
+
+  fn = "test_hengxing_scorecard_ten_questions_zero_false_premise"
+  tree = ast.parse(open("tests/test_premise_check.py", encoding="utf-8").read())
+  qs = next(ast.literal_eval(n.value)
+            for f in [x for x in ast.walk(tree) if isinstance(x, ast.FunctionDef) and x.name == fn]
+            for n in ast.walk(f)
+            if isinstance(n, ast.Assign) and getattr(n.targets[0], "id", "") == "questions")
+  assert len(qs) == 10, len(qs)
+
+  def cell(dossier_for):            # 一格＝同一批题换一个案卷
+      tot_c = tot_f = 0
+      for q in qs:
+          d = dossier_for(q)
+          rec = pc.premise_record(d)
+          tot_c += rec["n_candidates"]; tot_f += rec["n_flags"]
+      return tot_c, tot_f
+
+  base = load_case(Path("cases/user-20261008-144308"))          # 真卷（本机专属，不入库）
+  def real(q):
+      d = Dossier(question=q)
+      for s in base.sources:
+          d.add_source(s)
+      return d
+
+  hand = Source.create("手写案卷", SourceType.REPORT, id="SRC1")
+  # PARAS ＝ 本单末「附：手写案卷」那 10 段，抄进这个变量即可（我不把它同时塞进仓库两处）
+  for i, p in enumerate(PARAS, start=1):
+      hand.segments.append(Segment(id=f"doc_001#p{i}", source_id="SRC1", text=p))
+  def built(q):
+      d = Dossier(question=q); d.add_source(hand); return d
+
+  # 变异 B（证伪件）：把 60% shingle 容错换成严格字面命中
+  # _o = pc._covered
+  # pc._covered = lambda t, c: (t.lower() in c.lower()) if any(x.isascii() for x in t) \
+  #     else (t in c or pc._synonym_covered(t, c))
+
+  print("真卷 候选/黄灯 =", cell(real))
+  print("手写 候选/黄灯 =", cell(built))
+  ```
+  **实测输出**（同一份 `/tmp/c26_fix/review.py`，三格＝真卷／手写案卷／第一轮那份"语料＝题面＋`extract_entities(题面)`"的自参照夹具；口径＝候选实体数／黄灯盏数／亮灯题数）：
+
+  | | 未变异 | 变异 B（丢 60% shingle 容错） |
+  |---|---|---|
+  | 真卷 | `(35, 0, 0)` | `(35, 8, 7)` |
+  | 手写案卷（本轮要求换成它） | `(35, 0, 0)` | `(35, 4, 3)` |
+  | 自参照夹具（第一轮交付） | `(35, 0, 0)` | **`(35, 0, 0)` ⇒ 绿得没有任何信息** |
+  **这条读数是"手写案卷够不够格当真卷替身"的唯一证据**，所以第二轮的判据不是"绿"，而是"在变异 B 下发红"。
+
+- **要求（第二轮，只做一件＝② 那一格；其余七件已复放通过，别顺手重构）**
+  1. 替身案卷改成**手写段落**：不许由 `extract_entities` 生成、不许整段抄题面。可直接用我这份（已验：10 段／607 字／黄灯 0／候选 35）：
+     「恒兴新材2023年度报告：公司主营业务为有机酮类产品与电解液相关材料，有机酮类产品的销量与销售金额见分产品情况表。」…（十段全文见本条末的 `附：手写案卷`）
+  2. 守卫换到 `premise_record`：逐题 `status ∈ {"checked_ok", "exempt_template"}`（**不许**出现 `no_corpus`／`no_candidates`），并断**候选总数 ≥ 30**（我量 35）；删掉那句 `assert len(questions) >= 1`。
+  3. 加**反向格**：同批题 ×「完全无关的一段话，只讲天气。」⇒ 断**亮灯题数 ≥ 8**（我量 9/10；q9 是模板题，本就不亮）。
+  4. 手写案卷不许写进真卷的财务数字（题面本身保留，那是已入库文本）；`app/` 一个字节不许动。
+  **附：手写案卷**（我用的就是这 10 段，抄过去即可；自己重写必须过判据 e2）
+  ```
+  恒兴新材2023年度报告：公司主营业务为有机酮类产品与电解液相关材料，有机酮类产品的销量与销售金额见分产品情况表。
+  恒兴新材2025年度实现归属于上市公司股东的净利润，具体数额见合并利润表，母公司净利润另有披露。
+  公司2023年度利润分配预案：拟向全体股东每10股派发现金红利，并以资本公积转增股本，转增后总股本相应变化，现金分红占归母净利润比例见预案说明。
+  2024年1月10日至12日，恒兴新材股票连续三个交易日收盘价格涨幅偏离值累计达到异常波动标准；公司于公告中说明，经核查，截至公告披露日不存在应披露未披露的重大事项。
+  恒兴新材2024年年度报告显示，营业收入与归母净利润较上年变动，归母净利润同比变动幅度见主要财务数据。
+  恒兴新材2024年披露过多轮股份回购方案，各轮回购金额区间与用途不同：首轮用于注销减少注册资本，后续用于员工持股计划，披露时间依次列示。
+  恒兴新材完成工商变更后，股票代码保持不变，注册资本、法定代表人、成立日期以登记机关核准记载为准，变更公告已披露。
+  恒兴新材2024年半年度报告披露营业收入与归母净利润，归母净利润同比变动情况见董事会报告。
+  截至2024年半年度报告期末，恒兴新材第一大股东及其持股数量、持股比例见前十名股东持股情况表。
+  据2023年年度报告摘要，公司所处行业为新材料行业，主营产品包括有机酮类产品与电解液材料；摘要引用行业协会统计的2023年全球锂离子电池电解液出货量与同比增速。
+  ```
+- **验收判据（第二轮）**：
+  - e1 用例内 0 黄灯 ＋ `premise_record` 状态守卫 ＋ 候选总数 ≥ 30（改前我量＝35，非空）；
+  - **e2 主判据（证伪件）**：临时把 `app/core/premise_check.py::_covered` 改成严格字面命中（丢 60% shingle 容错），跑这一条用例 ⇒ **必须变红**；
+    改前的替身夹具在这个变异下黄灯 **0**（＝它测不出），真卷黄灯 **8 盏／7 题**，上面那份手写案卷黄灯 **4 盏／3 题**（利润分配预案那题 2 盏＋营业收入 1 盏＋工商变更完成 1 盏）⇒ 改后必须复现"红"，**贴出红在哪几题、几条黄灯，然后把变异原样还原（`git diff -- app/core/premise_check.py` 必须为空）**；
+  - e3 反向格 ≥ 8 题亮灯（改前我量 9）；
+  - h′ 全量回归：本机 `pytest tests -q` 五次仍 `611`（这轮不加用例，加的是断言；若为反向格新开一条则 612）。**`AGENTS.md` 第 2 步那句"入库基线 611"是收口数——本轮若变成 612，报给我，收口时我改，执行方不动 `AGENTS.md`**；
+  - g′ 边界：`git diff -- app/` **为空**，本轮只许动 `tests/test_premise_check.py` ＋ HANDOFF 状态行。
+- **开工提示词（第二轮，✅ 可发）**：
+
+```
+读 docs/dev-protocol.md（§3.0 前提核查、§3 问题分流、§3.4 质疑通道、§6 三道纪律）和 docs/HANDOFF.md §5 工单 C-26「架构师验收（第一轮）」，你是执行工程师。第一轮九条判据我已复放通过、代码暂不入库；本轮只打回一条 R-C26-1，范围只有 tests/test_premise_check.py 里 test_hengxing_scorecard_ten_questions_zero_false_premise 这一格，其余七件（app/mcp_server.py、AGENTS.md、demo_offline 用例、③④ 夹具、两个 grep 归零）一律别动、别顺手重构。
+问题在于：你造的替身案卷 text = q + "\n" + "\n".join(extract_entities(q))，语料整段包含题面原文，于是任何从题面切出来的 token 必然字面命中——这条 assert bad == [] 对"误报"这个方向不可证伪。我拿三个口径同批 10 题（候选 35 个）实测：你的夹具未变异 0 黄灯、把 _covered 改成严格字面命中（丢 60% shingle 容错）后仍 0 黄灯；真卷未变异 0、同一变异下 8 黄灯；删掉归母净利润简称桥接的变异下真卷 5 黄灯、你的夹具仍 0。改前那条读真卷的用例抓得到这两个回归，你改完抓不到＝覆盖面净减。
+只做三件：1) 案卷换成手写段落——不许由 extract_entities 生成、不许整段抄题面；单末「附：手写案卷」那 10 段我验过（607 字、黄灯 0、候选 35、变异 B 下 4 盏亮在 3 题上），直接抄或自己重写都行，但必须过第 3 件那个证伪件；不要写进真卷的财务数字。2) 守卫换位置：逐题断 premise_record(d)["status"] 属于 {"checked_ok","exempt_template"}（不许 no_corpus／no_candidates——premise_flags 在空语料时直接返回 []，test_empty_corpus_is_not_checked_ok 写明了），并断候选总数 >= 30（我量 35）；删掉 assert len(questions) >= 1，那句同函数里 == 10 已经钉过。3) 加反向格：同批 10 题配一段无关文本（"完全无关的一段话，只讲天气。"）断亮灯题数 >= 8（我量 9/10，q9 是股东模板题本就不亮）。
+判据 e2 是本轮主判据，做法：临时把 app/core/premise_check.py 的 _covered 改成严格字面命中（非 ASCII 分支 return token in corpus，_synonym_covered 仍要调），跑这一条用例必须变红，把红在哪几题、几条黄灯写回状态行，然后把变异原样还原并确认 git diff -- app/core/premise_check.py 为空。不许用"再放宽断言"的方式过 e2，也不许把 e2 写成本轮交付内容。
+边界：git diff -- app/ 必须为空（本轮生产零改动）；cases/ 一个字节不许动、样例集不入库、不真调模型、conftest 守卫不动。全量回归连跑 5 次仍 611（若为反向格新开一条则 612）。动完把三件的数写回工单 C-26 的状态行，不要提交、不要 push，验收归 Qoder。
+```
+
 ## 6. 索引
 
 | 想知道什么 | 看哪儿 |
 |---|---|
-| 怎么把系统跑起来 | `AGENTS.md`（现场部署指引，通过判据 553 passed） |
+| 怎么把系统跑起来 | `AGENTS.md`（现场部署指引，第 2 步判据按两格写：未装 mcp ⇒ 零 failed＋1 跳；装完 mcp ⇒ 零 failed 零 skipped） |
 | 官方要什么、怎么评分 | `docs/contest-briefing-2026-10-14.md` |
 | 我们判场景判成了什么、七条结论 | `docs/scenario-review-2026-10-14.md` |
 | 每批改动的问题/决策/验证/开放项 | `docs/dev-journal.md`（§22 是最新一批） |
