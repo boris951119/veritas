@@ -3281,7 +3281,7 @@ c 那格有三面（现分布高档为 0 ＋夹具造出高档 ＋同一产物�
 ```
 读 docs/dev-protocol.md（§3.0 前提核查、§3 问题分流、§3.4 质疑通道、§6 三道纪律）和 docs/HANDOFF.md §5 的工单 C-22（含第一轮你的回写＋架构师验收结论），你是执行工程师。
 第二轮只做一件事：把 warrant_theme 的判定改成两条规则的**并集**——① 现行主题词脱节（词表命中才进判定），② 你第一轮写的措辞零交集（无阈值）；任一成立即亮黄灯，_DENIAL_CUES/_REBUTTAL_CUES 的否定式放行仍在两条之前。不许再把 _THEME_GROUPS 删掉（那张表还有 coverage_gap/premise_check/chain_integrity/gate_applicability 四个消费者，已确认）。
-顺序：① 先按判据 d 的改前那一步，在当前工作树（仍是第一轮那版实现）之外用 `git stash` 回到 HEAD 跑一次 score_artifacts 全量存 /tmp/s4runs/c22_scale_before.txt，再 stash pop 回来——注意别把第一轮的改动弄丢；② 实现并集；③ 跑判据 e（bi 必须 ⊇ 那 14 条 id，少一条就是没接住旧半）＋a/b/c/f/l/m/k。
+顺序：① 先按判据 d 的改前那一步，用 `git stash` 回到 HEAD 跑一次 score_artifacts 全量存 `/tmp/s4runs/c22_scale_before.txt`，再回来——你第一轮那版本**架构师已另存保险**：`/tmp/s4runs/c22_round1.patch`＋`/tmp/s4runs/probe_warrant_gate.py`＋`/tmp/s4runs/test_warrant_gate_probe.py`（弄丢可复原，但别拿它当基线）；② 实现并集；③ 跑判据 e（bi 必须 ⊇ 那 14 条 id，少一条就是没接住旧半）＋a/b/c/f/l/m/k。
 判据 m 别漏：第一轮为让零交集通过而改掉的那些测试夹具句子（test_warrant_coverage / test_chain_integrity / test_score_artifacts 里「账目统计截止日」那些），逐字改回 HEAD 原文——并集下它们本该绿，反过来迁就实现就是假绿。
 flag 的 value 分两型（旧半给主题组名、新半给「零交集」），detail 要写明是哪条规则触发；audit.py 的 KIND_LABEL 可以改成中性的「理由与主张脱节」（纯显示，已核无闸读它）。docs/proposal.md 局限性那行按单里要求 3 的新措辞重写，数字用实测的 3.1／44.2／0 亮／14。
 红线不变：不许动 app/core/skills.py 注入文案、不许改 confidence.py/export/official.py/pipeline.py/material.py/chain_integrity.py、不许拿黄灯删证据或过滤 supporting_facts、不许照金标议题造新词表或加词、不许加任何模型调用、不许 --save 重存刻度。
