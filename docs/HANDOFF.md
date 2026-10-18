@@ -2452,11 +2452,14 @@ git status 里没有官方样例集任何文件。
   - k) 回归：`pytest tests -q` 连跑 5 次全绿，passed ≥ **605＋新增用例数**（基线以 §1「入库版本 `bb35fb9`（C-14b 收口），605 passed」为准）。
 - **工时**：约 0.15 天（共用函数＋三处复用 0.08、第三格 0.02、测试钉实 0.05）。
 - **撞车点**：`app/agents/{base,repair,ingress}.py`、`app/core/evidence.py`（若函数落这里）、`tests/`。**与 C-14b（已收口 `bb35fb9`）、C-14c、C-18、C-13 都不撞**（不碰 `conflicts.py`／`human_ops.py`／`official.py`／`pipeline.py`／`answer_slots.py`）。排在最前，之后依序 C-18 → C-17 → C-14c → C-13。
+- **2026-10-18 早新测到的一条背景（不扩大本单范围）**：官方六案真跑里，金标命中的 38 条结论有 **20 条是 `insufficient` 态、进不了 `confidence.json`**（见 §1「⑦」）。
+  这**不是本单要修的**——本单只管「结论留下、证据掉了要留痕」；`insufficient` 不进置信度提交物是导出层现有设计，改它要另立单并经用户拍。
+  执行方若在自己的用例里发现「留痕齐了、但提交物里没这条」，那是**另一张单的事，按 §3 报给我、不许自己扩范围**。
 - **开工提示词**：
 
 ```
 读 docs/dev-protocol.md（重点 §3.0 前提核查、§3 问题分流、§3.4 质疑通道、§6 三道纪律）和 docs/HANDOFF.md §5 的工单 C-16b，你是执行工程师。
-先做 §3.0 前提核查，三处逐个打开文件核，对不上就按 §3 分流、别照抄：1) app/agents/repair.py:152-156 与 app/agents/ingress.py:61 是不是和 base.py 改前逐字同形的合并条件；2) 全仓 grep "dossier.segment(" 数清楚同形条件到底几处，与我单里写的三处对一下；3) tests/test_parse_drops.py::test_d 里那句 assert len(insuff)==0 是不是让下面的成因遍历变成空转。
+先做 §3.0 前提核查，三处逐个打开文件核，对不上就按 §3 分流、别照抄：1) app/agents/repair.py:153-156 与 app/agents/ingress.py:58-61 是不是和 base.py 改前逐字同形的合并条件（行号我 2026-10-18 早复核过）；2) 全仓 grep "dossier.segment(" 数清楚同形条件到底几处，与我单里写的三处对一下；3) tests/test_parse_drops.py:202 那句 assert len(insuff)==0 是不是让下面的成因遍历变成空转。
 先复算我单里三条实测：a) 用 ingest_external_judgment 造一条悬空引用，看 parse_drops 是不是空、报告是不是只印「成因缺失（异常）」；b) 跑一次 pytest 后再数 cases/*/out*/report.json 里含 parse_drops 键的份数（我测的是 3 份／34，也就是"历史留档"正在被自己的测试改写）。数不一致就停下来报，别按先验改数。
 只做三件：1) 把两格 reason 的留痕抽成一处共用函数，base／repair／ingress 三个调用点复用，author 各取各的身份；2) 补第三格——证据条目不是 dict 时的独立 reason，不许并进前两格；外层 item 非法导致整条结论消失那种不在本单范围；3) 把 test_d 钉实：显式造一条有 insufficient 的跑，断"全部有成因"，并且别再拿被自己改写的 out_offline 当历史基准（首选把 demo 产物写到 tmp_path）。
 不许放宽阈值、不许动 segment() 语义、不许动 empties 判定与 rejected 赋值语义、不许碰 conflicts.py／human_ops.py／export/official.py／pipeline.py／citation_check.py、四份提交 JSON 必须仍逐字节相同。
