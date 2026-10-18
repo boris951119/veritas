@@ -17,7 +17,9 @@ from dataclasses import dataclass, field
 
 from app.agents.base import Agent, Analyst, extract_json
 from app.core.citation_check import check_evidence
-from app.core.evidence import Conclusion, Dossier, EvidenceLevel, EvidenceNode, RelationKind
+from app.core.evidence import (
+    Conclusion, Dossier, EvidenceLevel, EvidenceNode, RelationKind, record_parse_drop,
+)
 from app.core.numeric_check import audit_counting, audit_numeric
 from app.llm.model_client import ModelClient
 
@@ -43,12 +45,14 @@ class _Snapshot:
     statement: str
     evidences: list[EvidenceNode]
     evidence_ids: list[str]
+    n_parse_drops: int
 
 
 def _snapshot(dossier: Dossier, con: Conclusion) -> _Snapshot:
     return _Snapshot(statement=con.statement,
                      evidences=[copy.deepcopy(e) for e in dossier.evidences_of(con.id)],
-                     evidence_ids=list(con.evidence_ids))
+                     evidence_ids=list(con.evidence_ids),
+                     n_parse_drops=len(dossier.parse_drops))
 
 
 def _rollback(dossier: Dossier, con: Conclusion, snap: _Snapshot) -> None:
@@ -57,6 +61,7 @@ def _rollback(dossier: Dossier, con: Conclusion, snap: _Snapshot) -> None:
     dossier.evidences.extend(snap.evidences)
     con.evidence_ids = list(snap.evidence_ids)
     con.statement = snap.statement
+    del dossier.parse_drops[snap.n_parse_drops:]
 
 
 def _conclusion_flags(dossier: Dossier, conclusion_id: str) -> list[dict]:
@@ -151,9 +156,20 @@ def _apply_repair(dossier: Dossier, con: Conclusion, data: dict) -> None:
     derived = Analyst._derived_note(item)
     for ev in item.get("evidence") or []:
         if not isinstance(ev, dict):
+            record_parse_drop(
+                dossier, conclusion_id=con.id, author=con.author,
+                ev=ev, kind="not_object")
             continue
         seg_ids = [str(ev.get("segment_id") or "").strip()]
-        if not seg_ids[0] or dossier.segment(seg_ids[0]) is None:
+        if not seg_ids[0]:
+            record_parse_drop(
+                dossier, conclusion_id=con.id, author=con.author,
+                ev=ev, kind="missing_id")
+            continue
+        if dossier.segment(seg_ids[0]) is None:
+            record_parse_drop(
+                dossier, conclusion_id=con.id, author=con.author,
+                ev=ev, kind="missing_segment", segment_id=seg_ids[0])
             continue
         try:
             relation = RelationKind(str(ev.get("relation") or "correlation"))

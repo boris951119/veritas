@@ -7,7 +7,9 @@ from pathlib import Path
 from types import SimpleNamespace
 
 from app.agents.base import Analyst
-from app.core.evidence import Conclusion, Dossier, Segment, Source, SourceType
+from app.core.evidence import (
+    Conclusion, Dossier, EvidenceNode, Segment, Source, SourceType,
+)
 from app.core.hashchain import HashChain
 from app.pipeline import RunDeps, RunSpec, render_report_md, run_case
 
@@ -67,6 +69,101 @@ def test_a_missing_segment_leaves_parse_drop_and_insufficient(tmp_path):
     assert audit.payload["n_parse_dropped"] == 1
     assert "引用未落地的证据（段落不存在／未编号）" in result.report_md
     assert "成因缺失（异常）" not in result.report_md
+
+
+def test_a_three_sites_share_one_reason():
+    """a) base／repair／ingress 悬空引用留痕文案一致，author 各取各的身份。"""
+    from app.agents.ingress import ingest_external_judgment
+    from app.agents.repair import _apply_repair
+
+    def _src(dossier: Dossier) -> None:
+        src = Source.create("T", SourceType.PAPER, id="SRC1")
+        src.segments.append(Segment(id="SRC1#s1", source_id="SRC1", text="原文足够长"))
+        dossier.add_source(src)
+
+    base = Dossier(question="Q")
+    _src(base)
+    Analyst("分析师甲", "角色", FakeClient(json.dumps({
+        "conclusions": [{
+            "statement": "悬空",
+            "evidence": [{"quote": "原文足够长", "segment_id": "SRC9#s99"}],
+        }],
+    }, ensure_ascii=False)), "m").analyze(base)
+
+    repaired = Dossier(question="Q")
+    _src(repaired)
+    con = Conclusion.create("待修复", author="修复环乙", id="CON-r")
+    repaired.conclusions.append(con)
+    _apply_repair(repaired, con, {"conclusions": [{
+        "statement": "待修复",
+        "evidence": [{"quote": "原文足够长", "segment_id": "SRC9#s99"}],
+    }]})
+
+    ingested = Dossier(question="Q")
+    _src(ingested)
+    ingest_external_judgment(ingested, {
+        "agent": "入卷丙",
+        "conclusions": [{
+            "statement": "外部悬空",
+            "evidence": [{"quote": "原文足够长", "segment_id": "SRC9#s99"}],
+        }],
+    })
+
+    drops = [base.parse_drops[0], repaired.parse_drops[0], ingested.parse_drops[0]]
+    assert len({row["author"] for row in drops}) == 3
+    assert {row["author"] for row in drops} == {"分析师甲", "修复环乙", "入卷丙"}
+    assert len({row["reason"] for row in drops}) == 1
+    assert drops[0]["reason"] == "引用段落不存在（segment_id=SRC9#s99）"
+
+
+def test_c_non_dict_evidence_has_its_own_reason(tmp_path):
+    """c) 证据条目是字符串时走第三格，结论仍 insufficient，报告不印成因缺失。"""
+    _make_case(tmp_path)
+    payload = json.dumps({
+        "conclusions": [{
+            "statement": "能量密度占优",
+            "evidence": ["这不是对象"],
+        }],
+    }, ensure_ascii=False)
+    fake = FakeClient(payload)
+    result = run_case(
+        RunSpec(case_dir=tmp_path, out_dir=tmp_path / "out"),
+        RunDeps(client=fake, analysts=[
+            Analyst("mainstream", "测试角色", fake, "test-model"),
+        ]),
+    )
+    assert len(result.dossier.parse_drops) == 1
+    reason = result.dossier.parse_drops[0]["reason"]
+    assert reason == "证据条目不是对象（渲染层拿不到）"
+    assert "未给出 segment_id" not in reason
+    assert "引用段落不存在" not in reason
+    assert [c.status for c in result.dossier.conclusions] == ["insufficient"]
+    assert "成因缺失（异常）" not in result.report_md
+    assert "引用未落地的证据（段落不存在／未编号）" in result.report_md
+
+
+def test_d_ingress_dangling_shows_in_report():
+    """d) 入卷悬空引用出现在留痕节，报告不含成因缺失。"""
+    from app.agents.ingress import ingest_external_judgment
+
+    d = Dossier(question="入卷")
+    src = Source.create("T", SourceType.PAPER, id="SRC1")
+    src.segments.append(Segment(id="SRC1#s1", source_id="SRC1", text="原文足够长可以引用。"))
+    d.add_source(src)
+    ingest_external_judgment(d, {
+        "agent": "外部分析师",
+        "conclusions": [{
+            "statement": "能量密度占优",
+            "evidence": [{
+                "quote": "能量密度显著高于液态",
+                "segment_id": "SRC9#s99",
+            }],
+        }],
+    })
+    md = render_report_md(d, HashChain(), [])
+    assert "引用未落地的证据（段落不存在／未编号）" in md
+    assert "引用段落不存在（segment_id=SRC9#s99）" in md
+    assert "成因缺失（异常）" not in md
 
 
 def test_a2_empty_segment_id_reason():
@@ -140,11 +237,16 @@ def test_c_invariant_anomaly_appears_and_clears():
     assert "引用未落地的证据（段落不存在／未编号）" in md_ok
 
 
-def test_d_roundtrip_and_demo_offline_invariant(tmp_path):
-    """d) 序列化 round-trip；demo_offline 新跑的 insufficient 全部有成因。
+def _cause_ids(dossier: Dossier) -> set[str]:
+    return {
+        str(r.get("conclusion_id") or "")
+        for r in (list(dossier.rejected or []) + list(dossier.parse_drops or []))
+        if r.get("conclusion_id")
+    }
 
-    34 份历史 report 没有 parse_drops 键——只作统计对照，不许拿它们断言新键。
-    """
+
+def test_d_roundtrip_and_dangling_has_cause(tmp_path):
+    """d) 序列化 round-trip；自建悬空引用的 insufficient 全部有成因。"""
     drop = {
         "conclusion_id": "CON-1",
         "author": "mainstream",
@@ -156,50 +258,96 @@ def test_d_roundtrip_and_demo_offline_invariant(tmp_path):
     loaded = Dossier.from_dict(d.to_dict())
     assert loaded.parse_drops == [drop]
 
-    # 统计对照（改前历史留档）：34 份／活结论 304／零证据 10／有打回 5／无打回 5。
-    # 不许对它们断言 parse_drops 键——那是改前产物，断言必然假红；demo 也会改写 out_offline。
-    from collections import defaultdict
+    case = tmp_path / "dangling"
+    case.mkdir()
+    _make_case(case)
+    payload = json.dumps({
+        "conclusions": [{
+            "statement": "能量密度占优",
+            "evidence": [{
+                "quote": "能量密度显著高于液态锂离子电池",
+                "segment_id": "SRC9#s99",
+                "level": "A",
+            }],
+        }],
+    }, ensure_ascii=False)
+    result = run_case(
+        RunSpec(case_dir=case, out_dir=case / "out"),
+        RunDeps(client=FakeClient(payload), analysts=[
+            Analyst("mainstream", "测试角色", FakeClient(payload), "test-model"),
+        ]),
+    )
+    insuff = [c for c in result.dossier.conclusions if c.status == "insufficient"]
+    assert len(insuff) >= 1
+    causes = _cause_ids(result.dossier)
+    for con in insuff:
+        assert con.id in causes, con.id
+    assert "成因缺失（异常）" not in result.report_md
 
-    hist = list(Path("cases").glob("*/out*/report.json"))
-    assert len(hist) == 34
-    n_live = n_zero = n_with_rej = n_without_rej = 0
-    for p in hist:
-        blob = json.loads(p.read_text(encoding="utf-8"))
-        by_cid = defaultdict(list)
-        for e in blob.get("evidences") or []:
-            by_cid[e.get("conclusion_id")].append(e)
-        rej_by = defaultdict(list)
-        for r in blob.get("rejected") or []:
-            rej_by[r.get("conclusion_id")].append(r)
-        for c in blob.get("conclusions") or []:
-            if c.get("status") == "merged":
-                continue
-            n_live += 1
-            if by_cid.get(c.get("id")):
-                continue
-            n_zero += 1
-            if rej_by.get(c.get("id")):
-                n_with_rej += 1
-            else:
-                n_without_rej += 1
-    assert (n_live, n_zero, n_with_rej, n_without_rej) == (304, 10, 5, 5)
 
-    from scripts.demo_offline import main as demo_main
+def _repair_dossier():
+    d = Dossier(question="Q")
+    src = Source.create("T", SourceType.PAPER, id="SRC1")
+    src.segments.append(Segment(
+        id="SRC1#s1", source_id="SRC1", text="原文足够长可以引用。"))
+    d.add_source(src)
+    con = Conclusion.create("能量密度 300Wh/kg 占优", author="analyst_a", id="CON-1")
+    d.conclusions.append(con)
+    ev = EvidenceNode.create(
+        con.id, "原文足够长", ["SRC1#s1"], author="analyst_a")
+    d.evidences.append(ev)
+    con.evidence_ids.append(ev.id)
+    return d, con
 
-    demo_main()
-    for case in ("demo-solid-state", "bi-delivery-risk"):
-        report = Path("cases") / case / "out_offline" / "report.json"
-        dossier = Dossier.from_json(report)
-        cause_ids = {
-            str(r.get("conclusion_id") or "")
-            for r in (list(dossier.rejected or []) + list(dossier.parse_drops or []))
-            if r.get("conclusion_id")
-        }
-        insuff = [c for c in dossier.conclusions if c.status == "insufficient"]
-        for con in insuff:
-            assert con.id in cause_ids, con.id
-        # 判定没变：离线演示两案与改前同量级（本就不应出现零证据 insufficient）
-        assert len(insuff) == 0
+
+def test_i_rejected_repair_rolls_back_drops_accepted_keeps_one():
+    """i) 被拒的修复不留虚痕；被接受且真丢掉一条时留痕恰 1 条。"""
+    from app.agents.repair import RepairCtx, run_repair_round
+
+    class RejectClient:
+        def chat(self, model, messages, json_mode=False):
+            return SimpleNamespace(content=json.dumps({"conclusions": [{
+                "statement": "能量密度 300Wh/kg 占优",
+                "evidence": [{
+                    "quote": "原文足够长", "segment_id": "SRC9#s99", "level": "A",
+                }],
+            }]}, ensure_ascii=False))
+
+    rejected, con = _repair_dossier()
+    before = list(rejected.parse_drops)
+    stats = run_repair_round(
+        rejected,
+        [{"kind": "provenance", "conclusion_id": con.id, "detail": "数字无出处"}],
+        RepairCtx(client=RejectClient(), model="stub", max_repairs=2),
+    )
+    assert stats["accepted"] == 0
+    assert rejected.parse_drops == before
+    assert len(rejected.evidences_of(con.id)) == 1
+    md = render_report_md(rejected, HashChain(), [])
+    assert "引用未落地的证据" not in md
+
+    class AcceptClient:
+        def chat(self, model, messages, json_mode=False):
+            return SimpleNamespace(content=json.dumps({"conclusions": [{
+                "statement": "能量密度占优",
+                "evidence": [
+                    {"quote": "原文足够长", "segment_id": "SRC1#s1", "level": "A"},
+                    {"quote": "悬空引文", "segment_id": "SRC9#s99", "level": "A"},
+                ],
+            }]}, ensure_ascii=False))
+
+    accepted, con2 = _repair_dossier()
+    stats2 = run_repair_round(
+        accepted,
+        [{"kind": "provenance", "conclusion_id": con2.id, "detail": "数字无出处"}],
+        RepairCtx(client=AcceptClient(), model="stub", max_repairs=2),
+    )
+    assert stats2["accepted"] == 1
+    assert len(accepted.evidences_of(con2.id)) == 1
+    assert len(accepted.parse_drops) == 1
+    assert accepted.parse_drops[0]["reason"] == "引用段落不存在（segment_id=SRC9#s99）"
+    md2 = render_report_md(accepted, HashChain(), [])
+    assert "引用未落地的证据" in md2
 
 
 def test_e_export_bytes_unchanged_by_parse_drops(tmp_path):

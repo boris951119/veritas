@@ -266,8 +266,8 @@ class Dossier:
     panel: list[str] = field(default_factory=list)  # 参与研判的分析师名
     # 被引文核对打回的证据清单（EvidenceRef dict + problems；持久化供工作台展示）
     rejected: list[dict] = field(default_factory=list)
-    # 物化时引用段落不存在／未给出 segment_id 的静默丢弃留痕（与 rejected 分家：
-    # pipeline 会对 rejected 整体赋值，解析期写进 rejected 会被盖掉）
+    # 物化时证据没落地的丢弃留痕（三格 reason 见 record_parse_drop）
+    # （与 rejected 分家：pipeline 会对 rejected 整体赋值，解析期写进 rejected 会被盖掉）
     parse_drops: list[dict] = field(default_factory=list)
     # 摄取阶段披露：解析失败/空文件/扫描件/含图未解析（输入夹层「标」职能）
     ingest_notes: list[dict] = field(default_factory=list)
@@ -370,3 +370,27 @@ class Dossier:
     @classmethod
     def from_json(cls, path: Path) -> "Dossier":
         return cls.from_dict(json.loads(Path(path).read_text(encoding="utf-8")))
+
+
+def record_parse_drop(
+    dossier: Dossier, *, conclusion_id: str, author: str, ev, kind: str,
+    segment_id: str = "",
+) -> None:
+    """结论留下、证据没落地时的留痕。三格 reason 只在这里写。"""
+    if kind == "not_object":
+        reason = "证据条目不是对象（渲染层拿不到）"
+        segment_id = ""
+    elif kind == "missing_id":
+        reason = "未给出 segment_id"
+        segment_id = ""
+    elif kind == "missing_segment":
+        reason = f"引用段落不存在（segment_id={segment_id}）"
+    else:
+        raise ValueError(f"未知的 parse_drop 种类：{kind}")
+    dossier.parse_drops.append({
+        "conclusion_id": conclusion_id,
+        "author": author,
+        "segment_id": segment_id,
+        "quote_head": str(ev.get("quote") or "")[:60] if isinstance(ev, dict) else str(ev)[:60],
+        "reason": reason,
+    })

@@ -18,6 +18,7 @@ from app.core.evidence import (
     EvidenceLevel,
     EvidenceNode,
     RelationKind,
+    record_parse_drop,
 )
 
 
@@ -56,9 +57,20 @@ def ingest_external_judgment(dossier: Dossier, payload: dict) -> list[str]:
         new_ids.append(con.id)
         for ev in item.get("evidence") or []:
             if not isinstance(ev, dict):
+                record_parse_drop(
+                    dossier, conclusion_id=con.id, author=agent,
+                    ev=ev, kind="not_object")
                 continue
             seg_id = str(ev.get("segment_id") or "").strip()
-            if not seg_id or dossier.segment(seg_id) is None:
+            if not seg_id:
+                record_parse_drop(
+                    dossier, conclusion_id=con.id, author=agent,
+                    ev=ev, kind="missing_id")
+                continue
+            if dossier.segment(seg_id) is None:
+                record_parse_drop(
+                    dossier, conclusion_id=con.id, author=agent,
+                    ev=ev, kind="missing_segment", segment_id=seg_id)
                 continue
             try:
                 relation = RelationKind(str(ev.get("relation") or "correlation"))
