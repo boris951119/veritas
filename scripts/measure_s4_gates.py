@@ -419,7 +419,7 @@ def _append_jsonl(path: Path, row: dict) -> None:
 
 
 def cmd_time(args) -> int:
-    run_questions("time", None, None, align=args.align, ref=args.ref,
+    run_questions("time", None, args.case, align=args.align, ref=args.ref,
                   fixed=args.budget)
     return 0
 
@@ -549,8 +549,8 @@ def cmd_calib(args) -> int:
             continue
         gold_rows = json.loads((case_dir / "conclusions.json").read_text(encoding="utf-8"))
         band_by_id = _exported_scores(case_run)
-        submitted_by_q = (_submitted_conclusions(case_run)
-                          if getattr(args, "submitted", False) else {})
+        sub_mode = bool(getattr(args, "submitted", False))
+        submitted_by_q = _submitted_conclusions(case_run) if sub_mode else {}
         gold_by_q: dict[str, str] = {}
         for g in gold_rows:
             gold_by_q.setdefault(str(g.get("question_id")), str(g.get("conclusion") or ""))
@@ -567,10 +567,12 @@ def cmd_calib(args) -> int:
             noscore = [c["id"] for c in ours if c["id"] not in band_by_id]
             n_noscore += len(noscore)
             conf_hist.extend(band_by_id[c["id"]] for c in ours if c["id"] in band_by_id)
-            if submitted_by_q:
+            if sub_mode:
                 # 达标行「消解后一致率」的被评对象＝官方收到的那一行（每题一条 headline），
                 # 不是 report 里的内部结论集（每题可多条、含 insufficient／dissent）。两套不许混，
                 # 所以这里是**另一条独立读数**，用 align_scope 标着，内部那版照旧跑得到。
+                # ⚠ 分支条件必须是 `sub_mode` 而不是 `submitted_by_q`（真数踩过）：整案提交物为 `[]`
+                # 时那个字典是空的，按真值判会**悄悄退回内部口径**，一格里混两套读数。
                 sub = submitted_by_q.get(qid) or {"statement": "", "max_score": None, "n_facts": 0}
                 target = [{"id": f"SUB::{qid}", "statement": sub["statement"],
                            "status": "submitted"}]
@@ -582,7 +584,7 @@ def cmd_calib(args) -> int:
                 matched_conf = [band_by_id[m] for m in verdict["matched"]
                                 if m in band_by_id]
             rows.append({"case": case_dir.name, "qid": qid, "n_ours": len(ours),
-                         "align_scope": "submitted" if submitted_by_q else "internal",
+                         "align_scope": "submitted" if sub_mode else "internal",
                          "n_band_rows": len(band_by_id), "n_no_band_row": len(noscore),
                          "gold_chars": len(gold),
                          "agreement": verdict["agreement"],
@@ -712,7 +714,9 @@ def main(argv: list[str] | None = None) -> int:
                         help="窗口反解的线性拟合参考档（默认 19000＝上次真跑实证预算）")
     parser.add_argument("--no-align", dest="align", action="store_false",
                         help="不做窗口对齐，按固定预算跑（复放旧读数时用）")
-    parser.add_argument("--case", default=None, help="solo 只跑案名含该子串的案例（默认刘翔）")
+    parser.add_argument("--case", default=None,
+                        help="只跑案名含该子串的案例（子串匹配）。solo 不给时默认「刘翔」；"
+                             "time 不给＝跑全部六案（C-18 落地后补量单案墙钟用 `time --case 吉隆`）")
     parser.add_argument("--all", dest="all_cases", action="store_true",
                         help="solo 用：跑全部六案（要和 panel 侧凑成同样的 18 个题级单元才有 A/B 分母，"
                              "默认只跑刘翔一案）")
