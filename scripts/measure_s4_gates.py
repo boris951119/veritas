@@ -140,6 +140,21 @@ def _read_report(q_dir: Path) -> dict:
             "dossier": data}
 
 
+def _exported_scores(case_run: Path) -> dict[str, float]:
+    """取**提交物**里的置信度行（`confidence.json` 在案级，只交 majority 态）。
+
+    缺这个文件＝这份产物早于导出层，返回空表而不是拿 report 的字段凑数。"""
+    f = case_run / "confidence.json"
+    if not f.is_file():
+        return {}
+    out: dict[str, float] = {}
+    for row in json.loads(f.read_text(encoding="utf-8")):
+        if isinstance(row, dict) and row.get("conclusion_id") is not None \
+                and isinstance(row.get("score"), (int, float)):
+            out[str(row["conclusion_id"])] = float(row["score"])
+    return out
+
+
 def preflight(st) -> None:
     from app.llm.model_client import ModelClientFactory
 
@@ -297,6 +312,12 @@ def run_questions(label: str, roster: list | None, only_case: str | None,
                 data = result.dossier.to_dict()
                 acc = data.get("accounting") or {}
                 pw = acc.get("prompt_window") or {}
+                # 生产侧的整条提示词只有**超窗时**才写（C-9 丙的设计）：accounting 里没 total_chars，
+                # 字数在同一条 ingest_note（kind=prompt_over_window）里。不超窗那格生产不记 ⇒ 只能印 —，
+                # 拿拟合值顶位会把两套口径混成一行（王虹 q_003 因此印成「拟合 12,173 tok 却超窗 3,396」）。
+                over_note = next((n for n in (data.get("ingest_notes") or [])
+                                  if n.get("kind") == "prompt_over_window"), {})
+                fit_rec = (extra or {}).get("rec") or {}
                 cons = [c for c in (data.get("conclusions") or [])
                         if c.get("status") != "merged"]
                 rows.append({
@@ -305,14 +326,14 @@ def run_questions(label: str, roster: list | None, only_case: str | None,
                     "wall_q_s": wall_q,
                     "elapsed_s": acc.get("elapsed_s"),
                     "n_calls": acc.get("n_calls"), "tokens": acc.get("tokens"),
-                    # 渲染后整条提示词：accounting["prompt_window"] 只在**超窗时**写（C-9 丙的设计），
-                    # 所以不超窗那一格必须用对齐步自己的估算填，否则读数会误报成 0。
-                    "prompt_chars": (extra or {}).get("rec", {}).get("total_chars")
-                    or pw.get("total_chars"),
-                    "est_tokens": (extra or {}).get("rec", {}).get("est_tokens")
-                    or pw.get("est_tokens"),
-                    "overflow_tokens": pw.get("overflow_tokens")
-                    or (extra or {}).get("rec", {}).get("overflow_tokens"),
+                    # 拟合口径（探针替身消息列表，只含 system＋资料块）
+                    "fit_prompt_chars": fit_rec.get("total_chars"),
+                    "fit_est_tokens": fit_rec.get("est_tokens"),
+                    "fit_overflow_tokens": fit_rec.get("overflow_tokens"),
+                    # 生产口径（真发出去的那条，app/agents/base.py:126 仅在超窗时留痕）
+                    "prod_prompt_chars": over_note.get("total_chars"),
+                    "prod_est_tokens": over_note.get("est_tokens") or pw.get("est_tokens"),
+                    "prod_overflow_tokens": pw.get("overflow_tokens"),
                     "align_iters": (extra or {}).get("n_iters"),
                     "n_conclusions": len(cons),
                     "steps": {s.get("id"): s.get("elapsed_s")
@@ -323,8 +344,10 @@ def run_questions(label: str, roster: list | None, only_case: str | None,
                 print(f"  {case_dir.name[:16]:<18} {r['qid']} 题墙钟 {r['wall_q_s']:>7}s "
                       f"(埋点 {r['elapsed_s']}) 预算 {r['budget_used']:>6} 字 "
                       f"调用 {r['n_calls']:>2} tok {r['tokens']:>6} "
-                      f"提示词 {r['prompt_chars'] or 0:>6}字 "
-                      f"超窗 {r['overflow_tokens'] or 0:>5} 结论 {r['n_conclusions']:>2}",
+                      f"拟合 {r['fit_prompt_chars'] or 0:>6}字/{r['fit_est_tokens'] or 0:>6}tok "
+                      f"生产 {r['prod_prompt_chars'] or '—':>6}/"
+                      f"{r['prod_est_tokens'] or '—':>6} "
+                      f"超窗 {r['prod_overflow_tokens'] or 0:>5} 结论 {r['n_conclusions']:>2}",
                       flush=True)
                 runs.append((question, result.dossier))
             export_official(runs, case_out)
@@ -491,11 +514,13 @@ def cmd_calib(args) -> int:
     out_dir.mkdir(parents=True, exist_ok=True)
     rows = []
     conf_hist: list[float] = []
+    n_noscore = 0
     for case_dir in case_dirs():
         case_run = src / case_dir.name
         if not case_run.is_dir():
             continue
         gold_rows = json.loads((case_dir / "conclusions.json").read_text(encoding="utf-8"))
+        band_by_id = _exported_scores(case_run)
         gold_by_q: dict[str, str] = {}
         for g in gold_rows:
             gold_by_q.setdefault(str(g.get("question_id")), str(g.get("conclusion") or ""))
@@ -507,11 +532,16 @@ def cmd_calib(args) -> int:
                 continue
             rep = _read_report(q_dir)
             ours = rep["conclusions"]
-            conf_hist.extend(float(c.get("confidence") or 0) for c in ours)
+            # 置信度只按**提交物里真存在的行**统计：`confidence.json` 在案级、只交 majority 态，
+            # 拿 report 里的 confidence 字段去凑会把没分档的结论当成 0（曾量出 median 0.0／lt_0.4=96 那种假数）
+            noscore = [c["id"] for c in ours if c["id"] not in band_by_id]
+            n_noscore += len(noscore)
+            conf_hist.extend(band_by_id[c["id"]] for c in ours if c["id"] in band_by_id)
             verdict = judge_one(client, MODEL, gold, ours)
-            by_id = {c["id"]: float(c.get("confidence") or 0) for c in ours}
-            matched_conf = [by_id.get(m) for m in verdict["matched"] if m in by_id]
+            by_id = band_by_id
+            matched_conf = [by_id[m] for m in verdict["matched"] if m in by_id]
             rows.append({"case": case_dir.name, "qid": qid, "n_ours": len(ours),
+                         "n_band_rows": len(by_id), "n_no_band_row": len(noscore),
                          "gold_chars": len(gold),
                          "agreement": verdict["agreement"],
                          "matched": verdict["matched"],
@@ -529,7 +559,7 @@ def cmd_calib(args) -> int:
     table = _band_table(rows, conf_hist)
     summary = {"run_dir": str(out_dir), "source": str(src), "rows": rows,
                "bands": table, "n_units": len(rows),
-               "n_ours": len(conf_hist),
+               "n_ours": len(conf_hist), "n_no_band_row": n_noscore,
                "conf_stats": _conf_stats(conf_hist)}
     (out_dir / "summary.json").write_text(
         json.dumps(summary, ensure_ascii=False, indent=1), encoding="utf-8")
@@ -541,7 +571,9 @@ def cmd_calib(args) -> int:
         print(f"{b['label']:<14}{b['n']:>8}{b['agree']:>6}{b['partial']:>8}"
               f"{b['disagree']:>7}{rate:>9}")
     print(f"\n标注单元 n={summary['n_units']}（官方六案每题一条金标结论＝上限 18）；"
-          f"我们交的结论 {summary['n_ours']} 条，置信度分布见 {out_dir / 'calib.md'}")
+          f"分档口径＝提交物 `confidence.json` 的行（只含 majority 态），"
+          f"计入 {summary['n_ours']} 条、无分档行 {summary['n_no_band_row']} 条"
+          f"（minority／conflict 态，导出层本就不交），分布见 {out_dir / 'calib.md'}")
     print("⚠ n<5 的档位没有统计意义；此表只用来定阈值，不是可对外声明的校准正确率。")
     return 0
 
@@ -576,7 +608,8 @@ def _conf_stats(conf: list[float]) -> dict:
 def _write_calib_md(path: Path, s: dict) -> None:
     lines = ["# 置信度分档 × 金标语义一致率（本机 14B 当评判模型）", "",
              f"- 产物来源：`{s['source']}`",
-             f"- 标注单元 n={s['n_units']}；系统交付结论 {s['n_ours']} 条",
+             f"- 标注单元 n={s['n_units']}；分档口径＝提交物 `confidence.json` 的行（只含 majority 态）："
+             f"计入 {s['n_ours']} 条、无分档行 {s.get('n_no_band_row', 0)} 条",
              f"- 置信度分布：{json.dumps(s['conf_stats'], ensure_ascii=False)}", "",
              "| 档位 | 命中该档的金标题数 | 一致 | 部分一致 | 不一致/未答 | 正确率 | 系统结论落该档条数 |",
              "|---|---|---|---|---|---|---|"]
