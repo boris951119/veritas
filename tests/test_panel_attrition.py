@@ -79,29 +79,32 @@ def test_report_renders_attrition_banner_and_solo_label():
     assert "仅 1 人署名" in md
 
 
-def test_knife11_offline_replay_marks_technologist_empty():
-    """用 knife11 署名分布复放：technologist 0 条 → 必显影。"""
-    from pathlib import Path
-
-    path = Path("cases/bi-delivery-risk/out_local14b_knife11/report.json")
-    if not path.exists():
-        return  # 无产物时跳过（CI 可无本地 out）
-    d = Dossier.from_json(path)
+def test_zero_delivery_analyst_is_marked(tmp_path):
+    """自建案卷：technologist 0 条交付 → 减员必须显影。"""
+    d = Dossier(question="客户回款如何？")
+    d.panel = ["mainstream", "redteam", "technologist"]
+    d.conclusions.append(Conclusion.create(
+        "客户B累计回款512万元", author="mainstream", id="CON-1"))
+    d.conclusions.append(Conclusion.create(
+        "回款账存在缺口", author="redteam", id="CON-2"))
+    path = tmp_path / "report.json"
+    d.to_json(path)
+    loaded = Dossier.from_json(path)
     roster = ["mainstream", "redteam", "technologist"]
-    # 按终表署名重建 panel 结果形态（二次定向也算 mainstream 交付）
     by = {n: [] for n in roster}
-    for c in d.conclusions:
+    for c in loaded.conclusions:
         for a in c.author_names():
             if a in by:
                 by[a].append(c)
     results = {**by, "_failures": {}}
     fails = failures_from_panel_results(roster, results)
+    assert len(fails) >= 1
     assert "technologist" in fails
     assert "mainstream" not in fails
-    rec = apply_panel_attrition(d, roster, fails)
-    assert "technologist" not in d.panel
+    rec = apply_panel_attrition(loaded, roster, fails)
+    assert "technologist" not in loaded.panel
     assert "空交付" in rec["note"]
-    md = render_report_md(d, HashChain(), list(d.rejected or []))
+    md = render_report_md(loaded, HashChain(), list(loaded.rejected or []))
     assert "**编队减员**" in md and "technologist（空交付）" in md
     assert "仅 1 人署名" in md
 

@@ -91,22 +91,29 @@ def test_detect_conflicts_recalls_same_subject_polarity():
     assert "补召" in (pairs[0].description or "")
 
 
-def test_knife1_offline_cross_subject_pairs_would_drop():
-    """靶子：knife1 里 2 场 C↔B 真错配，主体闸必须挡。"""
-    path = Path("cases/bi-delivery-risk/out_local14b_knife1/report.json")
-    if not path.exists():
-        return
-    d = Dossier.from_json(path)
+def test_saved_cross_subject_pairs_are_blocked(tmp_path):
+    """落盘的两场跨主体错配，读回来之后主体闸仍必须挡。"""
+    d = _bi_shell()
+    _con(d, "CON-c", "客户C（某头部券商）数据中台项目存在坏账风险")
+    _con(d, "CON-b", "客户B（某地产集团）数据中台项目整体完成率为62%")
+    _con(d, "CON-a", "客户A（某制造企业）存在回款风险")
+    _con(d, "CON-d", "客户D（某物流公司）累计回款无坏账")
+    d.conflicts = [
+        {"a_id": "CON-c", "b_id": "CON-b"},
+        {"a_id": "CON-a", "b_id": "CON-d"},
+    ]
+    path = tmp_path / "report.json"
+    d.to_json(path)
+    loaded = Dossier.from_json(path)
     cross = []
-    for raw in d.conflicts or []:
+    for raw in loaded.conflicts or []:
         a, b = raw.get("a_id"), raw.get("b_id")
-        reason = subject_mismatch_reason(d, a, b)
+        reason = subject_mismatch_reason(loaded, a, b)
         if reason:
             cross.append((a, b, reason))
-    # 产物里至少那两场 C↔B
     assert len(cross) >= 2, cross
     for a, b, _ in cross:
-        assert validate_conflict(ConflictPair(a_id=a, b_id=b), d)
+        assert validate_conflict(ConflictPair(a_id=a, b_id=b), loaded)
 
 
 def test_legacy_no_subject_pairs_still_work():

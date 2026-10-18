@@ -27,6 +27,10 @@ _REPO_ROOT = Path(__file__).resolve().parent.parent
 
 
 def _cases_root() -> Path:
+    import os
+    override = os.environ.get("VERITAS_CASES_ROOT", "").strip()
+    if override:
+        return Path(override)
     return _REPO_ROOT / "cases"
 
 

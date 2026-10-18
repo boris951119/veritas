@@ -119,16 +119,7 @@ def test_question_residue_not_flagged_on_dividend_question():
 
 
 def test_hengxing_scorecard_ten_questions_zero_false_premise():
-    """恒兴 10 道真题 + 满分案卷：前提黄灯应为 0（钉死误报率）。"""
-    from pathlib import Path
-
-    from app.ingest.case_loader import load_case
-
-    case = Path("cases/user-20261008-144308")
-    if not case.is_dir():
-        import pytest
-        pytest.skip("本地无恒兴案卷")
-    base = load_case(case)
+    """十道题面 + 手写段落：前提已核或免核，且无关文本会亮灯。"""
     questions = [
         "恒兴新材 2023 年度有机酮类产品的销量与销售金额分别是多少？",
         "恒兴新材 2025 年全年归属于上市公司股东的净利润是多少？",
@@ -145,15 +136,44 @@ def test_hengxing_scorecard_ten_questions_zero_false_premise():
         "据 2023 年报摘要，公司属于什么行业、主营哪几类产品？"
         "文中引用的 2023 年全球锂离子电池电解液出货量及同比增速是多少？",
     ]
-    bad: list[str] = []
+    paragraphs = [
+        "恒兴新材2023年度报告：公司主营业务为有机酮类产品与电解液相关材料，有机酮类产品的销量与销售金额见分产品情况表。",
+        "恒兴新材2025年度实现归属于上市公司股东的净利润，具体数额见合并利润表，母公司净利润另有披露。",
+        "公司2023年度利润分配预案：拟向全体股东每10股派发现金红利，并以资本公积转增股本，转增后总股本相应变化，现金分红占归母净利润比例见预案说明。",
+        "2024年1月10日至12日，恒兴新材股票连续三个交易日收盘价格涨幅偏离值累计达到异常波动标准；公司于公告中说明，经核查，截至公告披露日不存在应披露未披露的重大事项。",
+        "恒兴新材2024年年度报告显示，营业收入与归母净利润较上年变动，归母净利润同比变动幅度见主要财务数据。",
+        "恒兴新材2024年披露过多轮股份回购方案，各轮回购金额区间与用途不同：首轮用于注销减少注册资本，后续用于员工持股计划，披露时间依次列示。",
+        "恒兴新材完成工商变更后，股票代码保持不变，注册资本、法定代表人、成立日期以登记机关核准记载为准，变更公告已披露。",
+        "恒兴新材2024年半年度报告披露营业收入与归母净利润，归母净利润同比变动情况见董事会报告。",
+        "截至2024年半年度报告期末，恒兴新材第一大股东及其持股数量、持股比例见前十名股东持股情况表。",
+        "据2023年年度报告摘要，公司所处行业为新材料行业，主营产品包括有机酮类产品与电解液材料；摘要引用行业协会统计的2023年全球锂离子电池电解液出货量与同比增速。",
+    ]
+    assert len(questions) == 10
+    src = Source.create("手写案卷", SourceType.REPORT, id="SRC1")
+    for i, text in enumerate(paragraphs, start=1):
+        src.segments.append(Segment(
+            id=f"doc_001#p{i}", source_id="SRC1", text=text))
+    n_candidates = 0
     for q in questions:
         d = Dossier(question=q)
-        for src in base.sources:
-            d.add_source(src)
-        flags = premise_flags(d)
-        if flags:
-            bad.append(f"{q[:24]}… → {[f['value'] for f in flags]}")
-    assert bad == [], "前提误报:\n" + "\n".join(bad)
+        d.add_source(src)
+        rec = premise_record(d)
+        n_candidates += rec["n_candidates"]
+        assert rec["status"] in {"checked_ok", "exempt_template"}, (
+            q[:24], rec["status"], rec["flags"])
+        assert rec["n_flags"] == 0
+    assert n_candidates >= 30
+
+    blank = Source.create("无关", SourceType.OTHER, id="SRC9")
+    blank.segments.append(Segment(
+        id="SRC9#s1", source_id="SRC9", text="完全无关的一段话，只讲天气。"))
+    lit = 0
+    for q in questions:
+        d = Dossier(question=q)
+        d.add_source(blank)
+        if premise_record(d)["n_flags"] > 0:
+            lit += 1
+    assert lit >= 8
 
 
 def test_long_chinese_run_still_yields_candidates():

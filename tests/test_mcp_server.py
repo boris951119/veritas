@@ -21,12 +21,27 @@ def anyio_backend():
 
 async def test_stdio_protocol_list_and_read(tmp_path):
     pytest.importorskip("mcp")          # 现场包默认不装 mcp：跳过而非失败
+    import json as _json
+    import os
+
     from mcp import ClientSession, StdioServerParameters
     from mcp.client.stdio import stdio_client
 
+    from app.core.evidence import Conclusion, Dossier
+
+    root = tmp_path / "cases"
+    case = root / "fixture-alpha" / "out"
+    case.mkdir(parents=True)
+    dossier = Dossier(question="夹具议题")
+    dossier.conclusions.append(Conclusion.create(
+        "夹具结论", author="a", id="CON-1"))
+    dossier.to_json(case / "report.json")
+    env = os.environ.copy()
+    env["VERITAS_CASES_ROOT"] = str(root)
     params = StdioServerParameters(
         command=sys.executable, args=["-m", "app.mcp_server"],
         cwd=str(Path(__file__).resolve().parents[1]),
+        env=env,
     )
     async with stdio_client(params) as (read, write):
         async with ClientSession(read, write) as session:
@@ -38,25 +53,26 @@ async def test_stdio_protocol_list_and_read(tmp_path):
 
             cases = await session.call_tool("list_cases", {})
             text = cases.content[0].text
-            assert "demo-solid-state" in text
+            assert "fixture-alpha" in text
 
             report = await session.call_tool("get_report",
-                                             {"case": "demo-solid-state"})
+                                             {"case": "fixture-alpha"})
             assert "conclusions" in report.content[0].text
             # 第三方 Agent 必须拿到与工作台同口径的「未执行」与 clean——
             # 只看 flags 数就宣布全部核对通过，是不许发生的
-            import json as _json
             payload = _json.loads(report.content[0].text)["audit"]
             assert {"flags", "not_evaluated", "summary",
                     "n_flags", "clean"} <= set(payload)
             assert payload["clean"] is False or not payload["not_evaluated"]
 
             verified = await session.call_tool("verify_chain",
-                                               {"case": "demo-solid-state"})
+                                               {"case": "fixture-alpha"})
             assert '"ok"' in verified.content[0].text
 
             missing = await session.call_tool("get_report", {"case": "nope"})
             assert "error" in missing.content[0].text   # 结构化错误，不炸服务
+            escaped = await session.call_tool("get_report", {"case": "../secret"})
+            assert "error" in escaped.content[0].text
 
 
 def test_build_dossier_and_judgment_summary_with_stubs(tmp_path):
