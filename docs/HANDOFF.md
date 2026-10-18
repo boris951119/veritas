@@ -223,7 +223,10 @@ C-13＝推理树补中间结论层＋依赖边＋依赖传播（1 天，对着�
 
 ## 1. 现在在哪儿
 
-- 最近代码提交：`bb35fb9 feat(冲突消解+工作台+导出): C-14b 第一轮＝架构师独立复放通过收口（599→605），验收新插 C-14c 与 C-18`
+- 最近代码提交：`712f2c4 C-22 第二轮：warrant_theme 改两条规则取并集（主题词脱节 ∪ 措辞零交集）`
+  （9 文件＝2 生产 `app/core/warrant_check.py`／`app/core/audit.py`（仅 `KIND_LABEL`）＋ 1 前端 `web/index.html` ＋ 1 夹具 `tests/test_official_roundtrip.py` ＋ 2 新 `scripts/probe_warrant_gate.py`／`tests/test_warrant_gate_probe.py` ＋ 3 文档）；
+  ⚠ **`app/pipeline.py` 那处旧标签没改**——`tests/test_parse_drops.py::test_f_forbidden_files_untouched` 钉着 `app/pipeline.py`＋`app/core/citation_check.py` 自基线零 diff（我验收时动手改它，用例当场红，已 `git checkout` 还原）⇒ 留给下一张本来就要动 `pipeline.py` 的单（C-13／C-19）；
+  上一笔代码提交 `bb35fb9 feat(冲突消解+工作台+导出): C-14b 第一轮＝架构师独立复放通过收口（599→605），验收新插 C-14c 与 C-18`
   （7 文件＝3 生产 `app/core/conflicts.py`／`app/core/human_ops.py`／`app/export/official.py` ＋ 4 测试 `tests/test_c14b.py`（新）／`test_collab.py`／`test_conflicts_tiebreak.py`／`test_parse_drops.py`）；
   上一笔代码提交 `c68fe30 feat(证据台账+报告): C-16 收口＝引用落不了地的那次丢弃写进 parse_drops，「资料不足」必带成因`（4 文件：`app/agents/base.py`、`app/core/evidence.py`、`app/pipeline.py`、`tests/test_parse_drops.py`（新））；
   上一笔代码提交 `58e8610 feat(冲突消解): C-14 收口＝票数只在强度差 ≤0.20 时破平＋消解记录带可核验依据`（6 文件：`app/core/conflicts.py`、`app/export/official.py`、`app/pipeline.py`、`tests/test_conflicts_tiebreak.py`（新）、`tests/test_collab.py`、`tests/test_official_roundtrip.py`）；
@@ -233,8 +236,8 @@ C-13＝推理树补中间结论层＋依赖边＋依赖传播（1 天，对着�
   再上一笔 `1885131 feat(出口层): 提示词超模型窗口时披露不静默剪头（工单 C-9 只做丙）`；
   再上一笔 `56f1e7e feat(可信度): 推理链完整性进分`——
   置信度从三分量升为**四分量**（强度 × 覆盖 × 一致性 × **链完整性**），六环判定复用各道零 LLM 机械闸的输出，分数与警示同源。
-- 测试：**入库版本 `pytest tests -q` = 605 passed**（零失败，约 5.5 秒；C-14b 收口轮架构师连跑 5 次全绿，每次 605；本轮 2026-10-17 复跑仍 605）。
-  历史：C-1～C-6 落库时 553，C-9 收口后 559，C-10 收口后仍 559，C-12 收口后 575，C-15 收口后 581，C-14 收口后 592（a–k 十一条新用例），C-16 收口后 599（a–f 七条新用例），C-14b 收口后 605（a–f＋k 六条新用例）。
+- 测试：**入库版本 `pytest tests -q` = 606 passed**（零失败，约 4.9 秒；C-22 收口轮架构师连跑 5 次全绿，每次 606）。
+  历史：C-1～C-6 落库时 553，C-9 收口后 559，C-10 收口后仍 559，C-12 收口后 575，C-15 收口后 581，C-14 收口后 592（a–k 十一条新用例），C-16 收口后 599（a–f 七条新用例），C-14b 收口后 605（a–f＋k 六条新用例），**C-22 收口后 606（判据 l 那格没加用例，多的 1 条＝金标探针用例 `tests/test_warrant_gate_probe.py`）**。
   **C-10（已收口）把 `test_panel_single_failure_degrades` 改成按分析师身份取脚本后，flake 根因已除**：
   架构师独立复放该用例 **200/200 全绿**、全量连跑 5 次均为 **559 passed、0 failed**，且 `git diff --stat app/` 为空（零生产代码改动）。
   **此后「连跑 5 次全绿」这个判据不再掷骰子，C-12／C-14／C-13 可以照常引用。**
