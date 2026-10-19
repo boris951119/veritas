@@ -49,8 +49,8 @@ def failures_from_panel_results(
         elif isinstance(cons, list) and len(cons) == 0:
             fails[name] = "empty: 零结论交付"
         elif not isinstance(cons, list):
-            # 防御：非列表当未交付
-            fails[name] = "empty: 未返回结论"
+            # 拿到了东西但不是列表。缺键／None 仍走上面那句。
+            fails[name] = f"empty: 返回非列表（type={type(cons).__name__}）"
     return fails
 
 

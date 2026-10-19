@@ -63,6 +63,47 @@ def extract_json(text: str) -> dict:
     return json.loads(candidate[start:end + 1])
 
 
+_EMPTY_HEAD = 120
+_EMPTY_TAIL = 80
+
+
+def _empty_shape(raw: str, data: dict) -> str:
+    """从真实响应归形态。不改 extract_json，也不改哪些结论入卷。"""
+    text = (raw or "").lstrip()
+    if text.startswith("```"):
+        nl = text.find("\n")
+        text = text[nl + 1:] if nl >= 0 else text
+        text = text.lstrip()
+    if text.startswith("["):
+        return "conclusions 非列表"
+    if not isinstance(data, dict) or "conclusions" not in data:
+        return "缺 conclusions 键"
+    cons = data.get("conclusions")
+    if not isinstance(cons, list):
+        return "conclusions 非列表"
+    if not cons:
+        return "conclusions 空列表"
+    dicts = [x for x in cons if isinstance(x, dict)]
+    if not dicts:
+        return "元素全非对象"
+    if all(not str(x.get("statement") or "").strip() for x in dicts):
+        return "元素有对象但 statement 全空"
+    return "其他"
+
+
+def _empty_run(author: str, model: str, raw: str, data: dict) -> dict:
+    text = raw or ""
+    return {
+        "author": author,
+        "model": model,
+        "content_chars": len(text),
+        "top_keys": sorted(data.keys()) if isinstance(data, dict) else [],
+        "shape": _empty_shape(text, data if isinstance(data, dict) else {}),
+        "head": text[:_EMPTY_HEAD],
+        "tail": text[-_EMPTY_TAIL:] if text else "",
+    }
+
+
 class Analyst(Agent):
     """分析师智能体：独立研判，产出结构化结论 + 逐字引文证据。"""
 
@@ -83,8 +124,10 @@ class Analyst(Agent):
         # settings 在构造时已钉死，这里不再读配置。
         self._disclose_prompt_window(dossier, messages, self.settings)
         response = self.client.chat(self.model, messages, json_mode=True)
-        data = extract_json(response.content)
-        return self._materialize(data, dossier)
+        raw = response.content or ""
+        self.last_raw = raw
+        data = extract_json(raw)
+        return self._materialize(data, dossier, raw=raw)
 
     @staticmethod
     def _disclose_prompt_window(dossier: Dossier, messages: list[dict],
@@ -133,14 +176,23 @@ class Analyst(Agent):
 
     # ------------------------------------------------------------------
 
-    def _materialize(self, data: dict, dossier: Dossier) -> list[Conclusion]:
+    def _materialize(self, data: dict, dossier: Dossier,
+                     raw: str = "") -> list[Conclusion]:
         """模型 JSON → Conclusion + EvidenceNode（登记进案卷）。
 
         证据所指段落存在性在这里做第一道软校验（不存在的段落直接丢弃，
         引文逐字核对留给 citation_check 机械闸）。"""
         conclusions: list[Conclusion] = []
         for item in data.get("conclusions") or []:
-            if not isinstance(item, dict) or not str(item.get("statement", "")).strip():
+            if not isinstance(item, dict):
+                record_parse_drop(
+                    dossier, conclusion_id="", author=self.name,
+                    ev=item, kind="conclusion_not_object")
+                continue
+            if not str(item.get("statement", "")).strip():
+                record_parse_drop(
+                    dossier, conclusion_id="", author=self.name,
+                    ev=item, kind="conclusion_empty_statement")
                 continue
             try:
                 con = Conclusion.create(statement=str(item["statement"]).strip(),
@@ -194,6 +246,9 @@ class Analyst(Agent):
                 )
                 dossier.add_evidence(node)
             conclusions.append(con)
+        if not conclusions:
+            dossier.empty_runs.append(
+                _empty_run(self.name, self.model, raw, data))
         return conclusions
 
     @staticmethod

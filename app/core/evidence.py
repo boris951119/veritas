@@ -269,6 +269,8 @@ class Dossier:
     # 物化时证据没落地的丢弃留痕（三格 reason 见 record_parse_drop）
     # （与 rejected 分家：pipeline 会对 rejected 整体赋值，解析期写进 rejected 会被盖掉）
     parse_drops: list[dict] = field(default_factory=list)
+    # 分析师本轮 0 结论的形态留痕（无 conclusion_id，与 parse_drops 分家）
+    empty_runs: list[dict] = field(default_factory=list)
     # 摄取阶段披露：解析失败/空文件/扫描件/含图未解析（输入夹层「标」职能）
     ingest_notes: list[dict] = field(default_factory=list)
     # 输入分诊账本：每个文件（含压缩包条目）一条 {file, route, reason}——
@@ -337,6 +339,7 @@ class Dossier:
             "conflicts": self.conflicts,
             "rejected": self.rejected,
             "parse_drops": self.parse_drops,
+            "empty_runs": self.empty_runs,
             "ingest_notes": self.ingest_notes,
             "triage": self.triage,
             "synthesis": self.synthesis,
@@ -354,6 +357,7 @@ class Dossier:
             conflicts=list(d.get("conflicts") or []),
             rejected=list(d.get("rejected") or []),
             parse_drops=list(d.get("parse_drops") or []),
+            empty_runs=list(d.get("empty_runs") or []),
             ingest_notes=list(d.get("ingest_notes") or []),
             triage=list(d.get("triage") or []),
             synthesis=dict(d.get("synthesis") or {}),
@@ -385,6 +389,12 @@ def record_parse_drop(
         segment_id = ""
     elif kind == "missing_segment":
         reason = f"引用段落不存在（segment_id={segment_id}）"
+    elif kind == "conclusion_not_object":
+        reason = "结论条目非法：非对象"
+        segment_id = ""
+    elif kind == "conclusion_empty_statement":
+        reason = "结论条目 statement 为空"
+        segment_id = ""
     else:
         raise ValueError(f"未知的 parse_drop 种类：{kind}")
     dossier.parse_drops.append({

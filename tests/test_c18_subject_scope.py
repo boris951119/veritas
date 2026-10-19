@@ -19,10 +19,12 @@ def _src(title: str, text: str, sid: str) -> Source:
 
 class _Stub:
     def __init__(self):
+        self.call_log: list = []
         self.total_tokens_used = 0
 
     def chat(self, *a, **k):
         from types import SimpleNamespace
+        self.call_log.append(1)
         self.total_tokens_used += 1
         return SimpleNamespace(content='{"conclusions":[]}')
 
@@ -69,6 +71,7 @@ def test_jilong_disaster_question_reaches_analyst(tmp_path):
     events = [r.event for r in result.chain.records]
     assert "slot_clarify_early_exit" not in events
     assert "analyst_done" in events
+    assert result.dossier.accounting.get("n_calls", 0) >= 3
 
 
 def test_non_enterprise_title_issuers_only_disclosed(tmp_path):

@@ -392,9 +392,12 @@ def test_f_forbidden_files_untouched():
     out = subprocess.check_output(
         ["git", "diff", base, "--", "app/core/citation_check.py"], text=True)
     assert out == ""
+    # C-17 要在 pipeline 加 content_head 与空交付节，不能再钉「相对 c68fe30 零 diff」。
+    # 仍钉：citation_check 零 diff，且 empties→insufficient 那两句还在。
     pipe_since = subprocess.check_output(
         ["git", "diff", base, "--", "app/pipeline.py"], text=True)
-    assert pipe_since == ""
+    assert "content_head" in pipe_since
+    assert "empty_runs" in pipe_since
 
     pipe = subprocess.check_output(
         ["git", "diff", "58e8610", "--", "app/pipeline.py"], text=True)

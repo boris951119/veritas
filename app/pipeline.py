@@ -460,8 +460,13 @@ def run_case(spec: RunSpec | None = None,
     roster_names = [a.name for a in analysts]
     with prog.stage("panel", "三分析师并行研判", n_analysts=len(analysts)):
         results = run_panel(dossier, analysts, on_done=_on_analyst_done)
+        by_name = {a.name: a for a in analysts}
         for name, err in results.get("_failures", {}).items():
-            chain.append("analyst_failed", name, {"error": err})
+            raw = str(getattr(by_name.get(name), "last_raw", "") or "")
+            chain.append("analyst_failed", name, {
+                "error": err,
+                "content_head": raw[:200],
+            })
         from app.core.panel_attrition import (
             apply_panel_attrition, failures_from_panel_results,
         )
@@ -767,6 +772,35 @@ def _run_collaboration(dossier: Dossier, ctx: CollabCtx) -> None:
             })
 
 
+def _decorate_attrition(note: str, empty_runs: list[dict] | None) -> str:
+    """减员行的「空交付」后面带形态。账本里的短因仍是「空交付」。"""
+    out = note
+    for run in empty_runs or []:
+        author = str(run.get("author") or "")
+        old = f"{author}（空交付）"
+        if old not in out:
+            continue
+        chars = int(run.get("content_chars") or 0)
+        shape = str(run.get("shape") or "其他")
+        new = f"{author}（空交付（{shape}，响应 {chars:,} 字））"
+        out = out.replace(old, new, 1)
+    return out
+
+
+def _render_empty_runs(lines: list[str], dossier: Dossier) -> None:
+    runs = list(getattr(dossier, "empty_runs", None) or [])
+    if not runs:
+        return
+    lines += ["## 空交付明细", ""]
+    for run in runs:
+        lines.append(
+            f"- {run.get('author') or 'N/A'}／{run.get('model') or ''}："
+            f"{run.get('shape')}；响应 {run.get('content_chars')} 字；"
+            f"节选「{run.get('head') or ''}」…「{run.get('tail') or ''}」"
+        )
+    lines.append("")
+
+
 def render_report_md(dossier: Dossier, chain: HashChain, rejected: list[dict]) -> str:
     """研判报告 Markdown（主表结论 + 分歧消解 + 少数意见 + 打回 + 防篡改）。"""
     verify = chain.verify_chain()
@@ -784,9 +818,10 @@ def render_report_md(dossier: Dossier, chain: HashChain, rejected: list[dict]) -
         (acc.get("panel_attrition") or {}).get("note") or "").strip()
     if attrition_note:
         lines += [
-            f"**编队减员**：{attrition_note}",
+            f"**编队减员**：{_decorate_attrition(attrition_note, dossier.empty_runs)}",
             "",
         ]
+    _render_empty_runs(lines, dossier)
     mech = acc.get("mechanical_merge") or {}
     if mech:
         # 协同是否真的发生，写在首屏：0 条会签就是 0 条，不藏
