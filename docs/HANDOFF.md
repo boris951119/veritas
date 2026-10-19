@@ -309,6 +309,26 @@ C-13＝推理树补中间结论层＋依赖边＋依赖传播（1 天，对着�
 - **排期影响（要如实算）**：C-31 只 0.1 天，但**硬排 C-17 之后**——① 它的 kind 名要沿用 C-17 定下的那套，② 新增 kind 要改 `app/core/evidence.py:375-397`，而 C-17 第 1 件同改该文件（加 `empty_runs`）⇒ 同文件同函数区不能并行（协议 §9.1）。⇒ **队列 11 张＝C-17 → C-31 → C-14c → C-19 → C-29 → C-20 → C-21 → C-25 → C-13 → C-23（与 C-7 同批）→ C-24**，C-19 及之后整体顺延 0.1 天；D-1 与三张有分数路径的判断都不受影响。
 - **一条我自己的转述错误要纠**：单里 `grep -rn "conclusions\"" app/agents/` 的**路径是对的**，我先前在聊天里写成 `app/` 是我打错字，不是单的缺陷。
 
+㉓ **2026-10-19 夜·C-17 第一轮验收＝生产代码六件全判过、判据三格打回（第 4 次踩「测试依赖未入库产物」这个坑）**：
+- **两份干净克隆**（`git clone --no-hardlinks` → `/tmp/c17acc/{before,after}`，改前＝`ec4665c` 零补丁、改后＝同点 `git apply` 交付＋新测试文件）。**基线自证**：改前 `616 passed`、模拟未装 mcp `615 passed, 1 skipped` ⇒ 与 §1 那行逐字一致，树是干净的。
+- **打回一条、也是最硬的一条＝f 格依赖未入库产物**：`assert loaded >= 1` 钉的是 `cases/*/out*/report.json` 必须存在，而这些**全在 `.gitignore`**（`:27`/`:29`/`:31`/`:33`/`:34`/`:35`），干净 clone 实测 **0 份**、本机 34 份 ⇒ 他树上 `625 passed` 全绿、我克隆上 **`1 failed, 624 passed`**（未装 mcp＝`1 failed, 623 passed, 1 skipped`）。**这是同一类毛病的第 4 次**（C-26 就是为它开的单，打法早已入库在 `tests/test_premise_check.py`），所以判据 f 里我加了一句改判：**「扫历史产物」只许顺手扫、不许断下限**。
+- **两条「无证伪件」是我用变异量出来的，不是读他测试读出来的**：① 把 `panel_attrition.py:53` 改回与 `:48` 同一句 ⇒ **0 新增红**＝第 6 件在库里没人守（我那份 `/tmp/c17j_probe.py` 跑完就没了，不构成回归保护）；② 把 `content_head` 的 `raw[:200]` 放大到 `raw[:5000]` ⇒ **0 新增红**＝禁止事项 ⑤ 那半条上限没人守，而他现有那格断的是 `analyst.last_raw`（对象字段）、从没打开链事件载荷。**⇒ 新写判据 l＝断链记录里 `payload["content_head"]` 非空且恰 200 字**。
+- **变异矩阵（全部按整套 `pytest tests -q` 口径，改后树基线本身带 1 红＝f 格）**：`a_no_empty_runs` **4 红**、`c_no_drop_trace` 1 红、`h_no_decorate` 1 红、`key_rename` 1 红、`i_no_calllog` 2 红（f＋`test_jilong_disaster_question_reaches_analyst`＝**判据 i 的减法成立**）、`i_early_exit_real` 0 新增红（**反向自证通过**：早退分支改用 `len(call_log)` 后 b 格仍绿，说明那格钉的是桩有没有 `call_log`）、`j_revert_string` 0 新增红、`cap_5000` 0 新增红、`f_floor`（把 `>= 1` 改成 `>= 0`）**625 全绿**＝红点唯一来源就此钉死。
+- **端到端我自己跑了一遍**（新探针 `/tmp/c17acc/e2e.py <tree_root>`，真 `run_case`＋三分析师各一形状，零 LLM）：改后 `empty_runs` 三条 shapes 互异（`缺 conclusions 键`／`conclusions 空列表`／`元素全非对象`），首屏减员行同时带出三种形态并新增「## 空交付明细」；**`analyst_empty` 链事件两棵树载荷逐字相同**（键 `['error']`、25 字）＝判据 b 后半过；`analyst_failed` 改前键 `['error']`／243 字 ⇒ 改后键 `['content_head','error']`／463 字、节选恰 200 字；整案 `report.json` 增量 **+1,045 B**（3 位分析师 ≤200×3＋固定开销 445 B）＝判据 e 那档量到了。
+- **另核两条「没动判定」**：`app/export/` 里 `parse_drops`／`empty_runs` **grep 零命中** ⇒ 四份提交 JSON 结构上不可能被本单影响（他的 g 格再加直接字节比对，双保险）；`citation_audit` 链事件里 `n_parse_dropped` 会因新 kinds 变大（我这格 1→2）＝**披露计数、不是分数**，符合单的定性。
+- **一处等价变异要说清、别算缺口**：把 `cause_ids` 的 `if r.get("conclusion_id")` 换成 `if True` ⇒ **0 新增红**，我判它**语义等价**（空串永远配不上真实结论 id），他的反证格钉的是「匹配退化成通配」那一族回归，形状没问题。
+- **残留五条我记进工单状态段、不打回**（`analyst_empty` 全仓无守护＝既有缺口；`pipeline.py:489` 全员失败的 `RuntimeError` 消息内嵌整段响应无上限＝改前既有；`record_parse_drop` docstring 仍写「三格」；报告节标题「引用未落地的证据」现也列结论条目级丢弃＝文案错位，建议 C-31 一并改；`_materialize` 的 `raw` 缺省也开 `empty_runs`）。
+- **队列与工时不变**：本轮只补三处测试（0.05 天量级），`app/` 零改动 ⇒ **C-31 仍排队列第二、等 C-17 收口才可发**；基线 616 要等第二轮通过才刷。第二轮提示词照原文贴：
+
+```
+读 docs/dev-protocol.md（§3.0 前提核查、§3 问题分流、§5 判据纪律）和 docs/HANDOFF.md §5 工单 C-17 的「验收（第一轮）」段——你这一版六件的**生产代码我全判过了**，本轮**只补三处判据，app/ 一个字不许动**（动了我要重放全部六件）。环境照旧＝`git clone` 本仓库后在克隆里干活，分支 `cursor/knife11-second-pass-and-gates`，HEAD ≥ `ec4665c`。
+一、f 格（必修）：`tests/test_c17_empty_delivery.py::test_empty_runs_roundtrip_and_old_reports_load_empty` 里那句 `assert loaded >= 1` 依赖 `cases/*/out*/report.json`，而这些全在 `.gitignore`（`:27`/`:29`/`:31`/`:33`/`:34`/`:35`）——干净 clone 实测 **0 份**（你本机 34 份）。我两份克隆跑出来＝改后整套 **`1 failed, 624 passed`**（模拟未装 mcp＝`1 failed, 623 passed, 1 skipped`），你报的 `625 passed` 只在有本机 out/ 产物的树上成立。改法＝换成**自建夹具**：照 C-26 已入库的打法（看 `tests/test_premise_check.py` 里 `tmp_path` 那几个夹具），在 `tmp_path` 手写一份**不含 `empty_runs` 键**的 `report.json`，`Dossier.from_json` 载入后断 `empty_runs == []`；本机历史目录**有就顺手扫、没有也必须过**（`loaded` 只许打印，不许再断下限）。
+二、j 格（必修）：第 6 件的文案分家在**库里零证伪件**——我把 `app/core/panel_attrition.py:53` 改回与 `:48` 同一句 `empty: 未返回结论`，整套 **0 新增红**（只有 f 格那一红）。请补一格 pytest（放 `test_c17_empty_delivery.py` 或 `tests/test_panel_attrition.py` 都行），四种输入各断两半：③dict 与④str 的文案互不相同且各带 `type=`、①缺键与②None 允许同句；**同时**断四格 `len(failures)` 全＝4、键集合全＝roster 四人、`_short_reason()` 四格全＝`空交付`、⑤仍逐字＝`empty: 零结论交付`。回写必须带变异读数：把 `:53` 改回同一句 ⇒ 你新加的这格**当场红**（红名照抄）。`/tmp/c17j_probe.py` 那两行 True／False 我已量过、不必再跑——**库里那格才是长期守护**，我的探针跑完就没了。
+三、l 格（新增判据，必修）：第三件的 200 字上限同样无证伪件——`raw[:200]` 改成 `raw[:5000]` 整套 **0 新增红**；你现有的 `test_failed_event_keeps_a_content_head` 断的是 `analyst.last_raw`（分析师对象上的字段），从没打开链事件载荷，唯一的守护是 `test_parse_drops.py::test_f` 那句 `assert "content_head" in git_diff`＝只认字串在场（我把键名改成 `resp_head` 它确实红了，但放大上限抓不到）。补法＝断**链记录**：桩给一条 780 字的不可解析响应（例 `"这不是 JSON，也没有花括号。" * 60`），跑一条真管线或 `run_panel`＋`chain.append` 那一段，从 `chain.records` 里取 `event == "analyst_failed"` 那条，断 `payload["content_head"]` 非空且长度恰＝200（并断 `== raw[:200]`）；变异 `raw[:200]`→`raw[:5000]` ⇒ 该格当场红。
+判据纪律照旧：红数一律按整套 `pytest tests -q` 口径，且**必须在干净 clone 上量**——本轮通过线＝clone 树上 **0 failed**；未装 mcp 那一格我来量，你只管 `pytest tests -q` 连跑 5 次并抄末次读数，另把**新增用例条数**写清（我要刷 §1 基线 616→?）。
+不许动 `app/`、不许放宽 extract_json、不许动 material_char_budget/model_context_tokens 与 empties→insufficient 判定、不许替模型补结论、样例集不入库、不许真调模型（判据全用桩）。不要提交，不要 push，验收归 Qoder。
+```
+
 ## 1. 现在在哪儿
 
 - **最近代码提交：`ae0908a test(槽位主体闸): C-30 第一轮＝架构师独立复放通过收口（615→616），给 ① 那一半补上证伪件`**（**1 文件＝`tests/test_c18_subject_scope.py`（新增一格 22 行），`app/` 零 diff**；
@@ -2931,6 +2951,12 @@ git status 里没有官方样例集任何文件。
   - f) **round-trip 与向后兼容**：`empty_runs` 写进 `to_dict`/`from_dict`，往返逐字相同；
     扫 `cases/*/out*/report.json` 全部历史文件载入不炸、`empty_runs==[]`（**基数不许写死 34**，见 R-C16-3；
     且统计对照**不许用会被本测试自己改写的 `out_offline`**）；
+    **⚠ 第二轮改判（架构师 10-19 夜复放实测）**：这条里的「扫历史文件」**不许当闸用**——`cases/*/out*/report.json`
+    全在 `.gitignore`（`:27`/`:29`/`:31`/`:33`/`:34`/`:35`）里，**干净 `git clone` 实测 0 份**（本机 34 份），
+    所以任何 `assert loaded >= 1` 之类「产物必须存在」的断言在克隆里**当场红**（这一格本次就是这么红的，见验收段）。
+    正确形状＝**自建夹具**（C-26 已把这套打法落进 `tests/test_premise_check.py`，照抄）：
+    在 `tmp_path` 里手写一份**不含 `empty_runs` 键**的 `report.json`，用 `Dossier.from_json` 载入断 `empty_runs==[]`；
+    历史目录**有就顺手扫、没有也必须过**（`loaded` 只许打印，不许断言下限）。
   - g) **零分数变化**：同一 dossier 加／不加空交付留痕 ⇒ 四份提交 JSON 逐字节相同；六案上帝 `7/6/6/7/6` ×6、白卷 `0/0/0/0/0` ×6；
   - h) **非空样本格**（协议 §5 新纪律）：桩编队三分析师分别给「空数组／缺 conclusions 键／元素全非对象」三种，
     断 `count(empty_runs) ≥ 1` **且**报告首屏减员行出现**三种不同分类文案**——只断"都满足"不断"确实有"＝真空通过；
@@ -2946,6 +2972,19 @@ git status 里没有官方样例集任何文件。
     改前四个读数我已在 HEAD 树上量死并写在第 6 件那段（②③④ 塌成同一句＝True／`len(fails)`＝4／键集合＝roster 四人／短因全 `空交付`），
     **回写必须用 `/tmp/c17j_probe.py` 在改前树与改后树各跑一遍、把两行 `②③④ 塌成同一句` 的 True／False 抄进去**——只写"文案改了"不写这四个数＝没做后一半。
     反向自证＝把 `:53` 那格文案改回与 `:48` 相同（`empty: 未返回结论`）⇒ ③④ 那两格当场红。
+    **⚠ 第二轮补的硬话（架构师 10-19 夜实测）**：`/tmp/c17j_probe.py` 是**我这一轮的验收件、不在仓库里**，
+    跑完就没了——第 6 件要在**库里**留一格 pytest（新格或并进 `test_c17_empty_delivery.py` 都行），
+    断 ③④ 互异且各带 `type=`、①② 同句、四格 `len(failures)`／键集合／短因不变。
+    **今天这一版没有这格**：我把 `:53` 改回 `empty: 未返回结论` 在改后树上跑整套＝**0 新增红**
+    （`1 failed, 624 passed`，那 1 红就是 f 格的历史产物断言），⇒ 第 6 件在库里**零证伪件**，将来谁把它抄回同一句话整套照绿。
+  - l) **第三件的链上形状必须钉行为，不能只钉字串（第二轮新增，架构师实测出的缺口）**：
+    断言对象是**链记录**——`chain.records` 里那条 `analyst_failed` 的 `payload["content_head"]` **非空、且 `len ≤ 200`**
+    （桩给一条 >200 字的不可解析响应，例 `"这不是 JSON，也没有花括号。" * 60` ＝ 780 字，链上那格必须正好截到 200）。
+    **今天两样都不成立**：现有 `test_failed_event_keeps_a_content_head` 断的是 `analyst.last_raw`（**分析师对象上的字段**），
+    从没打开过链事件载荷；唯一的守护是 `test_parse_drops.py::test_f` 那句 `assert "content_head" in git_diff`——
+    它只认字串在场。我做了两个变异：改键名 `content_head`→`resp_head` ⇒ **红**（`test_f` 抓到，勉强算数）；
+    把上限 `raw[:200]` 改成 `raw[:5000]`（**违反禁止事项 ⑤ 的「单条 ≤200 字」**）⇒ **0 新增红**（`1 failed, 624 passed`，仍只有 f 格）。
+    ⇒ 这一格补法＝在链记录上断长度，别在 `last_raw` 上断，也别靠 diff 字串。
   - k) 回归：`pytest tests -q` 连跑 5 次全绿，passed ≥ **上一单收口后的入库数＋新增用例数**
     （基线以 §1「入库版本」一行为准；出单时 `c68fe30`／599，**开工前必须先看 §1，本单排在 C-16b 之后，基线会再翻新**）。
 - **工时**：约 0.2 天＋两件残留各 0.02 天（`empty_runs` 字段＋分类 0.08、`parse_drops` 那格 0.03、`analyst_failed` 节选 0.02、报告显影 0.04、测试 0.03；第 5 件桩补 `call_log` 0.02、第 6 件 `panel_attrition` 文案分家 0.02）。
@@ -2953,22 +2992,26 @@ git status 里没有官方样例集任何文件。
   `app/core/evidence.py`（加 `empty_runs`）、`app/pipeline.py`（链事件载荷＋渲染区，**与 C-13 同文件 ⇒ 排 C-13 之前**）、
   `tests/`。与 C-14b **不撞**（不碰 `conflicts.py`／`human_ops.py`／`export/official.py`）。
   **当前序＝C-16b → C-18 → C-17 → C-14c → C-19 → C-20 → C-21 → C-25 → C-13 → C-23 → C-24（**C-22 已于 10-18 收口；10-18 晚四条拍板追加三张，见 §0 ⑭**）。**
-- **开工提示词**：
+- **开工提示词**：**第二轮＝打回件（10-19 夜，只补三处判据；第一轮那段全文见本文件 `ec4665c` 版）**
 
 ```
-读 docs/dev-protocol.md（重点 §3.0 前提核查、§3 问题分流、§3.4 质疑通道、§5 判据纪律、§6 三道纪律）和 docs/HANDOFF.md §5 的工单 C-17，你是执行工程师。环境＝`git clone` 本仓库后在克隆里干活，**clone 出来显式切到工作分支 `cursor/knife11-second-pass-and-gates`，且 HEAD ≥ `ae0908a`（C-30 收口那笔）**——基线 616 只在这条分支上，本地 `main` 停在 `7b9ca32`、不含 C-30 那笔代码，别从 main 开工。
-先做 §3.0 前提核查，逐条打开文件核，对不上就按 §3 分流、别照抄：1) app/agents/base.py:142-144 是不是 data.get("conclusions") or [] 加一条 not isinstance(item,dict) or statement 空就 continue（我说的"五种零塌成一句"就发生在这里）；2) app/core/panel_attrition.py:49-50 与 app/pipeline.py:472 是不是把 0 结论统一写成 "empty: 零结论交付"；3) app/llm/model_client.py 的 call_log 是不是只记 content_chars 不记内容。
-再跑全仓 grep 把"空交付只有这一条路径"这句话证明一遍：grep -rn "零结论交付\|empty: " app/ 与 grep -rn "conclusions\"" app/agents/ ——把输出贴进回写，发现还有第四处静默丢弃就停下来报，别自己扩范围。
-先复算我单里两条实测（都不用大模型）：a) 用桩客户端把我那五种形状各喂一次，确认今天它们留下的台账文字逐字相同；b) 扫 34 份 cases/*/out*/chain.jsonl 数 analyst_done / analyst_failed（我测的是 88 / 13＝12.9%，成因 8 条是 JSONDecodeError Invalid control character）。数不对就停下来报，不要按先验改数。
-只做六件：1) 分析师 0 结论时写一条 empty_runs（author/model/content_chars/top_keys/shape/head/tail），shape 是枚举、五种各自取值，必须从真实响应算出来；2) base.py 那条整条结论消失的 continue 补进 parse_drops，非对象与 statement 空两格文案分家，conclusion_id 留空串，复用 C-16b 抽出的那一处共用函数，不许再抄字面量；3) analyst_failed 链事件载荷加 content_head（≤200 字）；4) 报告减员行带形态分类并新增一节列空交付明细，empty_runs 进 to_dict/from_dict；5) tests/test_c18_subject_scope.py 的桩补 call_log（照 tests/test_panel_attrition.py:133 的现成写法），a 格加 n_calls > 0、b 格保留 n_calls == 0——这一件只动测试文件；6)（10-19 夜你 §3.0 回报里带出来的那处，同日并入单）panel_attrition.py 的 failures_from_panel_results 把两种病因写成同一句：:47-48 是 cons is None（缺键或值为 None），:51-53 是 not isinstance(cons, list)（拿到了但不是列表）——只分文案不动判定，:53 改成带类型的可区分文案（例 empty: 返回非列表（type=dict）），:48 允许与缺键共用一句。四种输入下 failures 的键集合、n_failures、首屏减员行条数必须与改前逐字相同。ingress.py:50-54 与 repair.py:151 那两处条目级静默丢弃**不在本单范围**，我已另立 C-31，你按单做完五件＋第 6 件就停。
-最容易写错的是判据 d：empty_runs 和 conclusion_id 为空串的 parse_drops 都不许进 cause_ids——请自己做那条反证格（一条 insufficient 只配一条空 id 的留痕，报告仍须印「成因缺失（异常）」）。
-不许放宽 extract_json（不许 strict=False、不许加修复式预处理）、不许动 material_char_budget/model_context_tokens、不许动 empties→insufficient 判定、不许替模型补结论、节选单条 ≤200 字不许把全文落盘、四份提交 JSON 必须仍逐字节相同、样例集不许入库、不许真调模型（判据全用桩）。
-判据 a/b/c/d/e/f/g/h/i/j/k 逐条自己跑再回写，h 那条必须断 count(empty_runs) ≥ 1（只断"全部满足"会真空通过）；i 那条必须写出"改前 a 格当场红、改后一红一绿成对"两个读数；j 那条必须同时写出"文案变了"与"键集合／n_failures／减员行条数／短因逐字未变"两半，用 /tmp/c17j_probe.py（架构师件、不在仓库里，若没有就说一声我重发内容）在改前树与改后树各跑一遍，把两行 True／False 与 len(fails) 抄进回写，只绿一半算没做；红数一律按整套 `pytest tests -q` 口径。
-基线＝**`616 passed`**（C-30 收口后，未装 mcp 那格＝`615 passed, 1 skipped`；动工前仍以 docs/HANDOFF.md §1「入库版本」那行为准），连跑 5 次全绿。
-不要提交，不要 push，验收归 Qoder。
+读 docs/dev-protocol.md（§3.0 前提核查、§3 问题分流、§5 判据纪律）和 docs/HANDOFF.md §5 工单 C-17 的「验收（第一轮）」段——你这一版六件的**生产代码我全判过了**，本轮**只补三处判据，app/ 一个字不许动**（动了我要重放全部六件）。环境照旧＝`git clone` 本仓库后在克隆里干活，分支 `cursor/knife11-second-pass-and-gates`，HEAD ≥ `ec4665c`。
+一、f 格（必修）：`tests/test_c17_empty_delivery.py::test_empty_runs_roundtrip_and_old_reports_load_empty` 里那句 `assert loaded >= 1` 依赖 `cases/*/out*/report.json`，而这些全在 `.gitignore`（`:27`/`:29`/`:31`/`:33`/`:34`/`:35`）——干净 clone 实测 **0 份**（你本机 34 份）。我两份克隆跑出来＝改后整套 **`1 failed, 624 passed`**（模拟未装 mcp＝`1 failed, 623 passed, 1 skipped`），你报的 `625 passed` 只在有本机 out/ 产物的树上成立。改法＝换成**自建夹具**：照 C-26 已入库的打法（看 `tests/test_premise_check.py` 里 `tmp_path` 那几个夹具），在 `tmp_path` 手写一份**不含 `empty_runs` 键**的 `report.json`，`Dossier.from_json` 载入后断 `empty_runs == []`；本机历史目录**有就顺手扫、没有也必须过**（`loaded` 只许打印，不许再断下限）。
+二、j 格（必修）：第 6 件的文案分家在**库里零证伪件**——我把 `app/core/panel_attrition.py:53` 改回与 `:48` 同一句 `empty: 未返回结论`，整套 **0 新增红**（只有 f 格那一红）。请补一格 pytest（放 `test_c17_empty_delivery.py` 或 `tests/test_panel_attrition.py` 都行），四种输入各断两半：③dict 与④str 的文案互不相同且各带 `type=`、①缺键与②None 允许同句；**同时**断四格 `len(failures)` 全＝4、键集合全＝roster 四人、`_short_reason()` 四格全＝`空交付`、⑤仍逐字＝`empty: 零结论交付`。回写必须带变异读数：把 `:53` 改回同一句 ⇒ 你新加的这格**当场红**（红名照抄）。`/tmp/c17j_probe.py` 那两行 True／False 我已量过、不必再跑——**库里那格才是长期守护**，我的探针跑完就没了。
+三、l 格（新增判据，必修）：第三件的 200 字上限同样无证伪件——`raw[:200]` 改成 `raw[:5000]` 整套 **0 新增红**；你现有的 `test_failed_event_keeps_a_content_head` 断的是 `analyst.last_raw`（分析师对象上的字段），从没打开链事件载荷，唯一的守护是 `test_parse_drops.py::test_f` 那句 `assert "content_head" in git_diff`＝只认字串在场（我把键名改成 `resp_head` 它确实红了，但放大上限抓不到）。补法＝断**链记录**：桩给一条 780 字的不可解析响应（例 `"这不是 JSON，也没有花括号。" * 60`），跑一条真管线或 `run_panel`＋`chain.append` 那一段，从 `chain.records` 里取 `event == "analyst_failed"` 那条，断 `payload["content_head"]` 非空且长度恰＝200（并断 `== raw[:200]`）；变异 `raw[:200]`→`raw[:5000]` ⇒ 该格当场红。
+判据纪律照旧：红数一律按整套 `pytest tests -q` 口径，且**必须在干净 clone 上量**——本轮通过线＝clone 树上 **0 failed**；未装 mcp 那一格我来量，你只管 `pytest tests -q` 连跑 5 次并抄末次读数，另把**新增用例条数**写清（我要刷 §1 基线 616→?）。
+不许动 `app/`、不许放宽 extract_json、不许动 material_char_budget/model_context_tokens 与 empties→insufficient 判定、不许替模型补结论、样例集不入库、不许真调模型（判据全用桩）。不要提交，不要 push，验收归 Qoder。
 ```
 
-- **状态**：✅ **可开工（队列第一，本轮翻新为六件）**——前置全清：硬依赖 C-16b 已收口 `c1b7f5a`（同文件那处共用函数 `record_parse_drop` 已入库）、撞 `pipeline.py` 早退区的 C-18 已收口 `51c25da`、C-30 已收口 `ae0908a`（只动测试、与本单零冲突）。10-19 夜把 C-18 验收挂过来的残留写成第 5 件＋判据 i，单已翻新。行号我今日复核过仍是 `base.py:142-144`／`panel_attrition.py:49-50`／`pipeline.py:472`、`model_client.py:339` 有 `call_log`。｜ **§3.0 停手已裁定（2026-10-19 夜第二轮翻新）**：执行方两条复算与单里逐字一致，并跑全了我那条 grep、点名 `ingress.py:50-54`／`repair.py:151` 两处条目级静默丢弃后**按单停手＝判对**。我逐处开提交树核过：**那两处不产生 `empty: 零结论交付`**（`panel_attrition.py:43-53` 三条分支＋`pipeline.py:472` 我 reopen 过，三种零文案确实只出自 `base.py` 一条出口）⇒ **本单前提未被打穿、不是打回**；两处另立 **C-31（队列第二、0.1 天、硬排本单之后）**，本单不扩范围。同日他这条回报里还带出 `panel_attrition.py:47-48` 与 `:51-53` 把两种病因写成**同一句** `empty: 未返回结论`——与第 1 件同一种病、只是发生在编队汇总层 ⇒ **并入本单作第 6 件＋判据 j**（只分文案不动判定，改前四读数我已用 `/tmp/c17j_probe.py` 量死）。另更正一条口径：开工提示词里 `grep -rn "conclusions\"" app/agents/` 的**路径是对的**，我先前在聊天中转述成 `app/` 是我打错字。｜ **验收**：—
+- **状态**：**第一轮验收完＝生产代码六件全判过、判据三格打回（f／j／l），待第二轮**（读数见本节末「验收」段）。动了：`app/agents/base.py`（`empty_runs` 形态从真实响应算；`continue` 进 `record_parse_drop` 的 `conclusion_not_object`／`conclusion_empty_statement`，`conclusion_id=""`）、`app/core/evidence.py`（`empty_runs` 进 `to_dict`/`from_dict`，缺键＝`[]`；两句 reason 只写在共用函数里）、`app/core/panel_attrition.py`（非列表改为 `empty: 返回非列表（type=…）`，缺键／None 仍是 `empty: 未返回结论`）、`app/pipeline.py`（`analyst_failed` 加 `content_head`≤200；减员行带形态；新增「空交付明细」）、`tests/test_c17_empty_delivery.py`、`tests/test_c18_subject_scope.py`（桩补 `call_log`；a 格 `n_calls >= 3`，b 格仍 `== 0`）、`tests/test_parse_drops.py`（见偏离）、本行。`ingress.py`／`repair.py` 未动。
+  - **我这一轮读到的残留（都不打回、记下来归后续单）**：① `analyst_empty` 链事件**整个仓库从没钉过**（`grep -rn analyst_empty tests/` 零命中，只有 `pipeline.py:477` 那一句写它）⇒ 判据 b 后半「触发条件不变」这轮我用两棵树的载荷逐字对照量过了（键 `['error']`／25 字，两边相同），**但库里依旧无守护**，排进 C-31 之后顺手补或写进 D-1 测试报告的局限；② **全员失败**那条老路 `pipeline.py:489` 抛的 `RuntimeError: 全部分析师研判失败` 消息里**内嵌整段原始响应、没有上限**（我这格 780 字全进了异常文本）——禁止事项 ⑤ 的 ≤200 只管住新加的 `content_head`，**改前既有、不是本单造成**；③ `record_parse_drop` 的 docstring 仍写「三格 reason」，现在实际五种；④ 报告节标题「引用未落地的证据（段落不存在／未编号）」现在也列**结论条目级**的丢弃，文案与内容错位（C-31 再加两种，建议那时一并改标题）；⑤ `_materialize(data, dossier)` 的 `raw` 缺省值是 `""`，**不传也会开一条 `empty_runs`**（`content_chars=0`、shape 落成「缺 conclusions 键」），生产路径只有 `Analyst.analyze` 传 raw，目前只有 `tests/test_panel_attrition.py:206` 那个桩会走到——不拦，但读数要按「有 raw 才算形态」解释。
+  - grep：`empty:` 只在 `panel_attrition.py:48/50/53`。`app/agents` 里 `"conclusions"` 还出现在 `repair.py:151`、`ingress.py:49`（C-31，本单未扩）。
+  - 五种桩形状改前台账都是 `empty: 零结论交付`。链扫描仍是 done 88／failed 13。
+  - a 五形态互异。b 有结论则 `empty_runs` 空。c 合法结论留下，`parse_drops` 恰 2 条且 id 为空串。d 空 id 留痕下报告仍印「成因缺失（异常）」。e `head+tail`≤200，5 万字全文不进 `to_dict`。f 往返一致；历史 `report.json` 载入 `empty_runs==[]`。g 加留痕后四份提交 JSON 逐字节相同。h `len(empty_runs)>=1`，减员行同时有三种形态。
+  - i 改前整套 **`1 failed, 624 passed`**，红名只有 `test_jilong_disaster_question_reaches_analyst`（`assert 0 >= 3`）。补上 `call_log.append` 后 a／b 两格 `2 passed`（a ≥ 3，b == 0）。
+  - j `/tmp/c17j_probe.py`：改前 `②③④ 塌成同一句 = True`，四格 `len(fails)=4`、短因全 `空交付`、键集合为 roster 四人。改后 **`= False`**；③ `empty: 返回非列表（type=dict）`、④ `type=str`，①②仍是 `empty: 未返回结论`；`len(fails)`／键集合／短因与改前相同。⑤仍是 `empty: 零结论交付`。
+  - k 五次全绿，末次 `625 passed in 4.46s`。`cases/` 零 diff。
+- **偏离**：`tests/test_parse_drops.py` 的 `test_f` 原钉 `git diff c68fe30 -- app/pipeline.py` 为空。本单第 3、4 件必须改 `pipeline.py`，该断言改成 diff 里要能看见 `content_head` 与 `empty_runs`，`citation_check.py` 仍零 diff，`insufficient` 两句仍在。｜ **验收（第一轮 2026-10-19 夜，架构师两份干净克隆复放，`git clone --no-hardlinks` 到 `/tmp/c17acc/{before,after}`，改前＝`ec4665c` 零补丁、改后＝同点＋`git apply` 本次交付）**：**六件的生产代码我全判过、三处判据打回**＝① **f 格依赖未入库产物**（`assert loaded >= 1`，干净克隆实测 `cases/*/out*`＝**0 份**／本机 34 份）⇒ **改后整套 `1 failed, 624 passed`**（模拟未装 mcp＝`1 failed, 623 passed, 1 skipped`），他报的 `625 passed` 只在有本机 `out/` 产物的树上成立；② **第 6 件库里零证伪件**（`:53` 文案改回与 `:48` 同一句 ⇒ **0 新增红**）；③ **第三件的 200 字上限没有证伪件**（`raw[:200]`→`raw[:5000]` ⇒ **0 新增红**；现有那格断的是 `analyst.last_raw` 不是链事件载荷，唯一守护是 `git diff` 字串在场）。**通过的**：a 三种形状端到端互异（我自建 `run_case` 桩夹具 `/tmp/c17acc/e2e.py`：`缺 conclusions 键`／`conclusions 空列表`／`元素全非对象`，`head+tail` 分别 40／36／48 字）；b 有结论者不开 `empty_runs`、`analyst_empty` 链事件**键与载荷逐字未变**（两棵树都是 键`['error']`、载荷 25 字）；c `结论条目非法：非对象` 进 `parse_drops` 且合法结论照常入卷；d 空 `conclusion_id` 配不上成因、报告仍印「成因缺失（异常）」（另测：把 `cause_ids` 的 `if r.get("conclusion_id")` 换成 `if True` **0 新增红＝语义等价变异**，空串永远配不上真实 id，不算缺口）；e 5 万字全文不落盘（`to_dict` 里没有该串）、整案 `report.json` 增量 **+1,045 B**（3 位分析师，≤200×3＋键名/shape/top_keys 固定开销 445 B）；g 四份提交 JSON 逐字节相同（我另核：`app/export/` 里**不读** `parse_drops`／`empty_runs` 任何一个字，grep 零命中）；h 首屏减员行同时出三种形态＋新增「## 空交付明细」在场；i **改前红＝`2 failed`（f 格＋`test_jilong_disaster_question_reaches_analyst`）**、补回 `call_log.append` 后只剩 f 格，反向自证（早退 `"n_calls": 0`→`len(getattr(client,"call_log",[]))`）**0 新增红＝b 格仍绿** ✓；j 我的探针 `②③④ 塌成同一句` 改前 **True** ⇒ 改后 **False**，四格 `len(fails)`＝4／键集合＝roster 四人／短因全 `空交付`／⑤ 仍是 `empty: 零结论交付` **逐字未变** ✓（但见打回 ② —— 库里没留）；k **基线两格我实测**：改前 `616 passed`／未装 mcp `615 passed, 1 skipped`（与 §1 一致），改后五连跑**稳定 `1 failed, 624 passed`**（非 flake）；范围核：`ingress.py`／`repair.py`／`profile.py` **零 diff**、`conftest.py` 守卫未动、`extract_json` 与装箱预算一个没碰、`cases/` 与 `eval/` **零 diff**、第 3 步 `demo_offline` 退出 0 且报告数 3、跑完 `git status` 除交付本身外零新增。**⇒ 判据 f／j／l 三格补齐后第二轮收口；本轮不提交。**
 
 ### C-31｜第三方入卷与修复环也在静默丢结论条目：把「条目级留痕」推到 ingress／repair 两处（2026-10-19 夜执行方 §3.0 回报带出新单，**队列第二＝C-17 之后**，约 0.1 天）
 
