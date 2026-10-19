@@ -642,7 +642,7 @@ def run_case(spec: RunSpec | None = None,
             if k in ("corpus_select", "query_rewrite", "slot_disclosures",
                      "repair_accept_rate", "panel_attrition",
                      "unused_topic_segments", "subquestion_status",
-                     "obligation_limitation",
+                     "obligation_limitation", "n_unused",
                      "premise", "second_pass", "conflict_drops",
                      "mechanical_merge", "fact_ledger_stats",
                      "prompt_window")}
@@ -946,7 +946,7 @@ def render_report_md(dossier: Dossier, chain: HashChain, rejected: list[dict]) -
 
     parse_drops = list(dossier.parse_drops or [])
     if parse_drops:
-        lines += ["## 引用未落地的证据（段落不存在／未编号）", ""]
+        lines += ["## 引用未落地的证据与丢失的结论条目（段落不存在／未编号／条目非法）", ""]
         for r in parse_drops:
             lines.append(
                 f"- `{r.get('conclusion_id')}`／{r.get('author') or 'N/A'}："

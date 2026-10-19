@@ -99,7 +99,7 @@ def run_repair_round(dossier: Dossier, flags: list[dict],
         if f.get("kind") in _REPAIR_KINDS and f.get("conclusion_id"):
             by_con.setdefault(f["conclusion_id"], []).append(f)
 
-    attempted = accepted = 0
+    attempted = accepted = n_unused = 0
     consecutive_rejects = 0
     stopped_early = False
     for cid, con_flags in by_con.items():
@@ -125,7 +125,7 @@ def run_repair_round(dossier: Dossier, flags: list[dict],
             consecutive_rejects += 1
             continue  # 修复调用失败：保留原状与警示
         snap = _snapshot(dossier, con)
-        _apply_repair(dossier, con, data)
+        n_unused += _apply_repair(dossier, con, data)
         if len(_conclusion_flags(dossier, cid)) < len(con_flags) \
                 and dossier.evidences_of(cid):
             accepted += 1
@@ -141,15 +141,35 @@ def run_repair_round(dossier: Dossier, flags: list[dict],
         "accepted": accepted,
         "repair_accept_rate": rate,
         "stopped_early": stopped_early,
+        "n_unused": n_unused,
     }
 
 
-def _apply_repair(dossier: Dossier, con: Conclusion, data: dict) -> None:
-    """重写产物 → 试装：新证据逐条过引文闸后替换，statement 允许改写。"""
+def _apply_repair(dossier: Dossier, con: Conclusion, data: dict) -> int:
+    """重写产物 → 试装：新证据逐条过引文闸后替换，statement 允许改写。
+
+    仍然只装第一条对象。非对象与空 statement 留痕；多出来的条数记 n_unused。
+    """
     for ev in list(dossier.evidences_of(con.id)):
         dossier.remove_evidence(ev.id)
-    items = [x for x in (data.get("conclusions") or []) if isinstance(x, dict)]
+    items: list[dict] = []
+    for x in data.get("conclusions") or []:
+        if not isinstance(x, dict):
+            record_parse_drop(
+                dossier, conclusion_id="", author=con.author,
+                ev=x, kind="conclusion_not_object")
+            continue
+        items.append(x)
+        if not str(x.get("statement") or "").strip():
+            record_parse_drop(
+                dossier, conclusion_id="", author=con.author,
+                ev=x, kind="conclusion_empty_statement")
+    # 一次只重写第一条。多出来的对象不装，只计 n_unused。
     item = items[0] if items else {}
+    unused = len(items) - 1 if len(items) > 1 else 0
+    if unused:
+        dossier.accounting["n_unused"] = (
+            int(dossier.accounting.get("n_unused") or 0) + unused)
     statement = str(item.get("statement") or "").strip()
     if statement:
         con.statement = statement
@@ -189,6 +209,7 @@ def _apply_repair(dossier: Dossier, con: Conclusion, data: dict) -> None:
         if check_evidence(node, dossier):
             continue  # 新引文不过闸：宁缺毋滥
         dossier.add_evidence(node)
+    return unused
 
 
 def _segments_of(dossier: Dossier, con: Conclusion) -> str:

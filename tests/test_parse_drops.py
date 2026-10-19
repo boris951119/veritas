@@ -67,7 +67,7 @@ def test_a_missing_segment_leaves_parse_drop_and_insufficient(tmp_path):
     assert con_id in cause_ids
     audit = next(r for r in result.chain.records if r.event == "citation_audit")
     assert audit.payload["n_parse_dropped"] == 1
-    assert "引用未落地的证据（段落不存在／未编号）" in result.report_md
+    assert "引用未落地的证据与丢失的结论条目（段落不存在／未编号／条目非法）" in result.report_md
     assert "成因缺失（异常）" not in result.report_md
 
 
@@ -139,7 +139,7 @@ def test_c_non_dict_evidence_has_its_own_reason(tmp_path):
     assert "引用段落不存在" not in reason
     assert [c.status for c in result.dossier.conclusions] == ["insufficient"]
     assert "成因缺失（异常）" not in result.report_md
-    assert "引用未落地的证据（段落不存在／未编号）" in result.report_md
+    assert "引用未落地的证据与丢失的结论条目（段落不存在／未编号／条目非法）" in result.report_md
 
 
 def test_d_ingress_dangling_shows_in_report():
@@ -161,7 +161,7 @@ def test_d_ingress_dangling_shows_in_report():
         }],
     })
     md = render_report_md(d, HashChain(), [])
-    assert "引用未落地的证据（段落不存在／未编号）" in md
+    assert "引用未落地的证据与丢失的结论条目（段落不存在／未编号／条目非法）" in md
     assert "引用段落不存在（segment_id=SRC9#s99）" in md
     assert "成因缺失（异常）" not in md
 
@@ -208,7 +208,7 @@ def test_b_citation_fail_goes_only_to_rejected(tmp_path):
     assert result.dossier.parse_drops == []
     md = result.report_md
     assert md.count("## 被打回的证据（引文核对未通过）") == 1
-    assert "引用未落地的证据（段落不存在／未编号）" not in md
+    assert "引用未落地的证据与丢失的结论条目（段落不存在／未编号／条目非法）" not in md
     rejected_block = md.split("## 被打回的证据（引文核对未通过）", 1)[1]
     rejected_block = rejected_block.split("## ", 1)[0]
     assert "引用未落地" not in rejected_block
@@ -234,7 +234,7 @@ def test_c_invariant_anomaly_appears_and_clears():
     })
     md_ok = render_report_md(d, chain, rejected=[])
     assert "成因缺失（异常）" not in md_ok
-    assert "引用未落地的证据（段落不存在／未编号）" in md_ok
+    assert "引用未落地的证据与丢失的结论条目（段落不存在／未编号／条目非法）" in md_ok
 
 
 def _cause_ids(dossier: Dossier) -> set[str]:
@@ -324,7 +324,7 @@ def test_i_rejected_repair_rolls_back_drops_accepted_keeps_one():
     assert rejected.parse_drops == before
     assert len(rejected.evidences_of(con.id)) == 1
     md = render_report_md(rejected, HashChain(), [])
-    assert "引用未落地的证据" not in md
+    assert "引用未落地的证据与丢失的结论条目（段落不存在／未编号／条目非法）" not in md
 
     class AcceptClient:
         def chat(self, model, messages, json_mode=False):
@@ -347,7 +347,7 @@ def test_i_rejected_repair_rolls_back_drops_accepted_keeps_one():
     assert len(accepted.parse_drops) == 1
     assert accepted.parse_drops[0]["reason"] == "引用段落不存在（segment_id=SRC9#s99）"
     md2 = render_report_md(accepted, HashChain(), [])
-    assert "引用未落地的证据" in md2
+    assert "引用未落地的证据与丢失的结论条目（段落不存在／未编号／条目非法）" in md2
 
 
 def test_e_export_bytes_unchanged_by_parse_drops(tmp_path):
@@ -403,7 +403,7 @@ def test_f_forbidden_files_untouched():
         ["git", "diff", "58e8610", "--", "app/pipeline.py"], text=True)
     # 只许出现 citation_audit 的 n_parse_dropped 与渲染区两处相关文案
     assert "n_parse_dropped" in pipe
-    assert "引用未落地的证据" in pipe
+    assert "引用未落地的证据与丢失的结论条目（段落不存在／未编号／条目非法）" in pipe
     assert "成因缺失（异常）" in pipe
     # 不许动 empties 判定
     assert 'and c.status != "merged"' in Path("app/pipeline.py").read_text(encoding="utf-8")

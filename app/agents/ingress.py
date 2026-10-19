@@ -48,9 +48,15 @@ def ingest_external_judgment(dossier: Dossier, payload: dict) -> list[str]:
     new_ids: list[str] = []
     for item in payload.get("conclusions") or []:
         if not isinstance(item, dict):
+            record_parse_drop(
+                dossier, conclusion_id="", author=agent,
+                ev=item, kind="conclusion_not_object")
             continue
         statement = str(item.get("statement") or "").strip()
         if not statement:
+            record_parse_drop(
+                dossier, conclusion_id="", author=agent,
+                ev=item, kind="conclusion_empty_statement")
             continue
         con = Conclusion.create(statement=statement, author=agent)
         dossier.conclusions.append(con)

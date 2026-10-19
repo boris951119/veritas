@@ -266,7 +266,7 @@ class Dossier:
     panel: list[str] = field(default_factory=list)  # 参与研判的分析师名
     # 被引文核对打回的证据清单（EvidenceRef dict + problems；持久化供工作台展示）
     rejected: list[dict] = field(default_factory=list)
-    # 物化时证据没落地的丢弃留痕（三格 reason 见 record_parse_drop）
+    # 物化时证据没落地的丢弃留痕（五格 reason 见 record_parse_drop）
     # （与 rejected 分家：pipeline 会对 rejected 整体赋值，解析期写进 rejected 会被盖掉）
     parse_drops: list[dict] = field(default_factory=list)
     # 分析师本轮 0 结论的形态留痕（无 conclusion_id，与 parse_drops 分家）
@@ -380,7 +380,7 @@ def record_parse_drop(
     dossier: Dossier, *, conclusion_id: str, author: str, ev, kind: str,
     segment_id: str = "",
 ) -> None:
-    """结论留下、证据没落地时的留痕。三格 reason 只在这里写。"""
+    """结论留下、证据没落地，或整条结论没入卷时的留痕。五格 reason 只在这里写。"""
     if kind == "not_object":
         reason = "证据条目不是对象（渲染层拿不到）"
         segment_id = ""
