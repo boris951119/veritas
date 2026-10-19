@@ -241,8 +241,15 @@ def export_official(runs: list[tuple[dict, Dossier]], out_dir: Path) -> dict[str
         conflicts.extend(conflict_rows)
         omission_notes.extend(omitted)
     gate_line = _bare_gate_line(n_questions, dropped_ids, kept_bare_ids)
+    # 早退只在 pipeline 写这一句 confidence_note；此处只读，不改早退条件。
+    n_slot = sum(
+        1 for _, dossier in runs
+        if (dossier.accounting or {}).get("confidence_note")
+        == "议题槽位未齐，未发起模型研判")
+    slot_line = f"本次 {n_slot} 题因槽位未齐未调用分析师。"
     dedup_line = f"evidence.json 去重 {deduped} 行（键 doc_id, para_id, quote）。"
     print(gate_line)
+    print(slot_line)
     print(dedup_line)
 
     paths = {
@@ -261,12 +268,16 @@ def export_official(runs: list[tuple[dict, Dossier]], out_dir: Path) -> dict[str
     paths["conflict_resolution"].write_text(
         json.dumps({
             "records": conflicts,
-            "omissions": sorted(set(omission_notes)) or ["basis", "重启条件"],
+            "omissions": (
+                (sorted(set(omission_notes)) or ["basis", "重启条件"])
+                + [slot_line]
+            ),
             "detail": "basis 与重启条件在 Resolution.to_dict() 中不存在，已留空；"
                       "resolution_type 仅由 method 映射表得到，未另算证据强度",
         }, ensure_ascii=False, indent=2),
         encoding="utf-8")
     paths["notes"].write_text(
-        _FIELD_NOTES + "\n## 本次导出\n" + gate_line + "\n" + dedup_line + "\n",
+        _FIELD_NOTES + "\n## 本次导出\n" + gate_line + "\n"
+        + slot_line + "\n" + dedup_line + "\n",
         encoding="utf-8")
     return paths
