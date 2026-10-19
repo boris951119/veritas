@@ -281,6 +281,8 @@ C-13＝推理树补中间结论层＋依赖边＋依赖传播（1 天，对着�
 - **② `file:line` 逐条核对**：`pipeline.py:309`（`VERITAS_FORCE_JUDGMENT` 默认关）／`:341`（`"n_calls": 0`）／`:635`（`len(getattr(client, "call_log", []))`）、`confidence.py:33`／`:87`（四分量那行 docstring）／`:68-72`（机制词闸）、`conflicts.py:157`（`_WEIGHT_MARGIN=0.20`）、`premise_check.py:19-21`（`_ALIAS_GROUPS`）、`answer_slots.py:506`（C-30 变异锚点）、`test_c18_subject_scope.py:91`（装饰断言）、`corpus_store.py` 确有 `published_at`、`fact_ledger.py` 首行确为「同期数字打架」、`app/core/precedent.py` 确不存在（C-29 才建）——**全部命中**。**抓到一处我自己造成的行号漂移**＝C-18 落地后 `answer_slots.py:502-521` 已不是 `_subject_tips`（现＝`_enterprise_question:503-508`＋`_subject_tips:511-531`，机构数来源拆到 `_issuers_in_titles:578`／`_issuers_in_body:582`／别名 `_issuers_in_dossier:592`），⇒ 在工单「现状」段补了**改前坐标 vs 落地后行号图**、工单表那行加了指路，历史读数（⑰ 里 `:514-520`、`:312`）按日期原样保留不动。
 - **③ 卫生**：tracked 无 `.env`／密钥／凭据（全库正文唯一命中是文档里的假密钥 `OPENAI_API_KEY=ollama`）；`cases/` tracked 只有自家三案＋`.gitkeep`；**官方样例集关键词（`testcases`／六案名／案卷中文专名）tracked 命中 0 个文件**；所有 `out*` 产物状态是 `!!`（在 `.gitignore` 内）；本批 9 个文件无二进制、工作树干净。**唯一的 tracked 大文件是本文档本身（703,706 字节）**——不阻塞交付，但再涨就该按批次分卷。
 - **合并动作**：本地 `main` **fast-forward** 到本轮 HEAD（**不 push**）；合并后 `origin/main` 落后数随 HEAD 递增，push 与否归用户。
+- **合并后复验**（`git clone -b main` 到 `f954052`，零补丁）：装了 mcp＝`615 passed in 5.03s`、模拟未装＝`614 passed, 1 skipped`、第 3 步 `demo_offline` 退出 0／报告数 3、跑完 `git status` 行数 0。`main` 现领先 `origin/main` **96 笔**。
+- **FF 前的前置检查**：`git merge-base --is-ancestor main HEAD` 通过才动 `main`（保证是纯 fast-forward、不产生合并提交、不改任何历史）。
 
 ## 1. 现在在哪儿
 
