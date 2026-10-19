@@ -4063,10 +4063,11 @@ _MAX_SOURCES 除了这三处还有没有第四个消费者（自己 grep 一遍�
   - d 计数不变：`pytest tests -q` 连跑 5 次仍 **611**（断言加在同一条用例里，不许新增用例条数；若你确实新开一条，报数给我、我改 `AGENTS.md` 与 §1 基线行，你别动）。
   - e 边界：本轮**只许动 `tests/test_premise_check.py` ＋ HANDOFF 状态行**；`git diff -- app/` 为空、`git status --short cases/` 为空、不真调模型、`tests/conftest.py` 守卫不动。
 - **明确禁止**：为了过判据 b 去改 `_ALIAS_GROUPS`／`_covered`／`_synonym_covered` 本体；把断言放宽成 `>= 0` 或删掉 `n_flags == 0`；把真卷的财务数字写进夹具（那是 C-26 要求 4 的延续）。
+- **状态行（执行方只回写这一行）**：**待开工**（2026-10-19 出单，队列第一，约 0.05 天，架构师已把改前数量完）。改完请替换为「已改完（YYYY-MM-DD），待架构师验收」＋动了哪些文件＋判据 b 的红落在哪几题＋`pytest tests -q` 尾行。
 - **开工提示词（✅ 可发）**：
 
 ```
-读 docs/dev-protocol.md（§3.0 前提核查、§3 问题分流、§3.4 质疑通道、§6 三道纪律）和 docs/HANDOFF.md §5 工单 C-27，你是执行工程师。C-26 已收口（代码已入库），这张单是它收口当场我量出来的覆盖面账，判据与改前数都在单里，别翻旧账动 C-26 的六个文件。
+读 docs/dev-protocol.md（§3.0 前提核查、§3 问题分流、§3.4 质疑通道、§6 三道纪律）和 docs/HANDOFF.md §5 工单 C-27，你是执行工程师。环境＝`git clone` 本仓库（**2026-10-19 已把 85 笔整批 fast-forward 合进 `main`，`main` 与工作分支 `cursor/knife11-second-pass-and-gates` 同一点、内容逐字节相同**，clone 哪条都行；别用"复制工作树"，那会把未入库产物当依赖）。C-26 已收口（代码已入库），这张单是它收口当场我量出来的覆盖面账，判据与改前数都在单里，别翻旧账动 C-26 的六个文件。
 只做一件：tests/test_premise_check.py 里 test_hengxing_scorecard_ten_questions_zero_false_premise 的 paragraphs 列表，把「归母净利润」5 处（第 3／5／8 段）全部换成全称「归属于上市公司股东的净利润」，其余一个字别动——不加段、不改题面、不动断言。
 判据（我会逐条在干净 clone 上自己复放）：a) 未变异 候选仍 35、黄灯仍 0、逐题 status 属于 checked_ok／exempt_template；b) 主判据＝临时把 app/core/premise_check.py 的 _ALIAS_GROUPS 置成 ()（只摘简称组，_THEME_GROUPS 留着）跑这条用例必须变红——改前我量现夹具是 0 盏／0 题＝测不出，你把红在哪几题、亮的值写回状态行（我量到 q3／q5／q8 三题各 1 盏、值均「归母净利润」），然后原样还原并确认 git diff -- app/core/premise_check.py 为空；c) 还原后再跑一遍 C-26 那个变异 B（_covered 非 ASCII 分支改 return token in corpus）仍必须红（我量 4 盏／3 题），证明没把上轮那格削掉；d) pytest tests -q 连跑 5 次仍 611（不许新增用例条数）；e) 只动 tests/test_premise_check.py＋本页状态行，git diff -- app/ 空、cases/ 零字节、不真调模型、conftest 守卫不动。
 若你认为"简称全换全称"这个改法本身不对（比如它让候选数掉下 30 或引入新黄灯），按协议 §3.4 带实测数质疑，别自己换第三种改法。
