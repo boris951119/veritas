@@ -6,7 +6,7 @@
 > **纪律**：每次收工或换工具前，对当前工具说一句「更新 HANDOFF 并提交」——
 > 记忆不会跨工具走，**只有进了 git 的文件才算同步**。
 
-最后更新：**2026-10-20 凌晨** · 分支 `cursor/knife11-second-pass-and-gates` · **本轮按 §7「满 3 张收口」做整批 review＋本地 fast-forward 合 `main`（不 push——本仓库只做本地 commit）；上一次 FF＝10-19 傍晚 `7b9ca32`（范围 7 commits），再上次＝下午 85 commits／103 files（`33ab8e3`→`a18042f`）**；
+最后更新：**2026-10-20 凌晨** · 分支 `cursor/knife11-second-pass-and-gates` · **本轮已按 §7「满 3 张收口」做完第三次整批 review＋本地 fast-forward**（范围＝`main..HEAD` 15 commits／16 files，逐项核过、判定输入七文件零 diff，记录见 §0 ㉖；`main` 已 FF 到工作分支 tip、**不 push**——本仓库只做本地 commit，`origin/main..main` 此刻 114 笔）；上一次 FF＝10-19 傍晚 `7b9ca32`（范围 7 commits），再上次＝下午 85 commits／103 files（`33ab8e3`→`a18042f`）；
 **当前队列序（9 张，权威口径见 §5.0 顶部那行）＝C-14c → C-19 → C-29 → C-20 → C-21 → C-25 → C-13 → C-23（与 C-7 同批）→ C-24**（**C-31 已于 10-20 凌晨第一轮通过收口 `16d2d78` ⇒ 队列第一换成 C-14c**）；另挂**并行档 D-1＝交付物硬档**（测试报告／使用说明／技术方案口径刷新／讲稿分镜，约 0.8 天、**归架构师、不发 Cursor**、只动 `docs/`＋`README.md`＋`ROADMAP.md` ⇒ 与剩余九张零撞）；同日第二拍＝**六案真跑复测排 C-19 收口后立刻起跑**；
 **收口进度到 2026-10-20＝C-10／C-12／C-15／C-14／C-16／C-14b／C-22／C-16b／C-26／C-27／C-28／C-18／C-30／C-17／C-31 十五张已收口**（代码 commit 分别 `a1e10dd`／`1a4a026`／`3af57c7`／`58e8610`／`c68fe30`／`bb35fb9`／`712f2c4`／`c1b7f5a`／`a4b5336`／`a25d771`／`91210ef`／`51c25da`／`ae0908a`／`6b806f1`／`16d2d78`）；
 **入库基线＝`636 passed`**（干净 `git clone`＋装了 mcp；未装 mcp 那格＝`635 passed, 1 skipped`；两格 10-20 凌晨在 **C-31 收口**的两份克隆上各复放，装了 mcp 那格连跑 5 次无 flake，另在 13 个变异每次还原后回到 636。**历史复放：627／626＋1 跳（C-17 收口克隆，`627` 连跑 5 次无 flake）、616／615＋1 跳（`ae0908a` C-30 收口克隆，`616` 在变异矩阵 9 次还原里无 flake）、615／614＋1 跳（`7b9ca32` 两棵树）、611／610＋1 跳（`91210ef`、`a25d771`、合并前 HEAD 三格一致）**）。
@@ -357,7 +357,8 @@ C-13＝推理树补中间结论层＋依赖边＋依赖传播（1 天，对着�
 - **判分口径核了**：`git diff --numstat main..HEAD -- app/core/confidence.py app/core/citation_check.py app/core/material.py app/core/answer_slots.py app/core/premise_check.py app/export/official.py app/llm/profile.py` ＝ **零输出** ⇒ 这一批进 `main` 的**没有任何判定输入变更**，新增只有「留痕＋文案＋文档」；`app/` 侧只碰 `base.py`／`ingress.py`／`repair.py`／`evidence.py`／`panel_attrition.py`／`pipeline.py`（后两处只动链事件区与渲染区）。
 - **三项固定检查全在零补丁干净 `git clone` 上做**（`/tmp/c31-merge`，tip＝`95a964a`）：① `pytest tests -q`＝**`636 passed in 4.87s`**；② `scripts/demo_offline.py`＝exit 0、日志里 `^# 研判报告` **3 份**、三个 `out_offline/` 齐、跑完 `git status` 仍**干净**（产物全在 `.gitignore` 内）；③ `git ls-files` 三查＝`cases/*/out*` **0**、`.env` **0**、官方样例集 **0**。
 - **review 抓到一处自己过期的数（已改，`eee5cb1`）**：`docs/proposal-formal.md:147` 那行是 10-19 量的 **17,678／12,220／616**——C-17、C-31 两笔代码落地后它必然过期 ⇒ 现重量为 **app 17,805／web 1,894／tests 12,739／整套 636**（`pytest --collect-only` 复放＝636 collected）；同一行还带口径命令。**同段那句「攻击面与数字核验类用例 59 条」我逐文件重数＝20/15/9/7/4/4，未变**，`:166` 末尾「全仓整套 616 条」改成 636 并补了复放命令。
-- **合并动作**：本记录提交后随即把本地 `main` fast-forward 到工作分支 tip（含本笔）；**不 push**（`origin/main` 仍停在原地，是否推送归用户）。⇒ 下一合并点＝**再满 3 张收口单**（C-14c／C-19／C-29）或距本次满 3 天。
+- **合并动作**：本记录落笔后本地 `main` 先 FF 到 `42b1c32` 并复验（下面那行），本笔补记再 FF 一次使 `main`＝工作分支 tip；**不 push**（`origin/main` 仍停在原地，是否推送归用户）。⇒ 下一合并点＝**再满 3 张收口单**（C-14c／C-19／C-29）或距本次满 3 天。
+- **合并后复验（`git clone --no-hardlinks -b main` 到 `/tmp/c31-main`，零补丁）**：`git log -1`＝review 那笔 `42b1c32`；装了 mcp＝**`636 passed in 4.74s`**、模拟未装 mcp＝**`635 passed, 1 skipped`**；第 3 步 `demo_offline.py` 退出 0、报告数 **3**、跑完 `git status --short` **0 行**；`main` 上直接 grep 两格新数＝`app/pipeline.py:949` 已是新节标题、`grep -c "三格" app/core/evidence.py`＝**0**；FF 前置检查 `git merge-base --is-ancestor main HEAD` 先过再动 `main`＝纯 fast-forward、不产生合并提交、不改历史。`origin/main..main` 此刻 **114 笔**（流水账，别自己数，以 `git rev-list --count origin/main..main` 为准）。
 
 ## 1. 现在在哪儿
 
