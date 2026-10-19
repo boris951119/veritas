@@ -90,9 +90,10 @@ def test_delay_synonym_is_covered_literal_miss_is_not():
 def test_parent_net_profit_alias_is_covered():
     d = _dossier(
         "2024年半年度归母净利润是多少？",
-        "归属于上市公司股东的净利润 31,831,900.82 元，同比 -28.05%。",
+        "归属于上市公司股东的净利润 1,234,567.89 元，同比 -12.34%。",
     )
-    assert "归母净利润" not in [f["value"] for f in premise_flags(d)]
+    values = [f["value"] for f in premise_flags(d)]
+    assert not any("归母净利润" in v for v in values)
 
 
 def test_true_zero_hit_is_in_analyst_prompt_softly():
