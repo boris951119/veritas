@@ -71,6 +71,28 @@ def test_jilong_disaster_question_reaches_analyst(tmp_path):
     assert "analyst_done" in events
 
 
+def test_non_enterprise_title_issuers_only_disclosed(tmp_path):
+    """a2) 非企业题面 + 两家公司在信源标题：只披露，不早退。"""
+    from app.core.answer_slots import slot_intent
+
+    d = Dossier(question=_JILONG_Q)
+    d.add_source(_src("天仪空间科技股份有限公司", "现场影像见附件。", "S1"))
+    d.add_source(_src("西藏天路股份有限公司", "道路保通见附件。", "S2"))
+    intent = slot_intent(d.question, d)
+    assert intent["clarify"] == []
+    assert any("股份公司" in t for t in intent["disclosures"])
+
+    result = _run(tmp_path, _JILONG_Q, [
+        ("天仪空间科技股份有限公司", "现场影像见附件。"),
+        ("西藏天路股份有限公司", "道路保通见附件。"),
+    ])
+    events = [r.event for r in result.chain.records]
+    assert "slot_clarify_early_exit" not in events
+    assert "analyst_done" in events
+    assert any("股份公司" in t
+               for t in (result.dossier.accounting.get("slot_disclosures") or []))
+
+
 def test_enterprise_title_issuers_still_early_exit(tmp_path):
     """b) 企业题面 + 标题级两家 + 题面未点名：仍然澄清、仍然早退。"""
     from app.core.answer_slots import slot_intent
