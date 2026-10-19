@@ -63,7 +63,7 @@ python3 -m venv .venv
 .venv/bin/python -m pytest tests -q
 ```
 
-**通过判据**：未装 mcp 时零 failed，1 条 skip 属正常，只来自 `tests/test_mcp_server.py` 的 `importorskip("mcp")`。装完 mcp 再跑必须零 failed 且零 skipped。**入库基线 `627 passed`**（本机装了 mcp 的全绿数；干净 `git clone` 上实测复现，不再依赖任何本机未入库产物；未装 mcp 那格＝`626 passed, 1 skipped`，两格 2026-10-19 夜在 **C-17 收口**（`6b806f1`）的两份克隆上各复放，装了 mcp 那格连跑 5 次无 flake）。测试全 stub，无需密钥、不产生任何真实模型调用（测试期有守卫）。
+**通过判据**：未装 mcp 时零 failed，1 条 skip 属正常，只来自 `tests/test_mcp_server.py` 的 `importorskip("mcp")`。装完 mcp 再跑必须零 failed 且零 skipped。**入库基线 `636 passed`**（本机装了 mcp 的全绿数；干净 `git clone` 上实测复现，不再依赖任何本机未入库产物；未装 mcp 那格＝`635 passed, 1 skipped`，两格 2026-10-20 凌晨在 **C-31 收口**（`16d2d78`）的两份克隆上各复放，装了 mcp 那格连跑 5 次无 flake）。测试全 stub，无需密钥、不产生任何真实模型调用（测试期有守卫）。
 
 ## 第 3 步：离线演示（断网/无 key 时的完整演示兜底）
 
