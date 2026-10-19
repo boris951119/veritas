@@ -340,7 +340,7 @@ C-13＝推理树补中间结论层＋依赖边＋依赖传播（1 天，对着�
 - **一条我自己的账要对齐（诚实记）**：§1 那条「测试：入库版本 = 611 passed」从 C-18（615）起就该刷、当时只刷了页眉基线行，**连着三张单没动正文那行**；本轮把 §1 与页眉两处一起写成 `627`，并规定**以后收口时两处一起刷**（页眉是给工具读的、§1 是给人读的，两处不同值就会有人拿旧数当基线）。
 - **残留五条的去向**：① `analyst_empty` 链事件全仓无守护⇒ **归 C-31 顺手补一格**（它同改留痕区，成本 0.01 天）；② `pipeline.py:489` 全员失败的 `RuntimeError` 内嵌整段响应无上限＝**改前既有**，留给下一张本来就要动 `pipeline.py` 的单（C-13／C-19）；③ `record_parse_drop` docstring 仍写「三格」⇒ 同归 C-31；④ 报告节标题「引用未落地的证据」现在也列结论条目级丢弃＝**文案错位**⇒ 已写进 C-31 第 4 件；⑤ `_materialize` 的 `raw` 缺省 `""` 仍会开一条 `empty_runs`⇒ **不拦**，但读数口径要按「有 raw 才算形态」解释（写进 D-1 测试报告局限性的措辞）。
 - **口径提醒（将来写测试报告要用）**：C-17 只关掉了**三处条目级静默丢弃的第一处**（`base.py`）；`ingress.py:50-54`／`repair.py:151` 两处由 **C-31** 关。**只做 C-17 就宣布「条目级丢件已可见」是半截话**，这句要带口径写。
-- **排期影响**：C-17 收口 ⇒ **C-31 顶到队列第一、开工提示词已按新基线 627 可发**；其余九张相对序不动。下一合并点＝**C-31＋C-14c 收口后**（本地 `main` 仍停在 `7b9ca32`，不 push）。
+- **排期影响**：C-17 收口 ⇒ **C-31 顶到队列第一、开工提示词已按新基线 627 可发**；其余九张相对序不动。合并节律按 §7「满 3 张收口单」当场数过：上一次 FF 是 `7b9ca32`，**此后已收口 2 张（C-30 `ae0908a`、C-17 `6b806f1`）⇒ C-31 收口就是第 3 张＝下一个合并点**（本地 `main` 仍停在 `7b9ca32`，不 push；`git rev-list --count main..HEAD` 我量的是 10 笔）。
 
 ## 1. 现在在哪儿
 
@@ -3074,7 +3074,7 @@ git status 里没有官方样例集任何文件。
 
 ```
 读 docs/dev-protocol.md（重点 §3.0 前提核查、§3 问题分流、§3.4 质疑通道、§5 判据纪律、§6 三道纪律）和 docs/HANDOFF.md §5 的工单 C-31（六件＋判据 a–k 全在那一节），你是执行工程师。
-环境＝`git clone /Users/liuboyu/Developer/veritas` 后在克隆里干活，分支 `cursor/knife11-second-pass-and-gates`，**HEAD ≥ `6b806f1`（＝C-17 收口笔；本地 `main` 停在 `7b9ca32`、落后一百笔，别从 main 开工）**。
+环境＝`git clone /Users/liuboyu/Developer/veritas` 后在克隆里干活，分支 `cursor/knife11-second-pass-and-gates`，**HEAD ≥ `6b806f1`（＝C-17 收口笔；本地 `main` 停在 `7b9ca32`、落后工作分支 `git rev-list --count main..HEAD` ＝ **10 笔**，别从 main 开工——那 10 笔含 C-30／C-17 两笔代码）**。
 基线以 docs/HANDOFF.md 页眉「入库基线」与 §1「入库版本」那两行为准＝**`627 passed`**（模拟未装 mcp＝`626 passed, 1 skipped`）。动工前先读那两行、抄进回写，并自证你的干净树上 `cases/*/out*/report.json` ＝ 0 份（C-17 第一轮就是栽在用例读了未入库产物）。
 先做 §3.0 前提核查，逐条打开文件核，对不上就按 §3 分流、别照抄：1) `app/agents/ingress.py:50-54` 是不是「非对象 continue」＋「空 statement continue」两条、都没调 `record_parse_drop`；2) `app/agents/repair.py:151` 是不是列表推导滤非对象、`:152` 是不是取 `items[0]`（那 `items[1:]` 去哪了？把答案写进回写）；3) `record_parse_drop` 现在在 **`app/core/evidence.py:379-405`**（C-17 之后行号漂了，工单出单时写的 `375-397` 作废），对未知 kind 是不是 `raise ValueError`（在 `:399`）；4) C-17 已收口，条目级 kind 名与文案就是 `evidence.py:392-397` 那两种（`conclusion_not_object`／`conclusion_empty_statement`）——本单必须沿用那一套字面量，**不许自造第二套**；5) 报告节标题「引用未落地的证据」那一串全库命中几处？我量的是 **9＝生产 1＋测试 8**，把你 grep 出的清单贴进回写，**对不上就停手报我**、别自己删断言。
 六件按工单做：**第 1 件** `ingress.py` 两条 `continue` 补条目级留痕（两格文案分家、`conclusion_id` 留空串）；**第 2 件** `repair.py:151` 列表推导改显式循环、非对象条目补同样留痕；**第 3 件** `items[0]` 那处**只披露不改行为**——`items` 长度 >1 时把 `n_unused` 写进修复环已有的 accounting／链事件载荷（参照 `repair.py:139-144` 那组 `attempted/accepted/repair_accept_rate`），仍然只重写第一条；**第 4 件** `app/pipeline.py:949` 那个节标题与内容对齐（**只改文案**，不许拆成两节、不许改渲染条件；`tests/test_parse_drops.py` 里正向 5 处与**负向 2 处（`:211`／`:327`）必须一起换**，只换正向那两处负断言就成了永真摆设）；**第 5 件** `evidence.py:383` docstring 与 `:269` 注释里的「三格」按**你 `grep` 数出来的真实分支数**改写（别引用我写的数）；**第 6 件** 给 `app/pipeline.py:477` 的 `analyst_empty` 链事件补一格守护用例，只钉「事件名在场＋载荷键集合＝`{error}`」，**不许钉文案**（文案已由 C-17 判据 j 守）、**不许读未入库产物**。
