@@ -236,6 +236,55 @@ def probe_6_concentration() -> None:
         print(f"  {c[:20]:<22} 金标落 {len(per):>3}/{len(docs):<4} 篇   Top: {s}")
 
 
+def probe_7_time_anchorability() -> None:
+    """信源时点可定位性：任何「按时间比较」的判据，适用面就是这几个数。
+
+    出处＝C-29（案卷内同类事件对照）工单的实测前提。工单里引用的每个数都由本节重算，
+    不再靠架构师手头的临时脚本（协议 §5 基数三件套：命令＋参数＋真实输出）。
+    """
+    print()
+    print("=" * 78)
+    print("⑦ 信源时点可定位性（时序类判据的适用面上限）")
+    print("=" * 78)
+
+    def bucket(pt: str) -> str:
+        if not pt:
+            return "空"
+        if re.match(r"^\d{4}-\d{2}-\d{2}", pt):
+            return "完整日期（可按时间排序）"
+        if re.match(r"^\d{4}-\d{2}$", pt):
+            return "只有年月"
+        if re.match(r"^\d{1,2}月\d{1,2}日", pt):
+            return "只有月日（缺年）"
+        if re.match(r"^\d+天前", pt):
+            return "相对时间（N天前）"
+        return "其他（站名／中文日期等）"
+
+    order = ("完整日期（可按时间排序）", "空", "只有月日（缺年）",
+             "相对时间（N天前）", "其他（站名／中文日期等）", "只有年月")
+    per: dict[str, Counter] = {}
+    for c in cases():
+        per[c] = Counter(bucket((d.get("publish_time") or "").strip())
+                         for d in load(c, "raw_documents.json"))
+    tot = Counter()
+    for counts in per.values():
+        tot.update(counts)
+    n = sum(tot.values())
+    ok = tot[order[0]]
+    print(f"  {ok:>4}/{n:<4} 信源可定位到完整日期＝{100 * ok / n:.1f}%"
+          f"（其余按{len(order) - 1}类降级，逐类见下）")
+    for k in order:
+        ex = next((pt for c in cases() for d in load(c, "raw_documents.json")
+                   if bucket((d.get("publish_time") or "").strip()) == k
+                   and (pt := (d.get("publish_time") or "").strip())), "")
+        print(f"  {tot[k]:>4}  {k}{'：例 ' + ex[:18] if ex else ''}")
+    print("  逐案（覆盖率升序＝时序对照最不能硬闸的那个案排在最前）")
+    for c, cnt in sorted(per.items(), key=lambda kv:
+                         kv[1][order[0]] / max(sum(kv[1].values()), 1)):
+        m = sum(cnt.values())
+        print(f"  {cnt[order[0]]:>4}/{m:<4} = {100 * cnt[order[0]] / m:3.0f}%   {c[:30]}")
+
+
 def main() -> None:
     if not os.path.isdir(ROOT):
         print(f"找不到官方样例集目录：{ROOT}\n"
@@ -250,6 +299,7 @@ def main() -> None:
     probe_4_credibility()
     probe_5_gold_defects()
     probe_6_concentration()
+    probe_7_time_anchorability()
 
 
 if __name__ == "__main__":
