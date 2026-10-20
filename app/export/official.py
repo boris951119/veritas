@@ -38,9 +38,14 @@ schema 自定（附录 A 未规定）。每条结论含：
 
 ## conflict_resolution.json
 schema 自定。resolution_type 取官方五级之一，由 method 经模块级映射表得到
-（C-14 会把该表移进 conflicts.py）。
-basis、重启条件：Resolution.to_dict() 当前没有这两键，留空并在 omissions 里披露。
+（映射表在 conflicts.py）。
+basis、重启条件：由 Resolution.to_dict() 输出；缺失时留空并在 omissions 里披露。
+omissions 取值含：人工改判、假不等式已拦截，以及导出层对缺失字段的标注。
 导出层不另算证据强度，也不另数独立信源。
+
+## 窗口装箱
+本次按假定窗口装箱；若现场模型窗口更大请调 VERITAS_MODEL_CTX_TOKENS；
+关闭＝VERITAS_PACK_TO_WINDOW=0。
 """
 
 

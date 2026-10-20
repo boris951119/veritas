@@ -23,10 +23,14 @@ from app.core.evidence import Dossier
 from app.core.relevance import classify_sources
 
 DEFAULT_MATERIAL_CHAR_BUDGET = 80_000
+ALIGN_MAX_ITERS = 6
+WINDOW_EXCLUDE_REASON = "模型窗口截断（窗口对齐装箱）"
 
 # 运行时预算（pipeline 按 Settings.material_char_budget 置位；
 # render_segments_block / report 披露读同一值——全体出口口径一致）
 _MATERIAL_BUDGET = DEFAULT_MATERIAL_CHAR_BUDGET
+# 预算挤出段的 reason；窗口对齐时改为 WINDOW_EXCLUDE_REASON，与「预算截断」分家
+_EXCLUDE_BUDGET_REASON = "预算截断"
 
 
 def set_material_budget(value: int) -> None:
@@ -36,6 +40,144 @@ def set_material_budget(value: int) -> None:
 
 def material_budget() -> int:
     return _MATERIAL_BUDGET
+
+
+def set_exclude_budget_reason(reason: str | None = None) -> None:
+    """打包 excluded 的预算侧 reason；None／空串回退「预算截断」。"""
+    global _EXCLUDE_BUDGET_REASON
+    text = (reason or "").strip()
+    _EXCLUDE_BUDGET_REASON = text or "预算截断"
+
+
+def exclude_budget_reason() -> str:
+    return _EXCLUDE_BUDGET_REASON
+
+
+def production_pack_messages(
+    dossier: Dossier,
+    *,
+    persona: str,
+    profile_tier: str = "standard",
+    focus_segment_ids: list[str] | None = None,
+) -> list[dict]:
+    """与 Analyst.analyze 同形的两条 messages（含 skills_rules／focus）。
+
+    窗口对齐估算必须走这条，不许用 probe_pack_window 的替身构造。
+    """
+    from app.agents.prompts import render_segments_block, render_system_prompt
+    from app.core.skills import render_skills_rules
+
+    return [
+        {"role": "system",
+         "content": render_system_prompt(
+             persona,
+             skills_rules=render_skills_rules(dossier, profile_tier))},
+        {"role": "user",
+         "content": render_segments_block(
+             dossier, focus_segment_ids=focus_segment_ids)},
+    ]
+
+
+def align_budget_to_window(
+    dossier: Dossier,
+    settings,
+    *,
+    persona: str,
+    profile_tier: str = "standard",
+) -> dict:
+    """有界确定性缩档：整条生产提示词 est ≤ 窗口满值（不减 max_response_tokens）。
+
+    返回 accounting["pack_window"] 形状。预算经 set_material_budget 钉死。
+    """
+    from app.core.prompt_guard import estimate_prompt_window
+
+    window = int(getattr(settings, "model_context_tokens", 0) or 0)
+    density = float(getattr(settings, "zh_chars_per_token", 1.45) or 1.45)
+    if density <= 0:
+        density = 1.45
+    orig = max(1, int(getattr(settings, "material_char_budget",
+                              DEFAULT_MATERIAL_CHAR_BUDGET) or
+                      DEFAULT_MATERIAL_CHAR_BUDGET))
+    pack_on = bool(getattr(settings, "pack_to_window", True))
+
+    def _stamp(rule: str, budget: int, *, est=None, n_iters=None,
+               fits=None) -> dict:
+        """disabled／unchecked：没估算过 → est／n_iters／fits 记 null。"""
+        set_material_budget(budget)
+        if rule in ("disabled", "unchecked"):
+            set_exclude_budget_reason("预算截断")
+            return {
+                "rule": rule,
+                "window_tokens": window,
+                "target_tokens": window if window > 0 else 0,
+                "budget": budget,
+                "est_tokens": None,
+                "n_iters": None,
+                "fits": None,
+            }
+        if pack_on and budget < orig:
+            set_exclude_budget_reason(WINDOW_EXCLUDE_REASON)
+        else:
+            set_exclude_budget_reason("预算截断")
+        return {
+            "rule": rule,
+            "window_tokens": window,
+            "target_tokens": window if window > 0 else 0,
+            "budget": budget,
+            "est_tokens": int(est or 0),
+            "n_iters": int(n_iters or 0),
+            "fits": bool(fits),
+        }
+
+    if not pack_on:
+        return _stamp("disabled", orig)
+    if window <= 0:
+        return _stamp("unchecked", orig)
+
+    # 先按原预算估一次：已进窗则零改动（判据 f 反向格）
+    set_material_budget(orig)
+    set_exclude_budget_reason("预算截断")
+    msgs0 = production_pack_messages(
+        dossier, persona=persona, profile_tier=profile_tier)
+    rec0 = estimate_prompt_window(
+        msgs0, window_tokens=window, zh_chars_per_token=density)
+    est0 = int(rec0["est_tokens"])
+    if int(rec0.get("overflow_tokens") or 0) <= 0:
+        return _stamp("align_to_window", orig, est=est0, n_iters=1, fits=True)
+
+    # 超窗：按比值有界缩档；每轮全量生产同形估算（判据 m）。无进程级缓存。
+    est = est0
+    n_iters = 0
+    fits = False
+    budget = min(
+        orig,
+        max(1, int(window * density)),
+        max(1, int(orig * window / max(est0, 1) * 0.92)),
+    )
+    for _ in range(ALIGN_MAX_ITERS):
+        n_iters += 1
+        set_material_budget(budget)
+        set_exclude_budget_reason(
+            WINDOW_EXCLUDE_REASON if budget < orig else "预算截断")
+        msgs = production_pack_messages(
+            dossier, persona=persona, profile_tier=profile_tier)
+        rec = estimate_prompt_window(
+            msgs, window_tokens=window, zh_chars_per_token=density)
+        est = int(rec["est_tokens"])
+        if int(rec.get("overflow_tokens") or 0) <= 0:
+            fits = True
+            break
+        new_budget = max(1, int(budget * window / max(est, 1) * 0.92))
+        if new_budget >= budget:
+            new_budget = max(1, budget // 2)
+        if new_budget == budget:
+            break
+        budget = new_budget
+
+    out = _stamp("align_to_window", budget, est=est, n_iters=n_iters, fits=fits)
+    if not fits:
+        set_exclude_budget_reason(WINDOW_EXCLUDE_REASON)
+    return out
 
 
 def pack_material(dossier: Dossier,
@@ -117,11 +259,20 @@ def pack_material(dossier: Dossier,
         if not progressed:
             break
 
-    excluded = [{
-        "source_id": src_id, "seg_id": seg_id,
-        "reason": "BM25 排序未入预算" if scores.get(seg_id, 0.0) > 0
-        else "预算截断",
-    } for src_id, seg_id in eligible if seg_id not in selected]
+    cut_reason = _EXCLUDE_BUDGET_REASON
+    excluded = []
+    for src_id, seg_id in eligible:
+        if seg_id in selected:
+            continue
+        if cut_reason != "预算截断":
+            reason = cut_reason
+        elif scores.get(seg_id, 0.0) > 0:
+            reason = "BM25 排序未入预算"
+        else:
+            reason = "预算截断"
+        excluded.append({
+            "source_id": src_id, "seg_id": seg_id, "reason": reason,
+        })
 
     return {
         "selected": selected,

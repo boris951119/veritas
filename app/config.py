@@ -117,6 +117,9 @@ class Settings:
     # 中文字符／token 密度倒数：探针实测 ≈0.69 tok/字 → 1/0.69≈1.45。
     # 来源 scripts/probe_context_window.py（2026-10-16）。VERITAS_ZH_CHARS_PER_TOKEN。
     zh_chars_per_token: float = 1.45
+    # 装箱是否以模型窗口为准（C-9 乙／C-19）：开＝有界缩档使整条提示词
+    # est ≤ 窗口；关＝VERITAS_PACK_TO_WINDOW=0，走字预算老路。
+    pack_to_window: bool = True
 
     # 语料收窄阈值：信源数达到该值才走索引选料（默认 50=自动；
     # 0=强制关闭，小案例到不了阈值则整卷研判、不建 .corpus）。
@@ -229,6 +232,11 @@ class Settings:
                     s.zh_chars_per_token = zh_val
             except ValueError:
                 pass
+        pack_env = (os.environ.get("VERITAS_PACK_TO_WINDOW") or "").strip().lower()
+        if pack_env in ("0", "false", "off", "no"):
+            s.pack_to_window = False
+        elif pack_env in ("1", "true", "on", "yes"):
+            s.pack_to_window = True
         return s.validate()
 
     @classmethod
@@ -260,6 +268,13 @@ class Settings:
         if isinstance(zh, (int, float)) and not isinstance(zh, bool) \
                 and float(zh) > 0:
             s.zh_chars_per_token = float(zh)
+        if "pack_to_window" in data:
+            raw_pack = data.get("pack_to_window")
+            if isinstance(raw_pack, bool):
+                s.pack_to_window = raw_pack
+            elif isinstance(raw_pack, (int, str)):
+                s.pack_to_window = str(raw_pack).strip().lower() not in (
+                    "0", "false", "off", "no", "")
         select_min = data.get("corpus_select_min_sources")
         if isinstance(select_min, int) and not isinstance(select_min, bool) \
                 and select_min >= 0:

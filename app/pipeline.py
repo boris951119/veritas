@@ -50,7 +50,11 @@ from app.core.dup_check import duplicate_map, near_dup_pairs
 from app.core.evidence import Dossier
 from app.core.fact_ledger import _scan, find_collisions
 from app.core.hashchain import HashChain
-from app.core.material import pack_material, set_material_budget
+from app.core.material import (
+    align_budget_to_window,
+    pack_material,
+    set_material_budget,
+)
 from app.core.numeric_check import audit_conservation, audit_counting, audit_numeric
 from app.core.premise_check import premise_flags, premise_record
 from app.core.relevance import classify_sources
@@ -333,7 +337,7 @@ def run_case(spec: RunSpec | None = None,
         kept = {k: v for k, v in (dossier.accounting or {}).items()
                 if k in ("corpus_select", "query_rewrite", "slot_disclosures",
                          "panel_attrition", "repair_accept_rate", "premise",
-                         "fact_ledger_stats", "prompt_window")}
+                         "fact_ledger_stats", "prompt_window", "pack_window")}
         dossier.accounting = {
             **kept,
             "elapsed_s": round(time.monotonic() - t0, 1),
@@ -392,17 +396,6 @@ def run_case(spec: RunSpec | None = None,
                  {"skills": [s.name for s in detect_skills(dossier)],
                   "injection": skills_enabled()})
 
-    with prog.stage("material", "BM25 精排与预算装箱"):
-        pack = pack_material(dossier, settings.material_char_budget)
-        chain.append("material_pack", "pipeline", {
-            "budget": pack["budget"],
-            "n_total": pack["n_total"],
-            "n_selected": len(pack["selected"]),
-            "n_excluded": len(pack["excluded"]),
-        })
-        prog.note(n_total=pack["n_total"], n_selected=len(pack["selected"]),
-                  n_excluded=len(pack["excluded"]), budget=pack["budget"])
-
     guard = BudgetGuard(settings.budget_tokens, settings.budget_throttle_threshold)
     case_key = Path(spec.case_dir).name if spec.case_dir else ""
     run_id = (spec.run_id or "").strip()
@@ -444,6 +437,57 @@ def run_case(spec: RunSpec | None = None,
                                   "error": f"{type(exc).__name__}: {exc}"})
     for a in analysts:
         a.profile_tier = tiers.get(a.model, "standard")
+        a.settings = settings  # 与对齐／C-9 丙同一份窗口设定
+
+    # C-19：窗口对齐装箱（在档位已知后，用生产同形 messages 估）
+    with prog.stage("material", "BM25 精排与预算装箱"):
+        from app.agents.prompts import render_system_prompt
+        from app.core.skills import render_skills_rules
+
+        align_persona = analysts[0].persona if analysts else "独立分析师"
+        align_tier = analysts[0].profile_tier if analysts else "standard"
+        best_len = -1
+        for a in analysts or []:
+            sys_len = len(render_system_prompt(
+                a.persona,
+                skills_rules=render_skills_rules(dossier, a.profile_tier)))
+            if sys_len > best_len:
+                best_len = sys_len
+                align_persona, align_tier = a.persona, a.profile_tier
+        pack_window = align_budget_to_window(
+            dossier, settings,
+            persona=align_persona, profile_tier=align_tier)
+        dossier.accounting["pack_window"] = dict(pack_window)
+        if pack_window.get("rule") == "align_to_window" and not pack_window.get("fits"):
+            detail = (
+                f"窗口对齐后仍超窗：est≈{pack_window.get('est_tokens')} token，"
+                f"假定窗口 {pack_window.get('window_tokens')}，"
+                f"迭代 {pack_window.get('n_iters')} 次仍无法装入"
+            )
+            if not any(n.get("kind") == "pack_window_unfit"
+                       for n in dossier.ingest_notes):
+                dossier.ingest_notes.append({
+                    "file": "",
+                    "kind": "pack_window_unfit",
+                    "detail": detail,
+                    "est_tokens": pack_window.get("est_tokens"),
+                    "window_tokens": pack_window.get("window_tokens"),
+                    "budget": pack_window.get("budget"),
+                    "n_iters": pack_window.get("n_iters"),
+                })
+        # 钉死后全员同料：不许再传 settings.material_char_budget 实参
+
+        pack = pack_material(dossier)
+        chain.append("material_pack", "pipeline", {
+            "budget": pack["budget"],
+            "n_total": pack["n_total"],
+            "n_selected": len(pack["selected"]),
+            "n_excluded": len(pack["excluded"]),
+            "pack_window": dict(pack_window),
+        })
+        prog.note(n_total=pack["n_total"], n_selected=len(pack["selected"]),
+                  n_excluded=len(pack["excluded"]), budget=pack["budget"],
+                  pack_fits=pack_window.get("fits"))
 
     model_of = {a.name: a.model for a in analysts}
 
@@ -645,7 +689,7 @@ def run_case(spec: RunSpec | None = None,
                      "obligation_limitation", "n_unused",
                      "premise", "second_pass", "conflict_drops",
                      "mechanical_merge", "fact_ledger_stats",
-                     "prompt_window")}
+                     "prompt_window", "pack_window")}
     dossier.accounting = {
         **kept,
         "elapsed_s": round(time.monotonic() - t0, 1),
@@ -1326,10 +1370,37 @@ def _render_prompt_window(lines: list[str], dossier: Dossier) -> None:
     notes = [n for n in dossier.ingest_notes
              if n.get("kind") == "prompt_over_window"]
     pw = (dossier.accounting or {}).get("prompt_window") or {}
-    if notes:
+    pack_w = (dossier.accounting or {}).get("pack_window") or {}
+    unfit = [n for n in dossier.ingest_notes
+             if n.get("kind") == "pack_window_unfit"]
+    if notes or unfit or pack_w or pw.get("status") == "unchecked":
         lines += ["## 模型窗口出口披露", ""]
+        if pack_w:
+            rule = str(pack_w.get("rule") or "")
+            if rule in ("disabled", "unchecked"):
+                reason = ("VERITAS_PACK_TO_WINDOW=0" if rule == "disabled"
+                          else "model_context_tokens≤0")
+                lines.append(
+                    f"- 窗口对齐装箱未启用（原因＝{reason}），"
+                    f"本次按字预算 {pack_w.get('budget')} 装箱"
+                )
+            else:
+                win = pack_w.get("window_tokens")
+                lines.append(
+                    f"- 本次按假定窗口 {win} 装箱"
+                    f"（budget={pack_w.get('budget')}，"
+                    f"est≈{pack_w.get('est_tokens')} token，"
+                    f"迭代 {pack_w.get('n_iters')}，"
+                    f"fits={pack_w.get('fits')}）；"
+                    f"若现场模型窗口更大请调 `VERITAS_MODEL_CTX_TOKENS`；"
+                    f"关闭＝`VERITAS_PACK_TO_WINDOW=0`"
+                )
+        for n in unfit:
+            lines.append(f"- {n.get('detail') or ''}")
         for n in notes:
             lines.append(f"- {n.get('detail') or ''}")
+        if not notes and not unfit and pw.get("status") == "unchecked" and not pack_w:
+            lines.append(f"- 未检查：{pw.get('detail') or 'model_context_tokens≤0'}")
         lines.append("")
         return
     if pw.get("status") == "unchecked":
@@ -1341,20 +1412,28 @@ def _render_prompt_window(lines: list[str], dossier: Dossier) -> None:
 def _render_excluded_sources(lines: list[str], dossier: Dossier) -> None:
     """丢弃必须可见：预算裁剪、零相关/重复排除、摄取失败三类披露。"""
     from app.core.dup_check import duplicate_map
-    from app.core.material import pack_material
+    from app.core.material import WINDOW_EXCLUDE_REASON, pack_material
     from app.core.relevance import classify_sources
 
     pack = pack_material(dossier)
     if pack["excluded"]:
         lines += ["## 因预算未进入研判的段落", ""]
-        by_source: dict[str, list[str]] = {}
+        by_source: dict[str, list[tuple[str, str]]] = {}
         for e in pack["excluded"]:
-            by_source.setdefault(e["source_id"], []).append(e["seg_id"])
+            by_source.setdefault(e["source_id"], []).append(
+                (e["seg_id"], str(e.get("reason") or "")))
         for sid in sorted(by_source):
-            segs = sorted(by_source[sid])
+            items = sorted(by_source[sid], key=lambda x: x[0])
+            segs = [g for g, _ in items]
+            reasons = {r for _, r in items if r}
             sample = "、".join(segs[:3]) + (" 等" if len(segs) > 3 else "")
-            lines.append(f"- `{sid}`：{len(segs)} 段（{sample}）"
-                         "——BM25 排序后超出资料预算，未进入分析师视野")
+            if WINDOW_EXCLUDE_REASON in reasons:
+                why = WINDOW_EXCLUDE_REASON
+            elif "BM25 排序未入预算" in reasons:
+                why = "BM25 排序后超出资料预算，未进入分析师视野"
+            else:
+                why = "超出资料预算，未进入分析师视野"
+            lines.append(f"- `{sid}`：{len(segs)} 段（{sample}）——{why}")
         lines.append("")
 
     entries: list[tuple[str, str, str]] = []  # (source_id, title, reason)
@@ -1367,9 +1446,10 @@ def _render_excluded_sources(lines: list[str], dossier: Dossier) -> None:
             entries.append((src.id, src.title,
                             f"与 {dups[src.id]} 内容完全重复——不重复进入研判，"
                             "防止一致性虚增"))
-    # 出口披露单列，不混进摄取披露章
+    # 出口披露单列，不混进摄取披露章（pack_window_unfit 已在「模型窗口出口披露」）
     ingest = [n for n in dossier.ingest_notes
-              if n.get("kind") not in ("corpus_select", "prompt_over_window")]
+              if n.get("kind") not in (
+                  "corpus_select", "prompt_over_window", "pack_window_unfit")]
     if not entries and not ingest:
         return
     lines += ["## 未采信信源（未进入分析师视野）", ""]
