@@ -63,7 +63,7 @@ python3 -m venv .venv
 .venv/bin/python -m pytest tests -q
 ```
 
-**通过判据**：未装 mcp 时零 failed，1 条 skip 属正常，只来自 `tests/test_mcp_server.py` 的 `importorskip("mcp")`。装完 mcp 再跑必须零 failed 且零 skipped。**入库基线 `660 passed`**（本机装了 mcp 的全绿数；干净 `git clone` 上实测复现，不再依赖任何本机未入库产物；未装 mcp 那格＝`659 passed, 1 skipped`，两格 2026-10-20 傍晚在 **C-19 收口**（第二轮通过）的两份新克隆上各复放，装了 mcp 那格连跑 5 次无 flake（19.25～19.46 秒）。整套比上一版慢约 14 秒，全部来自新增的装箱/窗口用例自身（去掉那个新文件仍是 `645 passed in 4.79s`），既有用例没有变慢。测试全 stub，无需密钥、不产生任何真实模型调用（测试期有守卫）。
+**通过判据**：未装 mcp 时零 failed，1 条 skip 属正常，只来自 `tests/test_mcp_server.py` 的 `importorskip("mcp")`。装完 mcp 再跑必须零 failed 且零 skipped。**入库基线 `678 passed`**（本机装了 mcp 的全绿数；干净 `git clone` 上实测复现，不依赖任何本机未入库产物；未装 mcp 那格＝`677 passed, 1 skipped`，两格 2026-10-20 深夜在 **C-29 收口**（第三轮通过）的两份新克隆上各复放，装了 mcp 那格连跑 6 次无 flake（21.1～21.5 秒）。整套比 C-19 那版慢约 1.8 秒，**而且这次慢在既有用例上**（摘掉新增的 `tests/test_c29_precedent.py` 仍是 `660 passed in 21.03s`，C-19 收口时是 19.3 秒）＝同类事件对照台账在 `accounting` 缺键时会全量重算，已登记待办（`docs/HANDOFF.md` task #65），不影响判绿。上一版 660 那档的 14 秒则全部来自新增的装箱/窗口用例自身（去掉那个新文件仍是 `645 passed in 4.79s`）。测试全 stub，无需密钥、不产生任何真实模型调用（测试期有守卫）。
 
 ## 第 3 步：离线演示（断网/无 key 时的完整演示兜底）
 
@@ -175,7 +175,15 @@ python3 -m venv .venv
 - 输入生命周期：事实对撞台账（`app/core/fact_ledger.py`，信源数字
   打架机械检出，注入提示词+报告兜底）、时序核对（`app/core/
   temporal_check.py` 时效闸/as-of 闸，manifest 可声明 published_at）、
-  相关性分层（`app/core/relevance.py`，零相关不进提示词但报告披露）
+  相关性分层（`app/core/relevance.py`，零相关不进提示词但报告披露）、
+  案卷内同类事件对照台账（`app/core/precedent.py`，零 LLM：按同一指标＋
+  同一主体把「早期同类事件 ↔ 本案」配成行，两端引文必须在原文段落里
+  逐字可定位（定位不到就不生成）、缺时点走 `gate_applicability` 通道披露
+  「时点不明，未据此排序」；报告新增「## 同类事件对照（案卷内）」一节，
+  展示双上限＝24 行且本节字数 ≤ 其余各节合计的 1/3，被截断时节内披露
+  「还有 N 行未展示」而台账本体仍全量、`accounting["precedent"]["n_rows"]`
+  记真数；外部先验句只出黄灯旗＋标「不计入置信度」，
+  **不加权重、不注入提示词**）
 - 检索与预算：纯 Python BM25 段级精排（`app/core/bm25.py`）+ 跨信源
   轮转装箱（`app/core/material.py`，`material_char_budget` 默认 8 万字，
   装不下全披露）；ES/向量不进默认链（方案文档「规模化路径」）
