@@ -180,6 +180,38 @@ def _submitted_conclusions(case_run: Path) -> dict[str, dict]:
     return out
 
 
+def env_snapshot() -> dict:
+    """本机内存态一帧（2026-10-20 吉隆定责学出来的：墙钟超闸的第一嫌疑是换页，不是代码）。
+
+    那一轮同一份代码、同一个 `budget_used`、calls/tokens 只差 4%，整案墙钟却从
+    1,322.5 s 涨到 2,290.3 s——只有把 swap／空闲内存逐题落到 rows.jsonl 里，
+    「环境 vs 代码」这道账才不必靠人回忆。只读；没有这两条命令的机器返回空 dict，
+    绝不因为测量帧报错而打断数小时的真跑。
+    """
+    out: dict = {}
+    if sys.platform != "darwin":
+        return out
+    try:
+        import subprocess
+
+        sw = subprocess.run(["sysctl", "-n", "vm.swapusage"],
+                            capture_output=True, text=True, timeout=5).stdout
+        used = re.search(r"used\s*=\s*([\d.]+)M", sw)
+        total = re.search(r"total\s*=\s*([\d.]+)M", sw)
+        if used:
+            out["swap_used_mb"] = float(used.group(1))
+        if total:
+            out["swap_total_mb"] = float(total.group(1))
+        mp = subprocess.run(["memory_pressure", "-Q"],
+                            capture_output=True, text=True, timeout=10).stdout
+        free = re.search(r"percentage:\s*(\d+)%", mp)
+        if free:
+            out["mem_free_pct"] = int(free.group(1))
+    except Exception as exc:                                    # 测量帧不许炸真跑
+        out["env_error"] = f"{type(exc).__name__}: {exc}"
+    return out
+
+
 def preflight(st) -> None:
     from app.llm.model_client import ModelClientFactory
 
@@ -329,11 +361,13 @@ def run_questions(label: str, roster: list | None, only_case: str | None,
                     st_q.material_char_budget = min(
                         fit, int(st.material_char_budget))
                 t_q = time.monotonic()
+                env_before = env_snapshot()
                 result = run_case(RunSpec(
                     dossier=snap,
                     out_dir=case_out / "questions" / str(question["question_id"]),
                     settings=st_q, roster=roster))
                 wall_q = round(time.monotonic() - t_q, 1)
+                env_after = env_snapshot()
                 data = result.dossier.to_dict()
                 acc = data.get("accounting") or {}
                 pw = acc.get("prompt_window") or {}
@@ -363,12 +397,19 @@ def run_questions(label: str, roster: list | None, only_case: str | None,
                     "n_conclusions": len(cons),
                     "steps": {s.get("id"): s.get("elapsed_s")
                               for s in (acc.get("steps") or [])},
+                    # 环境帧＋吞吐：墙钟异常先问这两个数，再动代码
+                    "tok_per_s": (round((acc.get("tokens") or 0) / wall_q, 1)
+                                  if wall_q else None),
+                    "env_before": env_before, "env_after": env_after,
                 })
                 _append_jsonl(run_dir / "rows.jsonl", rows[-1])
                 r = rows[-1]
                 print(f"  {case_dir.name[:16]:<18} {r['qid']} 题墙钟 {r['wall_q_s']:>7}s "
                       f"(埋点 {r['elapsed_s']}) 预算 {r['budget_used']:>6} 字 "
                       f"调用 {r['n_calls']:>2} tok {r['tokens']:>6} "
+                      f"吞吐 {r['tok_per_s']}tok/s "
+                      f"空闲内存 {r['env_after'].get('mem_free_pct')}% "
+                      f"swap {r['env_after'].get('swap_used_mb')}MB "
                       f"拟合 {r['fit_prompt_chars'] or 0:>6}字/{r['fit_est_tokens'] or 0:>6}tok "
                       f"生产 {r['prod_prompt_chars'] or '—':>6}/"
                       f"{r['prod_est_tokens'] or '—':>6} "
