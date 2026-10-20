@@ -139,6 +139,13 @@ GATE_SPECS: tuple[GateSpec, ...] = (
         "question", "议题表述聚焦核对",
         lambda d: bool((d.question or "").strip()),
         "议题为空，表述聚焦核对未执行"),
+    GateSpec(
+        "precedent_time", "同类事件时点排序",
+        # True＝无对照或两端均可定时点（已排／无对象）；False＝有对照缺时点
+        lambda d: __import__(
+            "app.core.precedent", fromlist=["precedent_time_sortable"]
+        ).precedent_time_sortable(d),
+        "时点不明，未据此排序"),
 )
 
 

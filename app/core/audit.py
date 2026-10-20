@@ -52,12 +52,15 @@ KIND_LABEL: dict[str, str] = {
     "unit_mismatch": "人民币与美元口径混用",
     "source_unverified": "信源出处未核验",
     "scope": "声称范围却无覆盖声明",
+    "external_prior": "外部先验未与案卷核对",
 }
 
 
 def audit_all(dossier: Dossier) -> list[dict]:
     """全部零 LLM 机械闸一次扫描：前提 + 计算/溯源/计数 + 守恒 + 话语
-    + 时序 + 范围诚实 + 输入防御（注入/同源）。"""
+    + 时序 + 范围诚实 + 输入风险（注入/同源）+ 外部先验。"""
+    from app.core.precedent import audit_external_prior
+
     return [
         *([question_flag(dossier.question)] if question_flag(dossier.question)
           else []),
@@ -78,6 +81,7 @@ def audit_all(dossier: Dossier) -> list[dict]:
         *audit_bare_percent(dossier),
         *audit_unit_mismatch(dossier),
         *audit_unverified_sources(dossier),
+        *audit_external_prior(dossier),
     ]
 
 

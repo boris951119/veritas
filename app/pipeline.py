@@ -280,6 +280,15 @@ def run_case(spec: RunSpec | None = None,
             "cross_source": sum(1 for c in collisions if c.cross_source),
             "fact_ledger_stats": fact_stats,
         })
+        from app.core.precedent import build_precedent_ledger
+        # hygiene 早于 material：此处先落台账＋链事件；material 钉选段后再回填进窗标注。
+        _prec = build_precedent_ledger(dossier)
+        dossier.accounting["precedent"] = _prec.to_dict()
+        chain.append("precedent", "pipeline", {
+            "n_rows": len(_prec.rows),
+            "time_sortable": _prec.time_sortable,
+            "n_external_prior": _prec.n_external_prior,
+        })
         chain.append("injection_scan", "pipeline",
                      {"n_suspects": len(scan_injections(dossier))})
         chain.append("dup_check", "pipeline", {
@@ -478,6 +487,10 @@ def run_case(spec: RunSpec | None = None,
         # 钉死后全员同料：不许再传 settings.material_char_budget 实参
 
         pack = pack_material(dossier)
+        # C-29：进窗标注只读这份 accounting，不许再调 pack_material（task #60）
+        dossier.accounting["material_pack_selected"] = sorted(pack["selected"])
+        from app.core.precedent import build_precedent_ledger
+        dossier.accounting["precedent"] = build_precedent_ledger(dossier).to_dict()
         chain.append("material_pack", "pipeline", {
             "budget": pack["budget"],
             "n_total": pack["n_total"],
@@ -978,6 +991,9 @@ def render_report_md(dossier: Dossier, chain: HashChain, rejected: list[dict]) -
     _render_conflicts_section(lines, dossier)
     _render_dissent_section(lines, dossier)
     _render_fact_collisions(lines, dossier)
+    # C-29 R1：同类对照节插在对撞与窗口披露之间；字数闸分母＝其余节合计，
+    # 先渲后续节一次算清 rest，再按双上限把本节插回原位（输出序不变）。
+    _prec_at = len(lines)
     _render_prompt_window(lines, dossier)
     _render_excluded_sources(lines, dossier)
 
@@ -1001,6 +1017,10 @@ def render_report_md(dossier: Dossier, chain: HashChain, rejected: list[dict]) -
         lines.append("")
 
     _render_flags_section(lines, dossier)
+
+    rest_chars = len("\n".join(lines))
+    prec_block = _render_precedent_section_lines(dossier, rest_chars=rest_chars)
+    lines[_prec_at:_prec_at] = prec_block
 
     lines += [
         "## 防篡改校验",
@@ -1363,6 +1383,21 @@ def _render_fact_collisions(lines: list[str], dossier: Dossier) -> None:
         tag = "跨信源" if c.cross_source else "同信源前后矛盾"
         lines.append(f"- [{tag}] {detail}")
     lines.append("")
+
+
+
+def _render_precedent_section_lines(
+    dossier: Dossier, *, rest_chars: int,
+) -> list[str]:
+    """同类事件对照（案卷内）节正文；rest_chars＝其余节合计（C-29 R1 双上限）。"""
+    from app.core.precedent import render_precedent_lines
+    return render_precedent_lines(dossier, rest_chars=rest_chars)
+
+
+def _render_precedent_section(lines: list[str], dossier: Dossier) -> None:
+    """兼容入口：无 rest 时只走行数帽（单测／探针直调）。"""
+    from app.core.precedent import render_precedent_lines
+    lines += render_precedent_lines(dossier)
 
 
 def _render_prompt_window(lines: list[str], dossier: Dossier) -> None:
