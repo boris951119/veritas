@@ -11,7 +11,9 @@
   ⇒ 行数很小（10-20 实测 0～21 行）；
 - **案卷名当议题**＝AGENTS 第 4 步 `python -m app.pipeline <官方案例目录>` 那条 CLI 路的
   **默认形状**（`load_case` 给不出更具体的问题，`d.question` 就是目录名）
-  ⇒ 议题锚退化、台账**无界生成**（10-20 实测 835／844 行，那一节占整份 `report.md` 91%／93%）；
+  ⇒ 议题锚退化、台账**无界生成**（10-20 第一轮实测 835／844 行，那一节占整份 `report.md` 的
+  **90%／93%**——占比按 `sec_len*100//md_len` 下取整，旧句「91%」那支临时脚本 round 上来的）；
+  第二轮 R1 返工后同一六态被双上限削到 **22／0／2／18／6／2** 行、最大占比 **24%**（见 C-29 第二轮验收）；
 - 自家 `cases/`（入库）⇒ 当前 0 行，＝判据夹具的形状。
 
 每行还带三列返工口径（C-29 第一轮打回那一格 R1 的判据基数）：**台账真数行数**（渲染截断后必须
@@ -64,28 +66,44 @@ def _rows_and_dropped(dossier) -> tuple[int, int, int]:
     return len(pairs), len(pairs) - dropped, dropped
 
 
-def _section_share(dossier) -> tuple[int, int, int, int, int]:
-    """（整份 report.md 字数, 那一节字数, 那一节 bullet 行数, 台账真实行数, 引文落在 JSON 脚手架里的行数）。
+def _section_share(dossier) -> tuple[int, int, int, int, int, int, int]:
+    """（整份 report.md 字数, 那一节字数, 那一节 bullet 行数, 台账真实行数,
+    引文落在 JSON 脚手架里的行数, 截断披露行数, 展示对照行数）。
 
-    后两列是 R1 那两格的口径：
+    节字数与行数**从 `render_report_md` 的产物里切出来量**，不直调
+    `render_precedent_lines`——生产路径的双上限（行数帽＋其余节字数 1/3）
+    只在那条路上生效，直调会少走字数闸，量与产品对不上（第二轮 R1 验收订正）。
+
+    后三列是 R1 那几格的口径：
     - 台账真实行数 vs 本节行数＝**渲染有没有截断**（截断后必须写"另有 N 组未展示"）；
     - 引文脚手架＝官方卷段落粒度把 JSON 字段留在段文本里，切出的"引文"其实是
       `"doc_id": "doc_006"` 这类键名 ⇒ 那一行人读不了（不是 C-29 的台账逻辑错，是料形状）。
     """
     from app.core.hashchain import HashChain
-    from app.core.precedent import build_precedent_ledger, render_precedent_lines
+    from app.core.precedent import build_precedent_ledger
     from app.pipeline import render_report_md
 
     ledger = build_precedent_ledger(dossier)
     dossier.accounting["precedent"] = ledger.to_dict()
-    sec_lines = render_precedent_lines(dossier)
     md = render_report_md(dossier, HashChain(), [])
+    title = "## 同类事件对照（案卷内）"
+    lines = md.splitlines()
+    start = next((i for i, ln in enumerate(lines) if ln.strip() == title), None)
+    if start is None:                      # 节没渲出来＝产品缺陷，按 0 行记录
+        sec_lines: list[str] = []
+    else:
+        end = next((j for j in range(start + 1, len(lines))
+                    if lines[j].startswith("## ")), len(lines))
+        sec_lines = lines[start:end]
     n_bullets = sum(1 for ln in sec_lines if ln.startswith("- "))
+    n_pairs = sum(1 for ln in sec_lines if ln.startswith("- 指标："))
+    n_hidden = sum(1 for ln in sec_lines if "未展示" in ln and "另有" in ln)
     scaffold = sum(
         1 for r in ledger.rows
         if any(m in (r.current_quote or "") + (r.prior_quote or "")
                for m in ('"doc_id"', '"para_id"', '"text"')))
-    return len(md), len("\n".join(sec_lines)), n_bullets, len(ledger.rows), scaffold
+    return (len(md), len("\n".join(sec_lines)), n_bullets, len(ledger.rows),
+            scaffold, n_hidden, n_pairs)
 
 
 def one(case_dir: Path, qid: str, question: str, title: str) -> tuple[int, int]:
@@ -103,14 +121,17 @@ def one(case_dir: Path, qid: str, question: str, title: str) -> tuple[int, int]:
     pairs, kept, dropped = _rows_and_dropped(dossier)
     pack = pack_material(dossier)
     dossier.accounting["material_pack_selected"] = sorted(pack["selected"])
-    md_len, sec_len, n_bul, n_rows, scaffold = _section_share(dossier)
+    md_len, sec_len, n_bul, n_rows, scaffold, n_hidden, n_pairs = _section_share(dossier)
     pct = sec_len * 100 // max(md_len, 1)
     rest = max(md_len - sec_len, 1)          # 「本节 ≤ 其余节合计 1/3」那道闸的分母（不含本节）
+    gate = rest // 3
+    # 双上限合规：展示对照行 ≤ 24；本节字数 ≤ 其余节 1/3
+    cap_ok = n_pairs <= 24 and sec_len <= gate
     print(f"  [{title}] {qid:<12} {(question or '（议题为空）')[:34]:<36} "
           f"候选对={pairs:>4} 生成={kept:>4} 被过滤={dropped:>2}｜"
           f"该节 {n_bul:>4} 行／{sec_len:>7,} 字＝整份报告 {md_len:>7,} 字的 {pct:>2}%｜"
-          f"台账真数 {n_rows:>4} 行｜脚手架引文 {scaffold:>4} 行｜"
-          f"其余节 {rest:>7,} 字（1/3 闸＝{rest // 3:,}）｜"
+          f"台账真数 {n_rows:>4} 行｜展示 {n_pairs} 行｜披露行 {n_hidden}｜脚手架引文 {scaffold:>4} 行｜"
+          f"其余节 {rest:>7,} 字（1/3 闸＝{gate:,}）｜双上限={'OK' if cap_ok else '❌超'}｜"
           f"用时 {time.perf_counter()-t0:.2f}s（抽事实 {t1-t0:.2f}s）")
     return pairs, dropped
 
