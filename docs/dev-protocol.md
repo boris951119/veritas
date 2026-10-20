@@ -293,6 +293,10 @@
   新边界格（`w_lose` 恰落在 `(w_win, w_win+margin]`）写好后，摘掉容差（`w_lose > w_win`）＝**1 红**（只有那格）、恒假（`return False`）＝**6 红**、区间加宽（`+ _WEIGHT_MARGIN * 3`）＝**3 红**；
   ⇒ 三种形态咬住的是**不同格**：摘掉容差咬"带内不许翻盘"、恒假与加宽咬"**带外必须翻盘**"（红名＝`test_claim_hygiene.py::test_prefer_stronger_side_overrides_weaker_llm_winner`、`::test_rumor_offline_flips_to_official_and_keeps_dissent`、`test_conflicts_tiebreak.py::test_g_above_margin_keeps_winner_method_rationale`，恒假再多 `test_c14c::test_d_…agree…`／`test_conflicts_tiebreak::test_a`／`::test_f`）。
   这次运气好，"带外必须翻盘"那一半**在别的文件里早有格**，所以加宽与恒假不是真空；但**判据里没要求执行方去量这三道**，全靠运气 ⇒ 出这类单时把"三形态各跑一遍、红名抄进回写"写进自证要求。
+- **引用体检的判据＝打开引用区间核对区间里的构造，不许只 grep 名字在文件里出现过**（2026-10-20 C-14c 收口轮我自己漏核的一条，`05aacc0` 之后重核 C-19 才发现）：
+  ㉖ 那把 review 我记的是"73 条只漂 1 条，其余命中（含 C-19 `base.py:89-130`＝`_disclose_prompt_window`，算准）"——**"算准"是错的**：该函数在 C-16b／C-17 加行后已移到 `:133-175`，`:89-130` 现在是 `_empty_run` 尾部。
+  名字 grep 得到＝只能证明"这个文件里有这个函数"，证明不了"引用行号指向它"。**每张单发出去之前重跑一遍锚点**（协议 §9.1），并把区间内第一行与最后一行抄进「发单前锚点重核」段；
+  顺带一条：**判据里"执行方自己 grep 数清楚"的那些计数，我先量一遍给出基数**（改前基数由我发布＝纪律⑧的延伸），执行方量的基数对不上就直接质疑，别让他从我的错数往下推。
 
 ## 6. 仓库三道纪律（每次改动默认适用）
 
