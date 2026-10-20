@@ -25,7 +25,7 @@
 **这条不是形式主义**：仓库 config.json 现在列的全是云端模型，`.env` 里是真的付费 key。
 
 口径纪律（三条容易读错，写在输出里也写在这里）：
-1. B 的单分析师**不只是少两个分析师**：`app/pipeline.py:548` 的 `if len(analysts) >= 2` 让
+1. B 的单分析师**不只是少两个分析师**：`app/pipeline.py:610` 的 `if len(analysts) >= 2` 让
    归并·冲突·质证·仲裁整段跳过 ⇒ B 量的差值＝「一个人 vs 一整套协作」，不是「一个人的边际成本」。
 2. C 只有 **18 个带标注单元**（每题一条金标结论）——分档表里任何一档 n<5 都没有统计意义，
    读数只用来定「阈值该放哪」，不许对外说成校准过的正确率。
@@ -314,7 +314,7 @@ def run_questions(label: str, roster: list | None, only_case: str | None,
 
     **逐题预算对齐**（`align=True`，默认）：每题先按 C-19 的口径反解窗口安全预算，
     再用该预算跑这一题——这就是 C-19 落地后生产路径的行为（`material_char_budget` 是上限不是目标）。
-    为什么不走现成的 `run_official_case`（`app/pipeline.py:1334`）：它把 settings 一次定死、
+    为什么不走现成的 `run_official_case`（`app/pipeline.py:1503`）：它把 settings 一次定死、
     一案一值，而窗口对齐要求**每题一个值**；本函数是它同一个函数体的逐题展开（`load_official_case`
     一次 → 逐题 `Dossier.from_dict` 快照 → `run_case(RunSpec(dossier=…))` → 末尾 `export_official`），
     除预算外不改任何编排。**若生产侧 C-19 落地，本函数应改为直接调它，读数以那张单的判据为准。**
@@ -389,7 +389,7 @@ def run_questions(label: str, roster: list | None, only_case: str | None,
                     "fit_prompt_chars": fit_rec.get("total_chars"),
                     "fit_est_tokens": fit_rec.get("est_tokens"),
                     "fit_overflow_tokens": fit_rec.get("overflow_tokens"),
-                    # 生产口径（真发出去的那条，app/agents/base.py:126 仅在超窗时留痕）
+                    # 生产口径（真发出去的那条，app/agents/base.py:149-150 仅在超窗时留痕）
                     "prod_prompt_chars": over_note.get("total_chars"),
                     "prod_est_tokens": over_note.get("est_tokens") or pw.get("est_tokens"),
                     "prod_overflow_tokens": pw.get("overflow_tokens"),

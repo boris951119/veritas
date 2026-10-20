@@ -10,7 +10,7 @@
    逐题找「渲染后整块真能进窗」的最大预算档，看金标存活几段。
 
 口径纪律（三条都踩过坑，别再犯）：
-- **入口必须是 `load_official_case`**（官方适配层只在 `run_official_case` 里调用，`app/pipeline.py:1345`）。
+- **入口必须是 `load_official_case`**（官方适配层只在 `run_official_case` 里调用，`app/pipeline.py:1514`）。
   用 `_load_case_dossier`（演示案例路径）会拿到 `SRC1#s1` 这种 id，金标 `doc_012#p8` 一格都对不上＝假零。
 - **估算必须按整条提示词算**（system＋议题行＋围栏＋对撞台账＋收尾指令），只算资料块会漏判超窗：
   本脚本按 19000 字预算复算＝**11/18 题超窗**，只算块是 9/18。
