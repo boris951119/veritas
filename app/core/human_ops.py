@@ -72,8 +72,9 @@ def override_resolution(dossier: Dossier, conflict_id: str,
     )
     exact = duplicate_map(dossier)
     near = near_dup_pairs(dossier)
-    path = mechanical_decision_path(pair, dossier, pair.resolution, exact, near)
-    _stamp(pair.resolution, pair, dossier, path, exact, near)
+    mech = mechanical_decision_path(pair, dossier, pair.resolution, exact, near)
+    _stamp(pair.resolution, pair, dossier, "human_override", exact, near,
+           mechanical_path=mech)
     err = apply_resolution(pair, dossier)
     if err:
         raise ValueError(str(err.get("problems") or err))

@@ -1256,13 +1256,32 @@ def _render_dissent_section(lines: list[str], dossier: Dossier) -> None:
     dissents = dissent_conclusions(dossier)
     if not dissents:
         return
+    human_losers: dict[str, str] = {}
+    for raw in dossier.conflicts or []:
+        if not isinstance(raw, dict):
+            continue
+        res = raw.get("resolution") if isinstance(raw.get("resolution"), dict) else {}
+        if str(res.get("decision_path") or "") != "human_override":
+            continue
+        winner = str(res.get("winner_id") or "")
+        a_id, b_id = str(raw.get("a_id") or ""), str(raw.get("b_id") or "")
+        if winner not in (a_id, b_id):
+            continue
+        loser = b_id if winner == a_id else a_id
+        mech = ""
+        basis = res.get("basis") if isinstance(res.get("basis"), dict) else {}
+        mech = str(basis.get("mechanical_path") or "")
+        human_losers[loser] = mech or "llm_arbitration"
     lines += ["## 少数意见（依规保留）", ""]
     for con in dissents:
+        if con.id in human_losers:
+            tag = f"人工改判后未采信（原机械判断：{human_losers[con.id]}）"
+        else:
+            tag = "经仲裁证据加权后列为少数意见，原始证据保留可查"
         lines.append(
             f"- 「{con.statement}」（研判方："
             f"{'、'.join(con.author_names()) or 'N/A'}"
-            f"{author_count_label(con)}）——"
-            "经仲裁证据加权后列为少数意见，原始证据保留可查")
+            f"{author_count_label(con)}）——{tag}")
     lines.append("")
 
 

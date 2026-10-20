@@ -82,10 +82,11 @@ def test_d_override_stamps_basis_and_empty_basis_is_omitted():
     assert stored["winner_id"] == "CON-0"
     assert stored["method"] == "arbitration"
     assert stored["basis"]
-    assert stored["resolution_type"]
+    assert stored["resolution_type"] == "其他"
+    assert stored["decision_path"] == "human_override"
     assert stored["重启条件"]
     rows, _ = _conflict_rows("q1", d)
-    assert rows[0]["omissions"] == []
+    assert "人工改判" in rows[0]["omissions"]
 
     empty = Dossier(question="Q")
     empty.conflicts = [{
@@ -104,7 +105,7 @@ def test_d_override_stamps_basis_and_empty_basis_is_omitted():
 
 
 def test_e_near_dup_once_per_conflict(monkeypatch):
-    """e) 每条冲突 near_dup_pairs 只调用一次；独立信源数口径不变。"""
+    """e) 强侧与破平两条路径上，每条冲突 near_dup_pairs 都只调用一次。"""
     from app.core.conflicts import independent_source_count
     import app.core.conflicts as conflicts_mod
     import app.core.dup_check as dup_mod
@@ -151,21 +152,40 @@ def test_e_near_dup_once_per_conflict(monkeypatch):
             Resolution(winner_id=b, rationale="票多"))
     assert calls["n"] == 10
 
+    # 破平路径：强度接近，靠独立信源数裁决。
+    calls["n"] = 0
+    d2 = Dossier(question="Q")
+    for i in range(4):
+        a, b = f"TIE-{i}a", f"TIE-{i}b"
+        _side(d2, a, "甲", [
+            (f"TA{i}", f"甲方破平记录{i}，彼此不同正文。", EvidenceLevel.C)])
+        _side(d2, b, "乙", [
+            (f"TB{i}0", f"乙方破平第一份{i}，讲产线。", EvidenceLevel.C),
+            (f"TB{i}1", f"乙方破平第二份{i}，讲良率。", EvidenceLevel.C),
+            (f"TB{i}2", f"乙方破平第三份{i}，讲订单。", EvidenceLevel.C),
+        ])
+        out = prefer_stronger_side(
+            ConflictPair(a_id=a, b_id=b), d2,
+            Resolution(winner_id=a, rationale="仲裁"))
+        assert out.decision_path == "source_majority"
+    assert calls["n"] == 4
+
 
 def test_f_dissent_assertion_and_tie_case_both_exist():
-    """f) 测试里同时有少数意见文案和 tie 胜方断言。"""
-    root = Path("tests")
-    dissent = tie = 0
-    for path in root.rglob("*.py"):
-        text = path.read_text(encoding="utf-8")
-        dissent += text.count("少数意见")
-        tie += text.count('winner_id == "tie"')
-    assert dissent >= 1
+    """f) collab 那句少数意见 md 断言在场；tie 胜方断言仍有人钉。"""
+    collab = Path("tests/test_collab.py").read_text(encoding="utf-8")
+    assert (
+        'assert "分歧识别与消解" in md and "少数意见（依规保留）" in md'
+        in collab
+    )
+    tie = 0
+    for path in Path("tests").rglob("*.py"):
+        tie += path.read_text(encoding="utf-8").count('winner_id == "tie"')
     assert tie >= 1
 
 
 def test_k_duplicate_question_orders_match(tmp_path):
-    """k) 同题多一行空支撑，两种顺序的五项读数相同。"""
+    """k) 同题多一行空支撑，两种顺序的五项读数相同；命中行单独跑非零。"""
     from scripts.score_official import score_submission
 
     samples = [
@@ -210,3 +230,13 @@ def test_k_duplicate_question_orders_match(tmp_path):
             metrics["score_2_5_1"], metrics["score_2_5_2"],
         ))
     assert fives[0] == fives[1]
+    hit_only = score_submission(
+        evidence, dump("hit-only.json", [hit]), gold_ev, gold_c,
+        samples_path=samples_path)
+    hit_five = (
+        hit_only["score_2_2_1"], hit_only["score_2_4_1"], hit_only["score_2_4_2"],
+        hit_only["score_2_5_1"], hit_only["score_2_5_2"],
+    )
+    assert hit_five[0] >= 7
+    assert hit_five[1] >= 6
+    assert any(v > 0 for v in hit_five)

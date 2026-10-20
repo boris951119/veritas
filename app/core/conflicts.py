@@ -38,7 +38,7 @@ _OFFICIAL_RESOLUTION_TYPES = frozenset({
 # 同一张表同时覆盖 method 与 decision_path。类型以 decision_path 优先
 # （strength 即使 method 仍是 arbitration，也是「语义可信度」）。
 _DECISION_PATHS = frozenset({
-    "strength", "source_majority", "tie", "llm_arbitration",
+    "strength", "source_majority", "tie", "llm_arbitration", "human_override",
 })
 METHOD_TO_RESOLUTION_TYPE = {
     "arbitration": "其他",
@@ -47,6 +47,7 @@ METHOD_TO_RESOLUTION_TYPE = {
     "source_majority": "多数投票",
     "strength": "语义可信度",
     "llm_arbitration": "其他",
+    "human_override": "其他",
 }
 if set(METHOD_TO_RESOLUTION_TYPE) != RESOLUTION_METHODS | _DECISION_PATHS:
     raise RuntimeError("method 映射表键集与 method／decision_path 取值集不一致")
@@ -64,6 +65,7 @@ _REOPEN_WHEN = {
     ),
     "tie": "任一方补充新证据后即重启（本冲突此前无机械判据，仅凭仲裁说理）",
     "llm_arbitration": "任一方补充新证据后即重启（本冲突此前无机械判据，仅凭仲裁说理）",
+    "human_override": "若人工撤销改判则恢复机械路径",
 }
 
 
@@ -83,6 +85,7 @@ class Resolution:
     basis: dict = field(default_factory=dict)
     resolution_type: str = ""
     decision_path: str = ""
+    omissions: list[str] = field(default_factory=list)
 
     def to_dict(self) -> dict:
         out = {
@@ -91,6 +94,7 @@ class Resolution:
             "evidence_weight": self.evidence_weight, "rebuts": self.rebuts,
             "basis": self.basis, "resolution_type": self.resolution_type,
             "decision_path": self.decision_path,
+            "omissions": list(self.omissions or []),
         }
         if self.decision_path:
             out["重启条件"] = reopen_when_for(self.decision_path)
@@ -105,7 +109,8 @@ class Resolution:
                    rebuts=dict(d.get("rebuts") or {}),
                    basis=dict(d.get("basis") or {}),
                    resolution_type=str(d.get("resolution_type") or ""),
-                   decision_path=str(d.get("decision_path") or ""))
+                   decision_path=str(d.get("decision_path") or ""),
+                   omissions=list(d.get("omissions") or []))
 
 
 @dataclass
@@ -228,9 +233,15 @@ def _fmt(value: float) -> str:
     return format(value, ".4f")
 
 
+def _loser_clearly_stronger(w_win: float, w_lose: float) -> bool:
+    """败方强度明显高出胜方（超过 margin）——prefer／mechanical 共用这一条。"""
+    return w_lose > w_win + _WEIGHT_MARGIN
+
+
 def _stamp(resolution: Resolution, pair: ConflictPair, dossier: Dossier,
            decision_path: str, exact: dict[str, str] | None = None,
-           pairs: list | None = None) -> None:
+           pairs: list | None = None,
+           mechanical_path: str = "") -> None:
     """只补 basis / resolution_type / decision_path，不改 winner、method、rationale。
 
     resolution_type 由 decision_path 查表，不看 method。
@@ -239,7 +250,7 @@ def _stamp(resolution: Resolution, pair: ConflictPair, dossier: Dossier,
     sb = evidence_strength_of(pair.b_id, dossier)
     na, ea, na_near = _source_fold(pair.a_id, dossier, exact, pairs)
     nb, eb, nb_near = _source_fold(pair.b_id, dossier, exact, pairs)
-    exact = ea + eb
+    exact_count = ea + eb
     near = na_near + nb_near
     gap = abs(sa - sb)
     basis = {
@@ -247,17 +258,35 @@ def _stamp(resolution: Resolution, pair: ConflictPair, dossier: Dossier,
         "independent_sources": {pair.a_id: na, pair.b_id: nb},
         "margin": _WEIGHT_MARGIN,
         "decision_path": decision_path,
-        "dedup": {"exact": exact, "near": near},
+        "dedup": {"exact": exact_count, "near": near},
         "strength_gap": gap,
     }
     winner = resolution.winner_id
     margin_s = f"{_WEIGHT_MARGIN:.2f}"
     gap_s = _fmt(gap)
-    if decision_path == "strength" and winner in (pair.a_id, pair.b_id):
+    omissions: list[str] = list(resolution.omissions or [])
+    if decision_path == "human_override" and winner in (pair.a_id, pair.b_id):
+        win_s = sa if winner == pair.a_id else sb
+        lose_s = sb if winner == pair.a_id else sa
+        mech = mechanical_path or "llm_arbitration"
+        basis["mechanical_path"] = mech
+        type_applies = (
+            f"人工改判，机械判断原为 {mech}"
+            f"（胜方强度 {_fmt(win_s)} vs 败方 {_fmt(lose_s)}）"
+        )
+        loser_excluded = f"人工改判后未采信（原机械判断：{mech}）"
+        if "人工改判" not in omissions:
+            omissions.append("人工改判")
+    elif decision_path == "strength" and winner in (pair.a_id, pair.b_id):
         win_s = sa if winner == pair.a_id else sb
         lose_s = sb if winner == pair.a_id else sa
         type_applies = f"双方强度差 {gap_s} > {margin_s}，按证据强度裁决"
-        loser_excluded = f"败方强度 {_fmt(lose_s)} ＜ 胜方 {_fmt(win_s)}"
+        if win_s <= lose_s:
+            loser_excluded = "未按强度关系排除败方（数值关系不成立）"
+            if "假不等式已拦截" not in omissions:
+                omissions.append("假不等式已拦截")
+        else:
+            loser_excluded = f"败方强度 {_fmt(lose_s)} ＜ 胜方 {_fmt(win_s)}"
     elif decision_path == "source_majority" and winner in (pair.a_id, pair.b_id):
         win_n = na if winner == pair.a_id else nb
         lose_n = nb if winner == pair.a_id else na
@@ -266,7 +295,7 @@ def _stamp(resolution: Resolution, pair: ConflictPair, dossier: Dossier,
         )
         loser_excluded = (
             f"败方独立信源 {lose_n} 个 ＜ 胜方 {win_n} 个"
-            f"（已折掉 {exact + near} 件同源转载）"
+            f"（已折掉 {exact_count + near} 件同源转载）"
         )
     elif decision_path == "tie":
         type_applies = (
@@ -281,6 +310,7 @@ def _stamp(resolution: Resolution, pair: ConflictPair, dossier: Dossier,
     resolution.basis = basis
     resolution.decision_path = decision_path
     resolution.resolution_type = METHOD_TO_RESOLUTION_TYPE[decision_path]
+    resolution.omissions = omissions
 
 
 def _break_tie_by_sources(resolution: Resolution, pair: ConflictPair,
@@ -327,7 +357,7 @@ def prefer_stronger_side(pair: ConflictPair, dossier: Dossier,
     loser = pair.b_id if winner == pair.a_id else pair.a_id
     w_win = float(weight.get(winner, 0.0))
     w_lose = float(weight.get(loser, 0.0))
-    if w_lose > w_win + _WEIGHT_MARGIN:
+    if _loser_clearly_stronger(w_win, w_lose):
         resolution.winner_id = loser
         resolution.method = "evidence_weight"
         resolution.rationale = (
@@ -350,7 +380,7 @@ def mechanical_decision_path(pair: ConflictPair, dossier: Dossier,
                              pairs: list | None = None) -> str:
     """按现有强度差／信源数规则读出路径，不改 winner／method／rationale。
 
-    人工改判用它盖章：人指定的胜方保留，类型跟机械路径走。
+    人工改判用它读出机械原判；盖章路径另走 human_override。
     """
     if resolution.winner_id == "tie":
         return "tie"
@@ -361,7 +391,7 @@ def mechanical_decision_path(pair: ConflictPair, dossier: Dossier,
     loser = pair.b_id if winner == pair.a_id else pair.a_id
     w_win = float(weight.get(winner, 0.0))
     w_lose = float(weight.get(loser, 0.0))
-    if w_lose > w_win + _WEIGHT_MARGIN or abs(w_win - w_lose) > _WEIGHT_MARGIN:
+    if _loser_clearly_stronger(w_win, w_lose) or abs(w_win - w_lose) > _WEIGHT_MARGIN:
         return "strength"
     na = _source_fold(pair.a_id, dossier, exact, pairs)[0]
     nb = _source_fold(pair.b_id, dossier, exact, pairs)[0]
