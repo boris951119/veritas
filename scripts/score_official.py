@@ -324,6 +324,150 @@ def recall_src_ceiling_line(gold_evidence: list[dict],
     return f"Recall_src 上限 {in_corpus}/{gold_n}＝{in_corpus / gold_n:.1%}"
 
 
+def _question_row(grouped: dict[str, list[dict]], qid: str) -> dict:
+    rows = grouped.get(qid) or []
+    if not rows:
+        return {}
+    if len(rows) == 1:
+        return rows[0]
+    return {
+        "supporting_facts": _union_facts(rows, "supporting_facts"),
+        "conflicting_facts": _union_facts(rows, "conflicting_facts"),
+    }
+
+
+def _sup_inconsistent(sub: list[tuple[str, str]],
+                      gold: list[tuple[str, str]]) -> bool:
+    """支撑侧不一致＝两侧（作为多重集）不相等；两侧都空不算不一致。"""
+    if not sub and not gold:
+        return False
+    return Counter(sub) != Counter(gold)
+
+
+# 第三桶走形 (乙)：对照金标 evidence 的 quote，不扩 --raw-documents 读原文。
+# 桶名必须叫「与金标引文不一致」，不许叫「原文段逐字命中」。
+CITATION_BUCKET = "与金标引文不一致"
+CITATION_BUCKET_FORM = "乙"
+ERRORS_NOTE = "三桶不可相加"
+
+
+def error_buckets(
+    conclusions: list[dict],
+    gold_conclusions: list[dict],
+    evidence: list[dict],
+    gold_evidence: list[dict],
+    *,
+    samples: list[dict] | None = None,
+) -> dict:
+    """漏召／误召／与金标引文不一致 三桶＋overlap＋两侧都空。
+
+    漏召＝金标 supporting 非空而提交该题 supporting 为空；
+    误召＝提交 supporting 有落在金标外的对，且该题支撑侧不一致；
+    与金标引文不一致＝提交 evidence 与金标同 (doc_id, para_id) 但 quote 逐字不等（形乙）。
+    """
+    index = _fact_index(samples if samples is not None else gold_evidence)
+    unresolved: list[str] = []
+    grouped: dict[str, list[dict]] = {}
+    for row in conclusions:
+        grouped.setdefault(str(row.get("question_id") or ""), []).append(row)
+
+    miss: list[str] = []
+    false_pos: list[str] = []
+    empty_both_q: list[str] = []
+    for gold in gold_conclusions:
+        qid = str(gold.get("question_id") or "")
+        row = _question_row(grouped, qid)
+        sub_sup = _pairs([row], "supporting_facts")
+        gold_sup = _gold_fact_pairs(
+            [gold], "supporting_facts", index, unresolved)
+        if not gold_sup and not sub_sup:
+            empty_both_q.append(qid)
+            continue
+        if gold_sup and not sub_sup:
+            miss.append(qid)
+        left = Counter(gold_sup)
+        has_extra = False
+        for p in sub_sup:
+            if left[p] > 0:
+                left[p] -= 1
+            else:
+                has_extra = True
+        if has_extra and _sup_inconsistent(sub_sup, gold_sup):
+            false_pos.append(qid)
+
+    gold_quote: dict[tuple[str, str], str] = {}
+    for row in gold_evidence:
+        key = (str(row.get("doc_id") or ""), str(row.get("para_id") or ""))
+        q = str(row.get("quote") or "")
+        if key[0] and key[1] and q and key not in gold_quote:
+            gold_quote[key] = q
+    ev_by_pair: dict[tuple[str, str], str] = {}
+    for row in evidence:
+        key = (str(row.get("doc_id") or ""), str(row.get("para_id") or ""))
+        q = str(row.get("quote") or "")
+        if key[0] and key[1] and q and key not in ev_by_pair:
+            ev_by_pair[key] = q
+    # 形乙：同 locator 下提交 quote ≠ 金标 quote → 记到引用了该对的题；
+    # 若没有任何题的 supporting 引用该对，记占位 _evidence（仍进桶计数）。
+    cite_qids: list[str] = []
+    mismatched = [
+        key for key, sub_q in ev_by_pair.items()
+        if (gold_q := gold_quote.get(key)) is not None and sub_q != gold_q
+    ]
+    for key in mismatched:
+        owners: list[str] = []
+        for gold in gold_conclusions:
+            qid = str(gold.get("question_id") or "")
+            row = _question_row(grouped, qid)
+            for item in row.get("supporting_facts") or []:
+                if not isinstance(item, dict):
+                    continue
+                k2 = (str(item.get("doc_id") or ""), str(item.get("para_id") or ""))
+                if k2 == key:
+                    owners.append(qid)
+                    break
+        if owners:
+            cite_qids.extend(owners)
+        else:
+            cite_qids.append("_evidence")
+
+    def _uniq(xs: list[str]) -> list[str]:
+        seen: set[str] = set()
+        out: list[str] = []
+        for x in xs:
+            if x in seen:
+                continue
+            seen.add(x)
+            out.append(x)
+        return out
+
+    miss = _uniq(miss)
+    false_pos = _uniq(false_pos)
+    cite_qids = _uniq(cite_qids)
+    empty_both_q = _uniq(empty_both_q)
+    sets = {
+        "漏召": set(miss),
+        "误召": set(false_pos),
+        CITATION_BUCKET: set(cite_qids),
+    }
+    overlap_ids = set()
+    for name, s in sets.items():
+        for other, t in sets.items():
+            if name >= other:
+                continue
+            overlap_ids |= (s & t)
+    return {
+        "漏召": {"count": len(miss), "question_ids": miss},
+        "误召": {"count": len(false_pos), "question_ids": false_pos},
+        CITATION_BUCKET: {"count": len(cite_qids), "question_ids": cite_qids},
+        "overlap": len(overlap_ids),
+        "overlap_question_ids": sorted(overlap_ids),
+        "两侧都空": {"count": len(empty_both_q), "question_ids": empty_both_q},
+        "citation_bucket_form": CITATION_BUCKET_FORM,
+        "errors_note": ERRORS_NOTE,
+    }
+
+
 def format_report(metrics: dict) -> str:
     unresolved = int(metrics.get("unresolved_fact_ids") or 0)
     empty_both = int(metrics.get("empty_both_excluded") or 0)
@@ -356,6 +500,25 @@ def format_report(metrics: dict) -> str:
             lines.append(f"{key}={value:.4f}")
         else:
             lines.append(f"{key}={value}")
+    errors = metrics.get("errors")
+    if isinstance(errors, dict):
+        lines.append(str(errors.get("errors_note") or ERRORS_NOTE))
+        lines.append(
+            f"错误分桶形={errors.get('citation_bucket_form') or CITATION_BUCKET_FORM}"
+            f"（第三桶名={CITATION_BUCKET}）"
+        )
+        for bucket in ("漏召", "误召", CITATION_BUCKET):
+            info = errors.get(bucket) or {}
+            qids = ",".join(info.get("question_ids") or []) or "（无）"
+            lines.append(
+                f"{bucket}={int(info.get('count') or 0)} 题：{qids}"
+            )
+        lines.append(f"overlap={int(errors.get('overlap') or 0)}")
+        both = errors.get("两侧都空") or {}
+        both_ids = ",".join(both.get("question_ids") or []) or "（无）"
+        lines.append(
+            f"两侧都空={int(both.get('count') or 0)} 题：{both_ids}"
+        )
     return "\n".join(lines)
 
 
@@ -373,6 +536,10 @@ def main(argv: list[str] | None = None) -> int:
         "--raw-documents", default=None,
         help="本案语料。给出后按本案金标计算 Recall_src 上限；不给则标明未核",
     )
+    parser.add_argument(
+        "--errors", action="store_true",
+        help="输出漏召／误召／与金标引文不一致三桶计数＋清单＋overlap（三桶不可相加）",
+    )
     args = parser.parse_args(argv)
     samples = Path(args.evidence_samples) if args.evidence_samples else None
     raw_documents = Path(args.raw_documents) if args.raw_documents else None
@@ -382,6 +549,16 @@ def main(argv: list[str] | None = None) -> int:
         samples_path=samples,
         raw_documents_path=raw_documents,
     )
+    if args.errors:
+        evidence = _load(Path(args.evidence))
+        conclusions = _load(Path(args.conclusions))
+        gold_evidence = _load(Path(args.gold_evidence))
+        gold_conclusions = _load(Path(args.gold_conclusions))
+        sample_rows = _load(samples) if samples is not None else gold_evidence
+        metrics["errors"] = error_buckets(
+            conclusions, gold_conclusions, evidence, gold_evidence,
+            samples=sample_rows,
+        )
     print(format_report(metrics))
     return 0
 

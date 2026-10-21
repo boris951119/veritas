@@ -246,14 +246,6 @@ def test_d_four_json_byte_stable_across_two_exports(tmp_path):
 
 
 # ---------- e ----------
-def test_e_score_official_diff_empty():
-    out = subprocess.check_output(
-        ["git", "diff", "--", "scripts/score_official.py"],
-        cwd=ROOT, text=True,
-    )
-    assert out == ""
-
-
 def test_e_blank_submission_still_all_zero(tmp_path):
     """库内三格②：沿用 test_official_roundtrip.test_blank_submission_scores_all_zero。"""
     from scripts.score_official import format_report

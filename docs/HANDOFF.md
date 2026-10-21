@@ -5050,6 +5050,22 @@ docs/HANDOFF.md 的写入边界：只许在「执行工程师回写」你自己�
 不要提交，不要 push，验收归 Qoder。
 ```
 
+#### Cursor 回写（2026-10-22）
+
+- **§3.0**：① score_official def 锚点 39／51／125／139／314／327／362 与四必填 :364-367 ✓；② `--raw-documents` → `_corpus_para_ids` **只取 para_id、不取段落文本** ✓ ⇒ 第三桶选形 **(乙)**＝对照金标 evidence 的 `quote`，桶名 **「与金标引文不一致」**（`CITATION_BUCKET`／`citation_bucket_form=乙`），无原文时不渲染成 0；③ `recompute_*` :249／:261、`band_of`:65、`_BAND_*`:43-44 ✓；`chain_context` 现锚点 **:162**（单写 :160＝函数体上移 2 行，签名与 docstring 仍是给 `recompute_all` 用的，未按 §3.4 质疑）；④ `cmd_calib:567` 未动 ✓；⑤ 产物面 `sources.credibility`／`evidences.weight` 可重建 ✓。
+- **动过**：`scripts/score_official.py`（`error_buckets`＋`--errors`＋`format_report` 写「三桶不可相加」）；新 `scripts/probe_weight_sensitivity.py`；新 `tests/test_c25_errors_sensitivity.py`（**13** 条）；`tests/test_c21_sample_face.py`（摘掉 `test_e_score_official_diff_empty`＝它断言 `git diff score_official` 空，与本单明令改该文件互斥；换分 0 根仍由同文件 `test_e_c20_score_submission_has_no_confidence_param` 钉住）。
+- **n_panel（当场定死）**：`max(1, len(dossier.panel))`——与 `app/server.py` 工作台重算入口同口径；理由＝默认 `1` 会让 agreement 恒吃 `_AGREEMENT_FLOOR`，扰动读数反映的是地板而不是 credibility／weight。**未**两档都试再挑。
+- **判据**：
+  - **a-in** ✅ 白卷漏召=2／全命中三桶 0／金标外进误召／两侧都空单独有数；报告含「三桶不可相加」。
+  - **a-out** ✅ 只附报：样例集六案 blank 树 **questions=18 漏召=18 误召=0**（与单内对照数逐字同）；无断言建在样例集上。
+  - **b** ✅ 删支撑 ⇒ 进漏召、不进两侧都空。
+  - **c** ✅ overlap≥1（误召∩与金标引文不一致）。
+  - **d** ✅ 同产物 probe 两次 JSON 逐字同；×1.0 时 band_flips＝winner_flips＝0。
+  - **e** ✅ ×0.8 与 ×1.2 相对 ×1.0 的 band_flips 各 ≥1。
+  - **f** ✅ 改前 collect **720**；新文件 HEAD 不存在（0）⇒ 改后该文件 **13**；整套 **732**＝720−1（摘 C-21 空 diff 格）＋13。`pytest tests -q` ×5＝**732 passed**；未装 mcp（临时移走 site-packages/mcp）＝**731 passed, 1 skipped**。
+  - **g** ✅ `git diff --stat app/` 空；`grep -c "本文件仅含" app/core/evidence.py`＝**0**；`cmd_calib`／confidence 常量未动。
+- **工单质疑**：无。未 commit／未 push。
+
 ### C-23｜大库选料上限 50 变成可配、默认 100（用户 2026-10-18 拍「增到 100」，**队列第三＝与 C-7 同批**，约 0.05 天）
 
 - **⚠ 单首要紧（先读这句再动工）**：**这张单不解决召回，也不改官方六案的任何读数**——我发单前给的依据「吉隆 137 篇只能进 50 篇」**是错的**，
