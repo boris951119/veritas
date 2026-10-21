@@ -502,10 +502,15 @@ def dossier_from_case_index(case_dir: Path, *,
                             project_id: str,
                             min_sources: int,
                             material_budget: int,
+                            max_sources: int = _MAX_SOURCES,
                             fetch_links: bool = False,
                             on_file=None,
                             queries: list[str] | None = None) -> Dossier:
-    """建磁盘索引后：达到阈值就收窄，否则从库中取回全部段（与全量案卷同口径）。"""
+    """建磁盘索引后：达到阈值就收窄，否则从库中取回全部段（与全量案卷同口径）。
+
+    max_sources 生产路径由 settings.corpus_select_max_sources 显式传入
+    （见 pipeline._load_case_dossier）；本处默认仅兜底无参调用。
+    """
     db_path = Path(case_dir) / ".corpus" / "index.sqlite"
     index, shell = index_case(
         case_dir, db_path, project_id=project_id,
@@ -515,6 +520,7 @@ def dossier_from_case_index(case_dir: Path, *,
         if index.live_source_count() >= min_sources:
             result = index.select(
                 shell.question, material_budget=material_budget,
+                max_sources=max_sources,
                 queries=queries)
             out = result.dossier
         else:

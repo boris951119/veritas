@@ -47,6 +47,38 @@ def load_dotenv(path: Path | None = None) -> None:
 
 load_dotenv()
 
+_CORPUS_SELECT_MAX_DEFAULT = 100
+
+
+def _coerce_corpus_select_max(raw) -> tuple[int, str | None]:
+    """解析纳入上限：合法 ≥1 的整数 → (n, None)；否则回落 100＋披露句。
+
+    MAX 没有「关掉」语义（MIN=0 才有）；不得把 0 当无限制。
+    """
+    default = _CORPUS_SELECT_MAX_DEFAULT
+    if isinstance(raw, bool):
+        return default, (
+            f"corpus_select_max_sources={raw!r} 非法（布尔），回落 {default}")
+    if isinstance(raw, int):
+        if raw >= 1:
+            return raw, None
+        return default, (
+            f"corpus_select_max_sources={raw!r} 非法（须≥1），回落 {default}")
+    if isinstance(raw, str):
+        text = raw.strip()
+        try:
+            n = int(text, 10)
+        except ValueError:
+            return default, (
+                f"corpus_select_max_sources={raw!r} 非整数，回落 {default}")
+        if n >= 1:
+            return n, None
+        return default, (
+            f"corpus_select_max_sources={raw!r} 非法（须≥1），回落 {default}")
+    return default, (
+        f"corpus_select_max_sources={raw!r} 非法，回落 {default}")
+
+
 # ---------------------------------------------------------------------------
 # 常量
 # ---------------------------------------------------------------------------
@@ -127,6 +159,14 @@ class Settings:
     # 不代表已能把十万份留在磁盘倒排里——建索引仍会读入材料。
     corpus_select_min_sources: int = 50
 
+    # 大库选料纳入上限（C-23）：默认 100；env VERITAS_CORPUS_SELECT_MAX /
+    # config.json corpus_select_max_sources。只接受 ≥1 的整数；
+    # 0／负数／非整数一律回落 100 并写入 corpus_select_max_disclosures
+    # （MAX 上没有「关掉」语义——关掉选料只认 MIN=0）。
+    # 不进 silent for-loop（val>0 静默丢弃无披露）；紧邻 min 单独解析。
+    corpus_select_max_sources: int = 100
+    corpus_select_max_disclosures: list[str] = field(default_factory=list)
+
     # 检索：原问 + 词表同义词始终生效。模型只在最新一句不完整且有上一句时
     # 补成一条独立问句。无上一句不猜主语。VERITAS_QUERY_REWRITE=0 只关这次补全。
     query_rewrite_enabled: bool = True
@@ -176,6 +216,19 @@ class Settings:
                 raise ValueError("llm_rate_limit_rps 必须为正数")
             if self.llm_rate_limit_burst < 1:
                 raise ValueError("llm_rate_limit_burst 必须 >= 1")
+        # C-23 R-C23-1：max < min 是合法组合——只披露、不回落。
+        # min＝「库多大才启动选料」、max＝「选料后纳入几份」，与 select 内
+        # 排序零耦合；回落会把用户显式写入的上限静默改掉。
+        lo = int(self.corpus_select_min_sources)
+        hi = int(self.corpus_select_max_sources)
+        if lo > 0 and hi < lo:
+            note = (
+                f"上限 {hi} 低于触发门槛 {lo}，"
+                f"仅当库内信源数 ≥{lo} 时才收窄到 {hi} 份；"
+                f"上限按 {hi} 生效"
+            )
+            if note not in self.corpus_select_max_disclosures:
+                self.corpus_select_max_disclosures.append(note)
         return self
 
     # ------------------------------------------------------------------
@@ -211,6 +264,14 @@ class Settings:
         select_min = (os.environ.get("VERITAS_CORPUS_SELECT_MIN") or "").strip()
         if select_min.isdigit():
             s.corpus_select_min_sources = int(select_min)
+        # C-23：MAX 不照抄 min 的 .isdigit()（那条会接受 "0"）
+        select_max = (os.environ.get("VERITAS_CORPUS_SELECT_MAX") or "").strip()
+        if select_max:
+            val, note = _coerce_corpus_select_max(select_max)
+            s.corpus_select_max_sources = val
+            if note:
+                s.corpus_select_max_disclosures.append(
+                    f"env VERITAS_CORPUS_SELECT_MAX: {note}")
         rewrite_env = (os.environ.get("VERITAS_QUERY_REWRITE") or "").strip().lower()
         if rewrite_env in ("0", "false", "off", "no"):
             s.query_rewrite_enabled = False
@@ -279,6 +340,18 @@ class Settings:
         if isinstance(select_min, int) and not isinstance(select_min, bool) \
                 and select_min >= 0:
             s.corpus_select_min_sources = select_min
+        # C-23：单独解析（不进上方 silent for-loop——非法值须披露不可静默丢）。
+        # config.json 只认真正的 int≥1；字符串 "100"／0／负数一律回落＋披露。
+        if "corpus_select_max_sources" in data:
+            raw = data.get("corpus_select_max_sources")
+            if (isinstance(raw, int) and not isinstance(raw, bool)
+                    and raw >= 1):
+                s.corpus_select_max_sources = raw
+            else:
+                s.corpus_select_max_sources = _CORPUS_SELECT_MAX_DEFAULT
+                s.corpus_select_max_disclosures.append(
+                    f"config.json: corpus_select_max_sources={raw!r} "
+                    f"非法（须为≥1 的整数），回落 {_CORPUS_SELECT_MAX_DEFAULT}")
         temp = data.get("llm_temperature")
         if isinstance(temp, (int, float)) and not isinstance(temp, bool) \
                 and 0.0 <= float(temp) <= 2.0:

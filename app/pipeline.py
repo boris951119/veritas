@@ -74,33 +74,54 @@ def _load_case_dossier(case_dir: Path, settings: Settings, *,
     min_sel = int(settings.corpus_select_min_sources or 0)
     fetch = settings.fetch_links_enabled
     if min_sel <= 0:
-        return load_case(case_dir, fetch_links=fetch, on_file=on_file)
+        return _attach_max_disclosures(
+            load_case(case_dir, fetch_links=fetch, on_file=on_file), settings)
 
     # 文件数先预判：演示小案不到阈值，跳过 .corpus，零额外成本。
     if count_case_files(case_dir) >= min_sel:
         from app.core.corpus_store import dossier_from_case_index
 
-        return dossier_from_case_index(
+        out = dossier_from_case_index(
             case_dir,
             project_id=case_dir.name,
             min_sources=min_sel,
+            max_sources=settings.corpus_select_max_sources,
             material_budget=settings.material_char_budget,
             fetch_links=fetch,
             on_file=on_file,
             queries=search_queries,
         )
+        return _attach_max_disclosures(out, settings)
 
     dossier = load_case(case_dir, fetch_links=fetch, on_file=on_file)
     # 压缩包拆封后信源数可能越过阈值——内存收窄，并写出选料披露。
     if len(dossier.sources) >= min_sel:
         from app.core.corpus_index import narrow_dossier
 
-        return narrow_dossier(
+        out = narrow_dossier(
             dossier,
             project_id=case_dir.name,
+            max_sources=settings.corpus_select_max_sources,
             material_budget=settings.material_char_budget,
             queries=search_queries,
         )
+        return _attach_max_disclosures(out, settings)
+    return _attach_max_disclosures(dossier, settings)
+
+
+def _attach_max_disclosures(dossier: Dossier, settings: Settings) -> Dossier:
+    """把 MAX 解析／冲突回落的披露挂进 accounting（有则并入 corpus_select）。"""
+    notes = list(getattr(settings, "corpus_select_max_disclosures", None) or [])
+    if not notes:
+        return dossier
+    acc = dossier.accounting if isinstance(dossier.accounting, dict) else {}
+    dossier.accounting = acc
+    acc["corpus_select_max_disclosures"] = notes
+    cs = acc.get("corpus_select")
+    if isinstance(cs, dict):
+        cs = dict(cs)
+        cs["max_disclosures"] = list(notes)
+        acc["corpus_select"] = cs
     return dossier
 
 
@@ -719,7 +740,8 @@ def run_case(spec: RunSpec | None = None,
                      "obligation_limitation", "n_unused",
                      "premise", "second_pass", "conflict_drops",
                      "mechanical_merge", "fact_ledger_stats",
-                     "prompt_window", "pack_window", "dependency")}
+                     "prompt_window", "pack_window", "dependency",
+                     "corpus_select_max_disclosures")}
     dossier.accounting = {
         **kept,
         "elapsed_s": round(time.monotonic() - t0, 1),

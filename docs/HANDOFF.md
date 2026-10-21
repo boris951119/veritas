@@ -5232,6 +5232,17 @@ docs/HANDOFF.md 的写入边界：只许在「执行工程师回写」你自己�
 不要提交，不要 push，验收归 Qoder。
 ```
 
+#### Cursor 回写（第二轮／R-C23-1，2026-10-22）
+
+- **裁定落地（只改三处）**：
+  1. `app/config.py::validate()`：删掉 `self.corpus_select_max_sources = 100`；note 改为「上限 {hi} 低于触发门槛 {lo}，仅当库内信源数 ≥{lo} 时才收窄到 {hi} 份；上限按 {hi} 生效」；`min>0` 与不重复 append 保留；注释写明「只披露不回落」。
+  2. 判据 c：摘掉 `VERITAS_CORPUS_SELECT_MIN=20` workaround 与「避开互斥」注释；默认 MIN=50 下钉 `n_selected==20`／`omitted==40`／`max_sources==20`＋专门披露在场（点名 20 与 50）。
+  3. 判据 e：改名 `test_e_max_lt_min_keeps_max_with_special_disclosure`；MIN=50 MAX=10 ⇒ 生效值 **10**、`n_selected==10`／`omitted==50`／专门披露点名 10 与 50、不得「回落 100」。
+- **两把证伪件（自下自复现到红再还原，清 `__pycache__`）**：
+  - ① 删掉专门披露 append ⇒ **2 failed**：`test_e_max_lt_min_keeps_max_with_special_disclosure`（`assert ('上限 10' in '')`）＋顺带 `test_c_env_max_20` 同形红。
+  - ② 保留披露但加回 `self.corpus_select_max_sources = 100` ⇒ **1 failed**：`test_e_max_lt_min_keeps_max_with_special_disclosure`（`assert 100 == 10`）。
+- **collect／绿**：整套 `--collect-only`＝**765**；本单文件仍 **18**（只改断言、条数不变）；×5＝**765 passed**；未装 mcp＝**764 passed, 1 skipped**；`cases/`／`scripts/` diff 空；k′＝0。
+- **未动**：d／h／k′／l／a-in／a-out／b／f；`dossier_from_case_index` 形参与 accounting 白名单两条偏离原样。未 commit／未 push。
 
 ### C-24｜置信度校准：让「高置信（≥0.8）正确率 ≥85%」这条达标行第一次有可复放的曲线（用户 2026-10-18 晚拍「做在里边、尽力做完」，**队列第二＝现队列最后一张**（10-22 傍晚 C-13 收口后队列 3⇒2 张，本单从第四退到第二＝队尾不变；发单前同样须按 `747` 重锚，它还引着 `confidence.py:131` 那条已漂的行号），约 0.5 天）
 
