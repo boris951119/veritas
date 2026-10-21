@@ -231,6 +231,10 @@ def test_c_overlap_has_real_count(tmp_path):
 
 # ---------- CLI --errors ----------
 def test_cli_errors_flag(tmp_path):
+    venv_py = ROOT / ".venv" / "bin" / "python"
+    if not venv_py.is_file():
+        import pytest
+        pytest.skip("no .venv (C-24/#99)：裸 clone 上此格 skip，勿读成 failed")
     samples, gold_c = _fixture_two_questions()
     e = _dump(tmp_path / "e.json", [])
     c = _dump(tmp_path / "c.json", [
@@ -240,7 +244,7 @@ def test_cli_errors_flag(tmp_path):
     ge = _dump(tmp_path / "ge.json", samples)
     gc = _dump(tmp_path / "gc.json", gold_c)
     out = subprocess.check_output(
-        [str(ROOT / ".venv/bin/python"), "-m", "scripts.score_official",
+        [str(venv_py), "-m", "scripts.score_official",
          "--evidence", str(e), "--conclusions", str(c),
          "--gold-evidence", str(ge), "--gold-conclusions", str(gc),
          "--errors"],

@@ -382,30 +382,19 @@ def test_e_export_bytes_unchanged_by_parse_drops(tmp_path):
 
 
 def test_f_forbidden_files_untouched():
-    """f) citation_check 相对 C-16 基线仍为零；pipeline 自 C-16 之后没有新 diff。
+    """f) 内容守护（#94）：不再用版本对照型瞬时断言。
 
-    conflicts.py／human_ops.py／official.py 是 C-14b 的允许落点，不再相对 58e8610 钉死。
+    钉住 citation_check 模块仍在、pipeline 仍含 C-16/C-17 关键留痕与
+    empties→insufficient 判定——这些是源码内容断言，任意克隆可复放。
     """
-    import subprocess
-
-    base = "c68fe30"
-    out = subprocess.check_output(
-        ["git", "diff", base, "--", "app/core/citation_check.py"], text=True)
-    assert out == ""
-    # C-17 要在 pipeline 加 content_head 与空交付节，不能再钉「相对 c68fe30 零 diff」。
-    # 仍钉：citation_check 零 diff，且 empties→insufficient 那两句还在。
-    pipe_since = subprocess.check_output(
-        ["git", "diff", base, "--", "app/pipeline.py"], text=True)
-    assert "content_head" in pipe_since
-    assert "empty_runs" in pipe_since
-
-    pipe = subprocess.check_output(
-        ["git", "diff", "58e8610", "--", "app/pipeline.py"], text=True)
-    # 只许出现 citation_audit 的 n_parse_dropped 与渲染区两处相关文案
+    cit = Path("app/core/citation_check.py").read_text(encoding="utf-8")
+    assert "def check_quote" in cit or "check_quote" in cit
+    pipe = Path("app/pipeline.py").read_text(encoding="utf-8")
+    assert "content_head" in pipe
+    assert "empty_runs" in pipe
     assert "n_parse_dropped" in pipe
     assert "引用未落地的证据与丢失的结论条目（段落不存在／未编号／条目非法）" in pipe
     assert "成因缺失（异常）" in pipe
-    # 不许动 empties 判定
-    assert 'and c.status != "merged"' in Path("app/pipeline.py").read_text(encoding="utf-8")
-    assert "con.status = \"insufficient\"" in Path("app/pipeline.py").read_text(
-        encoding="utf-8")
+    assert 'and c.status != "merged"' in pipe
+    assert 'con.status = "insufficient"' in pipe
+

@@ -5750,7 +5750,7 @@ docs/HANDOFF.md 只许在你自己那一节追加；状态行与我的复放块�
   1. `scripts/check_markdown_tables.py` docstring：删「基准读数（C-24 发单前重锚）：23 文件／93 张／列数不一致 0」；改为「唯一不变式是 mismatched==0；files／with_tables／tables 都是当场读数、随文档树漂移」＋「本轮实测（默认作用域 docs/＋仓库根层 *.md）：22 文件／98 张／列数不一致 0」。同文件 `--help`／注释无其他绝对张数钉桩，无需改。
   2. `tests/test_c24_calibration.py` `test_h_markdown_tables_ok_and_mismatch_errors`：补「docstring 不得含 `23 文件`／`93 张`」两条内容断言（**不断言绝对张数**）。
 - **禁品零 diff**：`app/` 整树／`scripts/measure_s4_gates.py`／`cases/`／`tests/conftest.py`／`SEGMENTER_VERSION`／两份 proposal 占位句／`calibration/candidates_self.jsonl`／`scripts/calibrate_confidence.py`＝本轮一字未动。
-- **测试**：整套仍 **822**（`--collect-only` 822；×5 全绿；未装 mcp＝821 passed, 1 skipped）。详见主代理报告。
+- **测试**：`--collect-only` **822**；×5＝**822 passed**（22.05／22.37／22.74／24.31／23.28 s）；未装 mcp（`sys.meta_path` 拦 `mcp`）＝**821 passed, 1 skipped**（22.33 s）。
 - **HANDOFF**：只追加本小节；状态行与「架构师独立复放」块零字节改动。
 - **偏离／发现**：无。默认作用域当场复测仍 `files=22 with_tables=19 tables=98 mismatched=0`，与 docstring 新写一致。
 - **置信度**：高（只改注释＋两条负断言；条数账不变）。
