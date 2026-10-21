@@ -63,7 +63,7 @@ python3 -m venv .venv
 .venv/bin/python -m pytest tests -q
 ```
 
-**通过判据**：未装 mcp 时零 failed，1 条 skip 属正常，只来自 `tests/test_mcp_server.py` 的 `importorskip("mcp")`。装完 mcp 再跑必须零 failed 且零 skipped。**入库基线 `678 passed`**（本机装了 mcp 的全绿数；干净 `git clone` 上实测复现，不依赖任何本机未入库产物；未装 mcp 那格＝`677 passed, 1 skipped`，两格 2026-10-20 深夜在 **C-29 收口**（第三轮通过）的两份新克隆上各复放，装了 mcp 那格连跑 6 次无 flake（21.1～21.5 秒）。整套比 C-19 那版慢约 1.8 秒，**而且这次慢在既有用例上**（摘掉新增的 `tests/test_c29_precedent.py` 仍是 `660 passed in 21.03s`，C-19 收口时是 19.3 秒）＝同类事件对照台账在 `accounting` 缺键时会全量重算，已登记待办（`docs/HANDOFF.md` task #65），不影响判绿。上一版 660 那档的 14 秒则全部来自新增的装箱/窗口用例自身（去掉那个新文件仍是 `645 passed in 4.79s`）。测试全 stub，无需密钥、不产生任何真实模型调用（测试期有守卫）。
+**通过判据**：未装 mcp 时零 failed，1 条 skip 属正常，只来自 `tests/test_mcp_server.py` 的 `importorskip("mcp")`。装完 mcp 再跑必须零 failed 且零 skipped。**入库基线 `699 passed`**（本机装了 mcp 的全绿数；干净 `git clone` 上实测复现，不依赖任何本机未入库产物；未装 mcp 那格＝`698 passed, 1 skipped`，两格 2026-10-22 凌晨在 **C-20 收口**（第二轮通过）的两份新克隆上各复放，装了 mcp 那格连跑 8 次无 flake（20.8～21.6 秒），`--collect-only` 整套 699 条；模拟「未装 mcp」请用 `sys.meta_path` 插 finder 抛 **`ModuleNotFoundError`**——pytest 9.1.1 的 `importorskip` 只吞它，抛父类 `ImportError` 会读成 `1 failed`。**这 21 条新用例几乎不花时间**（改前 `678 in 21.26s` ⇒ 改后 `699 in 20.83～21.57s`＝纯函数与文本断言，既有用例零变慢）。上一档 678（C-29 收口）比 C-19 那版慢约 1.8 秒，**而且那次慢在既有用例上**（摘掉新增的 `tests/test_c29_precedent.py` 仍是 `660 passed in 21.03s`，C-19 收口时是 19.3 秒）＝同类事件对照台账在 `accounting` 缺键时会全量重算，已登记待办（`docs/HANDOFF.md` task #65），不影响判绿。测试全 stub，无需密钥、不产生任何真实模型调用（测试期有守卫）。
 
 ## 第 3 步：离线演示（断网/无 key 时的完整演示兜底）
 
@@ -164,7 +164,11 @@ python3 -m venv .venv
 ## 仓库速览（供智能体理解上下文）
 
 - 入口：`python -m app.pipeline <case_dir>`；编排：`app/pipeline.py`
-- 三级证据链与判分：`app/core/`（evidence / citation_check / confidence / conflicts / hashchain）
+- 三级证据链与判分：`app/core/`（evidence / citation_check / confidence / conflicts / hashchain）；
+  置信度对外交**两套档、永不合并**（`confidence.py`）＝`band` 绝对档（0.8＝官方达标行原文「高置信（≥0.8）」、0.5＝我方设定）
+  与 `band_rel` 同跑次分位档（`quantiles(n=100, inclusive)` 的 34%/67% 切点、按**整份提交物 pooled**、样本<2 记「低」）；
+  退化分布两条规则＝`score<=0 ⇒ 低`、切点重合（`hi-lo < 1e-9`）时并列在切点上的记第四档「**不可分**」（不是缺数据、也不是低），
+  规则串当场披露切点原样值与并列真数
 - 零 LLM 机械闸族：`app/core/audit.py` 汇总（numeric_check 计算/溯源/计数、
   discourse_check 质证/仲裁/措辞、premise_check 前提）；skill 注册表
   `app/core/skills.py`（触发才注入，无闸的 skill 不注册）

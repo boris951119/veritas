@@ -512,7 +512,7 @@ openai/glm-5.3" oninput="previewAssignment()"></textarea>
         <div class="sub hidden" id="subquestionStatus" style="margin-top:8px"></div>
       </div>
       <div class="sec"><h2>一句话判断</h2><div id="synthesis"></div>
-        <div class="sub" style="margin-top:8px">置信度是规则分，不是命中率。</div>
+        <div class="sub" style="margin-top:8px">置信度是规则分，不是命中率。配色＝绝对档（0.8＝官方、0.5＝我方）；本跑次几乎全红/黄是实测结果，不是渲染坏了。</div>
       </div>
       <div class="tabs">
         <button class="active" data-go="evidence" onclick="showTab('evidence')">证据与原文</button>
@@ -626,7 +626,7 @@ document.addEventListener("keydown",e=>{
     closeAlert();
   }
 });
-function confColor(c){return c>=.5?"var(--good)":c>=.2?"var(--warn)":"var(--bad)"}
+function confColor(c){return c>=.8?"var(--good)":c>=.5?"var(--warn)":"var(--bad)"}
 function showTab(id){
   if(id!=="evidence" && id!=="more") id="more";
   TAB=id;
@@ -1420,8 +1420,10 @@ function renderSynth(s,d){
     const top=(d.conclusions||[]).filter(c=>c.status==="majority")
       .sort((a,b)=>b.confidence-a.confidence)[0];
     if(top){
+      const bandMain=top.band!=null?esc(top.band):"—";
+      const bandRel=top.band_rel!=null?esc(top.band_rel):"—";
       $("#synthesis").innerHTML=`<div style="font-size:18px;font-weight:650;margin-bottom:10px;line-height:1.45">${esc(top.statement)}</div>
-        <div class="kv">置信度 <b>${top.confidence.toFixed(2)}</b> · 本跑次没有单独的汇总句，以上是主表里最靠前的一条。</div>
+        <div class="kv">置信度 <b>${top.confidence.toFixed(2)}</b> · 档 <b>${bandMain}</b>（相对 ${bandRel}） · 本跑次没有单独的汇总句，以上是主表里最靠前的一条。</div>
         <div class="sub" style="margin-top:8px">请到「结论与证据」核对该判断的原文出处。</div>`;
       return;
     }
@@ -1455,7 +1457,7 @@ function render(){
   const acc=D.accounting||d.accounting||{};
   $("#heroTitle").textContent=d.question||"（未写议题）";
   const modeTag=(D.workbench_mode==="live"||(LLM&&LLM.mode==="live"))?"真实模型":"演示结果";
-  $("#heroMeta").textContent=`${modeTag} · ${zhRoles(d.panel)} · ${d.sources.length} 份资料 · ${acc.elapsed_s==null?"—":acc.elapsed_s+" 秒"} · 置信度是规则分，不是命中率`;
+  $("#heroMeta").textContent=`${modeTag} · ${zhRoles(d.panel)} · ${d.sources.length} 份资料 · ${acc.elapsed_s==null?"—":acc.elapsed_s+" 秒"} · 置信度是规则分，不是命中率 · 配色＝绝对档（本跑次几乎全红/黄是实测结果，不是渲染坏了）`;
   const cs=acc.corpus_select||null;
   const box=$("#corpusSelect");
   if(box){
@@ -1573,7 +1575,10 @@ function renderChains(d){
       :("链 "+p.chain.toFixed(2)+"〔核 "+((cd.applicable||[]).length)+" 环｜"
         +((cd.broken||[]).length?"断："+cd.broken.map(k=>CHAIN_CN[k]||k).join("、"):"全闭合")+"〕");
     const chips=["证据强度 "+f2(p.strength),"覆盖 "+f2(p.coverage),"一致性 "+f2(p.agreement),
-      chainTxt,`${p.n_evidence??evs.length} 条证据`].map(t=>`<span class="chip">${esc(t)}</span>`).join("");
+      chainTxt,`${p.n_evidence??evs.length} 条证据`,
+      con.band!=null?`档 ${con.band}`:null,
+      con.band_rel!=null?`相对档 ${con.band_rel}`:null]
+      .filter(Boolean).map(t=>`<span class="chip">${esc(t)}</span>`).join("");
     const evHtml=evs.map(ev=>{
       const segs=ev.segment_ids.map(sid=>{
         const seg=findSeg(d,sid);
@@ -1607,6 +1612,8 @@ function renderChains(d){
       <div class="lane"><div class="card" style="border-left:3px solid ${confColor(con.confidence)}">
         <div>${esc(con.statement)}</div>
         <div class="conf"><b style="color:${confColor(con.confidence)}">${con.confidence.toFixed(2)}</b>
+          <span class="chip" style="margin-left:8px">档 ${esc(con.band||"—")}</span>
+          <span class="sub" style="margin-left:4px">相对 ${esc(con.band_rel||"—")}</span>
           <div class="bar"><i style="width:${(con.confidence*100).toFixed(0)}%;background:${confColor(con.confidence)}"></i></div></div>
         <div class="chips">${chips}</div>
         <div class="who">研判视角：${esc(zhRoles(con.authors&&con.authors.length?con.authors:[con.author]))}${authorSignLabel(con)}${esc(mergeLabel(con))}</div>

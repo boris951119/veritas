@@ -209,13 +209,30 @@ def _dossier_payload(out_dir: Path, clearance: str = "confidential") -> dict:
             limitation = ledger_limitation(ledger)
             if limitation:
                 accounting["obligation_limitation"] = limitation
+    # C-20：band／band_rel 只挂展示 payload，不改 report.json
+    from app.core.confidence import (
+        band_count_dict,
+        band_of,
+        band_rel_of,
+        row_score_of,
+    )
+
+    dossier_view = view.to_dict()
+    cons = list(dossier_view.get("conclusions") or [])
+    scores = [row_score_of(c.get("confidence_parts")) for c in cons]
+    for con, score in zip(cons, scores):
+        con["band"] = band_of(score)
+        con["band_rel"] = band_rel_of(scores, score)
+    accounting["band_counts"] = band_count_dict(scores, absolute=True)
+    accounting["band_rel_counts"] = band_count_dict(scores, absolute=False)
+    accounting["band_n"] = len(scores)
     case_name, out_rel = _case_and_out_label(out_dir)
     writable = out_dir.parent.name != "history"
     return {
         "case": case_name,
         "out_dir": out_rel,
         "writable": writable,
-        "dossier": view.to_dict(),
+        "dossier": dossier_view,
         "audit": {"flags": flags, **scan["summary"],
                   "not_evaluated": ne,
                   "not_evaluated_note": not_evaluated_note(ne),

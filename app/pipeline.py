@@ -944,6 +944,7 @@ def render_report_md(dossier: Dossier, chain: HashChain, rejected: list[dict]) -
             f"（{acc.get('confidence_note') or '规则分，不是命中率'}）",
             "",
         ]
+    _render_confidence_bands(lines, dossier)
     lines += [
         "## 结论",
         "",
@@ -1347,6 +1348,33 @@ def _render_dissent_section(lines: list[str], dossier: Dossier) -> None:
             f"{'、'.join(con.author_names()) or 'N/A'}"
             f"{author_count_label(con)}）——{tag}")
     lines.append("")
+
+
+def _render_confidence_bands(lines: list[str], dossier: Dossier) -> None:
+    """首屏两套档条数（本案卷面；含 0 条的档；不进 confidence_note）。"""
+    from app.core.confidence import band_count_dict, row_score_of
+
+    scores = [
+        row_score_of(c.confidence_parts)
+        for c in dossier.conclusions
+        if c.status == "majority"
+    ]
+    n = len(scores)
+    abs_c = band_count_dict(scores, absolute=True)
+    rel_c = band_count_dict(scores, absolute=False)
+    lines += [
+        f"**置信度档（本案卷 {n} 条）**：",
+        (
+            f"- 绝对档 band（高阈值 0.8＝官方达标行原文；中阈值 0.5＝我方设定）："
+            f"高置信（≥0.8）：{abs_c['高']} 条 · 中：{abs_c['中']} 条 · 低：{abs_c['低']} 条"
+        ),
+        (
+            f"- 相对档 band_rel（同跑次 34%/67% 分位，本案卷面）："
+            f"高：{rel_c['高']} 条 · 中：{rel_c['中']} 条 · 低：{rel_c['低']} 条"
+            f" · 不可分：{rel_c.get('不可分', 0)} 条"
+        ),
+        "",
+    ]
 
 
 def _render_fact_collisions(lines: list[str], dossier: Dossier) -> None:

@@ -9,7 +9,13 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from app.core.confidence import _AGREEMENT_FLOOR, chain_factor_of
+from app.core.confidence import (
+    BAND_RULE,
+    band_of,
+    band_rel_of,
+    band_rel_rule_of,
+    row_score_detail,
+)
 from app.core.conflicts import METHOD_TO_RESOLUTION_TYPE
 from app.core.evidence import Dossier
 
@@ -35,6 +41,17 @@ schema 自定（附录 A 未规定）。每条结论含：
 信源可信度、证据数量与一致性、推理链完整性，
 以及公式 `min(1, strength × coverage × agreement_factor × chain_factor)`、
 各分项数值与代入演算。
+另有两套呈现档（不许合并、不许互替）：
+- band：绝对档。高阈值 0.8＝官方达标行原文「高置信（≥0.8）」；中阈值 0.5＝我方设定（官方未写中/低分界）。
+  一律从本行 score（parts 重算）来，不从 dossier_confidence 来（二者实测可差 1e-4）。
+- band_rel：同跑次分位档。切点＝statistics.quantiles(scores, n=100, method=inclusive) 的第 34／67 个；
+  样本面＝整份 confidence.json pooled（跨题合并）；样本 <2 整档记「低」。方法名与当次切点写在 band_rel_rule。
+  退化规则（我方设定）：score≤0 ⇒ 恒记「低」（0 分不参与分位）；切点重合（hi−lo < 1e-9）时并列在切点上的记「不可分」。
+  「不可分」＝我方设定，出现在本次分布退化（切点重合）时，表示这一档说不出高低，不是缺数据、也不是低。
+当前公式下 ≥0.8 实测 0/40（C-19 前）与 0/57（C-19 后），故本提交物高档为空是结构性的，不是这次没跑好；
+因此 ≥85% 那条达标线目前无样本可判，已向发榜方提问。
+首屏「本案卷 N 条」是单案卷面；提交物分位面是 pooled 全跑次——两面不要混读。
+配色（工作台）＝绝对档同一对阈值；本跑次提交行 max≈0.55 ⇒ 卡片几乎全红/黄是实测结果，不是渲染坏了。
 
 ## conflict_resolution.json
 schema 自定。resolution_type 取官方五级之一，由 method 经模块级映射表得到
@@ -133,15 +150,13 @@ def _confidence_rows(question_id: str, dossier: Dossier) -> list[dict]:
         if con.status != "majority":
             continue
         parts = dict(con.confidence_parts or {})
-        strength = float(parts.get("strength") or 0.0)
-        coverage = float(parts.get("coverage") or 0.0)
-        agreement = float(parts.get("agreement") or 0.0)
-        chain = parts.get("chain")
-        chain_num = None if chain is None else float(chain)
-        agreement_factor = _AGREEMENT_FLOOR + (1 - _AGREEMENT_FLOOR) * agreement
-        chain_factor = chain_factor_of(chain_num)
-        product = min(1.0, strength * coverage * agreement_factor * chain_factor)
-        score = round(product, 4)
+        score, terms = row_score_detail(parts)
+        strength = terms["strength"]
+        coverage = terms["coverage"]
+        agreement = terms["agreement"]
+        chain_num = terms["chain"]
+        agreement_factor = terms["agreement_factor"]
+        chain_factor = terms["chain_factor"]
         rows.append({
             "question_id": question_id,
             "conclusion_id": con.id,
@@ -149,24 +164,19 @@ def _confidence_rows(question_id: str, dossier: Dossier) -> list[dict]:
             "证据数量与一致性": {
                 "coverage": coverage,
                 "agreement": agreement,
-                "agreement_factor": round(agreement_factor, 4),
+                "agreement_factor": agreement_factor,
             },
             "推理链完整性": chain_num,
             "formula": "min(1, strength * coverage * agreement_factor * chain_factor)",
-            "terms": {
-                "strength": strength,
-                "coverage": coverage,
-                "agreement": agreement,
-                "agreement_factor": round(agreement_factor, 4),
-                "chain": chain_num,
-                "chain_factor": round(chain_factor, 4),
-            },
+            "terms": dict(terms),
             "substitution": (
-                f"min(1, {strength} * {coverage} * {round(agreement_factor, 4)}"
-                f" * {round(chain_factor, 4)}) = {score}"
+                f"min(1, {strength} * {coverage} * {agreement_factor}"
+                f" * {chain_factor}) = {score}"
             ),
             "score": score,
             "dossier_confidence": con.confidence,
+            "band": band_of(score),
+            "band_rule": BAND_RULE,
         })
     return rows
 
@@ -260,6 +270,13 @@ def export_official(runs: list[tuple[dict, Dossier]], out_dir: Path) -> dict[str
     print(gate_line)
     print(slot_line)
     print(dedup_line)
+
+    # C-20：band_rel 必须看整份提交物 pooled，不能在 _confidence_rows（单案卷）里算
+    pooled = [float(r["score"]) for r in confidence]
+    rel_rule = band_rel_rule_of(pooled)
+    for row in confidence:
+        row["band_rel"] = band_rel_of(pooled, float(row["score"]))
+        row["band_rel_rule"] = rel_rule
 
     paths = {
         "evidence": out_dir / "evidence.json",

@@ -21,6 +21,8 @@
 from __future__ import annotations
 
 import math
+import statistics
+from collections.abc import Sequence
 
 from app.core.evidence import (
     Dossier,
@@ -37,6 +39,14 @@ _AGREEMENT_FLOOR = 0.5        # 单人结论的一致性因子下限
 _CHAIN_FLOOR = 0.55           # 链全断时的因子下限（压分不清零，语义仍归人）
 _CHAIN_UNKNOWN = 0.75         # 无从判定时的因子（不给满分也不按断链罚）
 
+# 呈现层分档（C-20）：不进 conclude_confidence；0.8＝官方达标行原文，0.5＝我方设定
+_BAND_HIGH = 0.8
+_BAND_MID = 0.5
+_BAND_REL_EPS = 1e-9  # 切点重合判定容差（我方设定；R-C20-3）
+BAND_RULE = (
+    "高阈值 0.8＝官方达标行原文；中阈值 0.5＝我方设定；规则分档，不是命中率"
+)
+
 
 def chain_factor_of(chain_score: float | None) -> float:
     """链完整性 → 置信度因子（0-1）。
@@ -50,6 +60,114 @@ def chain_factor_of(chain_score: float | None) -> float:
     if chain_score is None:
         return _CHAIN_UNKNOWN
     return _CHAIN_FLOOR + (1 - _CHAIN_FLOOR) * chain_score
+
+
+def band_of(score: float) -> str:
+    """绝对档：>=0.8 高／>=0.5 中／否则低（边界方向钉官方达标行原话）。"""
+    if score >= _BAND_HIGH:
+        return "高"
+    if score >= _BAND_MID:
+        return "中"
+    return "低"
+
+
+def band_rel_cuts(scores: Sequence[float]) -> tuple[float, float] | None:
+    """34%/67% 切点；样本 <2 返回 None（quantiles 会抛）。"""
+    xs = list(scores)
+    if len(xs) < 2:
+        return None
+    q = statistics.quantiles(xs, n=100, method="inclusive")
+    return q[33], q[66]
+
+
+def band_rel_of(scores: Sequence[float], score: float) -> str:
+    """同跑次分位档；0 分恒低；切点重合 ⇒ 不可分；样本 <2 整档记「低」。"""
+    if score <= 0.0:  # 规则一：0 分＝无支撑，不参与分位
+        return "低"
+    cuts = band_rel_cuts(scores)
+    if cuts is None:  # 样本 <2：原有分支
+        return "低"
+    lo, hi = cuts
+    if hi - lo < _BAND_REL_EPS:  # 规则二：切点重合（含 hi<lo 浮点毛刺）
+        if score > hi + _BAND_REL_EPS:
+            return "高"
+        if score < lo - _BAND_REL_EPS:
+            return "低"
+        return "不可分"
+    if score >= hi:
+        return "高"
+    if score >= lo:
+        return "中"
+    return "低"
+
+
+def band_rel_rule_of(scores: Sequence[float]) -> str:
+    """别人能照着复算：方法名＋pooled 样本数＋当次切点（或小样本／退化分支）。"""
+    xs = list(scores)
+    n = len(xs)
+    if n < 2:
+        return (
+            f"quantiles n=100 method=inclusive；pooled 样本数={n}；"
+            "样本<2 整档记为低；来源＝我方本次分布"
+        )
+    lo, hi = band_rel_cuts(xs)  # type: ignore[misc]
+    base = (
+        f"quantiles n=100 method=inclusive；pooled 样本数={n}；"
+        f"切点 lo={round(lo, 4)} hi={round(hi, 4)}；来源＝我方本次分布"
+    )
+    if hi - lo < _BAND_REL_EPS:
+        n_tied = sum(
+            1 for s in xs
+            if s > 0.0
+            and not (s > hi + _BAND_REL_EPS)
+            and not (s < lo - _BAND_REL_EPS)
+        )
+        return (
+            f"{base}；切点重合（lo={lo!r} hi={hi!r}），"
+            f"并列在切点上的 {n_tied} 条记『不可分』"
+        )
+    return base
+
+
+def row_score_detail(parts: dict | None) -> tuple[float, dict]:
+    """提交行 score＋代入项（唯一一份公式；导出层 terms／substitution 共用）。"""
+    p = dict(parts or {})
+    strength = float(p.get("strength") or 0.0)
+    coverage = float(p.get("coverage") or 0.0)
+    agreement = float(p.get("agreement") or 0.0)
+    chain = p.get("chain")
+    chain_num = None if chain is None else float(chain)
+    agreement_factor = _AGREEMENT_FLOOR + (1 - _AGREEMENT_FLOOR) * agreement
+    chain_factor = chain_factor_of(chain_num)
+    score = round(min(1.0, strength * coverage * agreement_factor * chain_factor), 4)
+    terms = {
+        "strength": strength,
+        "coverage": coverage,
+        "agreement": agreement,
+        "agreement_factor": round(agreement_factor, 4),
+        "chain": chain_num,
+        "chain_factor": round(chain_factor, 4),
+    }
+    return score, terms
+
+
+def row_score_of(parts: dict | None) -> float:
+    """提交行 score：与官方导出层同一份公式（唯一实现）。"""
+    return row_score_detail(parts)[0]
+
+
+def band_count_dict(scores: Sequence[float], *, absolute: bool) -> dict[str, int]:
+    """档条数（含 0）。绝对面 3 键；相对面 4 键（含「不可分」）。"""
+    xs = list(scores)
+    if absolute:
+        out = {"高": 0, "中": 0, "低": 0}
+        for s in xs:
+            out[band_of(s)] += 1
+        return out
+    out = {"高": 0, "中": 0, "低": 0, "不可分": 0}
+    for s in xs:
+        out[band_rel_of(xs, s)] += 1
+    return out
 
 
 def evidence_score(ev: EvidenceNode, dossier: Dossier) -> float:
