@@ -148,7 +148,15 @@ class Source:
 
 @dataclass
 class EvidenceNode:
-    """证据：一条逐字引文 + 所指出处段落 + 关系/等级标注。"""
+    """证据：一条逐字引文 + 所指出处段落 + 关系/等级标注。
+
+    C-32 结构化因果主张（证据级；不做效应估计／完整因果引擎）：
+    - causal_claim：四要素 intervention／outcome／population／counterfactual
+    - mechanism_completeness：direct｜indirect｜correlation_only
+    - missing_links：mediator／temporal／contrast（indirect 必填）
+    - design_tier：rct｜quasi｜observational｜claim_only（只展示，不进分）
+    - declared_relation／degraded_reason：降级留痕（改 relation 值实现降级）
+    """
 
     id: str
     conclusion_id: str
@@ -160,6 +168,13 @@ class EvidenceNode:
     weight: float = 1.0           # 人工可调权重（修改后触发重算）
     author: str = ""              # 产出该证据的智能体
     verified: bool | None = None  # 引文核对结果（audit 时回填）
+    # C-32 主张卡与降级留痕（旧 dict 缺键 → from_dict 落默认）
+    causal_claim: dict | None = None
+    mechanism_completeness: str = "correlation_only"
+    missing_links: list = field(default_factory=list)
+    design_tier: str = "claim_only"
+    declared_relation: str = ""
+    degraded_reason: str = ""
 
     @classmethod
     def create(cls, conclusion_id: str, quote: str, segment_ids: list[str], **kw) -> "EvidenceNode":
@@ -172,18 +187,34 @@ class EvidenceNode:
             "segment_ids": self.segment_ids, "relation": self.relation.value,
             "level": self.level.value, "note": self.note, "weight": self.weight,
             "author": self.author, "verified": self.verified,
+            "causal_claim": dict(self.causal_claim) if self.causal_claim else None,
+            "mechanism_completeness": self.mechanism_completeness or "correlation_only",
+            "missing_links": list(self.missing_links or []),
+            "design_tier": self.design_tier or "claim_only",
+            "declared_relation": self.declared_relation or self.relation.value,
+            "degraded_reason": self.degraded_reason or "",
         }
 
     @classmethod
     def from_dict(cls, d: dict) -> "EvidenceNode":
+        rel = RelationKind(d.get("relation", "correlation"))
+        declared = str(d.get("declared_relation") or "") or rel.value
+        claim = d.get("causal_claim")
         return cls(
             id=str(d["id"]), conclusion_id=str(d["conclusion_id"]),
             quote=str(d.get("quote", "")),
             segment_ids=[str(x) for x in d.get("segment_ids") or []],
-            relation=RelationKind(d.get("relation", "correlation")),
+            relation=rel,
             level=EvidenceLevel(d.get("level", "C")),
             note=str(d.get("note", "")), weight=float(d.get("weight", 1.0)),
             author=str(d.get("author", "")), verified=d.get("verified"),
+            causal_claim=dict(claim) if isinstance(claim, dict) else None,
+            mechanism_completeness=str(
+                d.get("mechanism_completeness") or "correlation_only"),
+            missing_links=[str(x) for x in (d.get("missing_links") or [])],
+            design_tier=str(d.get("design_tier") or "claim_only"),
+            declared_relation=declared,
+            degraded_reason=str(d.get("degraded_reason") or ""),
         )
 
 

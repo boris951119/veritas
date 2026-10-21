@@ -555,6 +555,7 @@ const FLAG_CN={calc:"计算复算不符",provenance:"来源外数字",counting:"
   premise:"议题前提未覆盖",percent_no_base:"涨跌百分比未见基数",
   unit_mismatch:"人民币与美元口径混用",source_unverified:"信源出处未核验",
   level_consistency:"证据等级与信源类型不符",causation_support:"因果标注缺乏机制词",
+  causal_claim_missing:"因果主张卡不完整已降级",
   warrant_theme:"理由与主张脱节",scope:"声称范围却无覆盖声明"};
 const CHAIN_CN={quote_hits:"引文逐字命中",warrant_theme:"理由支撑主张",
   number_traceable:"数字可溯源",scope_declared:"范围有声明",
@@ -1597,7 +1598,10 @@ function renderChains(d){
         <div class="evquote">${esc(ev.quote)}</div>
         <div class="chips"><span class="tag ${esc(lv)}">${esc(lv)}级</span>
           <span class="chip">${REL_CN[ev.relation]||"相关"}</span>
+          ${ev.declared_relation==="causation"&&ev.relation!=="causation"
+            ?`<span class="chip">原声明：因果｜已降级：相关</span>`:""}
           <span class="chip">权重 ${ev.weight}</span>${ev.author?`<span class="chip">${esc(zhRole(ev.author))}</span>`:""}</div>
+        ${ev.degraded_reason?`<div class="who">降级原因：${esc(ev.degraded_reason)}</div>`:""}
         ${ev.note?`<div class="who">${esc(ev.note)}</div>`:""}
         <div class="evops"><span class="sub">关系</span>
           <select onchange="setRelation('${esc(ev.id)}',this.value)" title="改成因果且原文无机制词会亮黄牌">

@@ -294,6 +294,9 @@ def _mutate(cases_root: Path | None, case: str, event: str,
         extra = mutate_fn(dossier)
         if not isinstance(extra, dict):
             extra = {}
+        # C-32：主张卡降级须在重算前（与 pipeline finalize 同序）
+        from app.core.causal_claim import apply_causal_claim_gates
+        apply_causal_claim_gates(dossier)
         recompute_all(dossier, n_panel=max(1, len(dossier.panel)))
         refresh_premise_broken(dossier)
         affected = collect_affected(seeds, dossier)

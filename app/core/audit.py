@@ -7,6 +7,7 @@ flag 不持久化——每次加载即时重算（derived view）：人工修改
 
 from __future__ import annotations
 
+from app.core.causal_claim import audit_causal_claim_missing
 from app.core.discourse_check import (
     audit_causation_support,
     audit_discourse,
@@ -41,6 +42,7 @@ KIND_LABEL: dict[str, str] = {
     "level_tone": "措辞强度超过证据等级",
     "level_consistency": "证据等级与信源类型不符",
     "causation_support": "因果标注缺乏机制词支撑",
+    "causal_claim_missing": "因果主张卡不完整已降级",
     "warrant_theme": "理由与主张脱节",
     "stale": "引用旧时点资料",
     "as_of": "结论未锚定时点",
@@ -76,6 +78,7 @@ def audit_all(dossier: Dossier) -> list[dict]:
         *audit_level_tone(dossier),
         *audit_level_consistency(dossier),
         *audit_causation_support(dossier),
+        *audit_causal_claim_missing(dossier),
         *audit_warrant_theme(dossier),
         *audit_temporal(dossier),
         *audit_bare_percent(dossier),

@@ -2760,6 +2760,16 @@ docs/HANDOFF.md 的写入边界：只许在「执行工程师回写」你自己�
   - **质疑／发现（未修）**：`gate_applicability.GateSpec("causation_support").has_work` 仍只看当前 `relation == CAUSATION`（`causal_claim_missing` 那格第一轮已扩到 declared）。本轮按工单只扩了 `discourse_check.audit_causation_support`、四处注册表本轮不许再动 ⇒ demo `report.md` 现已同时亮两张黄牌（机制词＋主张卡），但「未能执行」清单里仍列着「因果机制词核对」——与「断：因果有机制」／黄牌在场的面仍有残留矛盾。若架构师要彻底收掉，需授权动 `gate_applicability.py` 那一格 has_work（对称扩到 declared）。
   - **置信度**：高（三件落地、807×5／806+1 skip、跨树只剩 relation、confidence.py 零 diff）。
 
+- **执行工程师回写（2026-10-21 夜＝按箱钟；R-C32-2 第三轮，未 commit）**：
+  - **本轮只补 R-C32-2 两件**＝① `gate_applicability.GateSpec("causation_support").has_work` 扩到「当前 `relation is CAUSATION` **或** `declared_relation == "causation"`」，形状与同文件 `causal_claim_missing` 那条对称（`reason` 文案未改）。② 新增判据 l 守护格 `test_l_degraded_report_md_no_false_not_evaluated`：已降级案卷当场渲 `report.md`，断言「未能执行」行不含「因果机制词核对」、同文件同时读得到 `[因果标注缺乏机制词]` 与 `[因果主张卡不完整已降级]`；自证三段＝修复后 `has_work(d)` 为真／改回只看当前 relation 后「未能执行」必再列「因果机制词核对」／假实现对已降级返回无工作。**未动**＝`_FIELD_NOTES`「降级不会让置信度变高」那句（#112，保持在场、不配格子）。
+  - **动了哪些文件（本轮）**：`app/core/gate_applicability.py`（只改 `causation_support` 那一格 `has_work`）／`tests/test_c32_causal_claim.py`（末尾**追加** l 一颗，已有 16 条一字未动）／本回写。**未动**＝`confidence.py`／`chain_integrity.py`／`discourse_check.py`／`causal_claim.py`／四处注册表其余／a-in 那颗／其余 15 条 C-32 测／`cases/`／`scripts/`／`tests/conftest.py`／`SEGMENTER_VERSION`／D-1 四份／状态行／两节「架构师独立复放」／「第三轮返工提示词」原文。
+  - **测试**：本单文件 16⇒**17**、整套 `--collect-only` 807⇒**808**；`pytest -q` ×5＝**808 passed**（21.68／22.26／22.29／22.11／22.03 s）；未装 mcp（`sys.meta_path` finder 抛 `ModuleNotFoundError`）＝**807 passed, 1 skipped**（22.04 s）。
+  - **可选 sanity**：夹具降级案卷渲 `report.md`＝「未能执行」行无「因果机制词核对」（ne 从 12→11 项）、两张黄牌仍在；`cases/demo-solid-state/out/report.md` 若为旧产物需重跑才刷新（本轮未动 demo 产物）。
+  - **禁品项／未再动证明**：`git diff HEAD -- app/core/confidence.py cases/ scripts/ tests/conftest.py app/ingest/segment.py` 与 D-1 四份交付文档全部空；`chain_integrity.py`／`discourse_check.py`／`official.py` mtime 停在 R-C32-1（2026-10-21 22:13:50），本轮未再写；本轮 mtime 只动 `gate_applicability.py`（22:44:43）与 `tests/test_c32_causal_claim.py`（22:44:53，l 追加后行 523 起）。
+  - **质疑／发现（未修）**：无（上轮质疑的 has_work 格本轮已按授权落地；#112 `_FIELD_NOTES` 那句仍无守护格，按单不配）。
+  - **置信度**：高（一句对称扩展＋一颗自证格、808×5／807+1 skip、禁品与 R1/R2 实现 mtime 未再动）。
+
+
 - **架构师独立复放（2026-10-22 深夜·第一轮＝判据 a–k 全过、打回一格 R-C32-1＝根因在我单判据 a-in）**：
   - **复放环境**＝两份新克隆 `/tmp/c32-acc/{base,after}`（两份都先 `ln -s` 宿主 `.venv`＝#99 那条前置）；after＝base＋他 12 个交付文件、**逐文件 `cmp` 与工作树全同**。
   - **基线账（我自己跑，不采信自跑）**＝base **`791 passed in 22.33s`** ⇒ after `--collect-only` **807**、`tests/test_c32_causal_claim.py --collect-only` **16**＝**＋16−0**；`pytest tests -q` ×5＝**807 passed**（21.68／21.91／22.05／22.17／22.13 s、无 flake）；未装 mcp（`sys.meta_path` 插 finder 抛 `ModuleNotFoundError`）＝**`806 passed, 1 skipped`**（21.75 s）⇒ 他回写的四个数逐字复现。

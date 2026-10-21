@@ -79,9 +79,18 @@ GATE_SPECS: tuple[GateSpec, ...] = (
         "本案卷没有冲突与消解记录，质证引文/引用核对未执行"),
     GateSpec(
         "causation_support", "因果机制词核对",
-        lambda d: any(ev.relation is RelationKind.CAUSATION
-                      for ev in d.evidences),
+        lambda d: any(
+            ev.relation is RelationKind.CAUSATION
+            or (getattr(ev, "declared_relation", "") or "") == "causation"
+            for ev in d.evidences),
         "没有任何证据标注为 causation（因果），因果机制词核对未执行"),
+    GateSpec(
+        "causal_claim_missing", "因果主张卡核对",
+        lambda d: any(
+            ev.relation is RelationKind.CAUSATION
+            or (getattr(ev, "declared_relation", "") or "") == "causation"
+            for ev in d.evidences),
+        "没有任何证据声明或标注为因果，主张卡核对未执行"),
     GateSpec(
         "stale", "旧时点引用核对",
         lambda d: bool(find_collisions(d)),

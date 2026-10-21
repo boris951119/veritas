@@ -34,6 +34,21 @@ _FIELD_NOTES = """\
 argument 六槽为：时间、主体、地点、内容、影响、数值口径。
 fact_des、argument 各槽、entities：本版本未实现，值为 null 或空串。不编造。
 
+本版本另附结构化因果主张字段（证据级；系统校验声称结构完整性与措辞纪律，
+不做效应估计、不做完整因果引擎）：
+- causal_claim：主张卡四要素（intervention＝干预 X／outcome＝结果 Y／
+  population＝适用对象／counterfactual＝反事实一句话）。缺任一项则该证据
+  降级为 correlation，取消因果加成，并写 degraded_reason。
+- mechanism_completeness：机制完整度。direct＝直接机制；indirect＝间接机制
+  （须填 missing_links）；correlation_only＝仅相关（默认）。
+- missing_links：间接机制缺环枚举。mediator＝缺中介；temporal＝缺时序；
+  contrast＝缺对照。
+- design_tier：识别强度（只展示／进提交物，**不乘进任何分数**）。
+  rct＝随机对照；quasi＝准实验；observational＝观察性；claim_only＝仅声称（默认）。
+- declared_relation：降级前的关系标注（降级时保留 causation）。
+- degraded_reason：降级原因（缺哪些要素／缺环）；未降级为空串。
+  降级后该结论仍把因果机制核对计入链分母并按断链计，故降级不会让置信度变高。
+
 ## conclusions.json
 键与附录 A.3 一致：question_id、question、conclusion、supporting_facts、conflicting_facts。
 supporting_facts / conflicting_facts 的元素只有 doc_id、para_id。
@@ -100,14 +115,30 @@ def _evidence_rows(dossier: Dossier,
                 dropped += 1
                 continue
             seen.add(key)
-            rows.append({
+            row = {
                 "doc_id": doc_id,
                 "para_id": para_id,
                 "quote": ev.quote,
                 "fact_des": None,
                 "argument": _empty_argument(),
                 "entities": None,
-            })
+            }
+            # C-32：因果相关条目附主张卡键（相关-only 条目不塞空卡噪音）
+            declared = (getattr(ev, "declared_relation", "") or
+                        ev.relation.value)
+            if (ev.relation.value == "causation"
+                    or declared == "causation"
+                    or getattr(ev, "degraded_reason", "")):
+                row["causal_claim"] = (
+                    dict(ev.causal_claim) if ev.causal_claim else None)
+                row["mechanism_completeness"] = (
+                    ev.mechanism_completeness or "correlation_only")
+                row["missing_links"] = list(ev.missing_links or [])
+                row["design_tier"] = ev.design_tier or "claim_only"
+                row["declared_relation"] = declared
+                row["degraded_reason"] = ev.degraded_reason or ""
+                row["relation"] = ev.relation.value
+            rows.append(row)
     return rows, dropped
 
 

@@ -663,6 +663,12 @@ def run_case(spec: RunSpec | None = None,
     chain.append("discourse_audit", "pipeline", summarize(discourse))
 
     with prog.stage("finalize", "置信度融合"):
+        # C-32：主张卡校验／降级须在 recompute_all 之前（改 relation 值，
+        # confidence.py 一行不碰；1.15 加成自然失效）
+        from app.core.causal_claim import apply_causal_claim_gates
+        claim_rec = apply_causal_claim_gates(dossier)
+        dossier.accounting["causal_claim"] = claim_rec
+        chain.append("causal_claim_gate", "pipeline", claim_rec)
         # 一致性按原编队人数计（减员已在 panel_attrition 披露）
         recompute_all(dossier, n_panel=len(roster_names) or len(analysts))
         refresh_premise_broken(dossier)
@@ -741,7 +747,7 @@ def run_case(spec: RunSpec | None = None,
                      "premise", "second_pass", "conflict_drops",
                      "mechanical_merge", "fact_ledger_stats",
                      "prompt_window", "pack_window", "dependency",
-                     "corpus_select_max_disclosures")}
+                     "corpus_select_max_disclosures", "causal_claim")}
     dossier.accounting = {
         **kept,
         "elapsed_s": round(time.monotonic() - t0, 1),
@@ -1102,6 +1108,7 @@ _KIND_LABEL = {
     "source_unverified": "信源出处未核验",
     "level_consistency": "证据等级与信源类型不符",
     "causation_support": "因果标注缺乏机制词",
+    "causal_claim_missing": "因果主张卡不完整已降级",
     "warrant_theme": "理由与主张无共同主题词",
     "scope": "声称范围却无覆盖声明",
 }
@@ -1207,6 +1214,8 @@ def _render_flags_section(lines: list[str], dossier: Dossier) -> None:
 
 
 def _render_evidence_table(lines: list[str], dossier: Dossier, con) -> None:
+    from app.core.causal_claim import missing_links_cn
+
     evs = dossier.evidences_of(con.id)
     if not evs:
         return
@@ -1215,8 +1224,17 @@ def _render_evidence_table(lines: list[str], dossier: Dossier, con) -> None:
         seg = dossier.segment(ev.segment_ids[0]) if ev.segment_ids else None
         where = ev.segment_ids[0] + (f"（{seg.locator}）" if seg else "")
         quote = ev.quote.replace("|", "\\|").replace("\n", " ")
-        note = ev.note.replace("|", "\\|")
-        lines.append(f"| {quote} | {where} | {ev.level.value} | {ev.relation.value} | {note} |")
+        note_bits = [ev.note] if ev.note else []
+        if (ev.declared_relation or "") == "causation" and ev.relation.value != "causation":
+            rel = "correlation（原声明：因果｜已降级：相关）"
+            if ev.degraded_reason:
+                note_bits.append(ev.degraded_reason)
+        else:
+            rel = ev.relation.value
+        note_bits.extend(missing_links_cn(ev))
+        note = "；".join(note_bits).replace("|", "\\|")
+        lines.append(
+            f"| {quote} | {where} | {ev.level.value} | {rel} | {note} |")
 
 
 def _render_question_preflight(lines: list[str], dossier: Dossier) -> None:

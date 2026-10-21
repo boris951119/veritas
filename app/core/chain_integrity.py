@@ -41,8 +41,10 @@ _BROKEN_BY_KIND: dict[str, frozenset[str]] = {
                                    "percent_no_base", "unit_mismatch"}),
     "scope_declared": frozenset({"scope"}),
     "as_of_anchored": frozenset({"as_of", "stale"}),
-    "causation_mechanism": frozenset({"causation_support"}),
+    "causation_mechanism": frozenset({
+        "causation_support", "causal_claim_missing"}),
 }
+
 
 CHECK_LABEL_CN = {
     "quote_hits": "引文逐字命中",
@@ -134,7 +136,13 @@ def applicable_checks(dossier: Dossier, conclusion_id: str) -> list[str]:
         # 「有没有锚」不由这里判，由 temporal_check 的闸输出说——否则
         # 这项会退化成「一适用必断链」，把分母灌成水
         out.append("as_of_anchored")
-    if any(e.relation == RelationKind.CAUSATION for e in evs):
+    # 当前标 causation，或曾声明过因果（declared_relation）——降级后仍进分母
+    # 并按断链计；否则降级会让分母变小、分数反而涨（R-C32-1）
+    if any(
+        e.relation == RelationKind.CAUSATION
+        or (e.declared_relation or "") == "causation"
+        for e in evs
+    ):
         out.append("causation_mechanism")
     return [c for c in CHECK_ORDER if c in out]
 
