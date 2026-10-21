@@ -212,6 +212,7 @@ def test_export_keys_match_appendix_a(tmp_path):
     assert evidence
     assert set(evidence[0]) == {
         "doc_id", "para_id", "quote", "fact_des", "argument", "entities",
+        "level", "level_official",
     }
     assert set(evidence[0]["argument"]) == {
         "时间", "主体", "地点", "内容", "影响", "数值口径",

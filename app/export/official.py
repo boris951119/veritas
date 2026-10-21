@@ -34,6 +34,14 @@ _FIELD_NOTES = """\
 argument 六槽为：时间、主体、地点、内容、影响、数值口径。
 fact_des、argument 各槽、entities：本版本未实现，值为 null 或空串。填它要做抽取、抽取即可能编造 ⇒ 留空并在路演说明。不编造。
 
+本版本另附证据等级字段（加分 4.1.2；rubric:352）：
+- level：我方 A/B/C/D（与 EvidenceLevel 一致，键名与取值逐字不变）。
+- level_official：官方六级名之一（官方程序记录／官方表态／权威媒体／主流媒体／匿名信源／自媒体转述），
+  由全仓唯一映射表 OFFICIAL_LEVEL_TO_OURS（官方六级→A/B/C/D）逆查代表词得到。
+  映射依据＝官方程序记录→A；官方表态／权威媒体→B；主流媒体／匿名信源→C；自媒体转述→D
+  （与我方 EvidenceLevel 注释及信源优先级序对齐）。
+  **加权仍用我方 A/B/C/D、数值未改**（LEVEL_WEIGHT 与 confidence.py 应用点一字未动）。
+
 本版本另附结构化因果主张字段（证据级；系统校验声称结构完整性与措辞纪律，
 不做效应估计、不做完整因果引擎）：
 - causal_claim：主张卡四要素（intervention＝干预 X／outcome＝结果 Y／
@@ -102,6 +110,27 @@ def _segment_locator(dossier: Dossier, segment_id: str) -> tuple[str, str] | Non
     return doc_id, seg.id
 
 
+# 全仓唯一一张：官方六级证据等级 → 我方 A/B/C/D（rubric:352）。
+# 展示用逆查见 level_official_of；加权仍用 app.core.evidence.LEVEL_WEIGHT，数值未改。
+OFFICIAL_LEVEL_TO_OURS: dict[str, str] = {
+    "官方程序记录": "A",
+    "官方表态": "B",
+    "权威媒体": "B",
+    "主流媒体": "C",
+    "匿名信源": "C",
+    "自媒体转述": "D",
+}
+
+
+def level_official_of(level: str) -> str:
+    """我方 A/B/C/D → 官方六级展示名（每档取映射表中首次出现的代表词）。"""
+    key = str(level or "")
+    for official, ours in OFFICIAL_LEVEL_TO_OURS.items():
+        if ours == key:
+            return official
+    raise KeyError(f"unknown evidence level: {level!r}")
+
+
 def _evidence_rows(dossier: Dossier,
                    seen: set[tuple[str, str, str]]) -> tuple[list[dict], int]:
     """seen 由 export_official 持有，跨题共用。返回 (新行, 被去重掉的行数)。"""
@@ -118,6 +147,7 @@ def _evidence_rows(dossier: Dossier,
                 dropped += 1
                 continue
             seen.add(key)
+            level_val = ev.level.value
             row = {
                 "doc_id": doc_id,
                 "para_id": para_id,
@@ -125,6 +155,8 @@ def _evidence_rows(dossier: Dossier,
                 "fact_des": None,
                 "argument": _empty_argument(),
                 "entities": None,
+                "level": level_val,
+                "level_official": level_official_of(level_val),
             }
             # C-32：因果相关条目附主张卡键（相关-only 条目不塞空卡噪音）
             declared = (getattr(ev, "declared_relation", "") or

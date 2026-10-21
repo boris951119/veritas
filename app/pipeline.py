@@ -1233,8 +1233,13 @@ def _render_evidence_table(lines: list[str], dossier: Dossier, con) -> None:
             rel = ev.relation.value
         note_bits.extend(missing_links_cn(ev))
         note = "；".join(note_bits).replace("|", "\\|")
+        from app.export.official import level_official_of
+        try:
+            level_cell = f"{ev.level.value}（{level_official_of(ev.level.value)}）"
+        except KeyError:
+            level_cell = ev.level.value
         lines.append(
-            f"| {quote} | {where} | {ev.level.value} | {rel} | {note} |")
+            f"| {quote} | {where} | {level_cell} | {rel} | {note} |")
 
 
 def _render_question_preflight(lines: list[str], dossier: Dossier) -> None:

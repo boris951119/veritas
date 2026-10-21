@@ -540,6 +540,7 @@ let CASES=[],CUR=null,CUR_OUT="",PAGE="work",D=null,G=null,TAB="overview",HIST=n
 let _ingestToast=false;
 let EXIT_ALLOWED=false;
 const LV_CN={A:"甲",B:"乙",C:"丙",D:"丁"};
+const LV_OFFICIAL={A:"官方程序记录",B:"官方表态",C:"主流媒体",D:"自媒体转述"};
 const LV_COLOR={A:"var(--good)",B:"#58a6ff",C:"var(--warn)",D:"var(--bad)"};
 const REL_CN={causation:"因果",correlation:"相关",expert_judgment:"专家判断"};
 const TYPE_CN={paper:"文献",patent:"专利",report:"报告",news:"新闻",note:"笔记",web:"网页",other:"其他"};
@@ -1594,9 +1595,10 @@ function renderChains(d){
           <div class="segtext">${esc(seg.text)}</div></div>`;
       }).join("");
       const lv=LV_CN[ev.level]||ev.level;
+      const lvOff=LV_OFFICIAL[ev.level]||"";
       return `<div class="card">
         <div class="evquote">${esc(ev.quote)}</div>
-        <div class="chips"><span class="tag ${esc(lv)}">${esc(lv)}级</span>
+        <div class="chips"><span class="tag ${esc(lv)}">${esc(lv)}级${lvOff?`（${esc(lvOff)}）`:""}</span>
           <span class="chip">${REL_CN[ev.relation]||"相关"}</span>
           ${ev.declared_relation==="causation"&&ev.relation!=="causation"
             ?`<span class="chip">原声明：因果｜已降级：相关</span>`:""}

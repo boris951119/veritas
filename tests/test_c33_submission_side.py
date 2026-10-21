@@ -252,12 +252,15 @@ def test_e_headline_fallback_disclosed(tmp_path):
 
 # ---------- f（禁品零 diff：本文件不碰那些路径，另有命令核）----------
 def test_f_forbidden_paths_untouched_by_this_change():
-    """本单新增测试不引用禁品路径做瞬时断言；禁品 diff 由验收命令核。"""
-    # 只钉：导出层公共 API 仍可导入、禁品模块未被本文件 import 改写
-    import app.core.confidence as conf
-    import app.core.evidence as ev
-    assert hasattr(conf, "LEVEL_WEIGHT")
-    assert hasattr(ev, "Dossier")
+    """内容断言钉住禁品常量字面值（不许依赖工作树瞬时状态的常驻用例）。"""
+    root = Path(__file__).resolve().parents[1]
+    conf_src = (root / "app/core/confidence.py").read_text(encoding="utf-8")
+    ev_src = (root / "app/core/evidence.py").read_text(encoding="utf-8")
+    assert "_CAUSATION_BONUS = 1.15" in conf_src
+    assert "EvidenceLevel.A: 1.0" in ev_src
+    assert "EvidenceLevel.B: 0.8" in ev_src
+    assert "EvidenceLevel.C: 0.55" in ev_src
+    assert "EvidenceLevel.D: 0.3" in ev_src
 
 
 # ---------- g ----------
