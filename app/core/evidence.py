@@ -191,10 +191,12 @@ class EvidenceNode:
 class Conclusion:
     """结论：由某个研判智能体产出，挂证据链、置信度与少数意见。
 
-    status 状态机：
-    - majority 默认态（独立结论或归并/仲裁后的多数结论）；
+    status 状态机（自由字符串、无枚举校验；下列四态由生产赋值／默认值形成）：
+    - majority 默认态（独立结论或归并/仲裁后的多数结论；字段默认值）；
     - dissent  少数意见：仲裁落败但按榜单要求保留，不参与主表置信度排序；
-    - merged   已并入归并组，仅作溯源保留（其证据已转挂到组结论）。
+    - merged   已并入归并组，仅作溯源保留（其证据已转挂到组结论）；
+    - insufficient 资料不足：由 app/pipeline.py:770 与 app/agents/ingress.py:126
+      两处赋值写出（本文件无第三处赋值；不进提交物 confidence.json）。
     """
 
     id: str
@@ -249,6 +251,54 @@ class Conclusion:
             dissent=list(d.get("dissent") or []),
             coverage=d.get("coverage"),        # 旧产物没这字段 → None（未声明）
         )
+
+
+_FACE_STATUSES = ("majority", "insufficient", "dissent", "merged")
+
+
+def conclusion_face(dossier: "Dossier") -> dict[str, int]:
+    """按 status 逐态计数（全仓唯一实现）。返回 total＋四态＋other。"""
+    out = {k: 0 for k in _FACE_STATUSES}
+    out["other"] = 0
+    for con in dossier.conclusions:
+        st = str(con.status or "majority")
+        if st in _FACE_STATUSES:
+            out[st] += 1
+        else:
+            out["other"] += 1
+    out["total"] = sum(out[k] for k in (*_FACE_STATUSES, "other"))
+    return out
+
+
+def conclusion_face_pooled(dossiers: list["Dossier"]) -> dict[str, int]:
+    """多案卷 pooled 面＝逐态相加（同一套键）。"""
+    out = {k: 0 for k in (*_FACE_STATUSES, "other", "total")}
+    for d in dossiers:
+        face = conclusion_face(d)
+        for k in out:
+            out[k] += int(face.get(k) or 0)
+    return out
+
+
+# 两个面（字段说明.md／report.md）共用；点名工件，不许写「本文件」。
+_FACE_ARTIFACT = "confidence.json"
+
+
+def format_conclusion_face_line(face: dict[str, int], *, surface: str) -> str:
+    """样本面披露句；surface＝「本次提交物 pooled」或「本案卷」。"""
+    n = int(face.get("majority") or 0)
+    k = int(face.get("insufficient") or 0)
+    d = int(face.get("dissent") or 0)
+    mm = int(face.get("merged") or 0)
+    m = int(face.get("total") or 0)
+    return (
+        f"{surface}：提交物 {_FACE_ARTIFACT} 仅含消解后 majority 态结论 {n} 条；"
+        f"内部结论 {m} 条（逐态：majority {n}／insufficient {k}／"
+        f"dissent {d}／merged {mm}＝归并组成员的溯源副本、其证据已转挂组结论；"
+        f"不含副本 {m - mm} 条）。"
+        f"未进 {_FACE_ARTIFACT} 的 {k + d + mm} 条，成因见各题 "
+        f"questions/<question_id>/report.json 与同目录 chain.jsonl。"
+    )
 
 
 @dataclass

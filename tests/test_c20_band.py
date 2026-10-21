@@ -379,7 +379,10 @@ def test_field_notes_mention_thresholds_and_empty_high():
     from app.export.official import _FIELD_NOTES
     assert "0.8" in _FIELD_NOTES and "官方" in _FIELD_NOTES
     assert "0.5" in _FIELD_NOTES and "我方设定" in _FIELD_NOTES
-    assert "0/40" in _FIELD_NOTES and "0/57" in _FIELD_NOTES
+    # C-21 把跑次死数 0/40／0/57／max≈0.55 清掉；高档常空改写为结构性结论句
+    assert "0/40" not in _FIELD_NOTES and "0/57" not in _FIELD_NOTES
+    assert "max≈0.55" not in _FIELD_NOTES
+    assert "结构性" in _FIELD_NOTES
     assert "无样本可判" in _FIELD_NOTES
     assert "dossier_confidence" in _FIELD_NOTES
     assert "本案卷" in _FIELD_NOTES

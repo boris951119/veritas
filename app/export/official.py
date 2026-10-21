@@ -17,7 +17,11 @@ from app.core.confidence import (
     row_score_detail,
 )
 from app.core.conflicts import METHOD_TO_RESOLUTION_TYPE
-from app.core.evidence import Dossier
+from app.core.evidence import (
+    Dossier,
+    conclusion_face_pooled,
+    format_conclusion_face_line,
+)
 
 _ARGUMENT_KEYS = ("时间", "主体", "地点", "内容", "影响", "数值口径")
 _EMPTY_ARGUMENT = {key: "" for key in _ARGUMENT_KEYS}
@@ -48,10 +52,11 @@ schema 自定（附录 A 未规定）。每条结论含：
   样本面＝整份 confidence.json pooled（跨题合并）；样本 <2 整档记「低」。方法名与当次切点写在 band_rel_rule。
   退化规则（我方设定）：score≤0 ⇒ 恒记「低」（0 分不参与分位）；切点重合（hi−lo < 1e-9）时并列在切点上的记「不可分」。
   「不可分」＝我方设定，出现在本次分布退化（切点重合）时，表示这一档说不出高低，不是缺数据、也不是低。
-当前公式下 ≥0.8 实测 0/40（C-19 前）与 0/57（C-19 后），故本提交物高档为空是结构性的，不是这次没跑好；
-因此 ≥85% 那条达标线目前无样本可判，已向发榜方提问。
+当前公式下四因子均 ≤1 且 coverage 是渐近量，故提交物高档（≥0.8）常为空是结构性的，不是单次没跑好；
+因此 ≥85% 那条达标线在高档为空时无样本可判，已向发榜方提问。
 首屏「本案卷 N 条」是单案卷面；提交物分位面是 pooled 全跑次——两面不要混读。
-配色（工作台）＝绝对档同一对阈值；本跑次提交行 max≈0.55 ⇒ 卡片几乎全红/黄是实测结果，不是渲染坏了。
+本文件（confidence.json）仅含消解后 majority 态；逐态真数见下方「本次导出」里当场数出来的样本面披露。
+配色（工作台）＝绝对档同一对阈值；提交行多数落在绝对档低／中时卡片偏红/黄是实测结果，不是渲染坏了。
 
 ## conflict_resolution.json
 schema 自定。resolution_type 取官方五级之一，由 method 经模块级映射表得到
@@ -267,9 +272,12 @@ def export_official(runs: list[tuple[dict, Dossier]], out_dir: Path) -> dict[str
         == "议题槽位未齐，未发起模型研判")
     slot_line = f"本次 {n_slot} 题因槽位未齐未调用分析师。"
     dedup_line = f"evidence.json 去重 {deduped} 行（键 doc_id, para_id, quote）。"
+    face = conclusion_face_pooled([d for _, d in runs])
+    face_line = format_conclusion_face_line(face, surface="本次提交物 pooled")
     print(gate_line)
     print(slot_line)
     print(dedup_line)
+    print(face_line)
 
     # C-20：band_rel 必须看整份提交物 pooled，不能在 _confidence_rows（单案卷）里算
     pooled = [float(r["score"]) for r in confidence]
@@ -304,6 +312,6 @@ def export_official(runs: list[tuple[dict, Dossier]], out_dir: Path) -> dict[str
         encoding="utf-8")
     paths["notes"].write_text(
         _FIELD_NOTES + "\n## 本次导出\n" + gate_line + "\n"
-        + slot_line + "\n" + dedup_line + "\n",
+        + slot_line + "\n" + dedup_line + "\n" + face_line + "\n",
         encoding="utf-8")
     return paths

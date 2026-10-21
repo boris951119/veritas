@@ -4659,6 +4659,17 @@ docs/HANDOFF.md 的写入边界：只许在「执行工程师回写」你自己�
 不要提交，不要 push，验收归 Qoder。
 ```
 
+#### Cursor 回写（第二轮／R1，2026-10-22）
+
+- **只动**：`app/core/evidence.py`（`_FACE_ARTIFACT = "confidence.json"`＋`format_conclusion_face_line` 两行「本文件」→点名工件）；`tests/test_c21_sample_face.py`（＋`test_r1a_*`／`test_r1b_*`，collect 19⇒**21**）。`pipeline.py` 传参未改（仍 `surface='本案卷'`，模板内常量一处展开）。未碰闸／band／pooled／score_official／conftest／cases 入库。
+- **r1a**：`grep -c "本文件仅含" app/core/evidence.py` **1⇒0**；`grep -c "未进本文件" app/core/evidence.py` **1⇒0**；模板两行经 `_FACE_ARTIFACT` 展开后产物句含字面 `confidence.json`。
+- **r1b**：`_synth`→`render_report_md` ⇒ 首屏 face 行不含「本文件」、含 `confidence.json`，且 `未进 confidence.json 的 N 条` 的 N＝夹具 `insufficient＋dissent＋merged`（默认＝3）。
+- **r1c**：`.venv/bin/python scripts/demo_offline.py` exit＝0；三份 `cases/*/out_offline/report.md` 各 `grep -c "confidence.json"` **0⇒1**、`grep -c "本文件仅含"` **1⇒0**；`git status --short` 无产物文件（仍在 `.gitignore`）。
+- **r1d**：同夹具四份 JSON 前缀仍＝`46db044c`／`0fd8a685`／`bf2b261d`／`2c83bbcb`（与第一轮换分 0 发布值逐字同）；仅 notes／report 文案变。
+- **r1e**：工作树 `pytest tests -q` ×5＝**720 passed**（21.01～21.70 s）；`--collect-only` 整套 720＝718＋2；新文件 collect **21**。未装 mcp：本机将 `.venv/.../site-packages/mcp` 临时移走后＝**719 passed, 1 skipped**（票面 `meta_path`＋`ModuleNotFoundError` 在本机对顶层 `import mcp` 未拦截——`find_spec` 首参偶发收到 path list／None，未见到字面 `"mcp"`；产物口径与干净克隆「未装 mcp」一致＝719＋1 跳）。未 commit／未 push。
+- **自扫 `or`**：断言行无弱 `or`（命中均为 `statuses or`／`dict.get`／subprocess stdout 兜底）。
+- **工单质疑**：无。
+
 ### C-22｜`warrant_theme` 只认企业主题词，在官方六案上结构空转；把它做成与场景无关的取词闸，并把它**查不出什么**写进交付物（2026-10-18 出单，**队列第九＝队尾**，约 0.15 天）
 
 - **发现方式**：用户转来一份外部 AI 同题方案稿（千问分享链，见 §0 ⑬）。它的架构建议对我们零增量，但它把「主题相关 ≠ 支撑」说成最难的一步——我去量了我们对这一条的**唯一机械答案**。

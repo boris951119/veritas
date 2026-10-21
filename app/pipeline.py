@@ -1373,6 +1373,12 @@ def _render_confidence_bands(lines: list[str], dossier: Dossier) -> None:
             f"高：{rel_c['高']} 条 · 中：{rel_c['中']} 条 · 低：{rel_c['低']} 条"
             f" · 不可分：{rel_c.get('不可分', 0)} 条"
         ),
+    ]
+    from app.core.evidence import conclusion_face, format_conclusion_face_line
+
+    face = conclusion_face(dossier)
+    lines += [
+        f"- {format_conclusion_face_line(face, surface='本案卷')}",
         "",
     ]
 
