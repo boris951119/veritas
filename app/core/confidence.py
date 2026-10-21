@@ -14,8 +14,9 @@
              计通过率（对应榜单「推理链完整性」，此前只有黄灯不进分）。
 
 综合 = strength × coverage × agreement_factor × chain_factor。
-人工修改（删证据/改权重/改信源可信度）后调 recompute_conclusion()
-只重算受影响结论——周 3 工作台的「修改后重算」走同一入口。
+人工修改（删证据/改权重/改信源可信度）后，工作台经 `_mutate` 调
+`recompute_all()` 全量回填置信度；依赖传播只识别并披露受影响集合
+（`affected_downstream`／`premise_broken` 黄牌），不改变本模块公式。
 """
 
 from __future__ import annotations

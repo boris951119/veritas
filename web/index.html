@@ -546,7 +546,7 @@ const TYPE_CN={paper:"文献",patent:"专利",report:"报告",news:"新闻",note
 const KIND_CN={conclusion:"结论",evidence:"证据",segment:"段落",source:"信源",
   conflict:"冲突",rebuttal:"质证",arbitration:"裁决",analyst:"分析师"};
 const EDGE_CN={supports:"支撑",cites:"引用",from_source:"属信源",authored_by:"署名",
-  conflicts_with:"对立",rebuts:"质证",decides:"裁定"};
+  conflicts_with:"对立",rebuts:"质证",decides:"裁定",depends_on:"依赖前提"};
 const FLAG_CN={calc:"计算复算不符",provenance:"来源外数字",counting:"计数断言无法复核",
   merge_conservation:"归并概括漂移",rebut_quote:"质证引文未命中",rebut_ref:"质证引用不存在编号",
   arbiter_ref:"仲裁理由引用不存在编号",hedge:"低可信信源配断言语气",
@@ -591,8 +591,9 @@ const EVENT_CN={case_loaded:"装载案卷",premise_check:"议题前提核对",fa
   skills_triggered:"纪律注入",material_pack:"资料装箱",analyst_done:"视角完成",
   citation_audit:"引文核对",numeric_audit:"数字复核",merged:"结论归并",
   conflicts_detected:"检出分歧",conflict_resolved:"分歧裁决",discourse_audit:"表述复核",
-  confidence_computed:"置信度结算",chair_summary:"汇总成文",report_finalized:"报告收口",
-  evidence_weight:"按证据强度翻案"};
+  dependency_extract:"依赖边抽取",confidence_computed:"置信度结算",chair_summary:"汇总成文",
+  report_finalized:"报告收口",evidence_weight:"按证据强度翻案",
+  conclusion_depends:"人工改依赖边"};
 function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
 function hideIds(s){
   return String(s||"").replace(/CON-[0-9a-f]+/gi,"该判断")
@@ -1558,7 +1559,7 @@ function renderGraph(g){
   $("#graph").innerHTML=`<div class="kv">谁先说 → 吵什么 → 怎么裁 → 锚到哪　·　${g.nodes.length} 节点</div>
     ${stageHtml}
     <details style="margin-top:12px"><summary class="sub" style="cursor:pointer">展开节点与关系明细</summary>
-    <div class="graph" style="margin-top:8px">${shown.map(n=>`<div class="gnode"><b>${KIND_CN[n.kind]||"节点"}</b>${esc(n.label)}</div>`).join("")}</div>
+    <div class="graph" style="margin-top:8px">${shown.map(n=>`<div class="gnode"><b>${KIND_CN[n.kind]||"节点"}</b>${n.is_premise?"<span class=chip>中间结论</span>":""}${esc(n.label)}</div>`).join("")}</div>
     <div class="gedges">${(g.edges||[]).slice(0,40).map(e=>`<div>${esc(EDGE_CN[e.kind]||"关联")} ${esc(label(e.source))} → ${esc(label(e.target))}</div>`).join("")}
       ${(g.edges||[]).length>40?`<div class="sub">… 另有 ${(g.edges.length-40)} 条关系</div>`:""}</div>
     </details>`;
@@ -1577,8 +1578,12 @@ function renderChains(d){
     const chips=["证据强度 "+f2(p.strength),"覆盖 "+f2(p.coverage),"一致性 "+f2(p.agreement),
       chainTxt,`${p.n_evidence??evs.length} 条证据`,
       con.band!=null?`档 ${con.band}`:null,
-      con.band_rel!=null?`相对档 ${con.band_rel}`:null]
+      con.band_rel!=null?`相对档 ${con.band_rel}`:null,
+      (con.depends_on||[]).length?`前提 ${(con.depends_on||[]).length} 条`:null]
       .filter(Boolean).map(t=>`<span class="chip">${esc(t)}</span>`).join("");
+    const brokenHtml=(con.premise_broken||[]).length
+      ?`<div class="flagitem medium" style="margin-top:6px"><span class="tag medium">黄牌</span>
+        前提失效：上游 ${(con.premise_broken||[]).map(esc).join("、")} 已失效（只亮牌，未改写本结论）</div>`:"";
     const evHtml=evs.map(ev=>{
       const segs=ev.segment_ids.map(sid=>{
         const seg=findSeg(d,sid);
@@ -1616,6 +1621,7 @@ function renderChains(d){
           <span class="sub" style="margin-left:4px">相对 ${esc(con.band_rel||"—")}</span>
           <div class="bar"><i style="width:${(con.confidence*100).toFixed(0)}%;background:${confColor(con.confidence)}"></i></div></div>
         <div class="chips">${chips}</div>
+        ${brokenHtml}
         <div class="who">研判视角：${esc(zhRoles(con.authors&&con.authors.length?con.authors:[con.author]))}${authorSignLabel(con)}${esc(mergeLabel(con))}</div>
         <div class="editrow">
           <input type="text" id="edit-${esc(con.id)}" value="${esc(con.statement)}" placeholder="改写这条判断">

@@ -323,10 +323,8 @@ def test_n_panel_uses_dossier_panel_len():
     assert n_panel_of(empty) == 1
 
 
-def test_g_app_diff_empty_and_c21_guard():
-    diff = subprocess.check_output(
-        ["git", "diff", "--stat", "app/"], cwd=ROOT, text=True)
-    assert diff.strip() == ""
+def test_g_c21_face_artifact_guard():
+    """C-21 样本面不许回潮「本文件仅含」（长期形状断言；瞬时 git diff 已摘＝#87）。"""
     n = int(subprocess.run(
         ["grep", "-c", "本文件仅含", "app/core/evidence.py"],
         cwd=ROOT, text=True, capture_output=True,

@@ -5002,6 +5002,29 @@ docs/HANDOFF.md 的写入边界：只许在「执行工程师回写」你自己�
 
 - **状态**：**✅ 可发＝队列第一＝现队头**（2026-10-16 出单；**10-22 下午＝C-25 收口后顶到队头，同日按 §9.1 完成发单前重锚**：五处订正全在我 10-16 那版单里＝第 21 处 `server.py` 那一族行号整体漂移（`_mutate :248-279`⇒**`:265-298`**、`recompute_all :268`⇒**`:285`**、五个端点 `:694/:707/:734/:775/:790`⇒**`:711/:724/:751/:792/:807`）；第 22 处 `confidence.py` 两族漂 +118 且 **`:90-98` 现在指着 band_rel 的 `lo, hi = cuts`**（真身＝`conclude_confidence :202`、返回 0 在 `:212-216`）＝"行号在界内却指着别的东西"的活例；第 23 处判据里那句「基线以 C-14 验收记录的 pytest 尾行为准」不可开箱 ⇒ 写死 **base `732`／after ≥741**；第 24 处探针第 1 条要跑真模型、与"判据不花钱"硬约束冲突 ⇒ 拆成 **p-in（`ScriptedClient` 判绿）／p-out（真跑面只附报）**，并记下 `ScriptedClient` 已有两份；第 25 处＝存量产物"34 份"今天重量**仍未漂**、但当时没给命令 ⇒ 补命令与口径。**硬门全部已开**＝C-12 `1a4a026`／C-14 `58e8610`／C-14b／C-14c／C-19 `eb9c6ba`／C-20 `6eebfb1`／C-21 `a4b76bd`／C-25 `ca9eaa7` 全已入库；**新增前置＝#87 摘雷（判据 j，动工第一步）**；入库基线 **`732 passed`**（未装 mcp `731 passed, 1 skipped`）。｜ **验收**：—
 
+#### Cursor 回写（2026-10-22）
+
+- **§3.0**：`_mutate :265-298`／`recompute_all :285`／payload 钩子 `:272-273`；端点 `:711/:724/:751/:792/:807`；`confidence` `recompute_*:249/:261`、`conclude_confidence :202` 无证据 `return 0.0` 在 `:212-216`；`reasoning_graph` 七边 `:3-11`、merged 跳过 `:59/:69`；`Conclusion :191` 字段 `:202-214` 改前无 `depends_on`；`app/core/dependency.py` 改前不存在；全仓 `depends_on|premise_broken|is_premise|conclusion/depends` 改前 **0** 命中 ✓。
+- **j（#87 摘雷，动工第一步）**：`tests/test_c25_errors_sensitivity.py::test_g_*` 删掉 `git diff --stat app/` 半句，保留 `grep -c "本文件仅含" app/core/evidence.py == 0`；改前命中 **1** ⇒ 改后 **0**。
+- **五件交付**：
+  1. `Conclusion` 加 `depends_on`／`premise_broken`（`to_dict`／`from_dict` 带 `.get` 兜空）。
+  2. 新 `app/core/dependency.py`＝一遍 LLM 抽取＋机械校验（id／自环／成环披露路径／`to` 须 majority）＋失败 0 边＋披露「依赖边未生成」；管线 `pipeline` 在归并后、置信度前回填前插入；`accounting` 白名单加 `dependency`（否则收口重建 accounting 会把键冲掉——本单内就地修）。
+  3. `build_reasoning_graph` 加 `kind=depends_on` 边、结论节点 `is_premise`（被指向＝中间结论）；**无** `kind=intermediate` 节点；merged 不进主图、不当前提。
+  4. `affected_downstream` 反向传递闭包（visited 环保护、案卷序排序）；`_mutate` 在 `recompute_all` 后写 `affected_downstream` 进链 payload／`op`，并 `refresh_premise_broken` 黄牌（只亮牌不改写下游）。
+  5. `POST /api/conclusion/depends`（add/remove）走 `_mutate`，人工边同样过机械校验；成环 **422 且不写链**。
+- **只改注释**：`confidence.py` 模块 docstring `:17-18`（公式／常量零 diff 字节以外）。
+- **渲染**：`report.md` 节「结论依赖（推理中间层）」点名 `report.md`／`/api/conclusion/depends`；黄牌文案含「只亮牌」；`web/index.html` 图边 `depends_on`＋结论 `premise_broken` 黄牌。披露固定句：`NOTE_NARROW`／`NOTE_AB`（未经 A/B）。
+- **ScriptedClient**：复用 **`tests.test_collab.ScriptedClient`**（未复制第四份）。
+- **判据自跑**：
+  - **a–i** ✅（`tests/test_c13_dependency.py`）；**d** 用 `signal.SIGALRM(2)`；**g** 加边前／后／删边后 `conclude_confidence` 返回值与四分量 dict 逐位同。
+  - **h′** `grep -c "^def test_" tests/test_reasoning_graph.py`＝**6**。
+  - **j** ✅ 1⇒0；**k** ✅ 本文件字面无连续 `git`+`diff`；**l** ✅ 无「本文件」、点名 `report.md`、无「已实现中间推理层」。
+  - **p-in** ✅ `test_p_in_scripted_extract_builds_premise_nodes`（ScriptedClient 喂固定边）。
+- **基线**：`--collect-only`＝**747**；新增 **15** 条全在 `tests/test_c13_dependency.py`（`grep -c '^def test_'`＝15）；`pytest tests -q` ×5＝**747 passed**（21.3–21.8s）；未装 mcp（`sys.meta_path` finder 抛 `ModuleNotFoundError`）＝**746 passed, 1 skipped**。≥741 ✓。
+- **偏离工单之处**：① pipeline 收口 `kept` 白名单须加 `"dependency"`，否则 accounting 键被冲掉（判据 b 会假绿/假红）；② `_mutate` 现**总是**回传 `op`（含 `affected_downstream`，哪怕 mutate_fn 返回 None）——比旧「仅 extra 非空才带 op」多一个键，既有用例未红。
+- **发现（未修）**：无。**工单质疑**：无（v1 不合成新前提按单收窄，未扩范围）。
+- **禁品**：未碰 `conclusion_face`／`_FACE_ARTIFACT`／`scripts/score_official.py`／`cases/`／`conftest.py`；`dependency.py` 无 `sleep(`；未真调模型；未 commit／未 push。
+
 ### C-25｜自测评分器别再只交一个数：一致率拆成「漏召／误召／引文未命中」三桶＋权重 ±20% 扰动的翻转读数（2026-10-18 出单，**队列第一＝现队头**（10-22 中午 C-21 收口后顶上来），**0.25 天**（10-22 重锚后从 0.2 抬：件② 要从产物重建 Dossier、件① 第三桶还得选形））
 
 - **来历**：外部方案稿（千问第二轮分享链接见 §0 与记忆）里被判定可采纳的两句——

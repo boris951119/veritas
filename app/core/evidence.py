@@ -212,6 +212,10 @@ class Conclusion:
     # 覆盖声明三态（None=未声明）：partial 必带局限、unknown 必带理由，
     # 非法状态在构造阶段就抛——见 app/core/scope_state.py
     coverage: Any = None
+    # C-13：结论→结论依赖（self 以 depends_on 中每条为前提）；premise_broken
+    # 由机械侧写入已失效上游 id，只亮牌不改写下游。旧 report.json 缺键兜空。
+    depends_on: list[str] = field(default_factory=list)
+    premise_broken: list[str] = field(default_factory=list)
 
     def __post_init__(self) -> None:
         from app.core.scope_state import Coverage
@@ -235,6 +239,8 @@ class Conclusion:
             "evidence_ids": self.evidence_ids, "confidence": self.confidence,
             "confidence_parts": self.confidence_parts, "dissent": self.dissent,
             "coverage": self.coverage.to_dict() if self.coverage else None,
+            "depends_on": list(self.depends_on or []),
+            "premise_broken": list(self.premise_broken or []),
         }
 
     @classmethod
@@ -250,6 +256,8 @@ class Conclusion:
             confidence_parts=dict(d.get("confidence_parts") or {}),
             dissent=list(d.get("dissent") or []),
             coverage=d.get("coverage"),        # 旧产物没这字段 → None（未声明）
+            depends_on=[str(x) for x in d.get("depends_on") or []],
+            premise_broken=[str(x) for x in d.get("premise_broken") or []],
         )
 
 

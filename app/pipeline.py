@@ -621,6 +621,22 @@ def run_case(spec: RunSpec | None = None,
                           e.relation.value, e.author, e.note, e.conclusion_id)
     dossier.evidences.sort(key=_ev_key)
 
+    # C-13：归并之后、置信度回填之前——一遍依赖抽取（失败 → 0 边＋披露）
+    with prog.stage("dependency", "结论依赖边"):
+        from app.core.dependency import (
+            extract_dependencies,
+            refresh_premise_broken,
+        )
+        dep_rec = extract_dependencies(
+            dossier, client, settings.models[0] if settings.models else "m")
+        chain.append("dependency_extract", "pipeline", {
+            "n_edges": dep_rec.get("n_edges", 0),
+            "note": dep_rec.get("note"),
+            "n_rejected": len(dep_rec.get("rejected") or []),
+        })
+        prog.note(n_edges=dep_rec.get("n_edges", 0),
+                  note=dep_rec.get("note"))
+
     discourse = (audit_conservation(dossier) + audit_discourse(dossier)
                  + audit_hedge(dossier) + audit_level_tone(dossier))
     chain.append("discourse_audit", "pipeline", summarize(discourse))
@@ -628,6 +644,7 @@ def run_case(spec: RunSpec | None = None,
     with prog.stage("finalize", "置信度融合"):
         # 一致性按原编队人数计（减员已在 panel_attrition 披露）
         recompute_all(dossier, n_panel=len(roster_names) or len(analysts))
+        refresh_premise_broken(dossier)
         chain.append("confidence_computed", "pipeline", {
             "n_majority": len(majority_conclusions(dossier)),
             "n_dissent": len(dissent_conclusions(dossier)),
@@ -702,7 +719,7 @@ def run_case(spec: RunSpec | None = None,
                      "obligation_limitation", "n_unused",
                      "premise", "second_pass", "conflict_drops",
                      "mechanical_merge", "fact_ledger_stats",
-                     "prompt_window", "pack_window")}
+                     "prompt_window", "pack_window", "dependency")}
     dossier.accounting = {
         **kept,
         "elapsed_s": round(time.monotonic() - t0, 1),
@@ -945,6 +962,7 @@ def render_report_md(dossier: Dossier, chain: HashChain, rejected: list[dict]) -
             "",
         ]
     _render_confidence_bands(lines, dossier)
+    _render_dependency_section(lines, dossier)
     lines += [
         "## 结论",
         "",
@@ -964,6 +982,14 @@ def render_report_md(dossier: Dossier, chain: HashChain, rejected: list[dict]) -
         lines.append(
             f"- 研判方：{'、'.join(con.author_names()) or 'N/A'}"
             f"{author_count_label(con)}{merge_label(dossier, con)}")
+        if con.depends_on:
+            lines.append(
+                f"- 前提结论：{'、'.join(f'`{x}`' for x in con.depends_on)}")
+        if con.premise_broken:
+            lines.append(
+                f"- ⚠️ 前提失效黄牌：上游 "
+                f"{'、'.join(f'`{x}`' for x in con.premise_broken)} "
+                f"已失效（report.md 只亮牌，未改写本结论）")
         _render_evidence_table(lines, dossier, con)
         lines.append("")
 
@@ -1347,6 +1373,39 @@ def _render_dissent_section(lines: list[str], dossier: Dossier) -> None:
             f"- 「{con.statement}」（研判方："
             f"{'、'.join(con.author_names()) or 'N/A'}"
             f"{author_count_label(con)}）——{tag}")
+    lines.append("")
+
+
+def _render_dependency_section(lines: list[str], dossier: Dossier) -> None:
+    """C-13：依赖边披露（report.md 内对本文为真；点名工件与端点）。"""
+    dep = (dossier.accounting or {}).get("dependency")
+    if not dep and not any(c.depends_on or c.premise_broken
+                           for c in dossier.conclusions):
+        return
+    lines += ["## 结论依赖（推理中间层）", ""]
+    from app.core.dependency import NOTE_AB, NOTE_NARROW
+
+    lines.append(f"- {NOTE_NARROW}（见 report.md 本节）")
+    lines.append(f"- {NOTE_AB}")
+    if dep:
+        note = str(dep.get("note") or "").strip()
+        n_edges = int(dep.get("n_edges") or 0)
+        lines.append(f"- 本跑次机械落边 **{n_edges}** 条"
+                     + (f"；{note}" if note else ""))
+        for d in dep.get("disclosures") or []:
+            text = str(d).strip()
+            if not text or text in (NOTE_NARROW, NOTE_AB):
+                continue
+            lines.append(f"- ⚠️ {text}")
+    broken = [
+        c for c in dossier.conclusions if c.premise_broken
+    ]
+    if broken:
+        lines.append("- 前提失效黄牌（只亮牌，未自动删除或改写下游）：")
+        for c in broken:
+            lines.append(
+                f"  - `{c.id}` ← 失效上游 "
+                f"{'、'.join(f'`{x}`' for x in c.premise_broken)}")
     lines.append("")
 
 
