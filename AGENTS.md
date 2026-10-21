@@ -210,5 +210,5 @@ python3 -m venv .venv
   `cases/bi-delivery-risk/`（数据中台交付风险企业情报，信源已脱敏；
   由 `scripts/build_bi_case.py` 从外部语料构建）；manifest.yaml 声明信源类型与可信度
 - 路线图：`ROADMAP.md`；架构说明：`README.md`
-- **跨工具交接**：`docs/HANDOFF.md`（当前进度／未决／下一步／坑）；官方评分口径与场景重判七条见
+- **跨工具交接**：`docs/HANDOFF.md`（当前进度／未决／下一步／坑）＋`docs/handoff-archive.md`（§0 历史条目 ①…〔53〕，2026-10-22 深夜整段搬出、编号不变、一字未改；读到「§0〔52〕」这类旧引用而 HANDOFF 里没这个号，就去归档文件按同号查，别整份重读）；官方评分口径与场景重判七条见
   `docs/contest-briefing-2026-10-14.md`、`docs/scenario-review-2026-10-14.md`，宣讲会长文转写在 `docs/contest-transcript-2026-10-14.txt`
