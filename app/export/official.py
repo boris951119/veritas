@@ -32,7 +32,7 @@ _FIELD_NOTES = """\
 ## evidence.json
 键与附录 A.2 一致：doc_id、para_id、quote、fact_des、argument、entities。
 argument 六槽为：时间、主体、地点、内容、影响、数值口径。
-fact_des、argument 各槽、entities：本版本未实现，值为 null 或空串。不编造。
+fact_des、argument 各槽、entities：本版本未实现，值为 null 或空串。填它要做抽取、抽取即可能编造 ⇒ 留空并在路演说明。不编造。
 
 本版本另附结构化因果主张字段（证据级；系统校验声称结构完整性与措辞纪律，
 不做效应估计、不做完整因果引擎）：
@@ -52,8 +52,11 @@ fact_des、argument 各槽、entities：本版本未实现，值为 null 或空�
 ## conclusions.json
 键与附录 A.3 一致：question_id、question、conclusion、supporting_facts、conflicting_facts。
 supporting_facts / conflicting_facts 的元素只有 doc_id、para_id。
-supporting_facts 来自本案已采纳证据的段落。
-conflicting_facts：Resolution.to_dict() 里没有官方段落对，本版本留空数组，不编造。
+supporting_facts 与 conclusion 文本同源：优先消解后 majority 且带证据的那条结论的 evidence_ids 映射段落；
+该题没有任何带证据的结论时才用 headline 兜底，此时支撑沿用全案卷证据并披露「文本与支撑不同源」。
+conflicting_facts 映射规则（只一条）：对该题 dossier.conflicts 每一对，当 resolution.winner_id ∈ {a_id, b_id} 时，
+取与被交结论对立的另一侧结论的 evidence_ids，经 _segment_locator 换成 (doc_id, para_id) 去重并入；
+winner_id 为 tie／human_override 未分胜负、或段落取不到 ⇒ 一律不并入（宁缺毋编），计入跳过数（tie 与取不到段落分开计）。
 
 ## confidence.json
 schema 自定（附录 A 未规定）。每条结论含：
@@ -157,10 +160,11 @@ def _bare_gate_line(n_questions: int, dropped_ids: list[str],
     )
 
 
-def _supporting_facts(dossier: Dossier) -> list[dict]:
+def _facts_from_evidences(dossier: Dossier, evidences) -> list[dict]:
+    """把证据列表映射成去重后的 (doc_id, para_id) 行；locator 取不到的跳过。"""
     facts: list[dict] = []
     seen: set[tuple[str, str]] = set()
-    for ev in dossier.evidences:
+    for ev in evidences:
         for sid in ev.segment_ids:
             loc = _segment_locator(dossier, sid)
             if loc is None or loc in seen:
@@ -170,14 +174,81 @@ def _supporting_facts(dossier: Dossier) -> list[dict]:
     return facts
 
 
-def _conclusion_text(dossier: Dossier) -> str:
-    headline = str((dossier.synthesis or {}).get("headline") or "").strip()
-    if headline:
-        return headline
+def _supporting_facts_all(dossier: Dossier) -> list[dict]:
+    """全案卷证据 → 段落（仅 headline 兜底时沿用；同源路径不用它）。"""
+    return _facts_from_evidences(dossier, dossier.evidences)
+
+
+def _majority_with_evidence(dossier: Dossier):
+    """confidence.json 交的那类：status=majority 且 evidence_ids 非空的第一条。"""
     for con in dossier.conclusions:
-        if con.status == "majority" and con.statement.strip():
-            return con.statement.strip()
-    return ""
+        if con.status == "majority" and con.evidence_ids:
+            return con
+    return None
+
+
+def _supporting_facts(dossier: Dossier) -> list[dict]:
+    """与被交结论文本同源的支撑段落。
+
+    有带证据的 majority 结论 → 只映射该结论的 evidence_ids；
+    否则（headline 兜底）→ 沿用全案卷口径。
+    """
+    con = _majority_with_evidence(dossier)
+    if con is not None:
+        return _facts_from_evidences(dossier, dossier.evidences_of(con.id))
+    return _supporting_facts_all(dossier)
+
+
+def _conclusion_text(dossier: Dossier) -> str:
+    """与 supporting_facts 同源：有带证据 majority 用其 statement；否则 headline 兜底。"""
+    con = _majority_with_evidence(dossier)
+    if con is not None:
+        return con.statement.strip()
+    return str((dossier.synthesis or {}).get("headline") or "").strip()
+
+
+def _conclusion_support_diverged(dossier: Dossier) -> bool:
+    """headline 兜底且本题没有任何带证据结论 → 文本与支撑不同源。"""
+    return _majority_with_evidence(dossier) is None
+
+
+def _conflicting_facts(dossier: Dossier) -> tuple[list[dict], int, int]:
+    """冲突侧：与被交结论对立一侧的段落。
+
+    规则只一条——winner_id ∈ {a_id, b_id} 时取败方 evidence_ids 映射；
+    tie／未分胜负／段落全取不到 ⇒ 不并入并计跳过。
+    返回 (facts, skipped_tie, skipped_no_locator)。
+    """
+    facts: list[dict] = []
+    seen: set[tuple[str, str]] = set()
+    skipped_tie = 0
+    skipped_no_locator = 0
+    for pair in dossier.conflicts or []:
+        if not isinstance(pair, dict):
+            continue
+        a_id = str(pair.get("a_id") or "")
+        b_id = str(pair.get("b_id") or "")
+        res = pair.get("resolution") if isinstance(pair.get("resolution"), dict) else {}
+        winner = str((res or {}).get("winner_id") or "")
+        # tie／human_override 未分胜负／非法 winner → 跳过（计 tie 桶）
+        if not a_id or not b_id or winner not in (a_id, b_id):
+            skipped_tie += 1
+            continue
+        loser_id = b_id if winner == a_id else a_id
+        mapped_any = False
+        for ev in dossier.evidences_of(loser_id):
+            for sid in ev.segment_ids:
+                loc = _segment_locator(dossier, sid)
+                if loc is None:
+                    continue
+                mapped_any = True
+                if loc in seen:
+                    continue
+                seen.add(loc)
+                facts.append({"doc_id": loc[0], "para_id": loc[1]})
+        if not mapped_any:
+            skipped_no_locator += 1
+    return facts, skipped_tie, skipped_no_locator
 
 
 def _confidence_rows(question_id: str, dossier: Dossier) -> list[dict]:
@@ -271,6 +342,9 @@ def export_official(runs: list[tuple[dict, Dossier]], out_dir: Path) -> dict[str
     deduped = 0
     dropped_ids: list[str] = []
     kept_bare_ids: list[str] = []
+    diverged_ids: list[str] = []
+    total_skip_tie = 0
+    total_skip_noloc = 0
     n_questions = len(runs)
     for question, dossier in runs:
         qid = str(question["question_id"])
@@ -278,18 +352,24 @@ def export_official(runs: list[tuple[dict, Dossier]], out_dir: Path) -> dict[str
         evidence.extend(rows)
         deduped += dropped
         supporting = _supporting_facts(dossier)
+        conflicting, skip_tie, skip_noloc = _conflicting_facts(dossier)
+        total_skip_tie += skip_tie
+        total_skip_noloc += skip_noloc
+        diverged = _conclusion_support_diverged(dossier)
         # 题数 ≥3 才丢裸结论：2.3 是 15/N，N=2 时丢一题比 2.4.1 归零更亏。
         if n_questions >= 3 and not supporting:
             dropped_ids.append(qid)
         else:
             if not supporting:
                 kept_bare_ids.append(qid)
+            if diverged:
+                diverged_ids.append(qid)
             conclusions.append({
                 "question_id": qid,
                 "question": str(question["question"]),
                 "conclusion": _conclusion_text(dossier),
                 "supporting_facts": supporting,
-                "conflicting_facts": [],
+                "conflicting_facts": conflicting,
             })
         confidence.extend(_confidence_rows(qid, dossier))
         conflict_rows, omitted = _conflict_rows(qid, dossier)
@@ -305,10 +385,23 @@ def export_official(runs: list[tuple[dict, Dossier]], out_dir: Path) -> dict[str
     dedup_line = f"evidence.json 去重 {deduped} 行（键 doc_id, para_id, quote）。"
     face = conclusion_face_pooled([d for _, d in runs])
     face_line = format_conclusion_face_line(face, surface="本次提交物 pooled")
+    if diverged_ids:
+        div_ids = "、".join(diverged_ids)
+        diverge_line = (
+            f"文本与支撑不同源（headline 兜底）的 question_id：{div_ids}。"
+        )
+    else:
+        diverge_line = "文本与支撑不同源（headline 兜底）的 question_id：（无）。"
+    conflict_skip_line = (
+        f"冲突侧跳过：tie／未分胜负 {total_skip_tie} 对；"
+        f"段落取不到 {total_skip_noloc} 对。"
+    )
     print(gate_line)
     print(slot_line)
     print(dedup_line)
     print(face_line)
+    print(diverge_line)
+    print(conflict_skip_line)
 
     # C-20：band_rel 必须看整份提交物 pooled，不能在 _confidence_rows（单案卷）里算
     pooled = [float(r["score"]) for r in confidence]
@@ -343,6 +436,7 @@ def export_official(runs: list[tuple[dict, Dossier]], out_dir: Path) -> dict[str
         encoding="utf-8")
     paths["notes"].write_text(
         _FIELD_NOTES + "\n## 本次导出\n" + gate_line + "\n"
-        + slot_line + "\n" + dedup_line + "\n" + face_line + "\n",
+        + slot_line + "\n" + dedup_line + "\n" + face_line + "\n"
+        + diverge_line + "\n" + conflict_skip_line + "\n",
         encoding="utf-8")
     return paths
