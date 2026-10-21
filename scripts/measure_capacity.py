@@ -77,6 +77,7 @@ def main() -> None:
           f"→ taken={c.taken} skipped={c.skipped} truncated={c.truncated}")
 
     t0 = time.perf_counter()
+    # d500＝默认封顶 500 下的 load_case 结果（C-7 后仍可读 Settings，默认不变）
     d500 = load_case(case)
     print(f"[2] 现口径摄取 {len(d500.sources)} 份 → load_case："
           f"{time.perf_counter() - t0:.2f}s segments={nseg(d500)} 峰值RSS≈{rss_mb():.0f}MB")

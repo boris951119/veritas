@@ -48,6 +48,29 @@ def load_dotenv(path: Path | None = None) -> None:
 load_dotenv()
 
 _CORPUS_SELECT_MAX_DEFAULT = 100
+_INGEST_MAX_FILES_DEFAULT = 500
+_INGEST_MAX_DEPTH_DEFAULT = 3
+
+
+def _coerce_positive_int(
+        raw, *, default: int, name: str) -> tuple[int, str | None]:
+    """合法 ≥1 的整数 → (n, None)；否则回落 default＋披露句。禁止 0＝无限制。"""
+    if isinstance(raw, bool):
+        return default, f"{name}={raw!r} 非法（布尔），回落 {default}"
+    if isinstance(raw, int):
+        if raw >= 1:
+            return raw, None
+        return default, f"{name}={raw!r} 非法（须≥1），回落 {default}"
+    if isinstance(raw, str):
+        text = raw.strip()
+        try:
+            n = int(text, 10)
+        except ValueError:
+            return default, f"{name}={raw!r} 非整数，回落 {default}"
+        if n >= 1:
+            return n, None
+        return default, f"{name}={raw!r} 非法（须≥1），回落 {default}"
+    return default, f"{name}={raw!r} 非法，回落 {default}"
 
 
 def _coerce_corpus_select_max(raw) -> tuple[int, str | None]:
@@ -55,28 +78,9 @@ def _coerce_corpus_select_max(raw) -> tuple[int, str | None]:
 
     MAX 没有「关掉」语义（MIN=0 才有）；不得把 0 当无限制。
     """
-    default = _CORPUS_SELECT_MAX_DEFAULT
-    if isinstance(raw, bool):
-        return default, (
-            f"corpus_select_max_sources={raw!r} 非法（布尔），回落 {default}")
-    if isinstance(raw, int):
-        if raw >= 1:
-            return raw, None
-        return default, (
-            f"corpus_select_max_sources={raw!r} 非法（须≥1），回落 {default}")
-    if isinstance(raw, str):
-        text = raw.strip()
-        try:
-            n = int(text, 10)
-        except ValueError:
-            return default, (
-                f"corpus_select_max_sources={raw!r} 非整数，回落 {default}")
-        if n >= 1:
-            return n, None
-        return default, (
-            f"corpus_select_max_sources={raw!r} 非法（须≥1），回落 {default}")
-    return default, (
-        f"corpus_select_max_sources={raw!r} 非法，回落 {default}")
+    return _coerce_positive_int(
+        raw, default=_CORPUS_SELECT_MAX_DEFAULT,
+        name="corpus_select_max_sources")
 
 
 # ---------------------------------------------------------------------------
@@ -166,6 +170,14 @@ class Settings:
     # 不进 silent for-loop（val>0 静默丢弃无披露）；紧邻 min 单独解析。
     corpus_select_max_sources: int = 100
     corpus_select_max_disclosures: list[str] = field(default_factory=list)
+
+    # 摄取目录封顶（C-7）：默认 500 份／深度 3；env
+    # VERITAS_INGEST_MAX_FILES／VERITAS_INGEST_MAX_DEPTH；config.json 同名键。
+    # 只接受 ≥1 的整数；0／负数／非整数回落默认并写入 ingest_max_disclosures。
+    # 不进 silent for-loop（与 C-23 同口径）；禁止把 0 当「无限制」。
+    ingest_max_files: int = 500
+    ingest_max_depth: int = 3
+    ingest_max_disclosures: list[str] = field(default_factory=list)
 
     # 检索：原问 + 词表同义词始终生效。模型只在最新一句不完整且有上一句时
     # 补成一条独立问句。无上一句不猜主语。VERITAS_QUERY_REWRITE=0 只关这次补全。
@@ -272,6 +284,24 @@ class Settings:
             if note:
                 s.corpus_select_max_disclosures.append(
                     f"env VERITAS_CORPUS_SELECT_MAX: {note}")
+        ingest_files = (os.environ.get("VERITAS_INGEST_MAX_FILES") or "").strip()
+        if ingest_files:
+            val, note = _coerce_positive_int(
+                ingest_files, default=_INGEST_MAX_FILES_DEFAULT,
+                name="ingest_max_files")
+            s.ingest_max_files = val
+            if note:
+                s.ingest_max_disclosures.append(
+                    f"env VERITAS_INGEST_MAX_FILES: {note}")
+        ingest_depth = (os.environ.get("VERITAS_INGEST_MAX_DEPTH") or "").strip()
+        if ingest_depth:
+            val, note = _coerce_positive_int(
+                ingest_depth, default=_INGEST_MAX_DEPTH_DEFAULT,
+                name="ingest_max_depth")
+            s.ingest_max_depth = val
+            if note:
+                s.ingest_max_disclosures.append(
+                    f"env VERITAS_INGEST_MAX_DEPTH: {note}")
         rewrite_env = (os.environ.get("VERITAS_QUERY_REWRITE") or "").strip().lower()
         if rewrite_env in ("0", "false", "off", "no"):
             s.query_rewrite_enabled = False
@@ -352,6 +382,27 @@ class Settings:
                 s.corpus_select_max_disclosures.append(
                     f"config.json: corpus_select_max_sources={raw!r} "
                     f"非法（须为≥1 的整数），回落 {_CORPUS_SELECT_MAX_DEFAULT}")
+        # C-7：摄取封顶单独解析（不进 silent for-loop）
+        if "ingest_max_files" in data:
+            raw = data.get("ingest_max_files")
+            if (isinstance(raw, int) and not isinstance(raw, bool)
+                    and raw >= 1):
+                s.ingest_max_files = raw
+            else:
+                s.ingest_max_files = _INGEST_MAX_FILES_DEFAULT
+                s.ingest_max_disclosures.append(
+                    f"config.json: ingest_max_files={raw!r} "
+                    f"非法（须为≥1 的整数），回落 {_INGEST_MAX_FILES_DEFAULT}")
+        if "ingest_max_depth" in data:
+            raw = data.get("ingest_max_depth")
+            if (isinstance(raw, int) and not isinstance(raw, bool)
+                    and raw >= 1):
+                s.ingest_max_depth = raw
+            else:
+                s.ingest_max_depth = _INGEST_MAX_DEPTH_DEFAULT
+                s.ingest_max_disclosures.append(
+                    f"config.json: ingest_max_depth={raw!r} "
+                    f"非法（须为≥1 的整数），回落 {_INGEST_MAX_DEPTH_DEFAULT}")
         temp = data.get("llm_temperature")
         if isinstance(temp, (int, float)) and not isinstance(temp, bool) \
                 and 0.0 <= float(temp) <= 2.0:

@@ -12,10 +12,19 @@ from __future__ import annotations
 from datetime import datetime
 from pathlib import Path
 
+# 默认值常量（C-7）：阈值一律读 Settings；此处不得再当运行时封顶用。
 MAX_FILES = 500
 MAX_BYTES_EACH = 20 * 1024 * 1024
 MAX_BYTES_TOTAL = 200 * 1024 * 1024
 MAX_DEPTH = 3
+
+
+def _ingest_limits() -> tuple[int, int]:
+    """生效封顶（files, depth）——与 _collect_files 同一 Settings 口径。"""
+    from app.config import Settings
+    s = Settings.from_env()
+    return int(s.ingest_max_files), int(s.ingest_max_depth)
+
 
 _SKIP_NAMES = {
     ".ds_store", "thumbs.db", "desktop.ini", ".gitkeep",
@@ -62,7 +71,8 @@ def classify_import_path(name: str) -> tuple[str | None, str | None]:
         return None, "hidden_path"
     if parts[-1].startswith("."):
         return None, "hidden_path"
-    if len(parts) > MAX_DEPTH + 1:  # 顶层文件夹名 + 至多 3 层
+    _, max_depth = _ingest_limits()
+    if len(parts) > max_depth + 1:  # 顶层文件夹名 + 至多 max_depth 层
         return None, "deep_path"
     return "/".join(parts), None
 
@@ -96,7 +106,8 @@ def resolve_case_file(case_dir: Path, rel: str) -> Path | None:
     if any(p.lower() in _SKIP_DIR or p.startswith(".") or p.startswith("out_")
            for p in parts):
         return None
-    if len(parts) > MAX_DEPTH + 1:
+    _, max_depth = _ingest_limits()
+    if len(parts) > max_depth + 1:
         return None
     path = (case_dir / Path(*parts)).resolve()
     try:
@@ -187,6 +198,7 @@ def _filter_items(
     kept: list[tuple[str, bytes]] = []
     refused: list[dict] = []
     skipped: list[str] = []
+    max_files, _ = _ingest_limits()
     running = total
     for name, blob in items:
         rel, reason = classify_import_path(name)
@@ -209,8 +221,8 @@ def _filter_items(
         running += len(data)
         if running > MAX_BYTES_TOTAL:
             raise CaseImportError("资料总体积超过上限，请先筛一批再添加")
-        if existing + len(kept) >= MAX_FILES:
-            raise CaseImportError(f"文件数超过 {MAX_FILES}，请先删一批再添加")
+        if existing + len(kept) >= max_files:
+            raise CaseImportError(f"文件数超过 {max_files}，请先删一批再添加")
         kept.append((rel, bytes(data)))
     return kept, refused, skipped
 
@@ -293,8 +305,9 @@ def write_imported_case(
     kept, refused, skipped = _filter_items(items)
     if not kept and not refused:
         raise CaseImportError("没有可落盘的文件（路径不合法或全是系统垃圾文件）")
-    if kept and len(kept) > MAX_FILES:
-        raise CaseImportError(f"文件数超过 {MAX_FILES}，请先拆开再添加")
+    max_files, _ = _ingest_limits()
+    if kept and len(kept) > max_files:
+        raise CaseImportError(f"文件数超过 {max_files}，请先拆开再添加")
 
     stamp = datetime.now().astimezone().strftime("%Y%m%d-%H%M%S")
     case_name = f"user-{stamp}"

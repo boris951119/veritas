@@ -13,6 +13,7 @@
 - empty              空文件/扫描件（零段落不入卷）
 - invalid_parse      解析失败（披露，不炸 run）
 - dir_truncated      目录遍历封顶（超 max_files / max_depth，披露未入卷数）
+- ingest_cap         摄取封顶非法值回落默认（C-7，env／config.json）
 - hidden_dir_skipped 工具名单外隐藏目录（不入卷但披露目录名与文件数）
 - import_refused      导入拒收（深层路径／隐藏路径／单文件过大）
 - prompt_over_window  提示词估算超模型窗口（出口披露，服务端可能剪头）
@@ -36,6 +37,7 @@ ROUTE_LABEL: dict[str, str] = {
     "invalid_parse": "解析失败",
     "unsupported_format": "格式暂不支持",
     "dir_truncated": "目录遍历封顶",
+    "ingest_cap": "封顶回落",
     "hidden_dir_skipped": "隐藏目录未入卷",
     "import_refused": "导入拒收",
     "prompt_over_window": "提示词超模型窗口",
@@ -51,6 +53,7 @@ ROUTE_ORDER: dict[str, int] = {
     "links_disclosed": 6, "image_disclosed": 7,
     "zero": 8, "dup": 9, "empty": 10,
     "invalid_parse": 11, "archive_unsupported": 12, "unsupported_format": 13,
-    "dir_truncated": 14, "hidden_dir_skipped": 15, "import_refused": 16,
-    "prompt_over_window": 17,
+    "dir_truncated": 14, "ingest_cap": 15,
+    "hidden_dir_skipped": 16, "import_refused": 17,
+    "prompt_over_window": 18,
 }

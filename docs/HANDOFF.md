@@ -2613,6 +2613,13 @@ docs/HANDOFF.md 的写入边界：只许在「执行工程师回写」你自己�
 不要提交，不要 push，验收归 Qoder。
 ```
 
+#### Cursor 回写（第二轮／R1，2026-10-22）
+
+- **两处改动**：
+  1. `app/ingest/triage.py`：`ROUTE_LABEL["ingest_cap"] = "封顶回落"`；`ROUTE_ORDER` 现读后定为 `dir_truncated=14` → **`ingest_cap=15`** → `hidden_dir_skipped=16` → `import_refused=17` → `prompt_over_window=18`（后三项顺延）；taxonomy 注释同步加一行。
+  2. `tests/test_c7_ingest_max.py`：新格 **`test_r1_ingest_cap_registered_chinese_label`**（monkeypatch `VERITAS_INGEST_MAX_FILES=0` → `load_case` → `route in ROUTE_LABEL` 且 `_render_triage_ledger` 文本含「封顶回落」、无 `**ingest_cap**` 裸键）。
+- **`VERITAS_INGEST_MAX_FILES=0` 回归**：`tests/test_case_import.py`＋`tests/test_import_refuse.py`＝**17 passed**（改前架构师读＝1 failed, 16 passed；红名 `test_docx_ingests_and_old_doc_disclosed` 已灭）。
+- **collect／绿**：整套 `--collect-only`＝**791**；本单文件 collect **26**（＝25＋1）；×5＝**791 passed**；未装 mcp＝**790 passed, 1 skipped**；`git diff --stat cases/` 空。未 commit／未 push。
 
 ### C-14 前置实测｜同源污染到底有多少：给票数权重之前要不要先建独立信源簇（架构师自测，2026-10-16，未派工、未动生产代码）
 

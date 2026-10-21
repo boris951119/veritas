@@ -198,6 +198,8 @@ class CollectResult:
     # {rel, n_files, files_capped}
     hidden_dirs: tuple[dict, ...] = ()
     hidden_dirs_overflow: bool = False
+    # C-7：Settings 非法值回落句（env／config.json）；空＝无回落
+    ingest_cap_disclosures: tuple[str, ...] = ()
 
     @property
     def truncated(self) -> bool:
@@ -349,14 +351,27 @@ def _hidden_dir_detail(rel: str, n_files: int, n_unsup: int, n_image: int,
             "（工具目录外的隐藏目录不收录）")
 
 
-def _collect_files(case_dir: Path, max_files: int = 500,
-                   max_depth: int = 3) -> CollectResult:
+def _collect_files(case_dir: Path, max_files: int | None = None,
+                   max_depth: int | None = None) -> CollectResult:
     """有界遍历案例目录 → CollectResult(files, 封顶元数据)。
 
     子目录此前被静默忽略——主办方自己解压成文件夹的场景同样常见；
     工具/缓存目录静默跳过；名单外隐藏目录不入卷但披露文件数（C-5）。
     封顶后仍继续遍历以计数未入卷文件——披露「取前 N、另有 M」，
-    不再静默丢材料。排序语义不变（按名）。"""
+    不再静默丢材料。排序语义不变（按名）。
+
+    max_files／max_depth 缺省时一次性 lazy 读 Settings（C-7）——
+    不在文件循环里逐份读；显式传入则不碰 Settings（测试夹具用）。
+    """
+    disclosures: tuple[str, ...] = ()
+    if max_files is None or max_depth is None:
+        from app.config import Settings
+        s = Settings.from_env()  # 热路径外一次性；禁循环内再读
+        if max_files is None:
+            max_files = int(s.ingest_max_files)
+        if max_depth is None:
+            max_depth = int(s.ingest_max_depth)
+        disclosures = tuple(s.ingest_max_disclosures or ())
     out: list[tuple[Path, str]] = []
     skipped = 0
     files_capped = False
@@ -415,6 +430,7 @@ def _collect_files(case_dir: Path, max_files: int = 500,
         max_files=max_files, max_depth=max_depth,
         hidden_dirs=tuple(hidden_dirs),
         hidden_dirs_overflow=hidden_dirs_overflow,
+        ingest_cap_disclosures=disclosures,
     )
 
 
@@ -712,6 +728,18 @@ def load_case(case_dir: Path, fetch_links: bool = False,
 
     collected = _collect_files(case_dir)
     files = collected.files
+    # C-7：非法封顶回落句 → ingest_notes + triage（report.md 输入分诊账本）
+    for msg in collected.ingest_cap_disclosures:
+        dossier.ingest_notes.append({
+            "file": "",
+            "kind": "ingest_cap",
+            "detail": msg,
+        })
+        dossier.triage.append({
+            "file": "",
+            "route": "ingest_cap",
+            "reason": msg,
+        })
     if collected.truncated:
         detail = (f"按文件名排序取前 {collected.taken}，"
                   f"另有 {collected.skipped} 个文件/更深层目录未入卷")
