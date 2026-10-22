@@ -7,7 +7,7 @@
 - 连续以 | 开头（允许前导空白）的行合成一张表；表内列数不等 ⇒ 报错
 
 读数口径：唯一不变式是 mismatched==0；files／with_tables／tables 都是当场读数、随文档树漂移。
-当场附报（随文档树漂移，非不变式；默认作用域 docs/＋仓库根层 *.md）：files=23／with_tables=20／tables=98／mismatched=0。
+当场附报（随文档树漂移，非不变式；默认作用域 docs/＋仓库根层 *.md）：files=23／with_tables=20／tables=99／mismatched=0。
 
 用法：
     .venv/bin/python scripts/check_markdown_tables.py
