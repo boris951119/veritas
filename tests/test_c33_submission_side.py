@@ -13,6 +13,7 @@ from app.core.evidence import Conclusion, EvidenceNode
 from app.export import official as official_mod
 from app.export.official import (
     _FIELD_NOTES,
+    _conclusion_support_diverged,
     _conflicting_facts,
     _conclusion_text,
     _supporting_facts,
@@ -223,7 +224,7 @@ def test_e_majority_statement_not_headline(tmp_path):
 
 
 def test_e_headline_fallback_disclosed(tmp_path):
-    """无带证据结论时兜底 headline，且披露句在场。"""
+    """#123：不同源披露冒号后紧跟本题 qid；有兜底时点名。"""
     tmp = tmp_path / "e2"
     tmp.mkdir()
     content = "无证据时的背景段落足够长。"
@@ -242,12 +243,56 @@ def test_e_headline_fallback_disclosed(tmp_path):
     con.status = "majority"
     d.conclusions.append(con)
     d.synthesis = {"headline": "headline 兜底文本"}
-    paths = export_official([(_q(), d)], tmp_path / "e2_out")
+    qid = "q-headline-1"
+    paths = export_official([(_q(qid), d)], tmp_path / "e2_out")
     rows = json.loads(paths["conclusions"].read_text(encoding="utf-8"))
     assert rows[0]["conclusion"] == "headline 兜底文本"
     notes = paths["notes"].read_text(encoding="utf-8")
-    assert "文本与支撑不同源" in notes
-    assert "q1" in notes
+    needle = f"文本与支撑不同源（headline 兜底）的 question_id：{qid}"
+    assert needle in notes
+    # 冒号后紧跟本题 qid（不允许先写别的再附带）
+    assert f"question_id：{qid}" in notes
+
+
+def test_e_headline_no_fallback_writes_none(tmp_path):
+    """#123 反向腿：不兜底时披露行必须写（无）。"""
+    d = _dossier_two_sides(tmp_path / "e3")
+    assert _conclusion_support_diverged(d) is False
+    paths = export_official([(_q("q-ok"), d)], tmp_path / "e3_out")
+    notes = paths["notes"].read_text(encoding="utf-8")
+    assert "文本与支撑不同源（headline 兜底）的 question_id：（无）。" in notes
+
+
+def test_e_headline_diverged_always_false_self_proof(tmp_path, monkeypatch):
+    """#123 自证：_conclusion_support_diverged 恒 False ⇒ 有兜底时披露必丢题号。"""
+    tmp = tmp_path / "e4"
+    tmp.mkdir()
+    content = "无证据时的背景段落足够长。"
+    case = _write_docs(tmp, [{
+        "doc_id": "doc_1",
+        "title": "t",
+        "publish_time": "2024-01-02",
+        "content": content,
+        "source_credibility": 0.5,
+        "content_url": "",
+        "paragraphs": [_para("para_x", 0, len(content))],
+    }])
+    d = load_official_case(case)
+    con = Conclusion.create("空majority", author="m", id="CON-EMPTY")
+    con.status = "majority"
+    d.conclusions.append(con)
+    d.synthesis = {"headline": "headline 兜底文本"}
+    monkeypatch.setattr(official_mod, "_conclusion_support_diverged", lambda _d: False)
+    paths = export_official([(_q("q-should-appear"), d)], tmp_path / "e4_out")
+    notes = paths["notes"].read_text(encoding="utf-8")
+    diverge_lines = [
+        ln for ln in notes.splitlines()
+        if "文本与支撑不同源（headline 兜底）的 question_id：" in ln
+    ]
+    assert diverge_lines == [
+        "文本与支撑不同源（headline 兜底）的 question_id：（无）。"
+    ]
+    assert "q-should-appear" not in diverge_lines[0]
 
 
 # ---------- f（禁品零 diff：本文件不碰那些路径，另有命令核）----------

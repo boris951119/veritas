@@ -146,6 +146,35 @@ def test_b_c_level_and_level_official_on_each_row(tmp_path):
     assert seen_levels == {"A", "B", "C", "D"}
 
 
+def test_c35_128_level_official_vs_lv_official_bidirectional():
+    """#128：level_official_of 四档与 LV_OFFICIAL 字面量经同一函数相等；键集双向相等。"""
+    html = (ROOT / "web/index.html").read_text(encoding="utf-8")
+    m = re.search(
+        r"const LV_OFFICIAL\s*=\s*\{([^}]+)\}",
+        html,
+    )
+    assert m, "LV_OFFICIAL 字面量失踪"
+    js_map = {}
+    for part in m.group(1).split(","):
+        part = part.strip()
+        if not part:
+            continue
+        km = re.match(r'([A-D])\s*:\s*"([^"]+)"', part)
+        assert km, part
+        js_map[km.group(1)] = km.group(2)
+    py_map = {lv: level_official_of(lv) for lv in ("A", "B", "C", "D")}
+    assert set(py_map) == set(js_map) == {"A", "B", "C", "D"}
+    for lv in ("A", "B", "C", "D"):
+        assert py_map[lv] == js_map[lv], (lv, py_map[lv], js_map[lv])
+    # 自证：改 B 的代表词或 JS 少一项 ⇒ 不一致
+    poisoned_py = dict(py_map)
+    poisoned_py["B"] = "权威媒体"  # 映射表第二项，非 JS 代表词「官方表态」
+    assert poisoned_py["B"] != js_map["B"]
+    js_drop = dict(js_map)
+    js_drop.pop("D")
+    assert set(py_map) != set(js_drop)
+
+
 def test_c_level_not_replaced_by_official_words(tmp_path):
     """负断言：level 取值逐字仍是 A/B/C/D，不是官方六词。"""
     rows = _export_levels(tmp_path, ["A", "B", "C", "D"])
@@ -183,13 +212,28 @@ def test_e_report_md_shows_official_level_label():
     assert "A（官方程序记录）" in md
 
 
+def _workbench_interpolates_lv_off(html: str) -> bool:
+    """#129 检测器：定义了 LV_OFFICIAL／lvOff 且模板真插值 ${lvOff / ${esc(lvOff)。"""
+    if "LV_OFFICIAL" not in html or "lvOff" not in html:
+        return False
+    return ("${lvOff" in html) or ("${esc(lvOff)" in html)
+
+
 def test_e_workbench_source_has_official_labels():
+    """#129：工作台真用 `${lvOff` 插值；只定义不插值的合成 HTML 必红。"""
     html = (ROOT / "web/index.html").read_text(encoding="utf-8")
     assert "LV_OFFICIAL" in html
     for name in ("官方程序记录", "官方表态", "主流媒体", "自媒体转述"):
         assert name in html
-    # 渲染点必须真用到 LV_OFFICIAL（不是只定义不用）
     assert "LV_OFFICIAL[ev.level]" in html
+    assert _workbench_interpolates_lv_off(html) is True
+    # 自证：喂只定义不插值的合成 HTML ⇒ 检测器红
+    fake = (
+        'const LV_OFFICIAL={A:"官方程序记录",B:"官方表态",C:"主流媒体",D:"自媒体转述"};\n'
+        'const lvOff=LV_OFFICIAL[ev.level]||"";\n'
+        '<div class="chips"><span class="tag">${esc(lv)}级</span></div>\n'
+    )
+    assert _workbench_interpolates_lv_off(fake) is False
 
 
 # ---------- g：映射不进分 ----------
@@ -304,6 +348,12 @@ def test_i_skipped_no_locator_not_merged(tmp_path, monkeypatch):
 
 
 # ---------- j：同段落去重只交一行 ----------
+
+
+def test_c35_124_test_j_not_deleted():
+    """#124 回归：test_j 不得被删。"""
+    src = Path(__file__).read_text(encoding="utf-8")
+    assert "def test_j_duplicate_loser_paragraph_deduped" in src
 
 
 def test_j_duplicate_loser_paragraph_deduped(tmp_path):

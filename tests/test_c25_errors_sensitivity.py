@@ -304,18 +304,38 @@ def test_d_deterministic_and_identity_at_1_0(tmp_path):
 
 
 def test_e_bands_flip_at_0_8_and_1_2(tmp_path):
+    """#⑱：钉死 ×0.8 掉档／×1.2 升档的 conclusion id；等 cred 自证必红。"""
     d = _sens_dossier()
     report = tmp_path / "report.json"
     d.to_json(report)
     result = probe(report)
     by_m = {r["multiplier"]: r for r in result["rows"]}
     assert set(by_m) == set(MULTIPLIERS)
-    # 0.8 与 1.2 相对基线（×1.0）都必须有 band 翻转
+    base = by_m[1.0]["bands"]
+    b08 = by_m[0.8]["bands"]
+    b12 = by_m[1.2]["bands"]
     assert by_m[0.8]["band_flips"] >= 1
     assert by_m[1.2]["band_flips"] >= 1
-    # 两侧各自真的印出了 band 标签
-    assert by_m[0.8]["bands"]
-    assert by_m[1.2]["bands"]
+    # 钉具体 id：×0.8 CON-mid 高→中（掉）；×1.2 CON-hi 中→高（升）
+    assert base["CON-mid"] == "高" and b08["CON-mid"] == "中"
+    assert base["CON-hi"] == "中" and b12["CON-hi"] == "高"
+
+    # 自证：两侧信源 cred 拉平 ⇒ 上述 id 钉必红（只数 flips≥1 不够）
+    d_eq = _sens_dossier()
+    for src in d_eq.sources:
+        src.credibility = 0.4
+    from app.core.confidence import recompute_all
+    recompute_all(d_eq, n_panel=n_panel_of(d_eq))
+    eq_path = tmp_path / "eq.json"
+    d_eq.to_json(eq_path)
+    eq = probe(eq_path)
+    eq_m = {r["multiplier"]: r for r in eq["rows"]}
+    eq_base, eq08, eq12 = eq_m[1.0]["bands"], eq_m[0.8]["bands"], eq_m[1.2]["bands"]
+    mid_drops = eq_base.get("CON-mid") == "高" and eq08.get("CON-mid") == "中"
+    hi_rises = eq_base.get("CON-hi") == "中" and eq12.get("CON-hi") == "高"
+    assert mid_drops is False
+    assert hi_rises is False
+
 
 
 def test_n_panel_uses_dossier_panel_len():
