@@ -278,13 +278,24 @@ def test_e_ece_matches_hand_calc():
     assert abs(curve["ece"] - ece) <= 1e-6
 
 
-# ---------- f proposal 两套口径分列 ----------
-def test_f_proposals_split_calibers_and_placeholder():
+# ---------- f proposal 两套口径分列（真数已入账版） ----------
+def test_f_proposals_split_calibers_and_real_numbers():
     prop = (ROOT / "docs" / "proposal.md").read_text(encoding="utf-8")
     formal = (ROOT / "docs" / "proposal-formal.md").read_text(encoding="utf-8")
     for text, name in ((prop, "proposal.md"), (formal, "proposal-formal.md")):
-        assert "待 #38" in text or "#38" in text, name
+        # 占位句必须已消失：真数入账后不许再留「待 #38 出数」这种说法
+        assert "待 #38" not in text, f"{name} 仍留着占位句"
         assert "自标定" in text, name
+        # 真数必须出现在两处（ECE 与高档覆盖率＝脚本当场输出）
+        assert "0.4067" in text, f"{name} 缺 ECE 真数"
+        assert "226" in text, f"{name} 缺标定集规模"
+        assert "0.0" in text and "高档覆盖率" in text, f"{name} 缺高档覆盖率"
+        # 口径：五箱（0.2 端点）＋非单调如实披露
+        assert "五箱" in text or "0.0–0.2" in text, f"{name} 缺分箱口径"
+        assert "非单调" in text, f"{name} 未如实披露单调性"
+        # 选择效应必须同句披露（256 候选里 30 行未入账 ⇒ 准确率是偏乐观上界）
+        assert "256" in text and "30 行" in text, f"{name} 缺选择效应披露"
+        assert "上界" in text, f"{name} 未写明偏乐观上界"
         # 不许把 11%/61% 与自标定平均成一个「正确率」
         assert "11%/61%" not in text.replace(" ", "")
         assert "平均为" not in text and "取平均" not in text
