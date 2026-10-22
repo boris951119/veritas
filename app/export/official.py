@@ -69,8 +69,9 @@ winner_id 为 tie／human_override 未分胜负、或段落取不到 ⇒ 一律�
 ## confidence.json
 schema 自定（附录 A 未规定）。每条结论含：
 信源可信度、证据数量与一致性、推理链完整性，
-以及公式 `min(1, strength × coverage × agreement_factor × chain_factor)`、
+以及公式（v2 加权和＋硬门）`clip01(b + s·strength + c·coverage + a·agreement_factor + h·chain_score)`再经 G1/G2/G3 硬门、
 各分项数值与代入演算。
+terms.gates 披露三道硬门状态：G1 引文命中（hit_rate＜0.6 ⇒ 封顶 0.40）／G2 无证据（n_evidence≤0 ⇒ 归零）／G3 前提破坏（premise_broken 非空 ⇒ 封顶 0.45）；substitution 尾巴 `+ gates[…]` 列出已触发门名（无触发＝none）。
 另有两套呈现档（不许合并、不许互替）：
 - band：绝对档。高阈值 0.8＝官方达标行原文「高置信（≥0.8）」；中阈值 0.5＝我方设定（官方未写中/低分界）。
   一律从本行 score（parts 重算）来，不从 dossier_confidence 来（二者实测可差 1e-4）。
@@ -78,8 +79,9 @@ schema 自定（附录 A 未规定）。每条结论含：
   样本面＝整份 confidence.json pooled（跨题合并）；样本 <2 整档记「低」。方法名与当次切点写在 band_rel_rule。
   退化规则（我方设定）：score≤0 ⇒ 恒记「低」（0 分不参与分位）；切点重合（hi−lo < 1e-9）时并列在切点上的记「不可分」。
   「不可分」＝我方设定，出现在本次分布退化（切点重合）时，表示这一档说不出高低，不是缺数据、也不是低。
-当前公式下四因子均 ≤1 且 coverage 是渐近量，故提交物高档（≥0.8）常为空是结构性的，不是单次没跑好；
-因此 ≥85% 那条达标线在高档为空时无样本可判，已向发榜方提问。
+v1 连乘下高档（≥0.8）结构性为空；v2 起改为人定权重加权和＋硬门后高档可非空，
+但自标定 226 行上高档准确率仍低于整体基准（见 proposal／score_face_v2_report），
+达标行「≥0.8 正确率 ≥85%」仍无法回答（等官方第 4 问）。无样本可判／未达标两句须同现。
 首屏「本案卷 N 条」是单案卷面；提交物分位面是 pooled 全跑次——两面不要混读。
 本文件（confidence.json）仅含消解后 majority 态；逐态真数见下方「本次导出」里当场数出来的样本面披露。
 配色（工作台）＝绝对档同一对阈值；提交行多数落在绝对档低／中时卡片偏红/黄是实测结果，不是渲染坏了。
@@ -283,6 +285,18 @@ def _conflicting_facts(dossier: Dossier) -> tuple[list[dict], int, int]:
     return facts, skipped_tie, skipped_no_locator
 
 
+
+def _gates_fired_note(gates: dict | None) -> str:
+    """substitution 尾巴用：列出已触发硬门名；无 gates／全未触发写 none。"""
+    if not isinstance(gates, dict) or not gates:
+        return "none"
+    fired = [
+        name for name, g in gates.items()
+        if isinstance(g, dict) and g.get("fired")
+    ]
+    return ",".join(fired) if fired else "none"
+
+
 def _confidence_rows(question_id: str, dossier: Dossier) -> list[dict]:
     rows = []
     for con in dossier.conclusions:
@@ -306,11 +320,12 @@ def _confidence_rows(question_id: str, dossier: Dossier) -> list[dict]:
                 "agreement_factor": agreement_factor,
             },
             "推理链完整性": chain_num,
-            "formula": "min(1, strength * coverage * agreement_factor * chain_factor)",
+            "formula": "clip01(b + s*strength + c*coverage + a*agreement_factor + h*chain_score) + hard gates",
             "terms": dict(terms),
             "substitution": (
-                f"min(1, {strength} * {coverage} * {agreement_factor}"
-                f" * {chain_factor}) = {score}"
+                f"clip01(0.10 + 0.25*{strength} + 0.20*{coverage} + "
+                f"0.15*{agreement_factor} + 0.30*{terms.get('chain_for_aggregate', chain_num)})"
+                f" + gates[{_gates_fired_note(terms.get('gates'))}] = {score}"
             ),
             "score": score,
             "dossier_confidence": con.confidence,

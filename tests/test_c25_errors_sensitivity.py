@@ -260,27 +260,27 @@ def _sens_dossier() -> Dossier:
 
     panel 取 1 人：与探针 n_panel 规则一致；多人编队会把 agreement 打到地板、
     分数挤在低档、×0.8 再也翻不出去。
+    C-36 v2 加权和后 strength 权重仅 0.25——旧 cred=0.95／0.70＋4 条证据会全进高档、
+    ±20% 翻不动；改用 cred=0.55／0.30＋各 1 条，让 CON-mid 贴 0.8 边界。
     """
     d = Dossier(question="敏感度夹具", panel=["a"])
-    s1 = Source.create("S1", SourceType.PAPER, credibility=0.95, id="SRC1")
+    s1 = Source.create("S1", SourceType.PAPER, credibility=0.55, id="SRC1")
     s1.segments.append(Segment(id="SRC1#s1", source_id="SRC1", text="段一原文足够长。"))
-    s2 = Source.create("S2", SourceType.NEWS, credibility=0.70, id="SRC2")
+    s2 = Source.create("S2", SourceType.NEWS, credibility=0.30, id="SRC2")
     s2.segments.append(Segment(id="SRC2#s1", source_id="SRC2", text="段二原文足够长。"))
     d.add_source(s1)
     d.add_source(s2)
-    # CON-hi：×1.0 在中档；×0.8 → 低
+    # CON-hi：贴中档上沿
     d.conclusions.append(Conclusion.create("高侧", author="a", id="CON-hi"))
-    for i in range(4):
-        d.add_evidence(EvidenceNode.create(
-            "CON-hi", "段一原文足够长。", ["SRC1#s1"],
-            level=EvidenceLevel.A, weight=1.0, id=f"EV-hi-{i}"))
-    # CON-lo：×1.0 在低档上沿；×1.2 → 中
+    d.add_evidence(EvidenceNode.create(
+        "CON-hi", "段一原文足够长。", ["SRC1#s1"],
+        level=EvidenceLevel.A, weight=1.0, id="EV-hi-0"))
+    # CON-lo：中档下沿
     d.conclusions.append(Conclusion.create("低侧", author="a", id="CON-lo"))
-    for i in range(4):
-        d.add_evidence(EvidenceNode.create(
-            "CON-lo", "段二原文足够长。", ["SRC2#s1"],
-            level=EvidenceLevel.A, weight=1.0, id=f"EV-lo-{i}"))
-    # CON-mid：第三条
+    d.add_evidence(EvidenceNode.create(
+        "CON-lo", "段二原文足够长。", ["SRC2#s1"],
+        level=EvidenceLevel.A, weight=1.0, id="EV-lo-0"))
+    # CON-mid：贴高档边界（×0.8／×1.2 翻档）
     d.conclusions.append(Conclusion.create("中侧", author="a", id="CON-mid"))
     for i in range(3):
         d.add_evidence(EvidenceNode.create(

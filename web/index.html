@@ -1577,8 +1577,11 @@ function renderChains(d){
     const chainTxt=p.chain==null?(cd.unknown?"链·无从判定":"链·旧口径未计")
       :("链 "+p.chain.toFixed(2)+"〔核 "+((cd.applicable||[]).length)+" 环｜"
         +((cd.broken||[]).length?"断："+cd.broken.map(k=>CHAIN_CN[k]||k).join("、"):"全闭合")+"〕");
+    const gates=p.gates||{};
+    const firedGates=Object.keys(gates).filter(k=>gates[k]&&gates[k].fired);
+    const gateTxt=firedGates.length?("硬门 "+firedGates.join("、")):("加权和＋硬门");
     const chips=["证据强度 "+f2(p.strength),"覆盖 "+f2(p.coverage),"一致性 "+f2(p.agreement),
-      chainTxt,`${p.n_evidence??evs.length} 条证据`,
+      chainTxt,gateTxt,`${p.n_evidence??evs.length} 条证据`,
       con.band!=null?`档 ${con.band}`:null,
       con.band_rel!=null?`相对档 ${con.band_rel}`:null,
       (con.depends_on||[]).length?`前提 ${(con.depends_on||[]).length} 条`:null]

@@ -13,7 +13,12 @@
              声称范围有无声明、时点有无锚定、因果有无机制——六环按**适用项**
              计通过率（对应榜单「推理链完整性」，此前只有黄灯不进分）。
 
-综合 = strength × coverage × agreement_factor × chain_factor。
+综合 = 加权和＋硬门（v2；人定权重，非拟合）：
+  raw = clip01(b + s·strength + c·coverage + a·agreement_factor + h·chain_score)；
+  再经 G1 引文命中／G2 无证据／G3 前提破坏三道硬门封顶。
+  权重表见 `_AGG`（先验设定；拟合版只作附报、不进生产）。
+  第四维直接用 `chain_score` 原值（0–1 六环通过率）；
+  `chain_factor_of`／`_CHAIN_FLOOR`／`_CHAIN_UNKNOWN` 留作面板与 v1 对照。
 人工修改（删证据/改权重/改信源可信度）后，工作台经 `_mutate` 调
 `recompute_all()` 全量回填置信度；依赖传播只识别并披露受影响集合
 （`affected_downstream`／`premise_broken` 黄牌），不改变本模块公式。
@@ -39,6 +44,125 @@ _COVERAGE_FLOOR = 0.5         # 单条证据的覆盖分下限（有证据就有
 _AGREEMENT_FLOOR = 0.5        # 单人结论的一致性因子下限
 _CHAIN_FLOOR = 0.55           # 链全断时的因子下限（压分不清零，语义仍归人）
 _CHAIN_UNKNOWN = 0.75         # 无从判定时的因子（不给满分也不按断链罚）
+
+# 合式常量表（人定、非拟合）。b/s/c/a/h＝加权和；g*＝三道硬门阈值。
+# 先验设定；拟合版只作附报、不进生产。拟合只许发生在温度标量 T 上（见 scripts/fit_temperature.py）。
+_AGG: dict[str, float] = {
+    "b": 0.10,   # 截距
+    "s": 0.25,   # strength
+    "c": 0.20,   # coverage
+    "a": 0.15,   # agreement_factor
+    "h": 0.30,   # chain_score 原值
+    "g1_hit_rate_min": 0.6,  # G1：引文命中率下限
+    "g1_cap": 0.40,          # G1 触发时 conf 封顶
+    "g3_cap": 0.45,          # G3：premise_broken 非空时封顶
+}
+
+# 生产默认温度（不缩放）。非 1.0 须经配置／回执显式启用；本模块读取侧见 apply_temperature。
+_DEFAULT_TEMPERATURE = 1.0
+
+
+def aggregate(strength: float, coverage: float, agreement_factor: float,
+              chain_score: float) -> float:
+    """唯一合式：加权和（人定权重，非拟合）。
+
+    raw = clip01(b + s·strength + c·coverage + a·agreement_factor + h·chain_score)。
+    第四维是 `chain_score` 原值，不经 `chain_factor_of` 下限拉伸。
+    硬门见 `apply_hard_gates`；温度见 `apply_temperature`。
+    """
+    a = _AGG
+    raw = (
+        a["b"]
+        + a["s"] * float(strength)
+        + a["c"] * float(coverage)
+        + a["a"] * float(agreement_factor)
+        + a["h"] * float(chain_score)
+    )
+    return min(1.0, max(0.0, raw))
+
+
+def apply_hard_gates(
+    conf: float,
+    *,
+    hit_rate: float | None,
+    n_evidence: int,
+    premise_broken: list | tuple | None,
+) -> tuple[float, dict]:
+    """三道硬门。返回 (封顶后 conf, gates 披露字典)。阈值只读 `_AGG`。"""
+    a = _AGG
+    gates: dict = {
+        "G1_citation": {
+            "fired": False,
+            "hit_rate": None if hit_rate is None else round(float(hit_rate), 4),
+            "threshold": a["g1_hit_rate_min"],
+            "cap": a["g1_cap"],
+        },
+        "G2_no_evidence": {"fired": False, "n_evidence": int(n_evidence)},
+        "G3_premise_broken": {
+            "fired": False,
+            "ids": list(premise_broken or []),
+            "cap": a["g3_cap"],
+        },
+    }
+    out = float(conf)
+    if int(n_evidence) <= 0:
+        gates["G2_no_evidence"]["fired"] = True
+        out = 0.0
+    if hit_rate is not None and float(hit_rate) < a["g1_hit_rate_min"]:
+        gates["G1_citation"]["fired"] = True
+        out = min(out, a["g1_cap"])
+    if premise_broken:
+        gates["G3_premise_broken"]["fired"] = True
+        out = min(out, a["g3_cap"])
+    return out, gates
+
+
+def apply_temperature(raw: float, *, mean: float, temperature: float) -> float:
+    """单调温度缩放：score = clip01(mean + T·(raw − mean))。T=1 恒等。"""
+    t = float(temperature)
+    m = float(mean)
+    return min(1.0, max(0.0, m + t * (float(raw) - m)))
+
+
+def citation_hit_rate(dossier: "Dossier", conclusion_id: str) -> float | None:
+    """当场用 citation_check 重算：逐字命中条数 / 证据条数。无证据 → None（交给 G2）。"""
+    from app.core.citation_check import check_evidence
+
+    evs = dossier.evidences_of(conclusion_id)
+    if not evs:
+        return None
+    hits = sum(1 for ev in evs if not check_evidence(ev, dossier))
+    return hits / len(evs)
+
+
+def _chain_score_for_aggregate(chain_score: float | None) -> float:
+    """aggregate 第四维：有原值用原值；None（无从判定）填 `_CHAIN_UNKNOWN` 数值，不经 floor 拉伸。"""
+    if chain_score is None:
+        return _CHAIN_UNKNOWN
+    return float(chain_score)
+
+
+def _gated_score_from_parts(parts: dict | None, raw: float) -> float:
+    """从 parts 里已披露的 gates／n_evidence 重放硬门（与 conclude_confidence 同源）。"""
+    p = dict(parts or {})
+    n_evidence = int(p.get("n_evidence") or 0)
+    gates_in = p.get("gates") if isinstance(p.get("gates"), dict) else {}
+    g1 = gates_in.get("G1_citation") if isinstance(gates_in.get("G1_citation"), dict) else {}
+    g3 = gates_in.get("G3_premise_broken") if isinstance(gates_in.get("G3_premise_broken"), dict) else {}
+    hit_rate = g1.get("hit_rate")
+    premise_broken = g3.get("ids") or []
+    # 无 gates 字段的旧 parts：不瞎触发 G1／G3（hit_rate 未知）；G2 仍看 n_evidence
+    if not gates_in:
+        hit_rate = 1.0  # 未知视作不触发 G1
+        premise_broken = []
+        if "n_evidence" not in p:
+            # 更老的产物：无法判断无证据，只跑加权和
+            return round(raw, 4)
+    conf, _ = apply_hard_gates(
+        raw, hit_rate=hit_rate, n_evidence=n_evidence, premise_broken=premise_broken,
+    )
+    return round(conf, 4)
+
 
 # 呈现层分档（C-20）：不进 conclude_confidence；0.8＝官方达标行原文，0.5＝我方设定
 _BAND_HIGH = 0.8
@@ -139,8 +263,15 @@ def row_score_detail(parts: dict | None) -> tuple[float, dict]:
     chain = p.get("chain")
     chain_num = None if chain is None else float(chain)
     agreement_factor = _AGREEMENT_FLOOR + (1 - _AGREEMENT_FLOOR) * agreement
-    chain_factor = chain_factor_of(chain_num)
-    score = round(min(1.0, strength * coverage * agreement_factor * chain_factor), 4)
+    chain_factor = chain_factor_of(chain_num)  # 面板／v1 对照；不进 v2 合式
+    chain_for_agg = _chain_score_for_aggregate(chain_num)
+    # 若 parts 来自 conclude_confidence，复用其 aggregate_raw，避免分量四位四舍五入后 ±1e-4
+    if "aggregate_raw" in p and p.get("aggregate_raw") is not None:
+        raw = float(p["aggregate_raw"])
+    else:
+        raw = aggregate(strength, coverage, agreement_factor, chain_for_agg)
+    score = _gated_score_from_parts(p, raw)
+    gates = p.get("gates") if isinstance(p.get("gates"), dict) else None
     terms = {
         "strength": strength,
         "coverage": coverage,
@@ -148,6 +279,10 @@ def row_score_detail(parts: dict | None) -> tuple[float, dict]:
         "agreement_factor": round(agreement_factor, 4),
         "chain": chain_num,
         "chain_factor": round(chain_factor, 4),
+        "chain_for_aggregate": round(chain_for_agg, 4),
+        "aggregate_raw": round(raw, 4),
+        # R-C36-3：substitution 挂「+ gates」须在提交面真披露；无 gates 的旧 parts 写 null
+        "gates": gates,
     }
     return score, terms
 
@@ -203,18 +338,23 @@ def evidence_strength_of(conclusion_id: str, dossier: Dossier) -> float:
 def conclude_confidence(conclusion_id: str, dossier: Dossier,
                         n_panel: int = 1,
                         chain_ctx: dict | None = None) -> tuple[float, dict]:
-    """结论置信度 = strength × coverage × agreement_factor × chain_factor。"""
+    """结论置信度 = aggregate(…) 加权和＋硬门（见模块 docstring）。"""
     con = dossier.conclusion(conclusion_id)
     evs = dossier.evidences_of(conclusion_id)
     if con is None or not evs:
         # 链上无从下手的结论（典型：证据被人工删空）记 unknown 而不是 0——
         # 「没证据」这件事由 strength/coverage 承担罚分，链分量不许重复计罚，
         # 更不许在渲染层冒出「0.00〔六环全闭合〕」这种自相矛盾。
-        return 0.0, {"strength": 0.0, "coverage": 0.0, "agreement": 0.0,
+        _conf0, gates0 = apply_hard_gates(
+            0.0, hit_rate=None, n_evidence=len(evs),
+            premise_broken=list((con.premise_broken if con else None) or []),
+        )
+        return _conf0, {"strength": 0.0, "coverage": 0.0, "agreement": 0.0,
                      "chain": None,
                      "chain_detail": {"applicable": [], "broken": [],
                                       "score": None, "unknown": True},
-                     "n_evidence": len(evs), "note": "无证据支撑"}
+                     "n_evidence": len(evs), "note": "无证据支撑",
+                     "gates": gates0}
     scores = [evidence_score(e, dossier) for e in evs]
     strength = sum(scores) / len(scores)
     n = len(evs)
@@ -231,7 +371,14 @@ def conclude_confidence(conclusion_id: str, dossier: Dossier,
     ctx = chain_ctx if chain_ctx is not None else chain_context(dossier)
     report = chain_integrity(dossier, conclusion_id, ctx)
     chain_score = report.score
-    chain_factor = chain_factor_of(chain_score)
+    chain_factor = chain_factor_of(chain_score)  # 面板／v1 对照；不进 v2 合式
+    chain_for_agg = _chain_score_for_aggregate(chain_score)
+    hit_rate = citation_hit_rate(dossier, conclusion_id)
+    premise_broken = list(con.premise_broken or [])
+    raw = aggregate(strength, coverage, agreement_factor, chain_for_agg)
+    conf, gates = apply_hard_gates(
+        raw, hit_rate=hit_rate, n_evidence=n, premise_broken=premise_broken,
+    )
     parts = {
         "strength": round(strength, 4),
         "coverage": round(coverage, 4),
@@ -242,8 +389,10 @@ def conclude_confidence(conclusion_id: str, dossier: Dossier,
         "n_authors": n_authors,
         "levels": sorted({e.level.value for e in evs}),
         "min_evidence_score": round(min(scores), 4),
+        "gates": gates,
+        "aggregate_raw": round(raw, 4),
+        "chain_factor": round(chain_factor, 4),
     }
-    conf = min(1.0, strength * coverage * agreement_factor * chain_factor)
     return round(conf, 4), parts
 
 

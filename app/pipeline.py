@@ -1118,7 +1118,7 @@ def confidence_label(parts: dict) -> str:
     """置信度分量 → 一行可读表述（榜单硬需求 3「给分并说明依据」）。
 
     四分量各自命名清楚，第四分量（推理链完整性）还要说清断在哪一环——
-    只报一个乘积数字，等于把依据又藏回黑箱。
+    综合是加权和＋硬门，只报一个总分等于把依据又藏回黑箱。
     """
     from app.core.chain_integrity import CHECK_LABEL_CN
 
@@ -1144,6 +1144,11 @@ def confidence_label(parts: dict) -> str:
             f"一致性 {p.get('agreement', 0):.2f}",
             chain_txt,
             f"{p.get('n_evidence', 0)} 条证据"]
+    gates = p.get("gates") if isinstance(p.get("gates"), dict) else {}
+    fired = [k for k, g in gates.items()
+             if isinstance(g, dict) and g.get("fired")]
+    if fired:
+        bits.append("硬门 " + "、".join(fired))
     note = str(p.get("note") or "").strip()
     if note:
         bits.append(note)

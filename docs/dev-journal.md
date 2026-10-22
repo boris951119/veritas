@@ -854,3 +854,17 @@ veritas-testcases/,不占 agent 仓库。
   进 `_BROKEN_BY_KIND`，否则新闸只亮灯不进分母——`test_check_order_covers_every_declared_check`
   与 `test_every_fired_gate_breaks_the_matching_link` 是这条规矩的守门人。
 - `_CHAIN_UNKNOWN` 当前是防御分支（有证据必进 `quote_hits`），已由直接测函数的用例覆盖。
+
+## 2026-10-22 · C-36 置信度合式改造（加权和＋硬门＋单参数温度）
+
+**背景**：用户拍板五项＝甲加权和＋硬门／丙权重人定只拟合 T／验收 ECE＋AUC＋分箱＋同分退化／达标线继续挂着／六案不重跑。许可证＝HANDOFF:3723（C-20 预写的「改合式＝判定变更」）。
+
+**交付**：
+- `app/core/confidence.py`：唯一 `aggregate`＋`_AGG`（人定非拟合）＋三道硬门写入 `confidence_parts.gates`；第四维用 `chain_score` 原值；`row_score_of` 同源。
+- `scripts/fit_temperature.py` → `calibration/temperature_receipt.json`（T 域 [0.7,1.3]，生产默认 1.0）。
+- `scripts/score_face_v2_report.py`：同码 v1 连乘 vs v2 加权和回灌读数。
+- `tests/test_c36_aggregate.py`；呈现层／提案／图口径「相乘→加权和＋硬门」；六案旧数标「v1 合式下所测」。
+
+**回灌真数（复放命令见脚本 stdout）**：v1 AUC≈0.430／ECE≈0.421／高档 n=0；v2 AUC≈0.601／ECE≈0.057／高档 n=29 准确率 0.517＜基准 0.637——**达标线仍无法回答**。
+
+**未动**：`evidence.py`／`LEVEL_WEIGHT`／`_CAUSATION_BONUS`／band 切点算法／labels_self／六案重跑。

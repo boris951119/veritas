@@ -5422,6 +5422,19 @@ docs/HANDOFF.md 的写入边界：只许在「Cursor 回写（C-36）」你自�
 - **路径**：`app/core/confidence.py`、`app/export/official.py`、`app/pipeline.py`、`web/index.html`、`scripts/{fit_temperature,score_face_v2_report}.py`、`calibration/temperature_receipt.json`、`tests/{test_c36_aggregate,test_c20_band,test_c25_errors_sensitivity}.py`、`docs/{proposal,proposal-formal,contest-requirements-S4-2026-10-17,architecture-map-2026-10-12.html,scenario-review-2026-10-14,dev-journal}.md`。
 
 
+#### Cursor 回写（C-36 · 第二轮返工 R-C36-1／2／3）（2026-10-22 20:43 CST／Asia/Shanghai，未 commit）
+
+- **R-C36-1（连接键＋合成腿）**：
+  1. `tests/test_c36_aggregate.py::test_c_architect_auc_invariance_pin` 改为**合成数据腿**（自制 scores＋labels；T∈[0.7,1.3] 未触 clip 时 AUC `abs=1e-9` 逐位相同、成对逆序数＝0；**零产品触碰**）。新增 `test_c_face_v2_auc_from_snapshot_or_skip`：读 `calibration/face_v2_row_snapshot.jsonl` 断言 AUC≈0.60104（容差 0.02）；无 snapshot ⇒ `pytest.skip`＋披露原因（不连 `.gitignore` 内 `cases/*/out*/report.json`）。
+  2. `scripts/score_face_v2_report.py::load_joined_rows` 连接键改为 **case＋statement_sha8**；`conclusion_id` 只作一致性旁报（`matched`／`mismatched`／`missing_by_sha8` 打印＋`LAST_JOIN_SIDE`）。同 sha8 多产物决胜＝① id 命中优先 ② 非 `out_offline` ③ 路径字典序。**id 对不上不再 `SystemExit` 整跑**（跳过 sha8 亦缺失的行）。默认写出 `calibration/face_v2_row_snapshot.jsonl`（`--no-write-snapshot` 可关）。
+  3. **自测**：`.venv` 全仓 **`869 passed in 23.13s`／0 failed**（`--collect-only`＝**869**；基线 859 ⇒ 第一轮 868 ⇒ 本轮 **＋1**＝snapshot 那格）。`demo_offline` **连跑两次**后再 `score_face_v2_report.py --labels calibration/labels_self.jsonl` ⇒ ECE／AUC／高档 n **逐位相同**＝v2 ECE **0.056505**／AUC **0.60104**／high_n **29**／high_acc **0.517241**（join 旁报 matched=224 mismatched=2 missing=0）。
+- **R-C36-2**：`docs/proposal-formal.md` §4.3 双口径改写——v1 存分 ECE **0.4067**／AUC **0.3642**／高档 0；v1 同码重算 ECE **0.4212**／AUC **0.4301**／高档 0；v2 同码重算 ECE **0.0565**／AUC **0.6010**／高档 29、该箱 0.517＜基准 0.637；达标线仍未回答。过期句「是否重标定权重…本轮不动公式」「按现公式高档天然为空」已删。
+- **R-C36-3＝选项 A**：`row_score_detail` 的 `terms` 写入 `gates`；`substitution` 尾巴改为 `+ gates[fired名|none]`；`_FIELD_NOTES`（《字段说明.md》）补一行 G1＜0.6⇒封顶 0.40／G2 n≤0⇒归零／G3 非空⇒封顶 0.45。
+- **未动**：无 commit／无 push；`evidence.py` 零 diff；`LEVEL_WEIGHT`／`_CAUSATION_BONUS=1.15`／`band_of`／`band_rel_of`／strength／coverage／agreement 算法未动；未改 `labels_self`／`candidates_self`／`cases/`／`conftest`／D-1 四件；未宣称达标；未扩 8 把可选刀。
+- **路径**：`scripts/score_face_v2_report.py`、`tests/test_c36_aggregate.py`、`calibration/face_v2_row_snapshot.jsonl`、`docs/proposal-formal.md`、`app/core/confidence.py`、`app/export/official.py`。
+- **§3.4**：无新质疑。决胜序（id 优先＋非 out_offline）是连接键改 sha8 后多产物歧义的必要决胜，不改合式。
+
+
 ### C-26｜「换一台机器 pytest 全绿」这句对外承诺现在不成立：四处测试依赖未入库产物，其中两处是静默假绿（2026-10-19 出单，**已收口＝2026-10-19 第二轮通过**，约 0.2 天）
 
 - **来历**：C-16b 第二轮我补写的判据 h 抓出来的，不是我的兴趣题。h 要求"删净未入库产物后全绿零 skip"，**我先没量改前就发了单**（与 C-12 第五轮 `Precision_sup=0.4`、C-16 判据 d 的空表遍历同一类错），执行方跑出来 1 红、按 §3.4 回写质疑 ⇒ 我复放时发现"红"不止它那一处，且我自己那两处"未跑过也算过"的旧用例（`test_conflict_pairing`／`test_panel_attrition`）从来没在别人机器上跑过。

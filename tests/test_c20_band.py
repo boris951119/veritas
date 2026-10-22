@@ -40,8 +40,22 @@ _BANDS4 = {"高", "中", "低", "不可分"}
 
 
 def _parts_for_score(score: float) -> dict:
-    """coverage/agreement/chain 满值 ⇒ row_score_of ≈ strength。"""
-    return {"strength": float(score), "coverage": 1.0, "agreement": 1.0, "chain": 1.0}
+    """反解 v2 加权和：构造 parts 使 row_score_of(parts) 逐位等于 target（agreement=1）。
+
+    可表达下界＝0.25（af=1 且 s=c=h=0）；上界＝1.0。C-36 后不再有 strength≈score 的乘性捷径。
+    """
+    t = float(score)
+    if t < 0.25 - 1e-12:
+        raise ValueError(f"v2 加权和在 agreement=1 下无法表达 score<{0.25}: {t}")
+    # t = 0.25 + 0.25*s + 0.20*c + 0.30*h  (af=1)
+    if t <= 0.50 + 1e-12:
+        s = (t - 0.25) / 0.25
+        return {"strength": s, "coverage": 0.0, "agreement": 1.0, "chain": 0.0}
+    if t <= 0.80 + 1e-12:
+        h = (t - 0.50) / 0.30
+        return {"strength": 1.0, "coverage": 0.0, "agreement": 1.0, "chain": h}
+    c = (t - 0.80) / 0.20
+    return {"strength": 1.0, "coverage": c, "agreement": 1.0, "chain": 1.0}
 
 
 def _synth_dossier(tmp_path: Path, *, n_majority: int = 3, parts_list=None,
@@ -60,12 +74,13 @@ def _synth_dossier(tmp_path: Path, *, n_majority: int = 3, parts_list=None,
         "paragraphs": [_para("para_9", 0, len(content))],
     }])
     dossier = load_official_case(case)
+    # v2 加权和下这些分量会落到 0.25／0.30／0.40…（高档空）；旧乘性默认 0.4/0.5/… 在 v2 会误进高档
     defaults = [
-        {"strength": 0.4, "coverage": 0.5, "agreement": 1.0, "chain": 1.0},
-        {"strength": 0.5, "coverage": 0.5, "agreement": 1.0, "chain": 1.0},
-        {"strength": 0.6, "coverage": 0.5, "agreement": 1.0, "chain": 1.0},
-        {"strength": 0.3, "coverage": 0.5, "agreement": 1.0, "chain": 1.0},
-        {"strength": 0.7, "coverage": 0.5, "agreement": 1.0, "chain": 1.0},
+        {"strength": 0.0, "coverage": 0.0, "agreement": 1.0, "chain": 0.0},  # 0.25
+        {"strength": 0.2, "coverage": 0.0, "agreement": 1.0, "chain": 0.0},  # 0.30
+        {"strength": 0.6, "coverage": 0.0, "agreement": 1.0, "chain": 0.0},  # 0.40
+        {"strength": 0.0, "coverage": 0.0, "agreement": 1.0, "chain": 0.0},  # 0.25
+        {"strength": 0.4, "coverage": 0.0, "agreement": 1.0, "chain": 0.0},  # 0.35
     ]
     plist = list(parts_list) if parts_list is not None else defaults[:n_majority]
     for i, parts in enumerate(plist[:n_majority], start=1):
@@ -209,11 +224,12 @@ def test_d_judgment_unchanged_sha_and_score(tmp_path):
 
 # ---------- e ----------
 def test_e_formula_numeric_nails():
-    """五个架构师实测值写死；偷改 _CAUSATION_BONUS／摘 min 钳位必须红。"""
+    """五个 C-36 v2 加权和实测值写死；偷改 _AGG／_CAUSATION_BONUS／摘 clip 钳位必须红。"""
+    # af=1, chain=1, cov=0.5 → raw = 0.10+0.25*st+0.20*0.5+0.15+0.30 = 0.65+0.25*st
     d, sid = _dossier(0.8)
     _add(d, sid)
     conf, parts = conclude_confidence("CON1", d)
-    assert conf == 0.4
+    assert conf == 0.85
     assert parts["strength"] == 0.8
     assert parts["coverage"] == 0.5
     assert parts["agreement"] == 1.0
@@ -223,7 +239,7 @@ def test_e_formula_numeric_nails():
     _add(d, sid)
     _add(d, sid, cid="CON1")
     conf, parts = conclude_confidence("CON1", d)
-    assert conf == 0.5134
+    assert conf == 0.8783  # 0.10+0.25*0.8+0.20*0.6417+0.15+0.30
     assert parts["strength"] == 0.8
     assert parts["coverage"] == 0.6417
     assert parts["agreement"] == 1.0
@@ -233,7 +249,7 @@ def test_e_formula_numeric_nails():
     d, sid = _dossier(0.8)
     _add(d, sid, relation=RelationKind.CAUSATION, note="接口缺失导致进度滞后")
     conf, parts = conclude_confidence("CON1", d)
-    assert conf == 0.46
+    assert conf == 0.88  # strength 0.92
     assert parts["strength"] == 0.92
     assert parts["coverage"] == 0.5
     assert parts["agreement"] == 1.0
@@ -242,7 +258,7 @@ def test_e_formula_numeric_nails():
     d, sid = _dossier(0.9)
     _add(d, sid)
     conf, parts = conclude_confidence("CON1", d)
-    assert conf == 0.45
+    assert conf == 0.875
     assert parts["strength"] == 0.9
     assert parts["coverage"] == 0.5
     assert parts["agreement"] == 1.0
@@ -251,13 +267,13 @@ def test_e_formula_numeric_nails():
     d, sid = _dossier(0.3)
     _add(d, sid)
     conf, parts = conclude_confidence("CON1", d)
-    assert conf == 0.15
+    assert conf == 0.725
     assert parts["strength"] == 0.3
     assert parts["coverage"] == 0.5
     assert parts["agreement"] == 1.0
     assert parts["chain"] == 1.0
 
-    # l4④／K6：min(1.0, …) 钳位
+    # l4④／K6：clip01 钳位
     assert row_score_of({
         "strength": 2.0, "coverage": 3.0, "agreement": 1.0, "chain": 1.0,
     }) == 1.0
@@ -265,8 +281,9 @@ def test_e_formula_numeric_nails():
 
 # ---------- g ----------
 def test_g_band_from_score_not_dossier_confidence(tmp_path):
-    parts = {"strength": 0.4, "coverage": 0.5, "agreement": 1.0, "chain": 1.0}
-    assert row_score_of(parts) == 0.2
+    # v2：score 走 parts 重算，不读 dossier_confidence；选可表达低分 0.25
+    parts = {"strength": 0.0, "coverage": 0.0, "agreement": 1.0, "chain": 0.0}
+    assert row_score_of(parts) == 0.25
     d = _synth_dossier(tmp_path / "g", n_majority=1, parts_list=[parts])
     d.conclusions[0].confidence = 0.95
     paths = export_official(
@@ -274,7 +291,7 @@ def test_g_band_from_score_not_dossier_confidence(tmp_path):
         tmp_path / "g_out",
     )
     row = json.loads(paths["confidence"].read_text(encoding="utf-8"))[0]
-    assert row["score"] == 0.2
+    assert row["score"] == 0.25
     assert row["dossier_confidence"] == 0.95
     assert row["band"] == "低"
 
@@ -382,8 +399,8 @@ def test_field_notes_mention_thresholds_and_empty_high():
     # C-21 把跑次死数 0/40／0/57／max≈0.55 清掉；高档常空改写为结构性结论句
     assert "0/40" not in _FIELD_NOTES and "0/57" not in _FIELD_NOTES
     assert "max≈0.55" not in _FIELD_NOTES
-    assert "结构性" in _FIELD_NOTES
-    assert "无样本可判" in _FIELD_NOTES
+    assert "v1 连乘" in _FIELD_NOTES or "结构性" in _FIELD_NOTES
+    assert ("无样本可判" in _FIELD_NOTES) or ("仍无法回答" in _FIELD_NOTES)
     assert "dossier_confidence" in _FIELD_NOTES
     assert "本案卷" in _FIELD_NOTES
     assert "不可分" in _FIELD_NOTES
@@ -392,13 +409,14 @@ def test_field_notes_mention_thresholds_and_empty_high():
 
 # ---------- l4① pooled 两题 ----------
 def test_l4_pooled_across_two_questions(tmp_path):
+    # v2 可表达下界 0.25；用 0.25／0.30／0.40 保持「pooled=低/中 vs q2-only=中/高」语义
     d1 = _synth_dossier(
         tmp_path / "p1", n_majority=3,
         parts_list=[_parts_for_score(0.9)] * 3)
     d2 = _synth_dossier(
         tmp_path / "p2", n_majority=3,
-        parts_list=[_parts_for_score(0.1), _parts_for_score(0.2),
-                    _parts_for_score(0.3)])
+        parts_list=[_parts_for_score(0.25), _parts_for_score(0.30),
+                    _parts_for_score(0.40)])
     paths = export_official(
         [({"question_id": "q1", "question": "题一"}, d1),
          ({"question_id": "q2", "question": "题二"}, d2)],
@@ -411,15 +429,15 @@ def test_l4_pooled_across_two_questions(tmp_path):
     q2 = [r for r in rows if r["question_id"] == "q2"]
     scores_q2 = [float(r["score"]) for r in q2]
     pooled = [float(r["score"]) for r in rows]
-    row02 = next(r for r in q2 if abs(float(r["score"]) - 0.2) < 1e-9)
-    row03 = next(r for r in q2 if abs(float(r["score"]) - 0.3) < 1e-9)
-    assert row02["band_rel"] == "低"
-    assert row03["band_rel"] == "中"
+    row030 = next(r for r in q2 if abs(float(r["score"]) - 0.30) < 1e-9)
+    row040 = next(r for r in q2 if abs(float(r["score"]) - 0.40) < 1e-9)
+    assert row030["band_rel"] == "低"
+    assert row040["band_rel"] == "中"
     # 只用 q2 三行算切点 ⇒ 与 pooled 不同
-    assert band_rel_of(scores_q2, 0.2) == "中"
-    assert band_rel_of(scores_q2, 0.3) == "高"
-    assert band_rel_of(scores_q2, 0.2) != row02["band_rel"]
-    assert band_rel_of(pooled, 0.2) == row02["band_rel"]
+    assert band_rel_of(scores_q2, 0.30) == "中"
+    assert band_rel_of(scores_q2, 0.40) == "高"
+    assert band_rel_of(scores_q2, 0.30) != row030["band_rel"]
+    assert band_rel_of(pooled, 0.30) == row030["band_rel"]
 
 
 # ---------- l4③ 首屏只数 majority ----------
