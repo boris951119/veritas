@@ -5327,7 +5327,7 @@ docs/HANDOFF.md 的写入边界：只许在「Cursor 回写（C-34）」你自�
 - **开工提示词（协议 §9.1；10-22 下午按 `9891653`／基线 `859` 写）**：
 
 ```
-读 docs/dev-protocol.md（重点 §3.0 前提核查、§3 问题分流、§3.4 质疑通道、§5 验收纪律、§10 上下文纪律）和 docs/HANDOFF.md §5 的工单 C-35，你是执行工程师。这张单是现队头，0.2 天；它是一次性还账：C-33／C-34／C-24 两轮验收里架构师量到 7 把「0 红」的刀＝实现没错、判据没配格。
+读 docs/dev-protocol.md（重点 §3.0 前提核查、§3 问题分流、§3.4 质疑通道、§5 验收纪律、§10 上下文纪律）和 docs/HANDOFF.md §5 的工单 C-35，你是执行工程师。这张单是现队头，0.2 天；它是一次性还账：C-33／C-34／C-24 三轮验收里架构师量到 7 把「0 红」的刀＝实现没错、判据没配格。
 读法按 §10：只看 HANDOFF 页眉＋§5.0 队列那行＋本单那一节；旧读数用 grep／sed 定位，不许整文件重载；改文档只做局部补丁，别碰别的单子的 live 记录。
 本单主题一句话＝只加／改测试格（外加 check_markdown_tables.py 的 docstring 那一句），一行生产代码都不许多。
 边界先记死：app/ 整树零改动（confidence.py／evidence.py／pipeline.py／export/official.py 一字不许多）；不改实现语义去迁就测试；不许新增 git 与 diff 连写的常驻用例；不动 calibration/labels_self.jsonl、calibration/candidates_self.jsonl、cases/、tests/conftest.py、SEGMENTER_VERSION、D-1 四份、两份 proposal。
