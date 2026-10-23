@@ -22,6 +22,10 @@
 件③ 与仓库外金标做两阶段匹配算 Precision_conf／Recall_conf：
     第一步 doc_id+para_id 精确；第二步规则近似（主体＋数值＋时点三项一致）。
     输出必含：「第二步是规则近似，官方那一步是大模型语义判定」。
+件④／丁档（C-42）候选条目全集上界＝四路并集：
+    conflicts（乙形＝败方＋平局双方）／fact_ledger 对撞 Fact／rejected／dissent；
+    条目形 (doc_id, para_id, 陈述文本, 来源标签)，去重键 (doc_id, para_id)；
+    定位不到段落的不计入上界，但单独打印丢弃条数；第二步仍 approx=not_available。
 """
 
 from __future__ import annotations
@@ -38,6 +42,8 @@ if str(REPO) not in sys.path:
     sys.path.insert(0, str(REPO))
 
 from app.core.evidence import Dossier  # noqa: E402
+from app.core.fact_ledger import find_collisions  # noqa: E402
+from app.core.conflicts import dissent_conclusions  # noqa: E402
 from app.export.official import _conflicting_facts, _segment_locator  # noqa: E402
 
 OFFICIAL_CASES = os.environ.get(
@@ -61,8 +67,30 @@ _APPROX_NOTE = "第二步是规则近似，官方那一步是大模型语义判�
 _APPROX_NA_NOTE = (
     "第二步近似档需要我方自有槽位、当前不可测："
     "我方只从 quote／segment 正则年份与数字（主体抽不出），"
-    "与金标 argument（主体／时间／数值口径）字面不可比，故只报 exact-only"
+    "与金标 argument（主体／时间／数值口径）字面不可比，故只报 exact-only；"
+    "官方第二步是大模型语义判定、本探针不做"
 )
+_DING_OFFICIAL_STEP2 = "官方第二步是大模型语义判定、本探针不做"
+_DING_LAYER_NOTE = {
+    "conflicts": (
+        "放行 conflicts／平局另一侧：导出层一条规则"
+        "（现行甲只交败方；乙形把平局／未分胜负双方也交出去）"
+    ),
+    "fact_ledger": (
+        "放行 fact_ledger 对撞：导出层新增来源"
+        "（数据已在 accounting／dossier 可重算，不需要模型）"
+    ),
+    "rejected": (
+        "放行 rejected：导出层新增来源＋要不要给它一个「所涉结论」字段的口径"
+        "（持久化只有 evidence_id／conclusion_id／quote／problems，无原生 segment_ids）"
+    ),
+    "dissent": (
+        "放行 dissent 少数意见：导出层新增来源＋要不要给它一个「所涉结论」字段的口径"
+        "（结论自带 statement＋evidence_ids，经 evidences_of→segment_ids 可定位）"
+    ),
+}
+# rejected.problems 里「（seg_id）」形；无原生 segment_ids 时的唯一定位线索
+_REJECTED_SEG_RE = re.compile(r"（([^）]*#[^）]*)）")
 _YEAR_RE = re.compile(r"(?:19|20)\d{2}")
 _NUM_RE = re.compile(r"\d+(?:\.\d+)?")
 
@@ -426,6 +454,348 @@ def two_stage_match(submitted: list[dict], gold: list[dict],
     }
 
 
+
+def _entry(doc_id: str, para_id: str, statement: str, source: str) -> dict:
+    return {
+        "doc_id": doc_id,
+        "para_id": para_id,
+        "statement": statement or "",
+        "sources": [source],
+    }
+
+
+def _stream_conflicts(dossier: Dossier) -> tuple[list[dict], list[dict], str]:
+    """一路＝conflicts 乙形（败方＋平局／未分胜负双方）→ 可定位条目。
+
+    返回 (locable_entries, discarded, empty_reason)。
+    原始单位＝冲突对侧结论×其证据段；定位靠 _segment_locator。
+    """
+    pairs = [p for p in (dossier.conflicts or []) if isinstance(p, dict)]
+    if not pairs:
+        return [], [], "dossier.conflicts 为空（本份产物无冲突对）"
+    raw_rows: list[tuple[str, str, str, str]] = []  # side_id used only for stmt
+    discarded: list[dict] = []
+    for pair in pairs:
+        a_id, b_id, _w, sides = _pair_sides(pair)
+        if sides is None:
+            sides = [a_id, b_id] if a_id and b_id else []
+        for cid in sides:
+            con = dossier.conclusion(cid) if cid else None
+            stmt = (con.statement if con else "") or ""
+            evs = dossier.evidences_of(cid) if cid else []
+            if not evs:
+                discarded.append({
+                    "reason": "结论无证据",
+                    "conclusion_id": cid,
+                    "stream": "conflicts",
+                })
+                continue
+            any_seg = False
+            for ev in evs:
+                for sid in ev.segment_ids:
+                    any_seg = True
+                    loc = _segment_locator(dossier, sid)
+                    if loc is None or not loc[0] or not loc[1]:
+                        discarded.append({
+                            "reason": "segment 定位失败",
+                            "segment_id": sid,
+                            "conclusion_id": cid,
+                            "stream": "conflicts",
+                        })
+                        continue
+                    raw_rows.append((loc[0], loc[1], stmt, "conflicts"))
+            if not any_seg:
+                discarded.append({
+                    "reason": "证据无 segment_ids",
+                    "conclusion_id": cid,
+                    "stream": "conflicts",
+                })
+    # 本路内先按 (doc_id, para_id) 去重，来源标签合并（同路只有 conflicts）
+    by: dict[tuple[str, str], dict] = {}
+    for doc_id, para_id, stmt, src in raw_rows:
+        key = (doc_id, para_id)
+        if key not in by:
+            by[key] = _entry(doc_id, para_id, stmt, src)
+        else:
+            if stmt and not by[key]["statement"]:
+                by[key]["statement"] = stmt
+    return list(by.values()), discarded, ""
+
+
+def _stream_fact_ledger(dossier: Dossier) -> tuple[list[dict], list[dict], str]:
+    """一路＝fact_ledger 对撞 Fact（find_collisions → 每条 Fact 尝试落段）。"""
+    collisions = find_collisions(dossier)
+    if not collisions:
+        return [], [], "find_collisions(dossier) 返回空（无数字对撞）"
+    discarded: list[dict] = []
+    by: dict[tuple[str, str], dict] = {}
+    n_facts = 0
+    for col in collisions:
+        for f in col.facts:
+            n_facts += 1
+            loc = _segment_locator(dossier, f.seg_id)
+            stmt = f"{col.entity or '（未指明主体）'}·{col.metric}：{f.raw}"
+            if loc is None or not loc[0] or not loc[1]:
+                discarded.append({
+                    "reason": "Fact.seg_id 定位失败",
+                    "seg_id": f.seg_id,
+                    "source_id": f.source_id,
+                    "stream": "fact_ledger",
+                })
+                continue
+            key = (loc[0], loc[1])
+            if key not in by:
+                by[key] = _entry(loc[0], loc[1], stmt, "fact_ledger")
+            # 同段多值：保留已有陈述，来源已是 fact_ledger
+    # 附带原始对撞组／事实行数到 empty_reason 不用；由调用方读 len
+    _ = n_facts
+    return list(by.values()), discarded, ""
+
+
+def _stream_fact_ledger_counts(dossier: Dossier) -> tuple[int, int]:
+    """返回 (对撞组数, 对撞内 Fact 行数)，与架构师可行性读数对齐。"""
+    collisions = find_collisions(dossier)
+    n_facts = sum(len(c.facts) for c in collisions)
+    return len(collisions), n_facts
+
+
+def _stream_rejected(dossier: Dossier) -> tuple[list[dict], list[dict], str]:
+    """一路＝rejected 未采信反方。
+
+    持久化字段＝evidence_id／conclusion_id／quote／problems（无原生 segment_ids）。
+    定位＝从 problems 文本「（seg_id）」解析后走 _segment_locator；
+    解析不到或 locator 失败 ⇒ 丢弃（计入因定位不到丢弃）。
+    """
+    rows = [r for r in (dossier.rejected or []) if isinstance(r, dict)]
+    if not rows:
+        return [], [], "dossier.rejected 为空（本份产物无打回证据）"
+    discarded: list[dict] = []
+    by: dict[tuple[str, str], dict] = {}
+    for r in rows:
+        quote = str(r.get("quote") or "")
+        probs = r.get("problems") or []
+        segs: list[str] = []
+        for pr in probs:
+            segs.extend(_REJECTED_SEG_RE.findall(str(pr)))
+        segs = list(dict.fromkeys(segs))
+        if not segs:
+            discarded.append({
+                "reason": "problems 中无（seg_id）可解析",
+                "evidence_id": r.get("evidence_id"),
+                "stream": "rejected",
+            })
+            continue
+        located = False
+        for sid in segs:
+            loc = _segment_locator(dossier, sid)
+            if loc is None or not loc[0] or not loc[1]:
+                continue
+            located = True
+            key = (loc[0], loc[1])
+            if key not in by:
+                by[key] = _entry(loc[0], loc[1], quote, "rejected")
+        if not located:
+            discarded.append({
+                "reason": "problems 解析出的 seg_id 定位失败",
+                "evidence_id": r.get("evidence_id"),
+                "segs": segs,
+                "stream": "rejected",
+            })
+    return list(by.values()), discarded, ""
+
+
+def _stream_dissent(dossier: Dossier) -> tuple[list[dict], list[dict], str]:
+    """一路＝dissent_conclusions()；经 evidences_of→segment_ids 定位。"""
+    cons = dissent_conclusions(dossier)
+    if not cons:
+        return [], [], "dissent_conclusions(dossier) 为空（无 status=dissent 结论）"
+    discarded: list[dict] = []
+    by: dict[tuple[str, str], dict] = {}
+    for con in cons:
+        stmt = con.statement or ""
+        evs = dossier.evidences_of(con.id)
+        if not evs:
+            discarded.append({
+                "reason": "dissent 结论无证据",
+                "conclusion_id": con.id,
+                "stream": "dissent",
+            })
+            continue
+        any_loc = False
+        any_seg = False
+        for ev in evs:
+            for sid in ev.segment_ids:
+                any_seg = True
+                loc = _segment_locator(dossier, sid)
+                if loc is None or not loc[0] or not loc[1]:
+                    discarded.append({
+                        "reason": "segment 定位失败",
+                        "segment_id": sid,
+                        "conclusion_id": con.id,
+                        "stream": "dissent",
+                    })
+                    continue
+                any_loc = True
+                key = (loc[0], loc[1])
+                if key not in by:
+                    by[key] = _entry(loc[0], loc[1], stmt, "dissent")
+        if not any_seg:
+            discarded.append({
+                "reason": "证据无 segment_ids",
+                "conclusion_id": con.id,
+                "stream": "dissent",
+            })
+        elif not any_loc:
+            pass  # 已逐条记 discarded
+    return list(by.values()), discarded, ""
+
+
+def map_ding(dossiers: list[Dossier]) -> dict:
+    """丁档＝四路并集。跨多份 report 累加后按 (doc_id, para_id) 去重。
+
+    返回结构含逐路原始／可定位／并入新增、并集、丢弃、空因、守恒。
+    """
+    stream_fns = (
+        ("conflicts", _stream_conflicts),
+        ("fact_ledger", _stream_fact_ledger),
+        ("rejected", _stream_rejected),
+        ("dissent", _stream_dissent),
+    )
+    # 逐路累加（跨 dossier 先合并同路再去重）
+    per: dict[str, dict] = {
+        name: {
+            "raw": 0,          # 原始条数（定位前的候选次数；fact_ledger＝Fact 行）
+            "n_collisions": 0,  # 仅 fact_ledger
+            "locable": [],     # list[dict] 本路可定位（路内已按 dp 去重后的跨文件再并）
+            "discarded": 0,
+            "empty_reasons": [],
+            "files_nonempty": 0,
+            "files_empty": 0,
+        }
+        for name, _ in stream_fns
+    }
+    for d in dossiers:
+        for name, fn in stream_fns:
+            if name == "fact_ledger":
+                n_col, n_fact = _stream_fact_ledger_counts(d)
+                per[name]["n_collisions"] += n_col
+                per[name]["raw"] += n_fact
+            entries, discarded, empty_reason = fn(d)
+            if name != "fact_ledger":
+                # conflicts／rejected／dissent：原始＝本份尝试条数
+                # conflicts：用 discarded+entries 近似；更准＝调用前计数
+                if name == "conflicts":
+                    # 重新按对侧证据段计原始（含定位失败）
+                    pairs = [p for p in (d.conflicts or []) if isinstance(p, dict)]
+                    raw_n = 0
+                    for pair in pairs:
+                        a_id, b_id, _w, sides = _pair_sides(pair)
+                        if sides is None:
+                            sides = [a_id, b_id] if a_id and b_id else []
+                        for cid in sides:
+                            evs = d.evidences_of(cid) if cid else []
+                            n_seg = sum(len(ev.segment_ids) for ev in evs)
+                            raw_n += n_seg if n_seg else 1  # 无证据也算 1 次原始尝试
+                    per[name]["raw"] += raw_n
+                elif name == "rejected":
+                    per[name]["raw"] += len([r for r in (d.rejected or []) if isinstance(r, dict)])
+                elif name == "dissent":
+                    cons = dissent_conclusions(d)
+                    raw_n = 0
+                    for con in cons:
+                        evs = d.evidences_of(con.id)
+                        n_seg = sum(len(ev.segment_ids) for ev in evs)
+                        raw_n += n_seg if n_seg else 1
+                    per[name]["raw"] += raw_n
+            per[name]["discarded"] += len(discarded)
+            if empty_reason:
+                per[name]["files_empty"] += 1
+                per[name]["empty_reasons"].append(empty_reason)
+            else:
+                per[name]["files_nonempty"] += 1
+            # 跨文件并入本路 locable（按 dp 去重）
+            bucket: dict[tuple[str, str], dict] = {
+                (e["doc_id"], e["para_id"]): e for e in per[name]["locable"]
+            }
+            for e in entries:
+                key = (e["doc_id"], e["para_id"])
+                if key not in bucket:
+                    bucket[key] = dict(e)
+                    bucket[key]["sources"] = list(e["sources"])
+                else:
+                    for s in e["sources"]:
+                        if s not in bucket[key]["sources"]:
+                            bucket[key]["sources"].append(s)
+                    if e["statement"] and not bucket[key]["statement"]:
+                        bucket[key]["statement"] = e["statement"]
+            per[name]["locable"] = list(bucket.values())
+
+    # 并集：按流顺序并入，计「并入后新增」
+    union: dict[tuple[str, str], dict] = {}
+    order = [name for name, _ in stream_fns]
+    added_by_stream: dict[str, int] = {}
+    for name in order:
+        added = 0
+        for e in per[name]["locable"]:
+            key = (e["doc_id"], e["para_id"])
+            if key not in union:
+                union[key] = {
+                    "doc_id": e["doc_id"],
+                    "para_id": e["para_id"],
+                    "statement": e["statement"],
+                    "sources": list(e["sources"]),
+                }
+                added += 1
+            else:
+                for s in e["sources"]:
+                    if s not in union[key]["sources"]:
+                        union[key]["sources"].append(s)
+                if e["statement"] and not union[key]["statement"]:
+                    union[key]["statement"] = e["statement"]
+        added_by_stream[name] = added
+
+    locable_counts = {name: len(per[name]["locable"]) for name in order}
+    n_union = len(union)
+    max_loc = max(locable_counts.values()) if locable_counts else 0
+    sum_loc = sum(locable_counts.values())
+    if not (max_loc <= n_union <= sum_loc):
+        raise RuntimeError(
+            f"丁档守恒失败：max(可定位)={max_loc} 并集={n_union} "
+            f"Σ(可定位)={sum_loc}；逐路={locable_counts}"
+        )
+
+    discarded_total = sum(per[name]["discarded"] for name in order)
+    return {
+        "streams": {
+            name: {
+                "raw": per[name]["raw"],
+                "n_collisions": per[name]["n_collisions"],
+                "n_locable": locable_counts[name],
+                "added_to_union": added_by_stream[name],
+                "discarded": per[name]["discarded"],
+                "files_nonempty": per[name]["files_nonempty"],
+                "files_empty": per[name]["files_empty"],
+                "empty_reasons": per[name]["empty_reasons"],
+                "layer_note": _DING_LAYER_NOTE[name],
+            }
+            for name in order
+        },
+        "union_n": n_union,
+        "union_facts": [
+            {"doc_id": e["doc_id"], "para_id": e["para_id"]}
+            for e in union.values()
+        ],
+        "discarded_total": discarded_total,
+        "conservation": {
+            "max_locable": max_loc,
+            "union": n_union,
+            "sum_locable": sum_loc,
+            "ok": True,
+        },
+        "order": order,
+    }
+
+
 def _print_recompute_cmd() -> None:
     cmd = (
         f"OFFICIAL_CASES={OFFICIAL_CASES} OFFICIAL_RUN={OFFICIAL_RUN} "
@@ -468,7 +838,7 @@ def probe_inrepo_jia() -> dict:
 
 def probe_six_cases() -> dict:
     print("=" * 78)
-    print("①②③ · 六案：金标／甲／乙／丙 ＋ 两阶段 Precision_conf／Recall_conf")
+    print("①②③④ · 六案：金标／甲／乙／丙／丁 ＋ 两阶段 Precision_conf／Recall_conf")
     print("=" * 78)
     print(_APPROX_NOTE)
 
@@ -508,6 +878,7 @@ def probe_six_cases() -> dict:
     per_case_rows = []
 
     run_by_name = {d.name: d for d in run_dirs}
+    all_dossiers: list[Dossier] = []
     for c in case_dirs:
         gold_items = _gold_conf_items(c)
         n_gold = len(gold_items)
@@ -523,6 +894,7 @@ def probe_six_cases() -> dict:
         reports = sorted((rd / "questions").glob("*/report.json")) if rd else []
         for rp in reports:
             d = _load_dossier(rp)
+            all_dossiers.append(d)
             _merge_text_by_dp(text_by_dp, _our_text_by_dp(d))
             mj = map_conflicts(d, "jia")
             my = map_conflicts(d, "yi")
@@ -607,6 +979,84 @@ def probe_six_cases() -> dict:
                   f"Precision_conf={m['Precision_conf']:.4f} "
                   f"Recall_conf={m['Recall_conf']:.4f}")
 
+
+    # ---- 丁档：四路并集上界 ----
+    print()
+    print("=" * 78)
+    print("④／丁档 · 候选条目全集上界（四路并集；去重键 doc_id+para_id）")
+    print("=" * 78)
+    print(_DING_OFFICIAL_STEP2)
+    print("approx=not_available；" + _APPROX_NA_NOTE)
+    try:
+        ding = map_ding(all_dossiers)
+    except RuntimeError as exc:
+        print(f"丁档守恒自检失败：{exc}")
+        raise SystemExit(2) from exc
+
+    print(f"产物份数={len(all_dossiers)}（六案 questions/*/report.json）")
+    print(f"{'来源':<14}{'原始':>8}{'可定位':>8}{'并入新增':>8}{'丢弃':>8}")
+    print("-" * 46)
+    for name in ding["order"]:
+        st = ding["streams"][name]
+        extra = ""
+        if name == "fact_ledger":
+            extra = f"  （对撞组={st['n_collisions']}）"
+        print(f"{name:<14}{st['raw']:>8}{st['n_locable']:>8}"
+              f"{st['added_to_union']:>8}{st['discarded']:>8}{extra}")
+        if st["n_locable"] == 0:
+            reasons = st["empty_reasons"]
+            if reasons:
+                # 去重原因后打印
+                uniq = list(dict.fromkeys(reasons))
+                print(f"  └ 空因（{st['files_empty']} 份空／"
+                      f"{st['files_nonempty']} 份非空）：")
+                for r in uniq[:5]:
+                    print(f"     · {r}")
+            else:
+                print("  └ 空因：可定位条数为 0（原始候选均因定位不到被丢弃）")
+    print("-" * 46)
+    print(f"{'并集':<14}{ding['union_n']:>8}")
+    print(f"因定位不到丢弃 {ding['discarded_total']} 条"
+          f"（四路 discarded 合计；不计入上界）")
+    cons = ding["conservation"]
+    print(f"守恒：max(可定位)={cons['max_locable']} ≤ 并集={cons['union']} "
+          f"≤ Σ(可定位)={cons['sum_locable']} → OK")
+
+    print()
+    print("逐路「放行需要动哪一层」（只描述、不改 app/）：")
+    for name in ding["order"]:
+        print(f"  · {ding['streams'][name]['layer_note']}")
+
+    # 与金标 exact-only（合并六案我方原文供槽位；approx 仍 not_available）
+    text_all: dict[tuple[str, str], str] = {}
+    for d in all_dossiers:
+        _merge_text_by_dp(text_all, _our_text_by_dp(d))
+    ding_sub = _submitted_items(ding["union_facts"], text_all)
+    m_ding = two_stage_match(ding_sub, all_gold, approx_available=False)
+    results["丁"] = m_ding
+    print()
+    print("丁档 vs 金标（只算第一步 doc_id+para_id 精确匹配；"
+          "第二步 approx=not_available）")
+    print(_DING_OFFICIAL_STEP2)
+    # 分子／分母原样整数
+    p_num, p_den = m_ding["exact"], m_ding["n_sub"]
+    r_num, r_den = m_ding["exact"], m_ding["n_gold"]
+    print(f"  丁: sub={m_ding['n_sub']} gold={m_ding['n_gold']} "
+          f"exact={m_ding['exact']} approx=not_available "
+          f"hits={m_ding['hits']}(exact-only)")
+    print(f"  Precision_conf = {p_num}/{p_den}"
+          f" = {m_ding['Precision_conf']:.4f}")
+    print(f"  Recall_conf    = {r_num}/{r_den}"
+          f" = {m_ding['Recall_conf']:.4f}")
+
+    # 判据 g：硬结论句
+    print()
+    if m_ding["exact"] < 46:
+        print("结论：改导出到不了 Recall_conf 最低档 3 分＝出路只剩检出侧"
+              "（判定变更、须用户点头）")
+    else:
+        print("结论：导出侧扩面可到最低档，且必须同步《字段说明》")
+
     return {
         "gold_total": sum_gold,
         "verdict_label": dict(vl),
@@ -615,6 +1065,7 @@ def probe_six_cases() -> dict:
         "bing_facts": sum_bing_facts,
         "per_case": per_case_rows,
         "match": results,
+        "ding": ding,
     }
 
 
@@ -671,15 +1122,33 @@ def main() -> None:
         if m.get("approx_available"):
             ap = m["approx"]
             tail = f"(exact={m['exact']} approx={ap})"
+            print(f"  {label} Precision_conf={m['Precision_conf']:.4f} "
+                  f"Recall_conf={m['Recall_conf']:.4f} {tail}")
         else:
-            tail = f"(exact={m['exact']} approx=not_available；exact-only)"
-        print(f"  {label} Precision_conf={m['Precision_conf']:.4f} "
-              f"Recall_conf={m['Recall_conf']:.4f} {tail}")
-    # 任一带 not_available 则印不可测说明，否则印近似声明
+            # 丁档强制打印分子／分母整数；甲乙丙保持原形兼打整数
+            p_num, p_den = m["exact"], m["n_sub"]
+            r_num, r_den = m["exact"], m["n_gold"]
+            print(f"  {label} Precision_conf={p_num}/{p_den}"
+                  f"={m['Precision_conf']:.4f} "
+                  f"Recall_conf={r_num}/{r_den}"
+                  f"={m['Recall_conf']:.4f} "
+                  f"(exact={m['exact']} approx=not_available；exact-only)")
     if any(not m.get("approx_available") for m in six["match"].values()):
         print(_APPROX_NA_NOTE)
+        print(_DING_OFFICIAL_STEP2)
     else:
         print(_APPROX_NOTE)
+    ding = six.get("ding") or {}
+    if ding:
+        print(f"丁并集={ding.get('union_n')} 丢弃={ding.get('discarded_total')} "
+              f"守恒={ding.get('conservation')}")
+        m = six["match"].get("丁") or {}
+        if m:
+            if m.get("exact", 0) < 46:
+                print("结论：改导出到不了 Recall_conf 最低档 3 分＝出路只剩检出侧"
+                      "（判定变更、须用户点头）")
+            else:
+                print("结论：导出侧扩面可到最低档，且必须同步《字段说明》")
 
 
 if __name__ == "__main__":
