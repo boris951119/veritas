@@ -868,3 +868,17 @@ veritas-testcases/,不占 agent 仓库。
 **回灌真数（复放命令见脚本 stdout）**：v1 AUC≈0.430／ECE≈0.421／高档 n=0；v2 AUC≈0.601／ECE≈0.057／高档 n=29 准确率 0.517＜基准 0.637——**达标线仍无法回答**。
 
 **未动**：`evidence.py`／`LEVEL_WEIGHT`／`_CAUSATION_BONUS`／band 切点算法／labels_self／六案重跑。
+
+
+## 2026-10-23 · C-37 锚点体检脚本入库跑法（件① 真登记）
+
+守护脚本 `scripts/check_doc_anchors.py` 把架构师每轮的全限定 `file:line` 锚点体检从 `/tmp` 搬进仓。操作面跑法（复算命令；总数会随文档树漂）：
+
+```bash
+.venv/bin/python scripts/check_doc_anchors.py
+.venv/bin/python scripts/check_doc_anchors.py --json
+.venv/bin/python scripts/check_doc_anchors.py --include-fenced
+.venv/bin/python scripts/check_doc_anchors.py --include-fenced --json
+```
+
+默认跳过围栏；`--include-fenced` 把围栏内锚点也计入（两版 total／missing／oob／ambig 都附报）。missing>0 或 oob>0 ⇒ 非零退出。

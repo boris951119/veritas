@@ -2,6 +2,10 @@
 
 边界：不连 cases/*/out*/report.json；合成夹具 + 入仓 eval/；
 新增格子 subprocess 总数 ≤3；禁止版本对照命令型常驻断言。
+
+件⑤ 零引用扫描排除面＝脚本自身 ＋ 三份叙事面 ＋ `tests/c37_zero_ref_registry.py`
+（登记表纯数据模块；表内键＝脚本名，计入引用面会 self-wash＝R-C37-5）。
+登记模块内的 import／字面量都不算引用；真引用写操作／决策面（见该模块 docstring）。
 """
 from __future__ import annotations
 
@@ -51,24 +55,20 @@ REGISTERED_EXCEPT_PASS_SITES = frozenset({
     "app/ingest/case_loader.py:825",
 })
 
-# 件⑤：零引用豁免登记表（名字 → 为什么留着 / 怎么退表）
-SCRIPT_ZERO_REF_EXEMPTIONS: dict[str, str] = {
-    "gen_eval_questions.py": (
-        "B4 评测集 v3 出题工具；评测集已固化进 eval/＝四个里最该处置的一个。"
-        "退表＝挂真实调用点或删脚本。"
-    ),
-    "local_retrieval_smoke.py": (
-        "10-19 为 C-19 写的离线检索抽检。退表＝挂真实调用点或删脚本。"
-    ),
-    "measure_capacity.py": (
-        "C-7 容量实测探针；docstring 自述架构师用不进 tests。"
-        "退表＝把跑法写进 docs/dev-journal.md 或改成测试调用。"
-    ),
-    "probe_source_dedup.py": (
-        "C-14 工单「实测前提」的数字来源。"
-        "退表＝把跑法写进 docs/dev-journal.md。"
-    ),
-}
+# 件⑤：零引用豁免登记表（纯数据模块；本文件不再内嵌键字面量，防 self-wash）
+from tests.c37_zero_ref_registry import SCRIPT_ZERO_REF_EXEMPTIONS
+
+ZERO_REF_REGISTRY_REL = "tests/c37_zero_ref_registry.py"
+
+
+def _is_zero_ref_registry(path: str) -> bool:
+    """引用面排除：登记模块与脚本自身同级（R-C37-5）。可被刀⑨ monkeypatch 拆掉。"""
+    return path == ZERO_REF_REGISTRY_REL
+
+
+def _script_path(stem: str) -> Path:
+    """scripts/<stem>.py；用拼接避免本文件源码出现「<stem>.py」连续字面量。"""
+    return SCRIPTS / (stem + ".py")
 
 _NOQA_RE = re.compile(r"#\s*noqa(?::\s*([A-Z0-9,\s]+))?", re.I)
 _SUBPROCESS_BUDGET = {"n": 0}
@@ -220,6 +220,8 @@ def scan_script_zero_refs(
         for f in tracked:
             if f == s:
                 continue
+            if _is_zero_ref_registry(f):
+                continue
             if exclude_narrative and _is_narrative(f):
                 continue
             # variant ①② only excl HANDOFF+archive (not map) when exclude_narrative
@@ -267,7 +269,7 @@ def scan_script_zero_refs_variant(kind: str) -> list[str]:
         needles = [name] if needles_py_only else [name, f"scripts.{stem}"]
         hit = False
         for f in tracked:
-            if f == s or excl(f):
+            if f == s or excl(f) or _is_zero_ref_registry(f):
                 continue
             try:
                 text = (ROOT / f).read_text(encoding="utf-8", errors="ignore")
@@ -554,8 +556,9 @@ def test_c37_knife7_remove_exemption_entry_red(monkeypatch):
     import tests.test_c37_engineering_gates as mod
 
     live = set(scan_script_zero_refs_variant("4"))
-    victim = "gen_eval_questions.py"
-    assert victim in live
+    assert live, "locked live must be non-empty"
+    victim = sorted(live)[0]
+    assert victim in SCRIPT_ZERO_REF_EXEMPTIONS
     shrunk = {
         k: v for k, v in SCRIPT_ZERO_REF_EXEMPTIONS.items() if k != victim
     }
@@ -569,7 +572,7 @@ def test_c37_knife8_narrative_mention_does_not_wash(monkeypatch):
     import tests.test_c37_engineering_gates as mod
 
     live = set(scan_script_zero_refs_variant("4"))
-    assert "local_retrieval_smoke.py" in live
+    assert live == set(SCRIPT_ZERO_REF_EXEMPTIONS)
     for name in SCRIPT_ZERO_REF_EXEMPTIONS:
         assert name in live
 
@@ -592,12 +595,65 @@ def test_c37_knife8_narrative_mention_does_not_wash(monkeypatch):
         mod._assert_script_zero_ref_equals_registry()
 
 
+
+
+def test_c37_knife7b_real_import_in_other_tracked_file_red():
+    """刀⑦b：往另一 tracked 非排除文件写真 `from scripts.<stem> import` ⇒ 该脚本离 live ⇒ 主断言红。"""
+    import tests.test_c37_engineering_gates as mod
+
+    live = set(mod.scan_script_zero_refs_variant("4"))
+    assert live
+    victim = sorted(live)[0]
+    stem = Path(victim).stem
+    # 操作面文件（非叙事、非登记模块）
+    target = ROOT / "AGENTS.md"
+    original = target.read_text(encoding="utf-8")
+    try:
+        target.write_text(
+            original
+            + f"\nfrom scripts.{stem} import _c37_knife7b_probe  # C-37 knife7b transient\n",
+            encoding="utf-8",
+        )
+        with pytest.raises(AssertionError):
+            mod._assert_script_zero_ref_equals_registry()
+    finally:
+        target.write_text(original, encoding="utf-8")
+
+
+def test_c37_knife9_registry_module_import_does_not_wash(monkeypatch):
+    """刀⑨：往登记模块写 import 不算引用；拆掉登记排除 ⇒ 主断言体必红。"""
+    import tests.test_c37_engineering_gates as mod
+
+    live = set(mod.scan_script_zero_refs_variant("4"))
+    assert live
+    victim = sorted(live)[0]
+    stem = Path(victim).stem
+    reg_path = ROOT / ZERO_REF_REGISTRY_REL
+    original = reg_path.read_text(encoding="utf-8")
+    try:
+        reg_path.write_text(
+            original
+            + f"\nfrom scripts.{stem} import _c37_knife9_probe  # noqa: F401  # knife9 transient\n",
+            encoding="utf-8",
+        )
+        # 排除仍在：victim 仍在 live，主断言绿
+        still = set(mod.scan_script_zero_refs_variant("4"))
+        assert victim in still
+        mod._assert_script_zero_ref_equals_registry()
+        # 拆掉登记排除 ⇒ 登记表键字面量＋刚写入的 import 洗白豁免 ⇒ 主断言红
+        monkeypatch.setattr(mod, "_is_zero_ref_registry", lambda _path: False)
+        with pytest.raises(AssertionError):
+            mod._assert_script_zero_ref_equals_registry()
+    finally:
+        reg_path.write_text(original, encoding="utf-8")
+
+
 # ===== 件①② CLI 烟测（计入 subprocess 预算）===========================
 
 def test_c37_check_doc_anchors_cli():
     _count_subprocess()
     r = subprocess.run(
-        [sys.executable, str(SCRIPTS / "check_doc_anchors.py"), "--json"],
+        [sys.executable, str(_script_path("check_doc_anchors")), "--json"],
         cwd=ROOT,
         capture_output=True,
         text=True,
@@ -608,7 +664,7 @@ def test_c37_check_doc_anchors_cli():
     assert data["missing"] == 0 and data["oob"] == 0
     import importlib.util
     spec = importlib.util.spec_from_file_location(
-        "check_doc_anchors", SCRIPTS / "check_doc_anchors.py"
+        "check_doc_anchors", _script_path("check_doc_anchors")
     )
     mod = importlib.util.module_from_spec(spec)
     assert spec.loader is not None
@@ -625,7 +681,7 @@ def test_c37_check_doc_anchors_cli():
 def test_c37_ledger_counts_cli():
     _count_subprocess()
     r = subprocess.run(
-        [sys.executable, str(SCRIPTS / "ledger_counts.py"), "--json"],
+        [sys.executable, str(_script_path("ledger_counts")), "--json"],
         cwd=ROOT,
         capture_output=True,
         text=True,
@@ -649,7 +705,7 @@ def test_c37_anchors_self_proof_oob_red(tmp_path):
         )
         _count_subprocess()
         r = subprocess.run(
-            [sys.executable, str(SCRIPTS / "check_doc_anchors.py"), "--json"],
+            [sys.executable, str(_script_path("check_doc_anchors")), "--json"],
             cwd=ROOT,
             capture_output=True,
             text=True,
@@ -674,7 +730,7 @@ def test_c37_anchors_self_proof_missing_docs_red(tmp_path):
             original + "\n`docs/c37_no_such_file_ever.md:1`\n", encoding="utf-8"
         )
         spec = importlib.util.spec_from_file_location(
-            "check_doc_anchors", SCRIPTS / "check_doc_anchors.py"
+            "check_doc_anchors", _script_path("check_doc_anchors")
         )
         mod = importlib.util.module_from_spec(spec)
         assert spec.loader is not None
