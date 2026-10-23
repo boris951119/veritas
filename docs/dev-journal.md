@@ -936,3 +936,22 @@ OFFICIAL_CASES=/path/to/样例集 OFFICIAL_RUN=/path/to/time-run \
 
 **缺目录或空目录必须退出码 2** 并说明原因；硬门槛＝可定位并集覆盖 ≥40／78，否则 STOP 不许进件②。
 
+## 2026-10-23 · C-45 件① 消解记录提交面对账探针入库跑法（操作面登记）
+
+只量探针 `scripts/probe_resolution_records.py`：对六案逐案调真 `app.export.official.export_official`（产物写 `/tmp/c45_resrec_*`），打印四项＝① 内部冲突 vs 提交面记录＋差集点名 pair_id／question_id；② 三要素（清单／结果／理由）在场率（空串≠缺键）；③ `resolution_type` 官方五类落点＋「其他」占比；④ dissent 独立记录＋重启条件非空。自证腿＝`C45_USE_OLD_JSON=1` 改读旧 JSON／见证文件；通用性腿＝同一规则扫 `cases/*/out*/report.json`。零 LLM、零网络、不写 `app/`。
+
+```bash
+OFFICIAL_RUN=/tmp/s4runs/time-20261023-173124 \
+    .venv/bin/python scripts/probe_resolution_records.py
+# 自证腿（差集须变／见证腿）：
+C45_USE_OLD_JSON=1 OFFICIAL_RUN=/tmp/s4runs/time-20261023-173124 \
+    .venv/bin/python scripts/probe_resolution_records.py
+```
+
+环境变量（均可覆盖）：
+- `OFFICIAL_RUN` — 六案跑产物根（默认 `/tmp/s4runs/time-20261023-173124`；跑次要点名）
+- `INREPO_ROOT` — 仓内产物扫描根（默认 `<repo>/cases`）
+- `C45_USE_OLD_JSON` — 设 `1` 则摘掉 `export_official`、改读既有 `conflict_resolution.json`
+
+**缺目录或空目录／无 report.json 必须退出码 2** 并说明原因，不许静默打印 0 条当结果。双条件门槛（缺记录≥1 ∧ 补后 P／R／置信换分不变）本探针只报告、不发件②。
+
