@@ -5,6 +5,9 @@
 app/ tests/ scripts/ web/ calibration/ 各自总行数、
 pytest --collect-only 条数、grep -c '^def test_' 合计。
 
+calibration 面＝该目录下 py／json／jsonl／md／txt／csv 的 splitlines 合计
+（含三份 .jsonl；与 `find calibration -type f | xargs wc -l` 同面＝历年账 907）。
+
 写行数账只许抄本脚本输出，不许往上传播估数（见 docs/dev-protocol.md §5）。
 
 用法：
@@ -120,7 +123,7 @@ def _dir_any_lines(rel: str) -> int:
     for p in root.rglob("*"):
         if not p.is_file():
             continue
-        if p.suffix.lower() not in {".py", ".json", ".md", ".txt", ".csv"}:
+        if p.suffix.lower() not in {".py", ".json", ".jsonl", ".md", ".txt", ".csv"}:
             continue
         if "__pycache__" in p.parts:
             continue

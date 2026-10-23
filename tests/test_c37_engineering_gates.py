@@ -30,29 +30,31 @@ ALLOWED_NOQA_CODES = frozenset({
     "E402", "E731", "F401", "BLE001", "PLC2701",
 })
 
+# C-38 件①：身份＝(文件, 外层函数名[＃序号])；行号只附报，不进断言。
+# 对照旧 file:line 见 scan_*_attach() / HANDOFF 回写对照表。
 REGISTERED_SKIP_SITES = frozenset({
-    "tests/test_c23_corpus_max.py:117",
-    "tests/test_c24_calibration.py:394",
-    "tests/test_c25_errors_sensitivity.py:237",
-    "tests/test_c36_aggregate.py:214",
-    "tests/test_c38_assist_label.py:258",
-    "tests/test_c38_assist_label.py:277",
-    "tests/test_server_human.py:89",
+    "tests/test_c23_corpus_max.py:test_a_out_s4runs_attach_only_no_assert_on_missing",
+    "tests/test_c24_calibration.py:test_h_cli_errors_has_venv_skip_guard",
+    "tests/test_c25_errors_sensitivity.py:test_cli_errors_flag",
+    "tests/test_c36_aggregate.py:test_c_face_v2_auc_from_snapshot_or_skip",
+    "tests/test_c38_assist_label.py:test_g_booked_labels_are_consistent_with_candidates",
+    "tests/test_c38_assist_label.py:test_h_receipt_matches_booked_labels_and_discloses_provenance",
+    "tests/test_server_human.py:test_http_override_conflict",
 })
 
 REGISTERED_EXCEPT_PASS_SITES = frozenset({
-    "app/server.py:1010",
-    "app/pipeline.py:1686",
-    "app/llm/model_client.py:543",
-    "app/llm/model_client.py:754",
-    "app/core/relevance.py:83",
-    "app/ingest/pdf_backend.py:80",
-    "app/ingest/pdf_backend.py:101",
-    "app/ingest/pdf_backend.py:114",
-    "app/ingest/readers.py:98",
-    "app/ingest/case_loader.py:182",
-    "app/ingest/case_loader.py:624",
-    "app/ingest/case_loader.py:825",
+    "app/server.py:main",
+    "app/pipeline.py:main",
+    "app/llm/model_client.py:_call_and_build",
+    "app/llm/model_client.py:_notify_on_call",
+    "app/core/relevance.py:classify_sources",
+    "app/ingest/pdf_backend.py:_extract_pypdf",
+    "app/ingest/pdf_backend.py:_extract_docling#1",
+    "app/ingest/pdf_backend.py:_extract_docling#2",
+    "app/ingest/readers.py:read_pdf",
+    "app/ingest/case_loader.py:_pdf_probe",
+    "app/ingest/case_loader.py:_handle_links",
+    "app/ingest/case_loader.py:load_case",
 })
 
 # 件⑤：零引用豁免登记表（纯数据模块；本文件不再内嵌键字面量，防 self-wash）
@@ -69,6 +71,58 @@ def _is_zero_ref_registry(path: str) -> bool:
 def _script_path(stem: str) -> Path:
     """scripts/<stem>.py；用拼接避免本文件源码出现「<stem>.py」连续字面量。"""
     return SCRIPTS / (stem + ".py")
+
+
+def _enclosing_function_name(tree: ast.AST, lineno: int) -> str:
+    """最近 enclosing FunctionDef／AsyncFunctionDef 名；模块顶层＝<module>。"""
+    best_name = "<module>"
+    best_span = None
+    for node in ast.walk(tree):
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            end = getattr(node, "end_lineno", None) or node.lineno
+            if node.lineno <= lineno <= end:
+                span = (end - node.lineno, -node.lineno)
+                if best_span is None or span < best_span:
+                    best_name = node.name
+                    best_span = span
+    return best_name
+
+
+def _identities_from_sites(sites: list[tuple[str, int, str]]) -> set[str]:
+    """(rel, lineno, fn) → 身份键。同函数多处补 #序号（按行号排序），永不退回行号。"""
+    from collections import defaultdict
+
+    groups: dict[tuple[str, str], list[int]] = defaultdict(list)
+    for rel, ln, fn in sites:
+        groups[(rel, fn)].append(ln)
+    out: set[str] = set()
+    for (rel, fn), lns in groups.items():
+        ordered = sorted(set(lns))
+        if len(ordered) == 1:
+            out.add(f"{rel}:{fn}")
+        else:
+            for i, _ln in enumerate(ordered, 1):
+                out.add(f"{rel}:{fn}#{i}")
+    return out
+
+
+def _attach_identity_lineno(sites: list[tuple[str, int, str]]) -> list[tuple[str, int]]:
+    """附报：身份 → 当场 lineno（不进断言）。"""
+    from collections import defaultdict
+
+    groups: dict[tuple[str, str], list[int]] = defaultdict(list)
+    for rel, ln, fn in sites:
+        groups[(rel, fn)].append(ln)
+    rows: list[tuple[str, int]] = []
+    for (rel, fn), lns in sorted(groups.items()):
+        ordered = sorted(set(lns))
+        if len(ordered) == 1:
+            rows.append((f"{rel}:{fn}", ordered[0]))
+        else:
+            for i, ln in enumerate(ordered, 1):
+                rows.append((f"{rel}:{fn}#{i}", ln))
+    return rows
+
 
 _NOQA_RE = re.compile(r"#\s*noqa(?::\s*([A-Z0-9,\s]+))?", re.I)
 _SUBPROCESS_BUDGET = {"n": 0}
@@ -114,9 +168,9 @@ def scan_noqa_sites() -> tuple[list[tuple[str, int, str | None]], Counter]:
     return sites, codes
 
 
-def scan_skip_sites_ast() -> set[str]:
-    """Real pytest.skip( call sites via AST (string literals excluded)."""
-    found: set[str] = set()
+def _collect_skip_sites_raw() -> list[tuple[str, int, str]]:
+    """AST pytest.skip( 位点；(rel, lineno, enclosing_fn)。"""
+    raw: list[tuple[str, int, str]] = []
     for p in _iter_py([TESTS]):
         rel = str(p.relative_to(ROOT))
         src = p.read_text(encoding="utf-8")
@@ -134,13 +188,24 @@ def scan_skip_sites_ast() -> set[str]:
                 and isinstance(f.value, ast.Name)
                 and f.value.id == "pytest"
             ):
-                found.add(f"{rel}:{node.lineno}")
-    return found
+                fn = _enclosing_function_name(tree, node.lineno)
+                raw.append((rel, node.lineno, fn))
+    return raw
+
+
+def scan_skip_sites_ast() -> set[str]:
+    """Real pytest.skip( 身份集合＝(文件, 外层函数[#序号])；字面量排除。"""
+    return _identities_from_sites(_collect_skip_sites_raw())
+
+
+def scan_skip_sites_attach() -> list[tuple[str, int]]:
+    """附报：身份 → 当场 lineno。"""
+    return _attach_identity_lineno(_collect_skip_sites_raw())
 
 
 def scan_skip_string_literal_lines() -> set[str]:
     """Lines that contain pytest.skip as a string but are NOT AST calls."""
-    real = scan_skip_sites_ast()
+    real_linenos = {f"{rel}:{ln}" for rel, ln, _fn in _collect_skip_sites_raw()}
     false: set[str] = set()
     for p in _iter_py([TESTS]):
         rel = str(p.relative_to(ROOT))
@@ -148,16 +213,14 @@ def scan_skip_string_literal_lines() -> set[str]:
             if "pytest.skip" not in line:
                 continue
             key = f"{rel}:{i}"
-            if key not in real:
+            if key not in real_linenos:
                 false.add(key)
     return false
 
 
-def scan_except_pass_sites() -> set[str]:
-    """except Exception (or tuple containing it) whose body is only Pass.
-    Keyed by the *except* lineno (AST Pass lineno is often +1).
-    """
-    found: set[str] = set()
+def _collect_except_pass_sites_raw() -> list[tuple[str, int, str]]:
+    """except Exception(+Pass) 位点；(rel, except_lineno, enclosing_fn)。"""
+    raw: list[tuple[str, int, str]] = []
     for p in _iter_py([APP]):
         rel = str(p.relative_to(ROOT))
         src = p.read_text(encoding="utf-8")
@@ -168,17 +231,28 @@ def scan_except_pass_sites() -> set[str]:
         for node in ast.walk(tree):
             if not isinstance(node, ast.ExceptHandler):
                 continue
-            t = node.type
-            is_exc = isinstance(t, ast.Name) and t.id == "Exception"
-            if isinstance(t, ast.Tuple):
+            typ = node.type
+            is_exc = isinstance(typ, ast.Name) and typ.id == "Exception"
+            if isinstance(typ, ast.Tuple):
                 is_exc = any(
-                    isinstance(x, ast.Name) and x.id == "Exception" for x in t.elts
+                    isinstance(x, ast.Name) and x.id == "Exception" for x in typ.elts
                 )
             if not is_exc:
                 continue
             if len(node.body) == 1 and isinstance(node.body[0], ast.Pass):
-                found.add(f"{rel}:{node.lineno}")
-    return found
+                fn = _enclosing_function_name(tree, node.lineno)
+                raw.append((rel, node.lineno, fn))
+    return raw
+
+
+def scan_except_pass_sites() -> set[str]:
+    """except-pass 身份集合＝(文件, 外层函数[#序号])。"""
+    return _identities_from_sites(_collect_except_pass_sites_raw())
+
+
+def scan_except_pass_sites_attach() -> list[tuple[str, int]]:
+    """附报：身份 → 当场 except lineno。"""
+    return _attach_identity_lineno(_collect_except_pass_sites_raw())
 
 
 def _is_narrative(path: str) -> bool:
@@ -333,10 +407,11 @@ def test_c37_knife1_bare_noqa_red(tmp_path):
 def test_c37_skip_registry_bidirectional():
     live = scan_skip_sites_ast()
     assert live == REGISTERED_SKIP_SITES
-    # 附报：字符串字面量假位点（应为 4 行，不进登记表）
+    # 附报：身份→lineno；字符串字面量假位点（行号会漂，不钉进断言）
+    print("skip_attach", scan_skip_sites_attach())
     false = scan_skip_string_literal_lines()
     print("skip_string_literal_false_sites", sorted(false))
-    assert "tests/test_c24_calibration.py:395" in false
+    assert any(s.startswith("tests/test_c24_calibration.py:") for s in false)
 
 
 def test_c37_knife2_unregistered_skip_red(tmp_path):
@@ -393,13 +468,105 @@ def test_c37_except_pass_registry_bidirectional():
     live = scan_except_pass_sites()
     assert live == REGISTERED_EXCEPT_PASS_SITES
     print("except_pass_n", len(live))
+    print("except_pass_attach", scan_except_pass_sites_attach())
 
 
 def test_c37_except_pass_self_proof_extra_would_red():
     """自证腿：若登记表少一条，必与 live 不等。"""
     shrunk = set(REGISTERED_EXCEPT_PASS_SITES)
-    shrunk.remove("app/ingest/case_loader.py:624")
+    shrunk.remove("app/ingest/case_loader.py:_handle_links")
     assert scan_except_pass_sites() != shrunk
+
+
+# ===== C-38 面卫生自证腿 ==============================================
+
+def test_c38_knife_blank_line_top_does_not_red_registries():
+    """腿①：被登记文件顶部插空行 ⇒ skip／except-pass 双向格都不红。"""
+    targets = [
+        TESTS / "test_c24_calibration.py",
+        APP / "ingest" / "pdf_backend.py",
+    ]
+    originals = {path: path.read_text(encoding="utf-8") for path in targets}
+    try:
+        for path, text in originals.items():
+            path.write_text("\n" + text, encoding="utf-8")
+        assert scan_skip_sites_ast() == REGISTERED_SKIP_SITES
+        assert scan_except_pass_sites() == REGISTERED_EXCEPT_PASS_SITES
+    finally:
+        for path, text in originals.items():
+            path.write_text(text, encoding="utf-8")
+
+
+def test_c38_knife_delete_registry_entry_red():
+    """腿②：删一条真 skip 登记 ⇒ 仍红（集合语义未变，只换身份写法）。"""
+    shrunk = set(REGISTERED_SKIP_SITES)
+    one = next(iter(sorted(shrunk)))
+    shrunk.remove(one)
+    live = scan_skip_sites_ast()
+    assert live != shrunk
+    assert live - shrunk == {one}
+
+
+def test_c38_knife_wrong_function_name_letter_red(monkeypatch):
+    """腿③：登记函数名写错一个字母 ⇒ 双向红（新身份真在比对，非行号兜底）。"""
+    import tests.test_c37_engineering_gates as mod
+
+    real = set(mod.REGISTERED_SKIP_SITES)
+    victim = sorted(real)[0]
+    rel, _, rest = victim.partition(":")
+    if "#" in rest:
+        fn, hash_, ord_ = rest.partition("#")
+        typo_fn = fn[:-1] + ("X" if fn[-1:] != "X" else "Y")
+        typo = f"{rel}:{typo_fn}{hash_}{ord_}"
+    else:
+        typo_fn = rest[:-1] + ("X" if rest[-1:] != "X" else "Y")
+        typo = f"{rel}:{typo_fn}"
+    fake = set(real)
+    fake.remove(victim)
+    fake.add(typo)
+    monkeypatch.setattr(mod, "REGISTERED_SKIP_SITES", frozenset(fake))
+    with pytest.raises(AssertionError):
+        assert mod.scan_skip_sites_ast() == mod.REGISTERED_SKIP_SITES
+
+
+def test_c38_knife_jsonl_line_bumps_calibration_reading():
+    """腿④＝件②(甲)：往 .jsonl 追加一行 ⇒ ledger_counts calibration 读数 +1。"""
+    import importlib.util
+
+    def _load_ledger():
+        spec = importlib.util.spec_from_file_location(
+            "ledger_counts_c38", _script_path("ledger_counts")
+        )
+        mod = importlib.util.module_from_spec(spec)
+        assert spec.loader is not None
+        spec.loader.exec_module(mod)
+        return mod
+
+    victim = ROOT / "calibration" / "labels_self.jsonl"
+    original = victim.read_bytes()
+    before = _load_ledger().collect()["calibration_lines"]
+    try:
+        victim.write_bytes(original + b'{"c38_knife": true}\n')
+        after = _load_ledger().collect()["calibration_lines"]
+        assert after == before + 1
+    finally:
+        victim.write_bytes(original)
+
+
+def test_c38_knife_break_s5_15_reds_zero_ref_after_splice():
+    """腿⑤＝件③：拼接下，改坏 §5#15 ⇒ 零引用主断言红（洗白路径只剩一条）。"""
+    path = ROOT / "docs" / "dev-protocol.md"
+    original = path.read_text(encoding="utf-8")
+    needle = "scripts/" + "ledger_counts" + ".py"
+    broken_needle = "scripts/" + "ledger_counts_BROKEN" + ".py"
+    try:
+        assert needle in original
+        # §5#15 同行两处字面量都要改掉，否则剩一处仍算引用
+        path.write_text(original.replace(needle, broken_needle), encoding="utf-8")
+        with pytest.raises(AssertionError):
+            _assert_script_zero_ref_equals_registry()
+    finally:
+        path.write_text(original, encoding="utf-8")
 
 
 # ===== 件④ gate inventory =============================================
@@ -749,7 +916,9 @@ def test_c37_dev_protocol_three_disciplines_last():
     idx6 = text.find("## 6. 仓库三道纪律")
     assert idx6 > 0
     sec = text[:idx6]
-    assert "写行数账只许抄 scripts/ledger_counts.py 的输出，不许往上传播估数" in sec
+    # C-38 件③：拼接路径字面量，避免本文件自洗 scripts/ledger_counts 引用面
+    _lc = "scripts/" + "ledger_counts" + ".py"
+    assert ("写行数账只许抄 " + _lc + " 的输出，不许往上传播估数") in sec
     assert "改文档树（加／删 markdown 表格）就同笔刷 check_markdown_tables.py docstring 那句当场附报" in sec
     assert "任何当场读数型数字进文档，必须同句带上复算命令与它会随什么漂" in sec
     assert "第 15 条" in sec and "第 16 条" in sec and "第 17 条" in sec
