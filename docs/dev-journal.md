@@ -972,3 +972,29 @@ C45_USE_OLD_JSON=1 OFFICIAL_RUN=/tmp/s4runs/time-20261023-173124 \
   roster＝`config/roster-devil-advocate.yaml`（`load_roster`）；展示清单用 `agent_inventory(roster=…)` 真绑；工作台默认入口未挂＝如实未达。记录落 `/tmp/c47_agent_demo/record.json` 与 `docs/deliverables/智能体实测-C47.md`。
 - **不**登记进 `tests/c37_zero_ref_registry.py`。
 
+
+## 2026-10-24 · C-48 件① 因果主张卡覆盖量尺＋件③ 打包默认不装因果件（操作面登记）
+
+- **日期**：2026-10-24（Asia/Shanghai）
+- **件①** `scripts/probe_causal_claim_coverage.py`（只量、零模型）：
+  ```
+  CAUSAL_PROBE_ROOTS=cases \
+      .venv/bin/python scripts/probe_causal_claim_coverage.py
+  CAUSAL_PROBE_ROOTS=/tmp/s4runs/time-20261023-173124 \
+      .venv/bin/python scripts/probe_causal_claim_coverage.py
+  CAUSAL_PROBE_ROOTS=cases,/tmp/s4runs/time-20261023-173124 \
+      .venv/bin/python scripts/probe_causal_claim_coverage.py
+  ```
+  缺／空 `CAUSAL_PROBE_ROOTS` ⇒ 退出码 2 带原因。打印键在场率 vs 有内容率（#160 同口径）、四要素逐要素非空率、降级声称条数、三档分布；汇总"件② 门槛（Y≥10）够不够"由 `PIECE2_DEGRADED_THRESHOLD` 当场比较。旧产物缺键按缺失计数、不抛。
+- **件③** `scripts/build_submission_zip.py`：默认不装 `causal_evidence.json`；`--with-causal` 才装。`MANIFEST.txt` 与 stdout 各打一行状态（含 task #163）。导出面照旧生成第五份文件——不许靠"文件不存在"实现不装。
+  ```
+  PYTHONPATH=. .venv/bin/python scripts/build_submission_zip.py \
+    --run-dir /tmp/s4runs/<完整六案跑次> \
+    --out dist/veritas-交件-YYYY-MM-DD.zip
+  # 显式装入因果件：
+  PYTHONPATH=. .venv/bin/python scripts/build_submission_zip.py \
+    --run-dir /tmp/s4runs/<完整六案跑次> --with-causal \
+    --out dist/veritas-交件-YYYY-MM-DD-with-causal.zip
+  ```
+- **不**登记进 `tests/c37_zero_ref_registry.py`。
+- **说明**：这是《评分标准》1.3 的非必须加分件、人工评测，我们不预测得分。

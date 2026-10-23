@@ -226,5 +226,9 @@ def test_zip_script_builds_from_synthetic(tmp_path):
     with zipfile.ZipFile(out_zip) as zf:
         names = zf.namelist()
     assert "MANIFEST.txt" in names
-    assert any(n.endswith("causal_evidence.json") for n in names)
+    # C-48：默认不装 causal_evidence.json（--with-causal 才装）
+    assert not any(n.endswith("causal_evidence.json") for n in names)
     assert any(n.endswith("evidence.json") for n in names)
+    man = zipfile.ZipFile(out_zip).read("MANIFEST.txt").decode("utf-8")
+    assert "causal_evidence：不装" in man
+    assert "task #163" in man

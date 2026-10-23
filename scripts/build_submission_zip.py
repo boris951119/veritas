@@ -3,7 +3,7 @@
 
 输入＝一个跑次目录（默认 /tmp/s4runs/ 下按 mtime 最新）＋对外文档目录。
 对每个专题调真 export_official（从 questions/*/report.json 读案卷），
-写出五份 JSON＋字段说明，再打 zip。
+写出五份 JSON＋字段说明，再打 zip。C-48：默认不把 causal_evidence.json 装进包，`--with-causal` 才装（不许靠文件不存在实现不装）。
 
 自查三件事（打印）：
 ① 每份 JSON 可被 json.load；
@@ -38,12 +38,22 @@ from scripts.probe_resolution_records import (  # noqa: E402
     _element_结果,
 )
 
-JSON_NAMES = (
+CORE_JSON_NAMES = (
     "evidence.json",
     "conclusions.json",
     "confidence.json",
     "conflict_resolution.json",
-    "causal_evidence.json",
+)
+CAUSAL_JSON_NAME = "causal_evidence.json"
+# 导出面仍生成五份；打包默认不装因果件（C-48 件③／task #163）。
+JSON_NAMES = CORE_JSON_NAMES + (CAUSAL_JSON_NAME,)
+
+CAUSAL_OMIT_STATUS = (
+    "causal_evidence：不装（原因＝四要素非空率 0%／见 task #163；本包暂不交该加分件）"
+)
+CAUSAL_INCLUDE_STATUS = (
+    "causal_evidence：装入（--with-causal；见 task #163；"
+    "1.3 非必须加分件／人工评测／不预测得分）"
 )
 
 
@@ -227,6 +237,7 @@ def build(
     out_zip: Path,
     docs_dirs: list[Path],
     work_root: Path,
+    with_causal: bool = False,
 ) -> dict:
     cases = _case_dirs(run_dir)
     staging = work_root / "staging"
@@ -237,10 +248,24 @@ def build(
 
     topic_stats = []
     parse_bad: list[str] = []
+    n_causal_exported = 0
+    n_causal_packed = 0
     for case in cases:
         topic_out = staging / case.name
         _export_topic(case, topic_out)
+        # 不许用"文件不存在"实现不装：导出后因果件必须在盘上
+        causal_path = topic_out / CAUSAL_JSON_NAME
+        if not causal_path.is_file():
+            _die(
+                f"导出后缺 {CAUSAL_JSON_NAME}：{causal_path}"
+                f"（口径开关不能靠文件不存在）"
+            )
+        n_causal_exported += 1
         parse_bad.extend(_check_json_parseable(topic_out))
+        if with_causal:
+            n_causal_packed += 1
+        else:
+            causal_path.unlink()
         rates = _check_resolution_rates(topic_out)
         topic_stats.append({"topic": case.name, **rates})
         # 包根字段说明：取第一专题的
@@ -263,13 +288,26 @@ def build(
 
     forbidden = _scan_forbidden(staging)
 
+    status_line = CAUSAL_INCLUDE_STATUS if with_causal else CAUSAL_OMIT_STATUS
+    print(f"==== {status_line} ====")
+    print(
+        f"  causal_exported={n_causal_exported} "
+        f"causal_packed={n_causal_packed} with_causal={with_causal}"
+    )
+
     # MANIFEST
+    cmd_bits = (
+        f"PYTHONPATH=. .venv/bin/python scripts/build_submission_zip.py "
+        f"--run-dir {run_dir}"
+    )
+    if with_causal:
+        cmd_bits += " --with-causal"
     manifest_lines = [
         f"# veritas 交件 MANIFEST",
         f"# generated_at={datetime.now().astimezone().isoformat(timespec='seconds')}",
         f"# run_dir={run_dir}",
-        f"# command=PYTHONPATH=. .venv/bin/python scripts/build_submission_zip.py "
-        f"--run-dir {run_dir}",
+        f"# command={cmd_bits}",
+        f"# {status_line}",
         "# columns: sha256  path",
     ]
     files_for_zip: list[Path] = []
@@ -318,6 +356,10 @@ def build(
         "parse_bad": parse_bad,
         "topic_stats": topic_stats,
         "forbidden": forbidden,
+        "with_causal": with_causal,
+        "causal_status": status_line,
+        "n_causal_exported": n_causal_exported,
+        "n_causal_packed": n_causal_packed,
     }
 
 
@@ -355,6 +397,11 @@ def main() -> int:
         default="",
         help="组包工作目录（默认 /tmp/c47_submission_build）",
     )
+    ap.add_argument(
+        "--with-causal",
+        action="store_true",
+        help="把 causal_evidence.json 装进包（默认不装；见 task #163／C-48）",
+    )
     args = ap.parse_args()
 
     run_dir = Path(args.run_dir) if args.run_dir else _latest_run_dir(Path(args.s4runs_root))
@@ -375,7 +422,7 @@ def main() -> int:
     print(f"run_dir={run_dir}")
     print(f"docs_dirs={docs_dirs}")
     print(f"out_zip={out_zip}")
-    result = build(run_dir, out_zip, docs_dirs, work)
+    result = build(run_dir, out_zip, docs_dirs, work, with_causal=args.with_causal)
     if result["parse_bad"] or result["forbidden"]:
         return 1
     return 0
