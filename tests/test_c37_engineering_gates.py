@@ -538,13 +538,21 @@ def test_c38_knife_wrong_function_name_letter_red(monkeypatch):
         assert mod.scan_skip_sites_ast() == mod.REGISTERED_SKIP_SITES
 
 
-def test_c38_knife_jsonl_line_bumps_calibration_reading():
+def test_c38_knife_jsonl_line_bumps_calibration_reading(monkeypatch):
     """腿④＝C-39 件①：往 .jsonl 追加一行 ⇒ calibration 读数 +1（进程内、零子进程）。
 
     性质与 C-38 相同；读数走 ledger_counts._dir_any_lines（纯读），
     不再调 collect()（其内部会起 pytest --collect-only）。
+    C-40：把「零子进程」从打印变成断言——本格期间 subprocess.run／Popen
+    一旦被调就失败（monkeypatch 结束自动还原）。
     """
     import importlib.util
+
+    def _boom(*_a, **_k):
+        raise RuntimeError("knife4 forbids subprocess (C-40)")
+
+    monkeypatch.setattr(subprocess, "run", _boom)
+    monkeypatch.setattr(subprocess, "Popen", _boom)
 
     spec = importlib.util.spec_from_file_location(
         "ledger_counts_c39", _script_path("ledger_counts")
@@ -552,9 +560,6 @@ def test_c38_knife_jsonl_line_bumps_calibration_reading():
     mod = importlib.util.module_from_spec(spec)
     assert spec.loader is not None
     spec.loader.exec_module(mod)
-    # 进程内纯读；本格不起任何 subprocess
-    knife4_subprocesses = 0
-    print(f"knife4_subprocesses={knife4_subprocesses}")
 
     victim = ROOT / "calibration" / "labels_self.jsonl"
     original = victim.read_bytes()
