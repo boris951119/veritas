@@ -1,0 +1,686 @@
+"""C-41 冲突面覆盖量尺（只读探针）：现行冲突映射能交几条、三种映射各交几条、对金标两阶段匹配。
+
+零 LLM、零网络、不写 app/、不把样例集／六案产物复制进仓库。只读既有 report.json。
+
+跑法：
+    .venv/bin/python scripts/probe_conflict_coverage.py
+    OFFICIAL_CASES=/path/to/样例集 OFFICIAL_RUN=/path/to/time-run \\
+        .venv/bin/python scripts/probe_conflict_coverage.py
+
+环境变量（均可覆盖；缺目录或空目录 ⇒ 退出码 2，不许静默印 0）：
+    OFFICIAL_CASES  官方样例集根（默认 ~/Desktop/veritas-testcases/样例集-拓尔思-20261012）
+    OFFICIAL_RUN    六案跑产物根，形如 <case>/questions/<qid>/report.json
+                    （默认 /tmp/s4runs/time-20261020-174839）
+    INREPO_ROOT     仓内产物扫描根（默认 <repo>/cases）；甲档自检用
+                    cases/*/out*/report.json（一层，34 份）
+
+件① 从 report.json 重建 dossier，跑现行冲突映射，逐案打印
+    内部冲突对／进入 conflicting_facts（对数＝未跳过且映射出段落的对）／
+    平局跳过／取不到段落跳过／事实行数，并原样打印复算命令。
+件② 同一批上三种映射条数：甲＝只交败方；乙＝平局／未分胜负也交双方；
+    丙＝乙＋每条附 verdict_label（只算条数与形状，取值仅 partial_support／full_support）。
+件③ 与仓库外金标做两阶段匹配算 Precision_conf／Recall_conf：
+    第一步 doc_id+para_id 精确；第二步规则近似（主体＋数值＋时点三项一致）。
+    输出必含：「第二步是规则近似，官方那一步是大模型语义判定」。
+"""
+
+from __future__ import annotations
+
+import json
+import os
+import re
+import sys
+from collections import Counter
+from pathlib import Path
+
+REPO = Path(__file__).resolve().parent.parent
+if str(REPO) not in sys.path:
+    sys.path.insert(0, str(REPO))
+
+from app.core.evidence import Dossier  # noqa: E402
+from app.export.official import _conflicting_facts, _segment_locator  # noqa: E402
+
+OFFICIAL_CASES = os.environ.get(
+    "OFFICIAL_CASES",
+    os.path.expanduser("~/Desktop/veritas-testcases/样例集-拓尔思-20261012"),
+)
+OFFICIAL_RUN = os.environ.get(
+    "OFFICIAL_RUN",
+    "/tmp/s4runs/time-20261020-174839",
+)
+INREPO_ROOT = os.environ.get("INREPO_ROOT", str(REPO / "cases"))
+
+# 官方样例集里出现过的 verdict_label；不许自造枚举。
+_VERDICT_ALLOWED = ("partial_support", "full_support")
+# 丙档形状占位：只证明字段形状，不做真实判定（dominant 金标值）。
+_VERDICT_SHAPE_PLACEHOLDER = "partial_support"
+assert _VERDICT_SHAPE_PLACEHOLDER in _VERDICT_ALLOWED
+
+_SLOT_KEYS = ("主体", "时间", "数值口径")  # 主体＋时点＋数值
+_APPROX_NOTE = "第二步是规则近似，官方那一步是大模型语义判定"
+_APPROX_NA_NOTE = (
+    "第二步近似档需要我方自有槽位、当前不可测："
+    "我方只从 quote／segment 正则年份与数字（主体抽不出），"
+    "与金标 argument（主体／时间／数值口径）字面不可比，故只报 exact-only"
+)
+_YEAR_RE = re.compile(r"(?:19|20)\d{2}")
+_NUM_RE = re.compile(r"\d+(?:\.\d+)?")
+
+
+def _die(msg: str, code: int = 2) -> None:
+    print(msg, file=sys.stderr)
+    raise SystemExit(code)
+
+
+def _require_dir(path: str, label: str) -> Path:
+    p = Path(path)
+    if not p.is_dir():
+        _die(f"找不到{label}目录：{p}\n"
+             f"用对应 env 指定（样例集／产物不入仓库，见模块 docstring）。")
+    return p
+
+
+def _official_case_dirs(root: Path) -> list[Path]:
+    out = []
+    for name in sorted(os.listdir(root)):
+        d = root / name
+        if d.is_dir() and not name.startswith(".") and (d / "conclusions.json").is_file():
+            out.append(d)
+    if not out:
+        _die(f"{root} 为空或不含官方案卷（缺 conclusions.json）")
+    return out
+
+
+def _run_case_dirs(root: Path, official_names: set[str]) -> list[Path]:
+    out = []
+    for name in sorted(os.listdir(root)):
+        d = root / name
+        if not d.is_dir() or name.startswith("."):
+            continue
+        if official_names and name not in official_names:
+            continue
+        reports = list((d / "questions").glob("*/report.json"))
+        if reports:
+            out.append(d)
+    if not out:
+        _die(f"{root} 为空或不含六案跑产物（缺 <case>/questions/*/report.json）")
+    return out
+
+
+def _inrepo_reports(root: Path) -> list[Path]:
+    """一层 cases/*/out*/report.json＝判据 d 的 34 份面（不含 Q 嵌套）。"""
+    root = Path(root)
+    if not root.is_dir():
+        _die(f"找不到仓内产物根：{root}（用 INREPO_ROOT 指定）")
+    paths = sorted(root.glob("*/out*/report.json"))
+    if not paths:
+        _die(f"{root} 下没有 cases/*/out*/report.json")
+    return paths
+
+
+def _load_dossier(path: Path) -> Dossier:
+    return Dossier.from_dict(json.loads(path.read_text(encoding="utf-8")))
+
+
+def _pair_sides(pair: dict) -> tuple[str, str, str, list[str] | None]:
+    """返回 (a_id, b_id, winner, sides_or_None)。
+
+    sides_or_None：
+      - [loser] 有胜方
+      - [a, b] 调用方在乙／丙下对平局使用
+      - None 表示甲档应计平局跳过
+    """
+    a_id = str(pair.get("a_id") or "")
+    b_id = str(pair.get("b_id") or "")
+    res = pair.get("resolution") if isinstance(pair.get("resolution"), dict) else {}
+    winner = str((res or {}).get("winner_id") or "")
+    if a_id and b_id and winner in (a_id, b_id):
+        loser = b_id if winner == a_id else a_id
+        return a_id, b_id, winner, [loser]
+    return a_id, b_id, winner, None
+
+
+def _map_side_facts(dossier: Dossier, side_ids: list[str],
+                    seen: set[tuple[str, str]],
+                    with_verdict: bool) -> tuple[list[dict], bool]:
+    facts: list[dict] = []
+    mapped_any = False
+    for cid in side_ids:
+        for ev in dossier.evidences_of(cid):
+            for sid in ev.segment_ids:
+                loc = _segment_locator(dossier, sid)
+                if loc is None:
+                    continue
+                mapped_any = True
+                if loc in seen:
+                    continue
+                seen.add(loc)
+                item: dict = {"doc_id": loc[0], "para_id": loc[1]}
+                if with_verdict:
+                    item["verdict_label"] = _VERDICT_SHAPE_PLACEHOLDER
+                facts.append(item)
+    return facts, mapped_any
+
+
+def map_conflicts(dossier: Dossier, mode: str) -> dict:
+    """mode ∈ {jia, yi, bing}。
+
+    甲＝现行（有胜方取败方；平局／未分胜负整对丢弃）＝直接调 _conflicting_facts。
+    乙＝平局／未分胜负也交双方。
+    丙＝乙＋verdict_label 形状（占位 partial_support，不计真实判定）。
+    """
+    if mode not in ("jia", "yi", "bing"):
+        raise ValueError(mode)
+    pairs = [p for p in (dossier.conflicts or []) if isinstance(p, dict)]
+    n_pairs = len(pairs)
+
+    if mode == "jia":
+        facts, skipped_tie, skipped_noloc = _conflicting_facts(dossier)
+        # 「进入」按对数＝未跳过且至少映射出 1 个段落的对（与架构师 44/39/5 对齐）
+        entered_pairs = 0
+        for pair in pairs:
+            _a, _b, _w, sides = _pair_sides(pair)
+            if sides is None:
+                continue
+            _f, mapped = _map_side_facts(dossier, sides, set(), False)
+            if mapped:
+                entered_pairs += 1
+        return {
+            "n_pairs": n_pairs,
+            "entered_pairs": entered_pairs,
+            "n_facts": len(facts),
+            "skipped_tie": skipped_tie,
+            "skipped_noloc": skipped_noloc,
+            "facts": facts,
+        }
+
+    with_verdict = mode == "bing"
+    facts: list[dict] = []
+    seen: set[tuple[str, str]] = set()
+    skipped_tie = 0  # 乙／丙不因平局跳过
+    skipped_noloc = 0
+    entered_pairs = 0
+    for pair in pairs:
+        _a, _b, _w, sides = _pair_sides(pair)
+        if sides is None:
+            sides = [_a, _b] if _a and _b else []
+            if not sides:
+                skipped_tie += 1
+                continue
+        chunk, mapped = _map_side_facts(dossier, sides, seen, with_verdict)
+        facts.extend(chunk)
+        if mapped:
+            entered_pairs += 1
+        else:
+            skipped_noloc += 1
+    return {
+        "n_pairs": n_pairs,
+        "entered_pairs": entered_pairs,
+        "n_facts": len(facts),
+        "skipped_tie": skipped_tie,
+        "skipped_noloc": skipped_noloc,
+        "facts": facts,
+    }
+
+
+def _norm(s: str) -> str:
+    return " ".join((s or "").strip().split())
+
+
+def _slots_of(argument: dict | None) -> tuple[str, str, str]:
+    a = argument or {}
+    return tuple(_norm(str(a.get(k) or "")) for k in _SLOT_KEYS)
+
+
+def _slots_match(a: tuple[str, str, str], b: tuple[str, str, str]) -> bool:
+    """三项一致；全空不算命中（避免空＝空虚匹配）。"""
+    if a != b:
+        return False
+    return any(a)
+
+
+def _fact_index(evidence_rows: list[dict]) -> dict[str, dict]:
+    """fact_id → evidence row（含 doc_id/para_id/argument）。"""
+    out: dict[str, dict] = {}
+    for row in evidence_rows:
+        fid = row.get("fact_id")
+        if fid is None or str(fid) == "":
+            continue
+        out[str(fid)] = row
+    return out
+
+
+def _gold_conf_items(case_dir: Path) -> list[dict]:
+    """金标 conflicting_facts 换形为带 para_id + slots 的条目（可一对一消耗）。
+
+    金标槽位仍读 argument（主体／时间／数值口径）；我方槽位另走原文正则。
+    两口径字面不可比 ⇒ 近似档由 _approx_available 判 not_available，只报 exact-only。
+    """
+    conc = json.loads((case_dir / "conclusions.json").read_text(encoding="utf-8"))
+    ev_rows = json.loads((case_dir / "evidence_samples.json").read_text(encoding="utf-8"))
+    index = _fact_index(ev_rows)
+    by_dp: dict[tuple[str, str], dict] = {}
+    for row in ev_rows:
+        key = (str(row.get("doc_id") or ""), str(row.get("para_id") or ""))
+        if key[0] and key[1]:
+            by_dp.setdefault(key, row)
+    items: list[dict] = []
+    for row in conc:
+        qid = str(row.get("question_id") or "")
+        for item in row.get("conflicting_facts") or []:
+            if not isinstance(item, dict):
+                continue
+            fid = str(item.get("fact_id") or "")
+            ev = index.get(fid)
+            if ev and ev.get("doc_id") and ev.get("para_id"):
+                doc_id = str(ev["doc_id"])
+                para_id = str(ev["para_id"])
+                argument = ev.get("argument") or {}
+            else:
+                doc_id = str(item.get("doc_id") or "")
+                para_id = str(item.get("para_id") or "")
+                argument = (by_dp.get((doc_id, para_id)) or {}).get("argument") or {}
+            items.append({
+                "question_id": qid,
+                "doc_id": doc_id,
+                "para_id": para_id,
+                "slots": _slots_of(argument if isinstance(argument, dict) else {}),
+                "verdict_label": str(item.get("verdict_label") or ""),
+            })
+    return items
+
+
+def _slots_from_our_text(text: str) -> tuple[str, str, str]:
+    """我方自有槽位＝(主体, 时间, 数值口径)。
+
+    只从原文正则：时间←年份，数值口径←数字；主体无法可靠正则 ⇒ 空。
+    不查金标 argument（R-C41-2）。
+    """
+    if not (text or "").strip():
+        return ("", "", "")
+    years = list(dict.fromkeys(_YEAR_RE.findall(text)))
+    nums = list(dict.fromkeys(_NUM_RE.findall(text)))
+    return ("", " ".join(years), " ".join(nums))
+
+
+def _our_text_by_dp(dossier: Dossier) -> dict[tuple[str, str], str]:
+    """(doc_id, para_id) → 我方原文（segments.text 与 evidences.quote 拼接）。"""
+    out: dict[tuple[str, str], str] = {}
+
+    def _add(key: tuple[str, str], chunk: str) -> None:
+        chunk = (chunk or "").strip()
+        if not chunk:
+            return
+        prev = out.get(key)
+        out[key] = chunk if not prev else (prev + "\n" + chunk)
+
+    for src in dossier.sources:
+        doc_id = str((src.meta or {}).get("doc_id") or src.id or "")
+        for seg in src.segments:
+            _add((doc_id, str(seg.id)), getattr(seg, "text", "") or "")
+    for ev in dossier.evidences:
+        for sid in ev.segment_ids:
+            loc = _segment_locator(dossier, sid)
+            if loc is None:
+                continue
+            _add(loc, getattr(ev, "quote", "") or "")
+    return out
+
+
+def _merge_text_by_dp(dst: dict[tuple[str, str], str],
+                     src: dict[tuple[str, str], str]) -> None:
+    for k, v in src.items():
+        if not v:
+            continue
+        prev = dst.get(k)
+        dst[k] = v if not prev else (prev + "\n" + v)
+
+
+def _submitted_items(facts: list[dict],
+                     text_by_dp: dict[tuple[str, str], str]) -> list[dict]:
+    """我方提交项：槽位只从我方产物原文正则，不查金标 argument。"""
+    items = []
+    for f in facts:
+        doc_id = str(f.get("doc_id") or "")
+        para_id = str(f.get("para_id") or "")
+        text = text_by_dp.get((doc_id, para_id)) or ""
+        items.append({
+            "doc_id": doc_id,
+            "para_id": para_id,
+            "slots": _slots_from_our_text(text),
+            "verdict_label": str(f.get("verdict_label") or ""),
+            "has_our_text": bool(text.strip()),
+        })
+    return items
+
+
+def _approx_available(submitted: list[dict]) -> bool:
+    """近似档可测判定。
+
+    我方槽位＝原文正则年份／数字（主体抽不出）；金标槽位＝argument 三槽。
+    两口径字面不可比 ⇒ 本探针固定不可测（避免结构性／误导性 approx=0）。
+    取不到我方原文时同样不可测。保留 has_our_text 供日后可比口径启用。
+    """
+    _ = submitted  # 口径不可比；不靠 submitted 放行
+    return False
+
+
+def two_stage_match(submitted: list[dict], gold: list[dict],
+                    *, approx_available: bool | None = None) -> dict:
+    """第一步精确 (doc_id, para_id)；第二步规则近似（主体＋数值＋时点）。
+
+    一对一消耗，与 score_official.exact_hits 同形。
+    approx_available=False ⇒ 不跑第二步、approx=not_available，只报 exact-only P／R。
+    """
+    if approx_available is None:
+        approx_available = _approx_available(submitted)
+    gold_left = list(gold)
+    sub_left: list[dict] = []
+    exact = 0
+    for s in submitted:
+        key = (s["doc_id"], s["para_id"])
+        hit_i = next((i for i, g in enumerate(gold_left)
+                      if (g["doc_id"], g["para_id"]) == key), None)
+        if hit_i is None:
+            sub_left.append(s)
+            continue
+        gold_left.pop(hit_i)
+        exact += 1
+    n_sub = len(submitted)
+    n_gold = len(gold)
+    if not approx_available:
+        precision = 0.0 if n_sub == 0 else exact / n_sub
+        recall = 0.0 if n_gold == 0 else exact / n_gold
+        return {
+            "n_sub": n_sub,
+            "n_gold": n_gold,
+            "exact": exact,
+            "approx": "not_available",
+            "hits": exact,
+            "Precision_conf": precision,
+            "Recall_conf": recall,
+            "approx_available": False,
+        }
+    approx = 0
+    still: list[dict] = []
+    for s in sub_left:
+        hit_i = next((i for i, g in enumerate(gold_left)
+                      if _slots_match(s["slots"], g["slots"])), None)
+        if hit_i is None:
+            still.append(s)
+            continue
+        gold_left.pop(hit_i)
+        approx += 1
+    hits = exact + approx
+    precision = 0.0 if n_sub == 0 else hits / n_sub
+    recall = 0.0 if n_gold == 0 else hits / n_gold
+    return {
+        "n_sub": n_sub,
+        "n_gold": n_gold,
+        "exact": exact,
+        "approx": approx,
+        "hits": hits,
+        "Precision_conf": precision,
+        "Recall_conf": recall,
+        "approx_available": True,
+    }
+
+
+def _print_recompute_cmd() -> None:
+    cmd = (
+        f"OFFICIAL_CASES={OFFICIAL_CASES} OFFICIAL_RUN={OFFICIAL_RUN} "
+        f"INREPO_ROOT={INREPO_ROOT} "
+        f"{sys.executable} scripts/probe_conflict_coverage.py"
+    )
+    print()
+    print("复算命令（原样粘贴）：")
+    print(cmd)
+
+
+def probe_inrepo_jia() -> dict:
+    print("=" * 78)
+    print("①′／判据 d · 仓内一层产物甲档自检（cases/*/out*/report.json）")
+    print("=" * 78)
+    paths = _inrepo_reports(Path(INREPO_ROOT))
+    tot = Counter()
+    for p in paths:
+        d = _load_dossier(p)
+        m = map_conflicts(d, "jia")
+        tot["n_files"] += 1
+        tot["n_pairs"] += m["n_pairs"]
+        tot["entered_pairs"] += m["entered_pairs"]
+        tot["n_facts"] += m["n_facts"]
+        tot["skipped_tie"] += m["skipped_tie"]
+        tot["skipped_noloc"] += m["skipped_noloc"]
+        if m["n_pairs"] or m["skipped_tie"] or m["n_facts"]:
+            rel = p.relative_to(REPO) if str(p).startswith(str(REPO)) else p
+            print(f"  {rel}: 对={m['n_pairs']} 进对={m['entered_pairs']} "
+                  f"事实行={m['n_facts']} 平局跳过={m['skipped_tie']} "
+                  f"无段落={m['skipped_noloc']}")
+    print(f"  合计 files={tot['n_files']} 对={tot['n_pairs']} "
+          f"进对={tot['entered_pairs']} 事实行={tot['n_facts']} "
+          f"平局跳过={tot['skipped_tie']} 无段落={tot['skipped_noloc']}")
+    print(f"  判据 d 锚点＝对/进对/平局丢弃 → "
+          f"{tot['n_pairs']}/{tot['entered_pairs']}/{tot['skipped_tie']} "
+          f"（期望 44/39/5）")
+    return dict(tot)
+
+
+def probe_six_cases() -> dict:
+    print("=" * 78)
+    print("①②③ · 六案：金标／甲／乙／丙 ＋ 两阶段 Precision_conf／Recall_conf")
+    print("=" * 78)
+    print(_APPROX_NOTE)
+
+    cases_root = _require_dir(OFFICIAL_CASES, "官方样例集")
+    run_root = _require_dir(OFFICIAL_RUN, "六案跑产物")
+    case_dirs = _official_case_dirs(cases_root)
+    official_names = {c.name for c in case_dirs}
+    run_dirs = _run_case_dirs(run_root, official_names)
+
+    print(f"OFFICIAL_CASES={cases_root}")
+    print(f"OFFICIAL_RUN={run_root}")
+    print(f"官方案卷数={len(case_dirs)} 跑产物案卷数={len(run_dirs)}")
+
+    # verdict_label 金标分布（复量前提 2）
+    vl = Counter()
+    gold_total = 0
+    for c in case_dirs:
+        for item in _gold_conf_items(c):
+            gold_total += 1
+            if item["verdict_label"]:
+                vl[item["verdict_label"]] += 1
+    print(f"金标 conflicting_facts 合计={gold_total}  verdict_label={dict(vl)}")
+
+    header = (f"{'案例':<28}{'金标':>6}{'甲对':>6}{'甲进对':>6}{'甲行':>6}"
+              f"{'甲平局':>6}{'甲无段':>6}{'乙行':>6}{'丙行':>6}")
+    print(header)
+    print("-" * len(header))
+
+    sum_gold = 0
+    sum_jia = Counter()
+    sum_yi_facts = 0
+    sum_bing_facts = 0
+    all_sub_jia: list[dict] = []
+    all_sub_yi: list[dict] = []
+    all_sub_bing: list[dict] = []
+    all_gold: list[dict] = []
+    per_case_rows = []
+
+    run_by_name = {d.name: d for d in run_dirs}
+    for c in case_dirs:
+        gold_items = _gold_conf_items(c)
+        n_gold = len(gold_items)
+        sum_gold += n_gold
+        all_gold.extend(gold_items)
+
+        jia = Counter()
+        yi_facts: list[dict] = []
+        bing_facts: list[dict] = []
+        sub_j: list[dict] = []
+        text_by_dp: dict[tuple[str, str], str] = {}
+        rd = run_by_name.get(c.name)
+        reports = sorted((rd / "questions").glob("*/report.json")) if rd else []
+        for rp in reports:
+            d = _load_dossier(rp)
+            _merge_text_by_dp(text_by_dp, _our_text_by_dp(d))
+            mj = map_conflicts(d, "jia")
+            my = map_conflicts(d, "yi")
+            mb = map_conflicts(d, "bing")
+            jia["n_pairs"] += mj["n_pairs"]
+            jia["entered_pairs"] += mj["entered_pairs"]
+            jia["n_facts"] += mj["n_facts"]
+            jia["skipped_tie"] += mj["skipped_tie"]
+            jia["skipped_noloc"] += mj["skipped_noloc"]
+            sub_j.extend(mj["facts"])
+            yi_facts.extend(my["facts"])
+            bing_facts.extend(mb["facts"])
+
+        sum_jia.update(jia)
+        sum_yi_facts += len(yi_facts)
+        sum_bing_facts += len(bing_facts)
+        all_sub_jia.extend(_submitted_items(sub_j, text_by_dp))
+        all_sub_yi.extend(_submitted_items(yi_facts, text_by_dp))
+        all_sub_bing.extend(_submitted_items(bing_facts, text_by_dp))
+
+        name = c.name[:26]
+        print(f"{name:<28}{n_gold:>6}{jia['n_pairs']:>6}{jia['entered_pairs']:>6}"
+              f"{jia['n_facts']:>6}{jia['skipped_tie']:>6}{jia['skipped_noloc']:>6}"
+              f"{len(yi_facts):>6}{len(bing_facts):>6}")
+        per_case_rows.append({
+            "case": c.name,
+            "gold": n_gold,
+            "jia_pairs": jia["n_pairs"],
+            "jia_entered": jia["entered_pairs"],
+            "jia_facts": jia["n_facts"],
+            "jia_tie": jia["skipped_tie"],
+            "jia_noloc": jia["skipped_noloc"],
+            "yi_facts": len(yi_facts),
+            "bing_facts": len(bing_facts),
+            "n_reports": len(reports),
+        })
+
+    print("-" * len(header))
+    print(f"{'合计':<28}{sum_gold:>6}{sum_jia['n_pairs']:>6}{sum_jia['entered_pairs']:>6}"
+          f"{sum_jia['n_facts']:>6}{sum_jia['skipped_tie']:>6}{sum_jia['skipped_noloc']:>6}"
+          f"{sum_yi_facts:>6}{sum_bing_facts:>6}")
+
+    gap = sum_gold - sum_jia["n_facts"]
+    print()
+    print(f"91 与现行甲档事实行之差：金标 {sum_gold} − 甲行 {sum_jia['n_facts']}＝{gap}")
+    print(f"  跳过桶拆解（甲）＝平局跳过对 {sum_jia['skipped_tie']} ＋ 无段落跳过对 "
+          f"{sum_jia['skipped_noloc']}；"
+          f"内部冲突对仅 {sum_jia['n_pairs']}（远小于金标 91）⇒ "
+          f"主缺口在检出侧（内部根本没配对），其次才是导出平局丢弃。")
+    print(f"  乙／丙事实行＝{sum_yi_facts}/{sum_bing_facts}（丙＝乙＋verdict_label 形状，"
+          f"占位={_VERDICT_SHAPE_PLACEHOLDER}；条数应相等）")
+    if sum_yi_facts != sum_bing_facts:
+        print("  ⚠ 乙／丙条数不一致——形状附加不该改条数")
+    if all_sub_bing:
+        shape = {k: all_sub_bing[0].get(k) for k in ("doc_id", "para_id", "verdict_label")}
+        print(f"  丙形状样例＝{json.dumps(shape, ensure_ascii=False)}")
+
+    print()
+    print("两阶段匹配（按映射档分别算；命中＝exact ∪ approx，一对一消耗）")
+    print("我方槽位来源＝evidences[].quote／sources[].segments[].text 正则年份·数字"
+          "（不查金标 argument）；金标槽位仍读 argument；两口径不可比⇒approx=not_available")
+    results = {}
+    for label, sub in (("甲", all_sub_jia), ("乙", all_sub_yi), ("丙", all_sub_bing)):
+        m = two_stage_match(sub, all_gold)
+        results[label] = m
+    any_na = any(not m.get("approx_available") for m in results.values())
+    any_ok = any(m.get("approx_available") for m in results.values())
+    if any_ok:
+        print(_APPROX_NOTE)
+    if any_na:
+        print(_APPROX_NA_NOTE)
+    for label, m in results.items():
+        if m.get("approx_available"):
+            print(f"  {label}: sub={m['n_sub']} gold={m['n_gold']} "
+                  f"exact={m['exact']} approx={m['approx']} hits={m['hits']} "
+                  f"Precision_conf={m['Precision_conf']:.4f} "
+                  f"Recall_conf={m['Recall_conf']:.4f}")
+        else:
+            print(f"  {label}: sub={m['n_sub']} gold={m['n_gold']} "
+                  f"exact={m['exact']} approx=not_available "
+                  f"hits={m['hits']}(exact-only) "
+                  f"Precision_conf={m['Precision_conf']:.4f} "
+                  f"Recall_conf={m['Recall_conf']:.4f}")
+
+    return {
+        "gold_total": sum_gold,
+        "verdict_label": dict(vl),
+        "jia": dict(sum_jia),
+        "yi_facts": sum_yi_facts,
+        "bing_facts": sum_bing_facts,
+        "per_case": per_case_rows,
+        "match": results,
+    }
+
+
+def probe_verdict_label_zero_hits() -> None:
+    print("=" * 78)
+    print("前提 2 附 · verdict_label 在 app/＋scripts/ 命中数（本探针文件自身除外）")
+    print("=" * 78)
+    hits = []
+    for base in (REPO / "app", REPO / "scripts"):
+        for p in base.rglob("*"):
+            if not p.is_file():
+                continue
+            if p.resolve() == Path(__file__).resolve():
+                continue
+            if p.suffix not in {".py", ".md", ".json", ".txt"}:
+                continue
+            try:
+                text = p.read_text(encoding="utf-8")
+            except (UnicodeDecodeError, OSError):
+                continue
+            if "verdict_label" in text:
+                hits.append(str(p.relative_to(REPO)))
+    print(f"  命中文件数={len(hits)}")
+    for h in hits[:20]:
+        print(f"    {h}")
+
+
+def main() -> None:
+    # 反向腿：任何关键目录不存在或为空都 exit 2（在真正读数之前）
+    _require_dir(OFFICIAL_CASES, "官方样例集")
+    _official_case_dirs(Path(OFFICIAL_CASES))
+    _require_dir(OFFICIAL_RUN, "六案跑产物")
+    _run_case_dirs(Path(OFFICIAL_RUN), set())  # 先按非空产物验；六案名对齐在 probe_six 再筛
+
+    print(f"样例集根: {OFFICIAL_CASES}")
+    print(f"六案产物根: {OFFICIAL_RUN}")
+    print(f"仓内产物根: {INREPO_ROOT}")
+
+    inrepo = probe_inrepo_jia()
+    six = probe_six_cases()
+    probe_verdict_label_zero_hits()
+    _print_recompute_cmd()
+
+    print()
+    print("=" * 78)
+    print("摘要")
+    print("=" * 78)
+    print(f"仓内甲档: {inrepo['n_files']} 份／"
+          f"{inrepo['n_pairs']} 对／{inrepo['entered_pairs']} 进／"
+          f"{inrepo['skipped_tie']} 平局丢弃／事实行 {inrepo['n_facts']}")
+    print(f"六案金标={six['gold_total']} 甲行={six['jia'].get('n_facts', 0)} "
+          f"乙行={six['yi_facts']} 丙行={six['bing_facts']}")
+    for label, m in six["match"].items():
+        if m.get("approx_available"):
+            ap = m["approx"]
+            tail = f"(exact={m['exact']} approx={ap})"
+        else:
+            tail = f"(exact={m['exact']} approx=not_available；exact-only)"
+        print(f"  {label} Precision_conf={m['Precision_conf']:.4f} "
+              f"Recall_conf={m['Recall_conf']:.4f} {tail}")
+    # 任一带 not_available 则印不可测说明，否则印近似声明
+    if any(not m.get("approx_available") for m in six["match"].values()):
+        print(_APPROX_NA_NOTE)
+    else:
+        print(_APPROX_NOTE)
+
+
+if __name__ == "__main__":
+    main()

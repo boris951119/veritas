@@ -882,3 +882,20 @@ veritas-testcases/,不占 agent 仓库。
 ```
 
 默认跳过围栏；`--include-fenced` 把围栏内锚点也计入（两版 total／missing／oob／ambig 都附报）。missing>0 或 oob>0 ⇒ 非零退出。
+
+## 2026-10-23 · C-41 冲突面覆盖探针入库跑法（操作面登记）
+
+只读探针 `scripts/probe_conflict_coverage.py`：从既有 `report.json` 重建 dossier 跑现行冲突映射，逐案打印甲／乙／丙三档条数，并对仓库外金标做两阶段匹配（零 LLM）。操作面跑法（复算命令）：
+
+```bash
+.venv/bin/python scripts/probe_conflict_coverage.py
+OFFICIAL_CASES=/path/to/样例集 OFFICIAL_RUN=/path/to/time-run \
+    INREPO_ROOT=/path/to/cases .venv/bin/python scripts/probe_conflict_coverage.py
+```
+
+环境变量（均可覆盖）：
+- `OFFICIAL_CASES` — 官方样例集根（默认 `~/Desktop/veritas-testcases/样例集-拓尔思-20261012`）
+- `OFFICIAL_RUN` — 六案跑产物根，形如 `<case>/questions/<qid>/report.json`（默认 `/tmp/s4runs/time-20261020-174839`）
+- `INREPO_ROOT` — 仓内产物扫描根（默认 `<repo>/cases`；甲档自检用 `cases/*/out*/report.json`）
+
+**缺目录或空目录必须退出码 2** 并说明原因，不许静默打印 0 条当结果。
