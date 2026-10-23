@@ -26,6 +26,12 @@
     conflicts（乙形＝败方＋平局双方）／fact_ledger 对撞 Fact／rejected／dissent；
     条目形 (doc_id, para_id, 陈述文本, 来源标签)，去重键 (doc_id, para_id)；
     定位不到段落的不计入上界，但单独打印丢弃条数；第二步仍 approx=not_available。
+件⑤／戊档（C-44）「口径并存」上界＝find_collisions 同 (实体, 指标) 多值组
+    × precedent._diff_kind 成对；两侧各锚 (doc_id, para_id)；去重键同；
+    只算对金标 91 条（去重段键 78）第一步 doc_id+para_id 精确覆盖；
+    类别取值以 _diff_kind 实测为准（时点／数字／收场）；票文「统计口径／
+    单位换算／信源层级」与源码不符时打印 §3.4 质疑，不闷着改分类器；
+    定位不到不计入并单独打印丢弃数；通用性腿＝同一规则跑仓内 34 份 ≥1 对。
 """
 
 from __future__ import annotations
@@ -43,6 +49,7 @@ if str(REPO) not in sys.path:
 
 from app.core.evidence import Dossier  # noqa: E402
 from app.core.fact_ledger import find_collisions  # noqa: E402
+from app.core.precedent import _diff_kind  # noqa: E402
 from app.core.conflicts import dissent_conclusions  # noqa: E402
 from app.export.official import _conflicting_facts, _segment_locator  # noqa: E402
 
@@ -52,7 +59,7 @@ OFFICIAL_CASES = os.environ.get(
 )
 OFFICIAL_RUN = os.environ.get(
     "OFFICIAL_RUN",
-    "/tmp/s4runs/time-20261020-174839",
+    "/tmp/s4runs/time-20261023-173124",
 )
 INREPO_ROOT = os.environ.get("INREPO_ROOT", str(REPO / "cases"))
 
@@ -89,6 +96,15 @@ _DING_LAYER_NOTE = {
         "（结论自带 statement＋evidence_ids，经 evidences_of→segment_ids 可定位）"
     ),
 }
+_WU_KIND_NOTE = (
+    "§3.4 质疑（件① 当场实测）：票文期望类别＝时点不同／统计口径不同／"
+    "单位换算不同／信源层级不同；源码 app/core/precedent.py:_diff_kind "
+    "实际只返回 {'时点','数字','收场'}；Collision.cross_source 是属性、"
+    "不是 _diff_kind 类别。本档按实测三类记账，不闷着改分类器。"
+)
+_WU_THRESHOLD = 40  # 硬门槛：可定位并集覆盖 ≥40／78 才进件②
+_WU_GOLD_KEYS = 78  # 金标 conflicting_facts 去重段键
+
 # rejected.problems 里「（seg_id）」形；无原生 segment_ids 时的唯一定位线索
 _REJECTED_SEG_RE = re.compile(r"（([^）]*#[^）]*)）")
 _YEAR_RE = re.compile(r"(?:19|20)\d{2}")
@@ -650,6 +666,253 @@ def _stream_dissent(dossier: Dossier) -> tuple[list[dict], list[dict], str]:
     return list(by.values()), discarded, ""
 
 
+
+def _wu_pair_rows(dossier: Dossier) -> tuple[list[dict], list[dict], str]:
+    """一份产物 → 戊档成对条目（可定位两侧）＋丢弃。
+
+    多值组＝find_collisions（同 (实体小写, 指标)、数值不可调和 ≥2）；
+    对内全序无序配对，跳过「同段同值同时点」平凡对；
+    类别＝_diff_kind 实测返回值；两侧各锚 (doc_id, para_id)。
+    返回 (pairs, discarded, empty_reason)。
+    """
+    collisions = find_collisions(dossier)
+    if not collisions:
+        return [], [], "find_collisions(dossier) 返回空（无数字对撞多值组）"
+    pairs: list[dict] = []
+    discarded: list[dict] = []
+    for col in collisions:
+        located: list[tuple] = []
+        for f in col.facts:
+            loc = _segment_locator(dossier, f.seg_id)
+            if loc is None or not loc[0] or not loc[1]:
+                discarded.append({
+                    "reason": "Fact.seg_id 定位失败",
+                    "seg_id": f.seg_id,
+                    "source_id": f.source_id,
+                    "entity": col.entity,
+                    "metric": col.metric,
+                    "stream": "wu_coexist",
+                })
+                continue
+            located.append((f, loc))
+        for i in range(len(located)):
+            for j in range(i + 1, len(located)):
+                fa, la = located[i]
+                fb, lb = located[j]
+                # 平凡对：同段 + 同值 + 同时点 ⇒ 不是「口径并存」
+                if (la == lb
+                        and abs(fa.value - fb.value) <= 1e-9
+                        and (fa.date or "") == (fb.date or "")):
+                    continue
+                kind, desc = _diff_kind(fa, fb)
+                pairs.append({
+                    "kind": kind,
+                    "desc": desc,
+                    "entity": col.entity,
+                    "metric": col.metric,
+                    "cross_source": fa.source_id != fb.source_id,
+                    "a": {"doc_id": la[0], "para_id": la[1],
+                          "raw": fa.raw, "date": fa.date,
+                          "source_id": fa.source_id, "seg_id": fa.seg_id},
+                    "b": {"doc_id": lb[0], "para_id": lb[1],
+                          "raw": fb.raw, "date": fb.date,
+                          "source_id": fb.source_id, "seg_id": fb.seg_id},
+                })
+    if not pairs and not discarded:
+        return [], [], "多值组有对撞但未生成非平凡对"
+    return pairs, discarded, ""
+
+
+def map_wu(dossiers: list[Dossier],
+           gold_items: list[dict]) -> dict:
+    """戊档＝口径并存上界。
+
+    覆盖口径＝可定位并集键 ∩ 金标去重段键；分母固定为金标去重键数
+    （现场重算，缺金标键时仍印分子／分母整数）。
+    """
+    all_pairs: list[dict] = []
+    discarded_total = 0
+    empty_reasons: list[str] = []
+    files_nonempty = 0
+    files_empty = 0
+    for d in dossiers:
+        pairs, discarded, empty_reason = _wu_pair_rows(d)
+        discarded_total += len(discarded)
+        if empty_reason and not pairs:
+            files_empty += 1
+            empty_reasons.append(empty_reason)
+        else:
+            files_nonempty += 1
+        all_pairs.extend(pairs)
+
+    # 并集键（两侧）
+    union: dict[tuple[str, str], dict] = {}
+    kind_keys: dict[str, set[tuple[str, str]]] = {}
+    kind_pairs = Counter()
+    cross_pairs = Counter()
+    for p in all_pairs:
+        kind = str(p.get("kind") or "")
+        kind_pairs[kind] += 1
+        cross_pairs["cross" if p.get("cross_source") else "same"] += 1
+        kind_keys.setdefault(kind, set())
+        for side in ("a", "b"):
+            s = p[side]
+            key = (str(s["doc_id"]), str(s["para_id"]))
+            if key not in union:
+                union[key] = {
+                    "doc_id": key[0],
+                    "para_id": key[1],
+                    "kinds": [kind],
+                }
+            else:
+                if kind not in union[key]["kinds"]:
+                    union[key]["kinds"].append(kind)
+            kind_keys[kind].add(key)
+
+    gold_keys = {
+        (str(g["doc_id"]), str(g["para_id"]))
+        for g in gold_items
+        if g.get("doc_id") and g.get("para_id")
+    }
+    n_gold_keys = len(gold_keys)
+    hit_keys = set(union.keys()) & gold_keys
+    # 逐类贡献＝该类键 ∩ 金标键（一类可独立贡献；并集命中另报）
+    kind_hit = {
+        k: len(ks & gold_keys) for k, ks in sorted(kind_keys.items())
+    }
+    kind_key_n = {k: len(ks) for k, ks in sorted(kind_keys.items())}
+
+    # 一对一 exact（对 91 条）——换算句用
+    sub_facts = [{"doc_id": e["doc_id"], "para_id": e["para_id"]}
+                 for e in union.values()]
+    # slots 空即可；exact-only
+    sub_items = [
+        {"doc_id": f["doc_id"], "para_id": f["para_id"],
+         "slots": ("", "", ""), "verdict_label": "", "has_our_text": False}
+        for f in sub_facts
+    ]
+    m = two_stage_match(sub_items, gold_items, approx_available=False)
+
+    return {
+        "n_pairs": len(all_pairs),
+        "n_collisions_files": files_nonempty,
+        "files_empty": files_empty,
+        "empty_reasons": empty_reasons,
+        "discarded_total": discarded_total,
+        "union_n": len(union),
+        "union_facts": list(union.values()),
+        "kind_pairs": dict(kind_pairs),
+        "kind_keys": kind_key_n,
+        "kind_hit_keys": kind_hit,
+        "cross_pairs": dict(cross_pairs),
+        "gold_keys": n_gold_keys,
+        "hit_keys": len(hit_keys),
+        "coverage": (len(hit_keys), n_gold_keys),
+        "match_91": m,
+        "diff_kinds_seen": sorted(kind_pairs.keys()),
+        "threshold": _WU_THRESHOLD,
+        "pass_threshold": len(hit_keys) >= _WU_THRESHOLD,
+    }
+
+
+def probe_wu_inrepo_generality() -> dict:
+    """判据 b · 通用性腿：同一规则跑仓内 cases/*/out*/report.json ≥1 对。"""
+    print("=" * 78)
+    print("⑤′／判据 b · 戊档通用性腿（仓内一层产物；规则禁案名／专有实体／专有数字）")
+    print("=" * 78)
+    paths = _inrepo_reports(Path(INREPO_ROOT))
+    n_pairs = 0
+    n_files_with = 0
+    kind_pairs = Counter()
+    for p in paths:
+        d = _load_dossier(p)
+        pairs, _disc, _er = _wu_pair_rows(d)
+        if pairs:
+            n_files_with += 1
+        n_pairs += len(pairs)
+        for pr in pairs:
+            kind_pairs[str(pr.get("kind") or "")] += 1
+    ok = n_pairs >= 1
+    print(f"  仓内产物份数={len(paths)} 含戊对份数={n_files_with} "
+          f"戊对数={n_pairs} 逐类对={dict(kind_pairs)}")
+    print(f"  通用性腿={'PASS（≥1 对）' if ok else 'FAIL（0 对＝规则被六案用词绑住，返工）'}")
+    # 规则面自检：本函数／_wu_pair_rows 源码不得含官方案名
+    src = Path(__file__).read_text(encoding="utf-8")
+    banned = [
+        "刘翔", "王虹", "吉隆口岸", "印度航空", "柬泰", "中美AI",
+        "AI171", "discouraged", "泥石流",
+    ]
+    hits = [b for b in banned if b in src]
+    # 允许出现在本打印字符串与 docstring 举例之外？禁品＝规则里不许。
+    # 上面 banned 列表本身含这些字 ⇒ 只查 _wu_pair_rows / map_wu 函数体。
+    import ast
+    tree = ast.parse(src)
+    rule_src_chunks = []
+    for node in tree.body:
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            if node.name in ("_wu_pair_rows", "map_wu"):
+                rule_src_chunks.append(ast.get_source_segment(src, node) or "")
+    rule_blob = "\n".join(rule_src_chunks)
+    rule_hits = [b for b in banned if b in rule_blob]
+    print(f"  规则函数体案名命中={rule_hits or '无'}")
+    if rule_hits:
+        ok = False
+        print("  ⚠ 规则函数体出现案名／专有实体 ⇒ 通用性腿 FAIL")
+    return {
+        "n_files": len(paths),
+        "n_files_with_pairs": n_files_with,
+        "n_pairs": n_pairs,
+        "kind_pairs": dict(kind_pairs),
+        "ok": ok,
+        "rule_banned_hits": rule_hits,
+    }
+
+
+def print_wu_section(wu: dict) -> None:
+    """打印戊档读数（分子分母原样整数＋逐类贡献＋门槛裁决）。"""
+    print()
+    print("=" * 78)
+    print("⑤／戊档 · 「口径并存」上界（find_collisions × _diff_kind；"
+          "去重键 doc_id+para_id）")
+    print("=" * 78)
+    print(_WU_KIND_NOTE)
+    print(f"产物非空份数={wu['n_collisions_files']} 空份={wu['files_empty']}")
+    if wu["files_empty"] and wu["empty_reasons"]:
+        uniq = list(dict.fromkeys(wu["empty_reasons"]))
+        print("  空因样例：")
+        for r in uniq[:5]:
+            print(f"    · {r}")
+    print(f"成对条目数（非平凡）={wu['n_pairs']}  "
+          f"cross_source 拆={wu['cross_pairs']}")
+    print(f"可定位并集键数={wu['union_n']}  "
+          f"因定位不到丢弃 Fact 行={wu['discarded_total']}（不计入并集）")
+    print(f"逐类成对：{wu['kind_pairs']}")
+    print(f"逐类可定位键：{wu['kind_keys']}")
+    print(f"逐类贡献（该类键 ∩ 金标去重段键）：{wu['kind_hit_keys']}")
+    cov_n, cov_d = wu["coverage"]
+    print(f"可定位并集覆盖 = {cov_n}/{cov_d}"
+          f"  （金标去重段键；门槛 ≥{_WU_THRESHOLD}/{cov_d or _WU_GOLD_KEYS}）")
+    m = wu["match_91"]
+    print(f"换算（对 91 条一对一 exact）："
+          f"exact={m['exact']}/{m['n_gold']} "
+          f"Recall_conf={m['exact']}/{m['n_gold']}={m['Recall_conf']:.4f} "
+          f"sub={m['n_sub']}")
+    # 判据 g 换算句
+    print()
+    print(f"覆盖 {cov_n}/{cov_d} ⇒ Recall_conf＝{m['exact']}/91"
+          f"＝{m['Recall_conf']:.4f}，"
+          f"够不够 ≥46 档＝{'够' if m['exact'] >= 46 else '不够'}；"
+          f"精度档本档不评（只量召回上界）")
+    print()
+    if wu["pass_threshold"]:
+        print(f"门槛裁决：PASS（{cov_n}≥{_WU_THRESHOLD}）⇒ 可交架构师复放、"
+              f"再决定是否发件②")
+    else:
+        print(f"门槛裁决：STOP（{cov_n}<{_WU_THRESHOLD}）⇒ **不许进件②**；"
+              f"根因＝fact_ledger 多值段键与金标段键重叠太少"
+              f"（本批并集∩金标＝{cov_n}），不是阈值问题、不许调阈值／加词表凑数")
+
+
 def map_ding(dossiers: list[Dossier]) -> dict:
     """丁档＝四路并集。跨多份 report 累加后按 (doc_id, para_id) 去重。
 
@@ -1057,6 +1320,23 @@ def probe_six_cases() -> dict:
     else:
         print("结论：导出侧扩面可到最低档，且必须同步《字段说明》")
 
+    # ---- 戊档：口径并存上界（C-44 件①）----
+    wu = map_wu(all_dossiers, all_gold)
+    print_wu_section(wu)
+    results["戊"] = {
+        "n_sub": wu["union_n"],
+        "n_gold": wu["match_91"]["n_gold"],
+        "exact": wu["match_91"]["exact"],
+        "hits": wu["match_91"]["hits"],
+        "Precision_conf": wu["match_91"]["Precision_conf"],
+        "Recall_conf": wu["match_91"]["Recall_conf"],
+        "approx_available": False,
+        "coverage_keys": wu["coverage"],
+        "kind_hit_keys": wu["kind_hit_keys"],
+        "discarded_total": wu["discarded_total"],
+        "pass_threshold": wu["pass_threshold"],
+    }
+
     return {
         "gold_total": sum_gold,
         "verdict_label": dict(vl),
@@ -1066,6 +1346,7 @@ def probe_six_cases() -> dict:
         "per_case": per_case_rows,
         "match": results,
         "ding": ding,
+        "wu": wu,
     }
 
 
@@ -1106,6 +1387,7 @@ def main() -> None:
 
     inrepo = probe_inrepo_jia()
     six = probe_six_cases()
+    wu_gen = probe_wu_inrepo_generality()
     probe_verdict_label_zero_hits()
     _print_recompute_cmd()
 
@@ -1149,6 +1431,22 @@ def main() -> None:
                       "（判定变更、须用户点头）")
             else:
                 print("结论：导出侧扩面可到最低档，且必须同步《字段说明》")
+    wu = six.get("wu") or {}
+    if wu:
+        cov_n, cov_d = wu["coverage"]
+        m91 = wu["match_91"]
+        print(f"戊并集键={wu.get('union_n')} 覆盖={cov_n}/{cov_d} "
+              f"丢弃={wu.get('discarded_total')} "
+              f"逐类贡献={wu.get('kind_hit_keys')} "
+              f"通用性腿={'PASS' if wu_gen.get('ok') else 'FAIL'}"
+              f"（仓内对={wu_gen.get('n_pairs')}）")
+        print(f"覆盖 {cov_n}/{cov_d} ⇒ Recall_conf＝{m91['exact']}/91"
+              f"＝{m91['Recall_conf']:.4f}，"
+              f"够不够 ≥46 档＝{'够' if m91['exact'] >= 46 else '不够'}")
+        if wu.get("pass_threshold"):
+            print("戊门槛：PASS ≥40／78 ⇒ 可交架构师复放件①")
+        else:
+            print("戊门槛：STOP <40／78 ⇒ 不许发件②、不许调阈值凑数")
 
 
 if __name__ == "__main__":

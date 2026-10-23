@@ -916,3 +916,23 @@ OFFICIAL_CASES=/path/to/样例集 OFFICIAL_RUN=/path/to/time-run \
 - `OFFICIAL_RUN` — 六案跑产物根（默认 `/tmp/s4runs/time-20261023-173124`）
 
 **缺目录或空目录／无 report.json 必须退出码 2** 并说明原因，不许静默打印 0 条当结果。
+
+
+## 2026-10-23 · C-44 件① 戊档「口径并存」上界入库跑法（操作面登记）
+
+只读探针 `scripts/probe_conflict_coverage.py` 第五档（戊）：`find_collisions` 同 (实体, 指标) 多值组 × `precedent._diff_kind` 成对，两侧各锚 `(doc_id, para_id)`，去重键同；只算对仓库外金标 91 条（去重段键 78）第一步精确覆盖；类别以 `_diff_kind` 实测为准（时点／数字／收场）；定位不到单独打印丢弃数；通用性腿＝同一规则跑 `cases/*/out*/report.json` ≥1 对。零 LLM、零网络、不写 `app/`。操作面跑法：
+
+```bash
+OFFICIAL_RUN=/tmp/s4runs/time-20261023-173124 \
+    .venv/bin/python scripts/probe_conflict_coverage.py
+OFFICIAL_CASES=/path/to/样例集 OFFICIAL_RUN=/path/to/time-run \
+    INREPO_ROOT=/path/to/cases .venv/bin/python scripts/probe_conflict_coverage.py
+```
+
+环境变量（均可覆盖）：
+- `OFFICIAL_CASES` — 官方样例集根（默认 `~/Desktop/veritas-testcases/样例集-拓尔思-20261012`）
+- `OFFICIAL_RUN` — 六案跑产物根（默认 `/tmp/s4runs/time-20261023-173124`）
+- `INREPO_ROOT` — 仓内产物扫描根（默认 `<repo>/cases`）
+
+**缺目录或空目录必须退出码 2** 并说明原因；硬门槛＝可定位并集覆盖 ≥40／78，否则 STOP 不许进件②。
+
