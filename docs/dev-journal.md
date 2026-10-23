@@ -955,3 +955,20 @@ C45_USE_OLD_JSON=1 OFFICIAL_RUN=/tmp/s4runs/time-20261023-173124 \
 
 **缺目录或空目录／无 report.json 必须退出码 2** 并说明原因，不许静默打印 0 条当结果。双条件门槛（缺记录≥1 ∧ 补后 P／R／置信换分不变）本探针只报告、不发件②。
 
+## C-47 交付包补齐（跑法登记）
+
+- **日期**：2026-10-24（Asia/Shanghai）
+- **件④** `scripts/build_submission_zip.py`：
+  ```
+  PYTHONPATH=. .venv/bin/python scripts/build_submission_zip.py \
+    --run-dir /tmp/s4runs/<完整六案跑次> \
+    --out dist/veritas-交件-YYYY-MM-DD.zip
+  ```
+  默认 `--s4runs-root /tmp/s4runs` 取 mtime 最新；自查打印 JSON 可解析／冲突三要素非空率（复用 `scripts.probe_resolution_records._element_清单`／`_element_结果`）／无 human 与 relevance_override 非空。
+- **件③** `scripts/demo_c47_agent.py`（配置化 roster，零真模型）：
+  ```
+  PYTHONPATH=. .venv/bin/python scripts/demo_c47_agent.py
+  ```
+  roster＝`config/roster-devil-advocate.yaml`（`load_roster`）；展示清单用 `agent_inventory(roster=…)` 真绑；工作台默认入口未挂＝如实未达。记录落 `/tmp/c47_agent_demo/record.json` 与 `docs/deliverables/智能体实测-C47.md`。
+- **不**登记进 `tests/c37_zero_ref_registry.py`。
+

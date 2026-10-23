@@ -1,4 +1,4 @@
-"""四份官方提交 JSON＋字段说明。
+"""五份官方提交 JSON＋字段说明。
 
 fact_des／argument／entities 本版本留空，不编造。
 conflict 记录只读 Resolution.to_dict() 已有键；basis、重启条件读不到就留空。
@@ -98,6 +98,27 @@ source_ids／para_ids 由该结论证据的 segment→(doc_id, para_id) 去重�
 结果（C-46）：{outcome, winner_id, tie}。outcome ∈ 甲胜／乙胜／并存不裁决；
 平局或未分胜负一律 outcome＝并存不裁决 且 winner_id＝""（不许伪造胜方）。
 单条记录按 JSON 串（ensure_ascii=False）计 ≤800 字；超限先压 statement、再压 rationale，并在 omissions 标注「单条记录超800字已截断」。
+
+## causal_evidence.json
+schema 自定（附录 A 将「因果证据 JSON」列为非必须加分项；rubric 1.3）。
+每条＝一条**含因果主张的结论**一行（不是每条证据一行；相关-only、无主张卡的结论不出现）。
+字段（全部复用既有证据级结构，**不新造判定、不调模型、不改数值**）：
+- conclusion_id／question_id：结论与议题标识。
+- intervention／outcome／population／counterfactual：主张卡四要素
+  （取值来自该结论下首条带非空 causal_claim 的证据；键名与
+  app/core/causal_claim.py 的 CLAIM_KEYS 一致）。
+- mechanism_completeness：direct｜indirect｜correlation_only
+  （与证据字段同名同枚举）。
+- missing_links：mediator／temporal／contrast 列表（indirect 时有意义）。
+- design_tier：rct｜quasi｜observational｜claim_only（只展示，不进分）。
+- degraded_reason：降级成因；未降级为空串。
+- evidence_refs：该结论下所有「带因果主张」证据的
+  {doc_id, para_id, quote} 列表（quote 为证据原引文摘要，不新造）。
+- confidence：复用该结论当前 confidence 数值（与 confidence.json 同源字段
+  dossier_confidence／Conclusion.confidence），**本文件不改写、不重算**。
+
+边界句与 evidence.json 相同：系统校验因果声称的结构完整性与措辞纪律，
+不做效应估计、不做完整因果引擎。
 
 ## 窗口装箱
 本次按假定窗口装箱；若现场模型窗口更大请调 VERITAS_MODEL_CTX_TOKENS；
@@ -568,14 +589,93 @@ def _conflict_rows(question_id: str, dossier: Dossier) -> tuple[list[dict], list
     return rows, sorted(set(omitted_any))
 
 
+
+def _evidence_has_causal_claim(ev) -> bool:
+    """该证据是否携带因果主张（与 evidence 行附卡条件对齐）。"""
+    declared = (getattr(ev, "declared_relation", "") or ev.relation.value)
+    if ev.relation.value == "causation" or declared == "causation":
+        return True
+    if getattr(ev, "degraded_reason", ""):
+        return True
+    claim = getattr(ev, "causal_claim", None)
+    if isinstance(claim, dict) and any(
+            str(claim.get(k) or "").strip() for k in (
+                "intervention", "outcome", "population", "counterfactual")):
+        return True
+    return False
+
+
+def _causal_evidence_rows(question_id: str, dossier: Dossier) -> list[dict]:
+    """每条含因果主张的结论一行；字段复用既有真名，confidence 复用现值。"""
+    rows: list[dict] = []
+    by_con: dict[str, list] = {}
+    for ev in dossier.evidences:
+        if not _evidence_has_causal_claim(ev):
+            continue
+        by_con.setdefault(ev.conclusion_id, []).append(ev)
+    con_by_id = {c.id: c for c in dossier.conclusions}
+    for cid, evs in by_con.items():
+        con = con_by_id.get(cid)
+        # 主张卡：首条非空 causal_claim；并列字段取同一条证据
+        primary = None
+        for ev in evs:
+            claim = ev.causal_claim if isinstance(ev.causal_claim, dict) else None
+            if claim and any(str(claim.get(k) or "").strip()
+                             for k in ("intervention", "outcome",
+                                       "population", "counterfactual")):
+                primary = ev
+                break
+        if primary is None:
+            primary = evs[0]
+        claim = dict(primary.causal_claim) if isinstance(
+            primary.causal_claim, dict) else {}
+        refs: list[dict] = []
+        seen_ref: set[tuple[str, str, str]] = set()
+        for ev in evs:
+            for sid in ev.segment_ids:
+                loc = _segment_locator(dossier, sid)
+                if loc is None:
+                    continue
+                doc_id, para_id = loc
+                quote = str(ev.quote or "")
+                key = (doc_id, para_id, quote)
+                if key in seen_ref:
+                    continue
+                seen_ref.add(key)
+                refs.append({
+                    "doc_id": doc_id,
+                    "para_id": para_id,
+                    "quote": quote,
+                })
+        # confidence 复用现值：不调用 row_score_detail、不改合式
+        conf_val = float(con.confidence) if con is not None else 0.0
+        rows.append({
+            "conclusion_id": cid,
+            "question_id": question_id,
+            "intervention": str(claim.get("intervention") or ""),
+            "outcome": str(claim.get("outcome") or ""),
+            "population": str(claim.get("population") or ""),
+            "counterfactual": str(claim.get("counterfactual") or ""),
+            "mechanism_completeness": (
+                primary.mechanism_completeness or "correlation_only"),
+            "missing_links": list(primary.missing_links or []),
+            "design_tier": primary.design_tier or "claim_only",
+            "degraded_reason": primary.degraded_reason or "",
+            "evidence_refs": refs,
+            "confidence": conf_val,
+        })
+    return rows
+
+
 def export_official(runs: list[tuple[dict, Dossier]], out_dir: Path) -> dict[str, Path]:
-    """按 question_id 汇总四份 JSON 与字段说明。runs 元素是 (问题, 案卷)。"""
+    """按 question_id 汇总五份 JSON 与字段说明。runs 元素是 (问题, 案卷)。"""
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
     evidence: list[dict] = []
     conclusions: list[dict] = []
     confidence: list[dict] = []
     conflicts: list[dict] = []
+    causal_evidence: list[dict] = []
     omission_notes: list[str] = []
     seen: set[tuple[str, str, str]] = set()
     deduped = 0
@@ -614,6 +714,7 @@ def export_official(runs: list[tuple[dict, Dossier]], out_dir: Path) -> dict[str
         conflict_rows, omitted = _conflict_rows(qid, dossier)
         conflicts.extend(conflict_rows)
         omission_notes.extend(omitted)
+        causal_evidence.extend(_causal_evidence_rows(qid, dossier))
     gate_line = _bare_gate_line(n_questions, dropped_ids, kept_bare_ids)
     # 早退只在 pipeline 写这一句 confidence_note；此处只读，不改早退条件。
     n_slot = sum(
@@ -654,6 +755,7 @@ def export_official(runs: list[tuple[dict, Dossier]], out_dir: Path) -> dict[str
         "conclusions": out_dir / "conclusions.json",
         "confidence": out_dir / "confidence.json",
         "conflict_resolution": out_dir / "conflict_resolution.json",
+        "causal_evidence": out_dir / "causal_evidence.json",
         "notes": out_dir / "字段说明.md",
     }
     paths["evidence"].write_text(
@@ -672,6 +774,9 @@ def export_official(runs: list[tuple[dict, Dossier]], out_dir: Path) -> dict[str
             "detail": "basis 与重启条件在 Resolution.to_dict() 中不存在，已留空；"
                       "resolution_type 仅由 method 映射表得到，未另算证据强度",
         }, ensure_ascii=False, indent=2),
+        encoding="utf-8")
+    paths["causal_evidence"].write_text(
+        json.dumps(causal_evidence, ensure_ascii=False, indent=2),
         encoding="utf-8")
     paths["notes"].write_text(
         _FIELD_NOTES + "\n## 本次导出\n" + gate_line + "\n"
