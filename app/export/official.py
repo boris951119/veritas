@@ -92,6 +92,12 @@ schema 自定。resolution_type 取官方五级之一，由 method 经模块级�
 basis、重启条件：由 Resolution.to_dict() 输出；缺失时留空并在 omissions 里披露。
 omissions 取值含：人工改判、假不等式已拦截，以及导出层对缺失字段的标注。
 导出层不另算证据强度，也不另数独立信源。
+冲突清单（C-46）：两侧各一项 {conclusion_id, statement, source_ids, para_ids}；
+甲＝pair.a_id、乙＝pair.b_id。statement 逐字取自该结论 statement，超 120 字截断并在串内标 …（截断）；
+source_ids／para_ids 由该结论证据的 segment→(doc_id, para_id) 去重列出。
+结果（C-46）：{outcome, winner_id, tie}。outcome ∈ 甲胜／乙胜／并存不裁决；
+平局或未分胜负一律 outcome＝并存不裁决 且 winner_id＝""（不许伪造胜方）。
+单条记录按 JSON 串（ensure_ascii=False）计 ≤800 字；超限先压 statement、再压 rationale，并在 omissions 标注「单条记录超800字已截断」。
 
 ## 窗口装箱
 本次按假定窗口装箱；若现场模型窗口更大请调 VERITAS_MODEL_CTX_TOKENS；
@@ -335,6 +341,181 @@ def _confidence_rows(question_id: str, dossier: Dossier) -> list[dict]:
     return rows
 
 
+# C-46：冲突清单 statement 上限／单条记录字数上限（按 Unicode 码点计）
+_C46_STMT_MAX = 120
+_C46_RECORD_MAX = 800
+_C46_TRUNC_MARK = "…（截断）"
+_C46_SIZE_OMISSION = "单条记录超800字已截断"
+
+
+def _c46_truncate_statement(text: str, limit: int = _C46_STMT_MAX) -> str:
+    """逐字取自结论 statement；超 limit 截断，并在串内标 …（截断）。"""
+    s = str(text or "")
+    mark = _C46_TRUNC_MARK
+    if len(s) <= limit:
+        return s
+    keep = max(0, limit - len(mark))
+    return s[:keep] + mark
+
+
+def _c46_side_entry(dossier: Dossier, conclusion_id: str, stmt_limit: int = _C46_STMT_MAX) -> dict:
+    """一侧：{conclusion_id, statement, source_ids, para_ids}。statement 逐字取自结论。"""
+    cid = str(conclusion_id or "")
+    con = next((c for c in dossier.conclusions if c.id == cid), None)
+    statement = ""
+    source_ids: list[str] = []
+    para_ids: list[str] = []
+    if con is not None:
+        statement = _c46_truncate_statement(con.statement, stmt_limit)
+        seen_src: set[str] = set()
+        seen_para: set[str] = set()
+        for ev in dossier.evidences_of(cid):
+            for sid in ev.segment_ids:
+                loc = _segment_locator(dossier, sid)
+                if loc is None:
+                    continue
+                doc_id, para_id = loc
+                if doc_id not in seen_src:
+                    seen_src.add(doc_id)
+                    source_ids.append(doc_id)
+                if para_id not in seen_para:
+                    seen_para.add(para_id)
+                    para_ids.append(para_id)
+    return {
+        "conclusion_id": cid,
+        "statement": statement,
+        "source_ids": source_ids,
+        "para_ids": para_ids,
+    }
+
+
+def _c46_result_of(pair: dict, res: dict) -> dict:
+    """结果：甲=a_id／乙=b_id；平局／未分胜负 → 并存不裁决 + winner_id=""。不许伪造胜方。"""
+    a_id = str(pair.get("a_id") or "")
+    b_id = str(pair.get("b_id") or "")
+    winner = str((res or {}).get("winner_id") or "")
+    if winner and winner == a_id:
+        return {"outcome": "甲胜", "winner_id": winner, "tie": False}
+    if winner and winner == b_id:
+        return {"outcome": "乙胜", "winner_id": winner, "tie": False}
+    return {"outcome": "并存不裁决", "winner_id": "", "tie": True}
+
+
+def _c46_record_char_len(row: dict) -> int:
+    return len(json.dumps(row, ensure_ascii=False))
+
+
+def _c46_enforce_record_size(row: dict, omissions: list[str]) -> dict:
+    """单条 ≤800 字。优先保留 statement 与 basis.type_applies／loser_excluded；
+    顺序：basis 压扁 → ids 截短 → rationale → basis 文案压短 → 清空 basis → statement。"""
+    if _c46_record_char_len(row) <= _C46_RECORD_MAX:
+        return row
+    mark = _C46_TRUNC_MARK
+    if _C46_SIZE_OMISSION not in omissions:
+        omissions.append(_C46_SIZE_OMISSION)
+    row["omissions"] = list(omissions)
+
+    def _ok() -> bool:
+        return _c46_record_char_len(row) <= _C46_RECORD_MAX
+
+    def _listing() -> list:
+        v = row.get("冲突清单")
+        return v if isinstance(v, list) else []
+
+    def _shrink_ids(keep: int) -> None:
+        for side in _listing():
+            if not isinstance(side, dict):
+                continue
+            if isinstance(side.get("source_ids"), list):
+                side["source_ids"] = list(side["source_ids"][:keep])
+            if isinstance(side.get("para_ids"), list):
+                side["para_ids"] = list(side["para_ids"][:keep])
+
+    # 1) basis 压成 type_applies／loser_excluded（丢掉 strength 等大块）
+    basis = row.get("basis")
+    compact = None
+    if isinstance(basis, dict) and basis:
+        compact = {}
+        for k in ("type_applies", "loser_excluded"):
+            if k in basis:
+                compact[k] = basis[k]
+        if compact:
+            row["basis"] = compact
+            if _ok():
+                return row
+
+    # 2) ids 截短（此时仍尽量留着 compact basis）
+    for keep in (3, 2, 1, 0):
+        _shrink_ids(keep)
+        if _ok():
+            return row
+
+    # 3) 二分压 rationale
+    rat = str(row.get("rationale") or "")
+    if rat:
+        lo, hi = 0, len(rat)
+        best = ""
+        while lo <= hi:
+            mid = (lo + hi) // 2
+            trial = (rat[:mid] + mark) if mid < len(rat) else rat
+            row["rationale"] = trial
+            if _ok():
+                best = trial
+                lo = mid + 1
+            else:
+                hi = mid - 1
+        row["rationale"] = best
+        if _ok():
+            return row
+        row["rationale"] = ""
+        if _ok():
+            return row
+
+    # 4) 压短 type_applies／loser_excluded 文案（仍留键）
+    if isinstance(row.get("basis"), dict) and row["basis"]:
+        b = dict(row["basis"])
+        for key in ("type_applies", "loser_excluded"):
+            if key not in b:
+                continue
+            raw = str(b[key] or "")
+            lo, hi = 0, len(raw)
+            best = mark if raw else ""
+            while lo <= hi:
+                mid = (lo + hi) // 2
+                trial = (raw[:mid] + mark) if mid < len(raw) else raw
+                b[key] = trial
+                row["basis"] = b
+                if _ok():
+                    best = trial
+                    lo = mid + 1
+                else:
+                    hi = mid - 1
+            b[key] = best
+            row["basis"] = b
+            if _ok():
+                return row
+        row["basis"] = ""
+        if "basis" not in omissions:
+            omissions.append("basis")
+            row["omissions"] = list(omissions)
+        if _ok():
+            return row
+
+    # 5) 最后才压 statement
+    for lim in (90, 60, 40, 20, 0):
+        for side in _listing():
+            if isinstance(side, dict) and "statement" in side:
+                raw = str(side.get("statement") or "")
+                if raw.endswith(mark):
+                    raw = raw[: -len(mark)]
+                side["statement"] = _c46_truncate_statement(raw, lim)
+        if _ok():
+            return row
+
+    row["omissions"] = [_C46_SIZE_OMISSION]
+    return row
+
+
 def _conflict_rows(question_id: str, dossier: Dossier) -> tuple[list[dict], list[str]]:
     rows = []
     omitted_any: list[str] = []
@@ -362,8 +543,14 @@ def _conflict_rows(question_id: str, dossier: Dossier) -> tuple[list[dict], list
         if restart in (None, ""):
             omissions.append("重启条件")
             restart = ""
-        omitted_any.extend(omissions)
-        rows.append({
+        a_id = str(pair.get("a_id") or "")
+        b_id = str(pair.get("b_id") or "")
+        listing = [
+            _c46_side_entry(dossier, a_id),
+            _c46_side_entry(dossier, b_id),
+        ]
+        result = _c46_result_of(pair, res)
+        row = {
             "question_id": question_id,
             "conflict_id": str(pair.get("id") or ""),
             "resolution_type": rtype,
@@ -371,8 +558,13 @@ def _conflict_rows(question_id: str, dossier: Dossier) -> tuple[list[dict], list
             "重启条件": restart if restart is not None else "",
             "method": method,
             "rationale": str(res.get("rationale") or ""),
+            "冲突清单": listing,
+            "结果": result,
             "omissions": omissions,
-        })
+        }
+        row = _c46_enforce_record_size(row, omissions)
+        omitted_any.extend(omissions)
+        rows.append(row)
     return rows, sorted(set(omitted_any))
 
 

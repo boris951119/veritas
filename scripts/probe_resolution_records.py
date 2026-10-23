@@ -122,7 +122,7 @@ def _internal_pairs(dossier: Dossier, question_id: str) -> list[dict]:
 
 def _element_清单(rec: dict) -> tuple[str, str]:
     """返回 (状态, 说明)。状态 ∈ present／empty／missing／present_ids_only。"""
-    for key in ("清单", "sides", "statements"):
+    for key in ("冲突清单", "清单", "sides", "statements"):
         if key in rec:
             val = rec.get(key)
             if val is None or val == "" or val == [] or val == {}:
