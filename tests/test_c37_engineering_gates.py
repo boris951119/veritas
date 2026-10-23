@@ -1,7 +1,7 @@
 """C-37：工程闸——守护脚本＋绕过手段登记＋闸清单对表＋脚本卫生。
 
 边界：不连 cases/*/out*/report.json；合成夹具 + 入仓 eval/；
-新增格子 subprocess 总数 ≤3；禁止版本对照命令型常驻断言。
+新增格子直接 subprocess 总数 ≤3（只计本文件内直接的 subprocess.run／经 _count_subprocess 记账的调用；被调脚本内部起的子进程不在本预算口径内）；禁止版本对照命令型常驻断言。
 
 件⑤ 零引用扫描排除面＝脚本自身 ＋ 三份叙事面 ＋ `tests/c37_zero_ref_registry.py`
 （登记表纯数据模块；表内键＝脚本名，计入引用面会 self-wash＝R-C37-5）。
@@ -129,8 +129,17 @@ _SUBPROCESS_BUDGET = {"n": 0}
 
 
 def _count_subprocess() -> None:
+    """只计本测试文件内的直接子进程（经本函数记账的 subprocess.run）。
+
+    被调脚本（如 ledger_counts.collect → pytest --collect-only）内部起的
+    子进程不在本预算口径内——「≤3」勿读成「整套没有别的子进程」。
+    """
     _SUBPROCESS_BUDGET["n"] += 1
-    assert _SUBPROCESS_BUDGET["n"] <= 3, "C-37 new cells subprocess budget ≤3"
+    assert _SUBPROCESS_BUDGET["n"] <= 3, (
+        "C-37 new cells direct-subprocess budget ≤3 "
+        "(counts only subprocess.run in this file via _count_subprocess; "
+        "subprocesses inside called scripts are out of scope)"
+    )
 
 
 # ----- scanners -------------------------------------------------------
@@ -530,24 +539,29 @@ def test_c38_knife_wrong_function_name_letter_red(monkeypatch):
 
 
 def test_c38_knife_jsonl_line_bumps_calibration_reading():
-    """腿④＝件②(甲)：往 .jsonl 追加一行 ⇒ ledger_counts calibration 读数 +1。"""
+    """腿④＝C-39 件①：往 .jsonl 追加一行 ⇒ calibration 读数 +1（进程内、零子进程）。
+
+    性质与 C-38 相同；读数走 ledger_counts._dir_any_lines（纯读），
+    不再调 collect()（其内部会起 pytest --collect-only）。
+    """
     import importlib.util
 
-    def _load_ledger():
-        spec = importlib.util.spec_from_file_location(
-            "ledger_counts_c38", _script_path("ledger_counts")
-        )
-        mod = importlib.util.module_from_spec(spec)
-        assert spec.loader is not None
-        spec.loader.exec_module(mod)
-        return mod
+    spec = importlib.util.spec_from_file_location(
+        "ledger_counts_c39", _script_path("ledger_counts")
+    )
+    mod = importlib.util.module_from_spec(spec)
+    assert spec.loader is not None
+    spec.loader.exec_module(mod)
+    # 进程内纯读；本格不起任何 subprocess
+    knife4_subprocesses = 0
+    print(f"knife4_subprocesses={knife4_subprocesses}")
 
     victim = ROOT / "calibration" / "labels_self.jsonl"
     original = victim.read_bytes()
-    before = _load_ledger().collect()["calibration_lines"]
+    before = mod._dir_any_lines("calibration")
     try:
-        victim.write_bytes(original + b'{"c38_knife": true}\n')
-        after = _load_ledger().collect()["calibration_lines"]
+        victim.write_bytes(original + b'{"c39_knife": true}\n')
+        after = mod._dir_any_lines("calibration")
         assert after == before + 1
     finally:
         victim.write_bytes(original)
