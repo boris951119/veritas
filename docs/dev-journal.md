@@ -899,3 +899,20 @@ OFFICIAL_CASES=/path/to/样例集 OFFICIAL_RUN=/path/to/time-run \
 - `INREPO_ROOT` — 仓内产物扫描根（默认 `<repo>/cases`；甲档自检用 `cases/*/out*/report.json`）
 
 **缺目录或空目录必须退出码 2** 并说明原因，不许静默打印 0 条当结果；四路全空时逐路印空因，不许静默 0。
+
+## 2026-10-23 · C-43 口头／丁 precision 路线定向量尺入库跑法（操作面登记）
+
+只读探针 `scripts/probe_conflict_precision.py`：在六案产物上以 C-42 丁档 `rejected` 一路可定位段（约 60 键）为池，试机械规则（数字／年份／口径词／两路重叠／引文长度／平局同段等，**先验定规则、金标只事后评分**），量能否压到十几条并保住 exact 命中、使 `Precision_conf`≥0.55（评分 2.5 精度档 2 分）。留一案交叉估泛化。零 LLM、零网络、不写 `app/`。操作面跑法：
+
+```bash
+OFFICIAL_RUN=/tmp/s4runs/time-20261023-173124 \
+    .venv/bin/python scripts/probe_conflict_precision.py
+OFFICIAL_CASES=/path/to/样例集 OFFICIAL_RUN=/path/to/time-run \
+    .venv/bin/python scripts/probe_conflict_precision.py
+```
+
+环境变量（均可覆盖）：
+- `OFFICIAL_CASES` — 官方样例集根（默认 `~/Desktop/veritas-testcases/样例集-拓尔思-20261012`）
+- `OFFICIAL_RUN` — 六案跑产物根（默认 `/tmp/s4runs/time-20261023-173124`）
+
+**缺目录或空目录／无 report.json 必须退出码 2** 并说明原因，不许静默打印 0 条当结果。
