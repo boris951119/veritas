@@ -55,6 +55,7 @@ KIND_LABEL: dict[str, str] = {
     "source_unverified": "信源出处未核验",
     "scope": "声称范围却无覆盖声明",
     "external_prior": "外部先验未与案卷核对",
+    "precedent_time": "同类事件时点未排序",
 }
 
 
