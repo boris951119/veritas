@@ -3,10 +3,12 @@
 量大输入的「选择」层（夹层职能：选、围、标——绝不改写）：
 
 1. 资格线：精确重复件与零相关信源先出局（沿用既有闸）；
-2. 精排：BM25 分 > 0 的段落按分数降序优先装入；
-3. 保底：零分段落跨信源**轮转**填充——防止单一信源灌满预算，
-   保证每个信源至少有机会进入研判；
-4. 全披露：任何未装入的段落进 excluded 清单（报告「因预算未进入
+2. 第一遍：议题槽位（answer_slots.priority_segment_ids）优先入箱；
+3. 第二遍：BM25 分 > 0 的段落按「分／log2(字数)」降序填剩余预算
+   （同预算内尽量多装高相关短段）；检索问句在装箱时做轻量增强
+   （去财务探针污染、议题切面、命中标题、案卷门控同义）——不改原文；
+4. 保底：零分段落跨信源**轮转**填充——防止单一信源灌满预算；
+5. 全披露：任何未装入的段落进 excluded 清单（报告「因预算未进入
    研判的段落」），读了什么、没读什么，账面可见——「资料不足」类
    结论的语义边界因此成立。
 
@@ -180,10 +182,133 @@ def align_budget_to_window(
     return out
 
 
+def _dossier_corpus_blob(dossier: Dossier, *, max_chars: int = 400_000) -> str:
+    """案卷标题＋正文拼接，供门控同义过滤（扩展词必须已在案卷出现）。"""
+    parts: list[str] = []
+    n = 0
+    for src in dossier.sources:
+        if src.title:
+            parts.append(src.title)
+            n += len(src.title)
+        for seg in src.segments:
+            t = seg.text or ""
+            parts.append(t)
+            n += len(t)
+            if n >= max_chars:
+                return "\n".join(parts)
+    return "\n".join(parts)
+
+
+def _facet_queries(question: str) -> list[str]:
+    """从议题切出对照面／从句，供多路 BM25（不改原议题）。"""
+    import re
+    q = (question or "").strip()
+    if not q:
+        return []
+    parts = re.split(r"(?:还是|或是|？|\?|。)", q)
+    facets = [p.strip("，、；; ") for p in parts if len(p.strip("，、；; ")) >= 4]
+    for m in re.finditer(r"(?:称|认定|表示|认为|报道)([^，。？?]{2,24})", q):
+        frag = m.group(1).strip()
+        if frag:
+            facets.append(frag)
+    seen: set[str] = set()
+    out: list[str] = []
+    for f in facets:
+        if f and f not in seen:
+            seen.add(f)
+            out.append(f)
+    return out[:8]
+
+
+def _title_queries(dossier: Dossier, question: str) -> list[str]:
+    """标题与议题共享字符 2-gram 的信源标题 → 追加为检索问句。"""
+    from app.core.bm25 import _tokens
+    q_toks = set(_tokens(question or ""))
+    if not q_toks:
+        return []
+    out: list[str] = []
+    for src in dossier.sources:
+        title = (src.title or "").strip()
+        if not title or len(title) > 100:
+            continue
+        if set(_tokens(title)) & q_toks:
+            out.append(title)
+    return out[:8]
+
+
+def pack_search_queries(dossier: Dossier) -> list[str]:
+    """装箱时的 BM25 问句列表（走 query_rewrite 通道，可现场增强）。
+
+    - 非财务题：剥掉历史 run 里 expand_query 打进去的财务探针尾；
+    - 追加议题切面、命中标题、案卷门控同义（扩展词∈案卷）；
+    - 空则回退 rank_segments 默认（原问 + expand_query）。
+    """
+    from app.core.bm25 import (
+        expand_query, looks_financial, strip_finance_probe_tail,
+        synonym_terms,
+    )
+
+    qinfo = (dossier.accounting or {}).get("query_rewrite") or {}
+    if not isinstance(qinfo, dict):
+        qinfo = {}
+    original = (qinfo.get("original") or dossier.question or "").strip()
+    variants = [str(v).strip() for v in (qinfo.get("variants") or []) if str(v).strip()]
+    stored = [str(q).strip() for q in (qinfo.get("queries") or []) if str(q).strip()]
+    corpus = _dossier_corpus_blob(dossier)
+    financial = looks_financial(original)
+
+    out: list[str] = []
+    seen: set[str] = set()
+
+    def _add(q: str) -> None:
+        q = (q or "").strip()
+        if not q or q in seen:
+            return
+        seen.add(q)
+        out.append(q)
+
+    if original:
+        if financial:
+            _add(expand_query(original, corpus=corpus))
+            for v in variants:
+                _add(expand_query(v, corpus=corpus))
+            for sq in stored:
+                _add(sq)
+        else:
+            _add(original)
+            for v in variants:
+                _add(strip_finance_probe_tail(v) or v)
+            for sq in stored:
+                cleaned = strip_finance_probe_tail(sq)
+                if cleaned:
+                    _add(cleaned)
+            syn = synonym_terms(original, corpus=corpus)
+            if syn:
+                _add(original + " " + " ".join(syn))
+                for t in syn[:6]:
+                    _add(t)
+        for f in _facet_queries(original):
+            _add(f)
+        for t in _title_queries(dossier, original):
+            _add(t)
+    elif stored:
+        for sq in stored:
+            _add(sq)
+
+    return out[:16]
+
+
 def pack_material(dossier: Dossier,
                   budget_chars: int | None = None) -> dict:
     """确定性装箱：返回 {selected: set[seg_id], excluded: list[dict],
-    budget, n_total, used_chars}。"""
+    budget, n_total, used_chars}。
+
+    两段式（C-52）：① 议题槽位优先；② BM25>0 按分／log2(len) 填箱；
+    零分段落再跨信源轮转保底。同案卷＋同预算 ⇒ 同结果。
+    """
+    import math
+    from app.core.answer_slots import priority_segment_ids
+
     budget = max(1, int(budget_chars or _MATERIAL_BUDGET))
     dups = duplicate_map(dossier)
     relevance = {s["source_id"]: s for s in classify_sources(dossier)}
@@ -207,14 +332,13 @@ def pack_material(dossier: Dossier,
                 eligible.append((src.id, seg.id))
                 lengths[seg.id] = len(seg.text)
 
-    qinfo = (dossier.accounting or {}).get("query_rewrite") or {}
-    queries = qinfo.get("queries") if isinstance(qinfo, dict) else None
+    queries = pack_search_queries(dossier)
     scores = dict(rank_segments(dossier, queries=queries)
                   if queries else rank_segments(dossier))
+
     by_source: dict[str, list[str]] = {}
     for src_id, seg_id in eligible:
         by_source.setdefault(src_id, []).append(seg_id)
-    # 信源内按 BM25 降序；信源间按其最高分降序（相关信源优先）
     for src_id in by_source:
         by_source[src_id].sort(key=lambda g: (-scores.get(g, 0.0), g))
     source_order = sorted(
@@ -222,29 +346,40 @@ def pack_material(dossier: Dossier,
         key=lambda s: -max((scores.get(g, 0.0) for g in by_source[s]),
                            default=0.0))
 
-    # 轮转填充：每轮各信源取一段（能装入者），防单源灌满、保跨源覆盖；
-    # 一整轮无一段能装入 → 预算尽，剩余统一进披露
-    from app.core.answer_slots import priority_segment_ids
-
     selected: set[str] = set()
     used = 0
-    # 议题槽位命中段 + BM25 高分数字段优先入箱
-    pinned = [g for g in priority_segment_ids(dossier) if g in lengths]
-    for seg_id, _sc in sorted(
-        ((g, scores.get(g, 0.0)) for g in lengths if scores.get(g, 0.0) > 0),
-        key=lambda x: (-x[1], x[0]),
-    )[:12]:
-        if seg_id not in pinned:
-            pinned.append(seg_id)
-    for seg_id in pinned:
-        if used + lengths[seg_id] > budget:
-            continue
+
+    def _take(seg_id: str) -> bool:
+        nonlocal used
+        if seg_id in selected or seg_id not in lengths:
+            return False
+        ln = lengths[seg_id]
+        if used + ln > budget:
+            return False
         selected.add(seg_id)
-        used += lengths[seg_id]
+        used += ln
         for queue in by_source.values():
             if seg_id in queue:
                 queue.remove(seg_id)
                 break
+        return True
+
+    # ① 议题槽位
+    for seg_id in priority_segment_ids(dossier):
+        _take(seg_id)
+
+    # ② BM25>0：按 score/log2(len) 降序填剩余预算（确定性破同分用 id）
+    scored = [g for g in lengths if scores.get(g, 0.0) > 0 and g not in selected]
+
+    def _density(seg_id: str) -> float:
+        return scores.get(seg_id, 0.0) / math.log2(max(lengths[seg_id], 2))
+
+    for seg_id in sorted(scored, key=lambda g: (-_density(g), g)):
+        if used >= budget:
+            break
+        _take(seg_id)
+
+    # ③ 零分保底：跨信源轮转
     while used < budget:
         progressed = False
         for src_id in source_order:

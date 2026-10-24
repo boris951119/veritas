@@ -43,21 +43,57 @@ _SYNONYM_GROUPS: tuple[tuple[str, ...], ...] = (
     ("倒闭", "破产"),
 )
 
+# 事件／伤亡／边境等新闻同义；只在 corpus 里确实出现时才启用（C-52）
+_DOSSIER_GATED_GROUPS: tuple[tuple[str, ...], ...] = (
+    ("伤亡", "遇难", "失联", "死亡", "死者", "遇难者"),
+    ("泥石流", "冰崩", "冰岩崩", "碎屑流", "山崩", "山体滑坡",
+     "冰川崩塌", "洪灾", "洪水"),
+    ("受灾", "灾区", "灾害"),
+    ("口径", "说法", "认定", "定性"),
+    ("预警", "警告", "通报"),
+    ("事故", "空难", "坠机"),
+    ("编制", "事业编", "公务员"),
+    ("边境", "边界", "交火", "冲突"),
+    ("开火", "动武", "袭击", "空袭"),
+)
 
-def synonym_terms(question: str) -> list[str]:
-    """原问已出现的词，补上同组里还没出现的说法。"""
+# 财务探针只该打在财务短议题上；长非财务题带探针＝排序噪声（C-52 基线污染源）
+_FINANCE_MARKERS: tuple[str, ...] = (
+    "营收", "收入", "净利", "利润", "分红", "同比", "占比", "每股",
+    "增长", "装机", "股利", "红利", "停工", "停产", "资金链", "流动性",
+    "回款", "应收账款", "扣非", "财报", "年报", "中报", "利用小时",
+)
+
+
+def synonym_terms(question: str, *, corpus: str = "") -> list[str]:
+    """原问已出现的词，补上同组里还没出现的说法。
+
+    corpus 非空时，额外启用 _DOSSIER_GATED_GROUPS，且扩展词必须在 corpus
+    里出现（＝来自案卷已有表述，不是外部词表硬塞）。
+    """
     q = question or ""
     extra: list[str] = []
     seen: set[str] = set()
-    for group in _SYNONYM_GROUPS:
+    groups = _SYNONYM_GROUPS
+    if corpus:
+        groups = _SYNONYM_GROUPS + _DOSSIER_GATED_GROUPS
+    for group in groups:
         if not any(term in q for term in group):
             continue
         for term in group:
             if term in q or term in seen:
                 continue
+            if corpus and term not in corpus:
+                continue
             seen.add(term)
             extra.append(term)
     return extra
+
+
+def looks_financial(question: str) -> bool:
+    """议题是否像财务／经营指标题（决定要不要打财务探针）。"""
+    q = question or ""
+    return any(k in q for k in _FINANCE_MARKERS)
 
 
 def _tokens(text: str) -> list[str]:
@@ -67,13 +103,17 @@ def _tokens(text: str) -> list[str]:
     return [t[i:i + 2] for i in range(len(t) - 1)]
 
 
-def expand_query(question: str) -> str:
-    """原问 + 词表同义词；短议题 / 缺指标词时再追加探针词。"""
+def expand_query(question: str, *, corpus: str = "") -> str:
+    """原问 + 词表同义词；短议题或财务题缺指标词时再追加探针词。
+
+    C-52：长非财务题不再无脑追加财务探针（否则泥石流／边境题的
+    BM25 被「营业收入／归母净利润」噪声淹没）。
+    """
     q = (question or "").strip()
     if not q:
         return _PROBE_TERMS
     parts = [q]
-    syn = " ".join(synonym_terms(q))
+    syn = " ".join(synonym_terms(q, corpus=corpus))
     if syn:
         parts.append(syn)
     has_metric = any(k in q for k in (
@@ -81,9 +121,22 @@ def expand_query(question: str) -> str:
         "占比", "每股", "增长", "小时", "装机", "股利", "红利",
         "停工", "停产", "资金链", "流动性", "回款", "应收账款",
     ))
-    if len(q) < 16 or not has_metric:
+    # 短议题（公司名）仍打探针；长题只在财务语境且缺指标词时打
+    if len(q) < 16:
+        parts.append(_PROBE_TERMS)
+    elif looks_financial(q) and not has_metric:
         parts.append(_PROBE_TERMS)
     return " ".join(parts)
+
+
+def strip_finance_probe_tail(text: str) -> str:
+    """去掉 expand_query 追加的财务探针尾（识别特征＝探针首词「营业收入」）。"""
+    q = (text or "").strip()
+    if not q or "营业收入" not in q:
+        return q
+    # 探针块以「营业收入」起头；切掉该标记及其后全部探针词
+    head, _sep, _tail = q.partition("营业收入")
+    return head.rstrip(" ，,;；")
 
 
 def fuse_rankings(rankings: list[list[tuple[str, float]]],

@@ -1007,3 +1007,39 @@ C45_USE_OLD_JSON=1 OFFICIAL_RUN=/tmp/s4runs/time-20261023-173124 \
 - **件③** `scripts/probe_resolution_records.py`：`_element_清单`／`_element_结果` 加 `empty_statements`；`present` 只认真在场；汇总报 present／ids_only／type_only／empty_statements／empty／missing。组包自查② 标签改为「文本在场率」（`清单_present`／`结果_present`）。`tests/test_c46_record_shape.py` 逐字格不动。
 - **说明**：这三件补的是仪器可信度，不改研判质量、不承诺分数。
 - **不**登记进 `tests/c37_zero_ref_registry.py`。
+
+## 2026-10-24 · C-51 召回漏桶四层量尺（操作面登记）
+
+- **日期**：2026-10-24（Asia/Shanghai）
+- **件** `scripts/probe_recall_funnel.py`＋`tests/test_c51_recall_funnel.py`：只读、零 LLM；`--run-dir` 必填、缺参非零退出。
+- **分母**＝金标 `supporting_facts` 经同案 `evidence_samples` 的 `fact_id→para_id` 联接后按 `(doc_id, para_id)` 去重；定位不上记 `skipped_no_locator`。
+- **四桶**＝L1 案卷到达／L2 装箱（`pack_material` 按 `pack_window.budget` 复算，因 report.accounting 白名单剥掉 `material_pack_selected`）／L3 主张引用（quote 逐字 ∪ para_id）／L4 提交面（`export_official` 现导到 `/tmp`，不入仓）。
+- **跑法**：
+  ```
+  PYTHONPATH=. .venv/bin/python scripts/probe_recall_funnel.py \
+    --run-dir /tmp/s4runs/time-20261023-173124
+  PYTHONPATH=. .venv/bin/python scripts/probe_recall_funnel.py \
+    --run-dir /tmp/s4runs/time-20261024-001335
+  PYTHONPATH=. .venv/bin/python scripts/probe_recall_funnel.py \
+    --run-dir /tmp/s4runs/time-20261024-001335 --json
+  ```
+- **不**登记进 `tests/c37_zero_ref_registry.py`。
+- **说明**：只量不改；`app/` 零 diff；不承诺分数。
+
+## 2026-10-24 · C-52 L2 装箱／检索增强（操作面登记；门槛未过）
+
+- **日期**：2026-10-24（Asia/Shanghai）
+- **件①**：`app/core/material.py` 两段式装箱（槽位 → BM25>0 密度 score/log2(len) → 零分轮转）＋`pack_search_queries`（剥非财务题上的财务探针尾、切面／标题／案卷门控同义）；`app/core/bm25.py`（`looks_financial`／`strip_finance_probe_tail`／门控 `synonym_terms`）。
+- **读数**：探针 live 复算 L2 批1 33/105→**53/105＝0.5048**；批2 32/87→**46/87＝0.5287**（门槛 0.60 未过）。
+- **件②**：未触发（`official.py` 零 diff）。
+- **测试**：`tests/test_c52_l2_packing.py`（10 格、反向腿当场下刀 2 红已还原）。
+- **跑法（改后 L2）**：
+  ```
+  PYTHONPATH=. .venv/bin/python scripts/probe_recall_funnel.py \
+    --run-dir /tmp/s4runs/time-20261023-173124
+  PYTHONPATH=. .venv/bin/python scripts/probe_recall_funnel.py \
+    --run-dir /tmp/s4runs/time-20261024-001335
+  ```
+  L2＝`reconstruct_pack_selected` → 现码 `pack_material`（预算＝`pack_window.budget`），不读旧 packed 快照。
+- **不**登记进 `tests/c37_zero_ref_registry.py`。
+- **说明**：诚实 §3.4；未改预算／判定阈值；金标未进扩展词。
