@@ -12,6 +12,7 @@
 from __future__ import annotations
 
 import json
+import re
 import zipfile
 from pathlib import Path
 
@@ -20,6 +21,7 @@ from app.core.evidence import RelationKind
 from tests.test_c32_causal_claim import _FULL_CLAIM, _add_ev, _base_dossier
 
 ROOT = Path(__file__).resolve().parents[1]
+_PCT_RE = re.compile(r"(\d+(?:\.\d+)?)%")
 
 
 def _synth_run(tmp_path: Path) -> Path:
@@ -66,8 +68,8 @@ def test_c48_default_omits_causal_with_flag_packs_and_manifest_diff_only(tmp_pat
     from scripts.build_submission_zip import (
         CAUSAL_INCLUDE_STATUS,
         CAUSAL_JSON_NAME,
-        CAUSAL_OMIT_STATUS,
         build,
+        format_causal_omit_status,
     )
 
     run = _synth_run(tmp_path)
@@ -102,18 +104,23 @@ def test_c48_default_omits_causal_with_flag_packs_and_manifest_diff_only(tmp_pat
     assert only_in_with, only_in_with
     assert all(p.endswith(CAUSAL_JSON_NAME) for p in only_in_with), only_in_with
 
-    # 状态行进 MANIFEST 与返回值
-    assert CAUSAL_OMIT_STATUS in man0
+    # 状态行进 MANIFEST 与返回值（C-49：省略原因＝当场探针读数，非常量）
+    omit_live = format_causal_omit_status(run)
+    assert omit_live in man0
     assert CAUSAL_INCLUDE_STATUS in man1
-    assert r0["causal_status"] == CAUSAL_OMIT_STATUS
+    assert r0["causal_status"] == omit_live
     assert r1["causal_status"] == CAUSAL_INCLUDE_STATUS
     assert "task #163" in man0 and "task #163" in man1
+    assert "四要素非空率" in omit_live
+    assert _PCT_RE.search(omit_live), omit_live
 
 
 def test_c48_zip_script_exposes_with_causal_flag():
     src = (ROOT / "scripts" / "build_submission_zip.py").read_text(encoding="utf-8")
     assert "--with-causal" in src
-    assert "CAUSAL_OMIT_STATUS" in src
+    assert "format_causal_omit_status" in src
     assert "task #163" in src
     # 不许用文件不存在实现不装：必须有导出后存在性检查
     assert "口径开关不能靠文件不存在" in src
+    # C-49：不许再把省略原因写死成常量 0%
+    assert "四要素非空率 0%" not in src

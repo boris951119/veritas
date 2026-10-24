@@ -7,8 +7,9 @@
 
 自查三件事（打印）：
 ① 每份 JSON 可被 json.load；
-② conflict_resolution 的 冲突清单／结果／重启条件 非空率
-   （复用 scripts.probe_resolution_records 的 _element_清单／_element_结果
+② conflict_resolution 的 冲突清单／结果／重启条件 文本在场率
+   （present＝说法文本真在场；empty_statements／ids_only／type_only 另计；
+    复用 scripts.probe_resolution_records 的 _element_清单／_element_结果
     与记录上的「重启条件」键判定，不另写一套）；
 ③ 包内无 human 事件与 relevance_override（客观分机器直出）。
 
@@ -37,6 +38,11 @@ from scripts.probe_resolution_records import (  # noqa: E402
     _element_清单,
     _element_结果,
 )
+from scripts.probe_causal_claim_coverage import (  # noqa: E402
+    CLAIM_KEYS as _CAUSAL_CLAIM_KEYS,
+    _pct as _causal_pct,
+    _scan_root as _causal_scan_root,
+)
 
 CORE_JSON_NAMES = (
     "evidence.json",
@@ -48,13 +54,60 @@ CAUSAL_JSON_NAME = "causal_evidence.json"
 # 导出面仍生成五份；打包默认不装因果件（C-48 件③／task #163）。
 JSON_NAMES = CORE_JSON_NAMES + (CAUSAL_JSON_NAME,)
 
-CAUSAL_OMIT_STATUS = (
-    "causal_evidence：不装（原因＝四要素非空率 0%／见 task #163；本包暂不交该加分件）"
-)
 CAUSAL_INCLUDE_STATUS = (
     "causal_evidence：装入（--with-causal；见 task #163；"
     "1.3 非必须加分件／人工评测／不预测得分）"
 )
+
+# C-49 件②：省略原因必须当场从 probe_causal_claim_coverage 读数填入；
+# 解析不出百分数 ⇒ 直接失败，不许回落到写死的默认串（防 #166 常量自比）。
+_PCT_IN_STATUS_RE = re.compile(r"(\d+(?:\.\d+)?)%")
+
+
+def format_causal_omit_status(run_dir: Path) -> str:
+    """从跑次目录当场跑因果覆盖探针，填入原因行。
+
+    含：跑次名＋四要素全非空率＋逐要素非空率＋降级条数。
+    n_ev==0 或拼不出百分数 ⇒ ValueError（调用方应让组包失败）。
+    """
+    st = _causal_scan_root(Path(run_dir))
+    n_ev = int(st["n_ev"])
+    if n_ev <= 0:
+        raise ValueError(
+            f"因果覆盖探针在跑次 {run_dir} 下证据条数=0，"
+            f"解析不出非空率数字（不许回落默认串）"
+        )
+    full_rate = _causal_pct(int(st["full_nonempty"]), n_ev)
+    if full_rate == "n/a" or not _PCT_IN_STATUS_RE.search(full_rate):
+        raise ValueError(
+            f"因果覆盖探针未能产出可解析百分数：full_rate={full_rate!r}"
+        )
+    per_bits = []
+    for k in _CAUSAL_CLAIM_KEYS:
+        rate_k = _causal_pct(int(st["per_key"][k]), n_ev)
+        if rate_k == "n/a" or not _PCT_IN_STATUS_RE.search(rate_k):
+            raise ValueError(
+                f"因果覆盖探针要素 {k} 无百分数：{rate_k!r}"
+            )
+        per_bits.append(f"{k}={rate_k}")
+    n_deg = int(st["n_degraded"])
+    line = (
+        f"causal_evidence：不装（原因＝四要素非空率 {full_rate}"
+        f"（{'／'.join(per_bits)}）／降级 {n_deg} 条"
+        f"／跑次={Path(run_dir).name}／见 task #163；本包暂不交该加分件）"
+    )
+    # 自检：行内至少有一个百分数，防止以后又写成无数字的常量
+    if not _PCT_IN_STATUS_RE.search(line):
+        raise ValueError(f"因果省略状态行无百分数：{line!r}")
+    return line
+
+
+def assert_causal_omit_status_matches_live(status_line: str, run_dir: Path) -> None:
+    """件② 牙：填进去的数字必须与当场探针一致；改数字 ⇒ 红。"""
+    live = format_causal_omit_status(run_dir)
+    assert status_line == live, (
+        f"因果省略状态与当场探针不一致：\n  got={status_line!r}\n  live={live!r}"
+    )
 
 
 def _die(msg: str, code: int = 2) -> None:
@@ -157,15 +210,18 @@ def _check_resolution_rates(topic_dir: Path) -> dict:
             restart = str(rec.get("restart_condition") or "")
         if restart.strip():
             n_restart += 1
-    # 非空＝探针状态不是 missing／empty
-    def nonempty(counter: Counter) -> int:
-        return sum(v for k, v in counter.items() if k not in ("missing", "empty"))
+    # 文本在场＝仅 present（empty_statements／ids_only／type_only／empty／missing 都不算）
+    def text_present(counter: Counter) -> int:
+        return int(counter.get("present", 0))
     return {
         "n": n,
         "清单_by_status": dict(list_c),
         "结果_by_status": dict(res_c),
-        "清单_nonempty": nonempty(list_c),
-        "结果_nonempty": nonempty(res_c),
+        "清单_present": text_present(list_c),
+        "结果_present": text_present(res_c),
+        # 兼容旧键名：语义已收到"文本在场"，不再把 empty_statements 算进去
+        "清单_nonempty": text_present(list_c),
+        "结果_nonempty": text_present(res_c),
         "重启条件_nonempty": n_restart,
     }
 
@@ -288,7 +344,13 @@ def build(
 
     forbidden = _scan_forbidden(staging)
 
-    status_line = CAUSAL_INCLUDE_STATUS if with_causal else CAUSAL_OMIT_STATUS
+    if with_causal:
+        status_line = CAUSAL_INCLUDE_STATUS
+    else:
+        try:
+            status_line = format_causal_omit_status(run_dir)
+        except ValueError as exc:
+            _die(str(exc), code=2)
     print(f"==== {status_line} ====")
     print(
         f"  causal_exported={n_causal_exported} "
@@ -333,12 +395,15 @@ def build(
     else:
         print(f"  OK 全部 {len(cases)} 专题 × {len(JSON_NAMES)} 文件可 json.load")
 
-    print("==== 自查② 冲突清单／结果／重启条件 非空率（复用 probe 判定） ====")
+    print(
+        "==== 自查② 冲突清单／结果／重启条件 文本在场率"
+        "（present；empty_statements 不算在场；复用 probe 判定） ===="
+    )
     for st in topic_stats:
         print(
             f"  {st['topic']}: n={st['n']} "
-            f"清单_nonempty={st['清单_nonempty']}/{st['n']} {st['清单_by_status']} "
-            f"结果_nonempty={st['结果_nonempty']}/{st['n']} {st['结果_by_status']} "
+            f"清单_present={st['清单_present']}/{st['n']} {st['清单_by_status']} "
+            f"结果_present={st['结果_present']}/{st['n']} {st['结果_by_status']} "
             f"重启条件_nonempty={st['重启条件_nonempty']}/{st['n']}"
         )
 

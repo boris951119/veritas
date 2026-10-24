@@ -120,18 +120,83 @@ def _internal_pairs(dossier: Dossier, question_id: str) -> list[dict]:
     return rows
 
 
+def _side_statement_text(item) -> str:
+    """从清单一侧取出说法文本；无则空串。"""
+    if isinstance(item, str):
+        return item.strip()
+    if isinstance(item, dict):
+        return str(item.get("statement") or "").strip()
+    return ""
+
+
+def _清单_has_statement_text(val) -> bool:
+    """清单值里是否真有说法文本（键在场≠文本在场）。"""
+    if isinstance(val, str):
+        return val.strip() != ""
+    if isinstance(val, list):
+        return any(_side_statement_text(x) for x in val)
+    if isinstance(val, dict):
+        if _side_statement_text(val):
+            return True
+        # 偶发 {"sides":[...]} 包一层
+        for nested_key in ("sides", "statements", "冲突清单", "清单"):
+            if nested_key in val and _清单_has_statement_text(val.get(nested_key)):
+                return True
+        return False
+    return False
+
+
+def _清单_has_any_id(val) -> bool:
+    """清单值里是否有结论 id（用于 empty_statements 说明）。"""
+    if isinstance(val, list):
+        for x in val:
+            if isinstance(x, dict) and str(
+                x.get("conclusion_id") or x.get("id") or ""
+            ).strip():
+                return True
+        return False
+    if isinstance(val, dict):
+        if str(val.get("conclusion_id") or val.get("id") or "").strip():
+            return True
+        for nested_key in ("sides", "statements", "冲突清单", "清单"):
+            if nested_key in val and _清单_has_any_id(val.get(nested_key)):
+                return True
+    return False
+
+
+def _结果_has_statement_text(val, key: str) -> bool:
+    """结果侧说法文本：outcome／result／statement 非空；纯 winner_id 不算。"""
+    if key == "winner_id":
+        return False
+    if isinstance(val, str):
+        return val.strip() != ""
+    if isinstance(val, dict):
+        for tk in ("outcome", "result", "statement", "结果"):
+            if str(val.get(tk) or "").strip():
+                return True
+        return False
+    return bool(val)
+
+
 def _element_清单(rec: dict) -> tuple[str, str]:
-    """返回 (状态, 说明)。状态 ∈ present／empty／missing／present_ids_only。"""
+    """返回 (状态, 说明)。
+
+    状态 ∈ present／empty_statements／empty／missing／present_ids_only。
+    present＝说法文本真在场；empty_statements＝有键但两侧只有 id／statement 全空。
+    """
     for key in ("冲突清单", "清单", "sides", "statements"):
         if key in rec:
             val = rec.get(key)
             if val is None or val == "" or val == [] or val == {}:
                 return "empty", f"键 {key} 在场但空"
-            return "present", f"键 {key}"
+            if _清单_has_statement_text(val):
+                return "present", f"键 {key}"
+            note = "两侧只有 id" if _清单_has_any_id(val) else "statement 全空"
+            return "empty_statements", f"键 {key} 在场但无说法文本（{note}）"
     if "a_id" in rec or "b_id" in rec:
         a, b = str(rec.get("a_id") or ""), str(rec.get("b_id") or "")
         if a and b:
-            return "present", "a_id+b_id"
+            return "empty_statements", "a_id+b_id（无说法文本）"
         return "empty", "a_id/b_id 在场但有空"
     basis = rec.get("basis")
     if isinstance(basis, dict):
@@ -142,12 +207,19 @@ def _element_清单(rec: dict) -> tuple[str, str]:
 
 
 def _element_结果(rec: dict) -> tuple[str, str]:
+    """返回 (状态, 说明)。
+
+    状态 ∈ present／empty_statements／empty／missing／present_type_only。
+    present＝结果说法文本真在场；empty_statements＝有键但只有 id／文本全空。
+    """
     for key in ("结果", "winner_id", "outcome", "result"):
         if key in rec:
             val = rec.get(key)
             if val is None or val == "":
                 return "empty", f"键 {key} 在场但空"
-            return "present", f"键 {key}"
+            if _结果_has_statement_text(val, key):
+                return "present", f"键 {key}"
+            return "empty_statements", f"键 {key} 在场但无说法文本"
     rtype = rec.get("resolution_type")
     if "resolution_type" not in rec:
         return "missing", "无显式结果字段且无 resolution_type"
@@ -405,8 +477,8 @@ def probe_six_cases(run_root: Path) -> dict:
     print()
     print("==== ② 三要素（清单／结果／理由）逐条在场率 ====")
     print("映射：清单＝所涉两条说法；结果＝胜负／裁决结果；理由＝rationale／basis")
-    print("状态：present／present_ids_only／present_type_only／empty／missing"
-          "（空串≠缺键）")
+    print("状态：present／empty_statements／present_ids_only／present_type_only"
+          "／empty／missing（空串≠缺键；present＝说法文本在场）")
     elem_counts = {
         "清单": Counter(), "结果": Counter(), "理由": Counter(),
     }
@@ -429,7 +501,8 @@ def probe_six_cases(run_root: Path) -> dict:
         print(
             f"  汇总 {k}：在场类={presentish}/{n_rec} "
             f"(present={c['present']} ids_only={c['present_ids_only']} "
-            f"type_only={c['present_type_only']}) "
+            f"type_only={c['present_type_only']} "
+            f"empty_statements={c['empty_statements']}) "
             f"空串={c['empty']}/{n_rec} 缺键={c['missing']}/{n_rec}"
         )
     print(

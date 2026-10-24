@@ -998,3 +998,12 @@ C45_USE_OLD_JSON=1 OFFICIAL_RUN=/tmp/s4runs/time-20261023-173124 \
   ```
 - **不**登记进 `tests/c37_zero_ref_registry.py`。
 - **说明**：这是《评分标准》1.3 的非必须加分件、人工评测，我们不预测得分。
+
+## 2026-10-24 · C-49 三件仪器可信度缺口（操作面登记）
+
+- **日期**：2026-10-24（Asia/Shanghai）
+- **件①** zip 反向腿（`tests/test_c49_instrument_gaps.py`）：合成跑次组包后往 staging 塞 `{"agent":"human"}` 链事件＋非空 `relevance_override` ⇒ `len(forbidden)≥1` 且 `main()` 退出码＝1；把 `_scan_forbidden` 换成恒 `[]` ⇒ 必须红。
+- **件②** `scripts/build_submission_zip.py`：`format_causal_omit_status(run_dir)` 当场调 `scripts/probe_causal_claim_coverage.py` 的 `_scan_root` 填入跑次名＋四要素／逐要素非空率＋降级条数；解析不出百分数 ⇒ `ValueError`／组包 `_die`，不许回落常量。牙＝`assert_causal_omit_status_matches_live`（改数字必红）。
+- **件③** `scripts/probe_resolution_records.py`：`_element_清单`／`_element_结果` 加 `empty_statements`；`present` 只认真在场；汇总报 present／ids_only／type_only／empty_statements／empty／missing。组包自查② 标签改为「文本在场率」（`清单_present`／`结果_present`）。`tests/test_c46_record_shape.py` 逐字格不动。
+- **说明**：这三件补的是仪器可信度，不改研判质量、不承诺分数。
+- **不**登记进 `tests/c37_zero_ref_registry.py`。
