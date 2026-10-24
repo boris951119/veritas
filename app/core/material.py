@@ -6,7 +6,7 @@
 2. 第一遍：议题槽位（answer_slots.priority_segment_ids）优先入箱；
 3. 第二遍：BM25 分 > 0 的段落按「分／log2(字数)」降序填剩余预算
    （同预算内尽量多装高相关短段）；检索问句在装箱时做轻量增强
-   （去财务探针污染、议题切面、命中标题、案卷门控同义）——不改原文；
+   （去财务探针污染、议题切面、命中标题、基组同义）——不改原文；
 4. 保底：零分段落跨信源**轮转**填充——防止单一信源灌满预算；
 5. 全披露：任何未装入的段落进 excluded 清单（报告「因预算未进入
    研判的段落」），读了什么、没读什么，账面可见——「资料不足」类
@@ -240,11 +240,11 @@ def pack_search_queries(dossier: Dossier) -> list[str]:
     """装箱时的 BM25 问句列表（走 query_rewrite 通道，可现场增强）。
 
     - 非财务题：剥掉历史 run 里 expand_query 打进去的财务探针尾；
-    - 追加议题切面、命中标题、案卷门控同义（扩展词∈案卷）；
+    - 追加议题切面、命中标题、基组同义（扩展词∈案卷；门控专题已摘）；
     - 空则回退 rank_segments 默认（原问 + expand_query）。
     """
     from app.core.bm25 import (
-        expand_query, looks_financial, strip_finance_probe_tail,
+        strip_finance_probe_tail,
         synonym_terms,
     )
 
@@ -255,7 +255,6 @@ def pack_search_queries(dossier: Dossier) -> list[str]:
     variants = [str(v).strip() for v in (qinfo.get("variants") or []) if str(v).strip()]
     stored = [str(q).strip() for q in (qinfo.get("queries") or []) if str(q).strip()]
     corpus = _dossier_corpus_blob(dossier)
-    financial = looks_financial(original)
 
     out: list[str] = []
     seen: set[str] = set()
@@ -267,26 +266,20 @@ def pack_search_queries(dossier: Dossier) -> list[str]:
         seen.add(q)
         out.append(q)
 
+    # R-C52-1：摘掉 looks_financial 分支——统一走剥探针尾＋基组同义（门控专题已摘）
     if original:
-        if financial:
-            _add(expand_query(original, corpus=corpus))
-            for v in variants:
-                _add(expand_query(v, corpus=corpus))
-            for sq in stored:
-                _add(sq)
-        else:
-            _add(original)
-            for v in variants:
-                _add(strip_finance_probe_tail(v) or v)
-            for sq in stored:
-                cleaned = strip_finance_probe_tail(sq)
-                if cleaned:
-                    _add(cleaned)
-            syn = synonym_terms(original, corpus=corpus)
-            if syn:
-                _add(original + " " + " ".join(syn))
-                for t in syn[:6]:
-                    _add(t)
+        _add(original)
+        for v in variants:
+            _add(strip_finance_probe_tail(v) or v)
+        for sq in stored:
+            cleaned = strip_finance_probe_tail(sq)
+            if cleaned:
+                _add(cleaned)
+        syn = synonym_terms(original, corpus=corpus)
+        if syn:
+            _add(original + " " + " ".join(syn))
+            for t in syn[:6]:
+                _add(t)
         for f in _facet_queries(original):
             _add(f)
         for t in _title_queries(dossier, original):

@@ -83,7 +83,17 @@ class QuestionResult:
         return abs(self.product - self.l4.rate)
 
     @property
+    def stage_losses(self) -> dict[str, int]:
+        """逐级损失（条）＝上一桶分子 − 下一桶分子。R-C51-1 主攻层口径。"""
+        return {
+            "L1->L2": self.l1.numer - self.l2.numer,
+            "L2->L3": self.l2.numer - self.l3.numer,
+            "L3->L4": self.l3.numer - self.l4.numer,
+        }
+
+    @property
     def leak_by_layer(self) -> dict[str, float]:
+        """保留：绝对未到达率（1−rate）；主攻层改看 stage_losses。"""
         return {
             "L1": 1.0 - self.l1.rate,
             "L2": 1.0 - self.l2.rate,
@@ -93,9 +103,10 @@ class QuestionResult:
 
     @property
     def main_leak(self) -> str:
-        leaks = self.leak_by_layer
-        ranked = sorted(leaks.items(), key=lambda kv: -kv[1])
-        if len(ranked) >= 2 and abs(ranked[0][1] - ranked[1][1]) < 0.03:
+        """主攻层＝逐级损失 argmax；与次大差 <15 条 ⇒「分不开」。"""
+        losses = self.stage_losses
+        ranked = sorted(losses.items(), key=lambda kv: -kv[1])
+        if len(ranked) >= 2 and (ranked[0][1] - ranked[1][1]) < 15:
             return "分不开"
         return ranked[0][0]
 
@@ -379,8 +390,13 @@ def aggregate(results: list[QuestionResult]) -> dict:
         "L3": 1.0 - totals["l3"]["rate"],
         "L4": 1.0 - totals["l4"]["rate"],
     }
-    ranked = sorted(leaks.items(), key=lambda kv: -kv[1])
-    if len(ranked) >= 2 and abs(ranked[0][1] - ranked[1][1]) < 0.03:
+    stage_losses = {
+        "L1->L2": totals["l1"]["numer"] - totals["l2"]["numer"],
+        "L2->L3": totals["l2"]["numer"] - totals["l3"]["numer"],
+        "L3->L4": totals["l3"]["numer"] - totals["l4"]["numer"],
+    }
+    ranked = sorted(stage_losses.items(), key=lambda kv: -kv[1])
+    if len(ranked) >= 2 and (ranked[0][1] - ranked[1][1]) < 15:
         main = "分不开"
     else:
         main = ranked[0][0]
@@ -392,6 +408,7 @@ def aggregate(results: list[QuestionResult]) -> dict:
         "n_questions": len(results),
         "totals": totals,
         "leaks": leaks,
+        "stage_losses": stage_losses,
         "main_leak": main,
         "product": product,
         "product_vs_l4_delta": abs(product - totals["l4"]["rate"]),
@@ -428,7 +445,8 @@ def print_human(run_dir: Path, results: list[QuestionResult], agg: dict) -> None
     for name in ("l1", "l2", "l3", "l3_para", "l3_quote", "l4"):
         row = t[name]
         print(f"  {name}: {row['numer']}/{row['denom']}={row['rate']:.4f}")
-    print(f"  主漏层={agg['main_leak']}  leaks={agg['leaks']}")
+    print(f"  主漏层={agg['main_leak']}  stage_losses={agg['stage_losses']}  "
+          f"leaks(绝对)={agg['leaks']}")
     print(f"  四桶连乘={agg['product']:.4f}  "
           f"vs L4={t['l4']['rate']:.4f}  "
           f"Δ={agg['product_vs_l4_delta']:.4f}")
@@ -436,10 +454,13 @@ def print_human(run_dir: Path, results: list[QuestionResult], agg: dict) -> None
         print("  解释：四桶均对同一金标分母取绝对到达率，连乘 ≠ 漏斗条件概率积；"
               "L4 直接对分母才是总到达率。Δ>0.02 属口径必然，非计算错误。")
     gap = agg["gap_to_0_97"]
-    print(f"  离 0.97 差 {gap*100:.2f} 个百分点；"
-          f"主漏在 {agg['main_leak']}；下一张票只准朝该层开刀"
-          if agg["main_leak"] != "分不开"
-          else f"  离 0.97 差 {gap*100:.2f} 个百分点；最大两桶差<0.03⇒分不开，不许硬指一层")
+    main = agg["main_leak"]
+    if main == "分不开":
+        print(f"  离 0.97 差 {gap*100:.2f} 个百分点；"
+              f"逐级损失最大两级差<15条⇒分不开，不许硬指一层")
+    else:
+        print(f"  离 0.97 差 {gap*100:.2f} 个百分点；"
+              f"主漏在 {main}；下一张票只准朝该层开刀")
     print(f"  skipped_no_locator 合计={agg['skipped_no_locator_total']}")
 
 

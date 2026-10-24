@@ -56,12 +56,32 @@ def test_c52_strip_finance_probe_tail_hardcoded():
 # -- 案卷门控同义 ----------------------------------------------------------------
 
 
-def test_c52_dossier_gated_synonym_requires_corpus_hit():
+def test_c52_dossier_gated_groups_removed_even_with_corpus_hit():
+    """R-C52-1 摘掉门控专题表：即便 corpus 含扩展词，也不再放出。
+
+    归因：关门控⇒批1 L2 54（+1）；词表冻结禁止再手写贴专题。
+    """
     q = "评估伤亡与受灾统计时应采用哪一口径？"
-    # 无 corpus：事件组不启用
     assert "遇难" not in synonym_terms(q)
-    # corpus 有「遇难」才放出
-    assert "遇难" in synonym_terms(q, corpus="灾害造成多人遇难、失联")
+    syn = synonym_terms(q, corpus="灾害造成多人遇难、失联、死亡、边境交火")
+    for banned in ("遇难", "失联", "死亡", "边境", "交火", "事业编", "公务员"):
+        assert banned not in syn, f"门控已摘却仍扩展出 {banned!r}: {syn!r}"
+
+
+def test_c52_gated_synonym_corpus_absent_term_not_expanded():
+    """真牙①（门控摘掉后改钉基组）：议题命中「停工」、corpus 不含「停产」⇒ 不扩展。
+
+    下刀：把 bm25.synonym_terms 里 `if corpus and term not in corpus` 改恒假 ⇒ 本格必红。
+    （门控专题表已按归因摘掉；本格守住基组的 corpus 过滤。）
+    """
+    q = "工厂是否停工？"
+    assert "停产" in synonym_terms(q)  # 无 corpus 时基组会扩
+    corpus = "与本次经营完全无关的普通叙述"
+    assert "停产" not in corpus
+    syn = synonym_terms(q, corpus=corpus)
+    assert "停产" not in syn, (
+        f"真牙①红名：corpus 不含「停产」却进了扩展 syn={syn!r}"
+    )
 
 
 # -- pack_search_queries --------------------------------------------------------
@@ -105,6 +125,34 @@ def test_c52_packing_prefers_dense_short_over_long_low_score():
     assert "SA#p1" not in pack["selected"] or "SA#p2" in pack["selected"]
 
 
+def test_c52_density_packing_selects_short_over_high_score_long():
+    """真牙②：同一预算下「高分长段」与「低分短段」二选一，钉 selected id。
+
+    分歧样本（现场标定）：长段 raw BM25 更高，但分/log2(len) 更低；
+    预算刚好装下二者之一 ⇒ 密度排序必须选短段 id。
+    下刀：摘掉 `/ math.log2(max(lengths[seg_id], 2))` ⇒ 改选长段 ⇒ 本格必红。
+    """
+    q = "客户B回款率是多少？"
+    long_hit = (
+        "客户B回款率是多少？客户B回款率四成，回款512万。"
+        + ("无关填充。" * 50)
+    )
+    short_hit = "回款四成。"
+    d = Dossier(question=q)
+    d.add_source(_src("SA", "回款报告", [long_hit, short_hit]))
+    d.add_source(_src("SB", "杂讯", ["公园天气走一走。" + ("走" * 30)]))
+    # 预算＝长段字数：二者都能单独入箱，但不能同时
+    budget = len(long_hit)
+    assert budget >= len(short_hit)
+    assert budget < len(long_hit) + len(short_hit)
+    pack = pack_material(d, budget_chars=budget)
+    # 钉最终 selected 的那一组 id（不是钉字符串在场）
+    assert pack["selected"] == {"SA#p2"}, (
+        f"真牙②红名：密度装箱应只选短段 SA#p2；"
+        f"实际 selected={sorted(pack['selected'])}"
+    )
+
+
 def test_c52_packing_deterministic():
     d = Dossier(question="客户B回款率是多少？")
     d.add_source(_src("S1", "回款", [
@@ -116,6 +164,15 @@ def test_c52_packing_deterministic():
     assert a["selected"] == b["selected"]
     assert a["excluded"] == b["excluded"]
 
+
+
+
+def test_c52_base_synonym_corpus_absent_not_expanded():
+    """基组同样守 corpus 门：议题有「停工」、corpus 不含「停产」⇒ 不扩展。"""
+    q = "工厂是否停工？"
+    assert "停产" in __import__("app.core.bm25", fromlist=["synonym_terms"]).synonym_terms(q)
+    syn = synonym_terms(q, corpus="与本次经营完全无关的叙述")
+    assert "停产" not in syn
 
 # -- 反向腿：摘掉关键逻辑必须红 --------------------------------------------------
 
@@ -139,47 +196,6 @@ def test_c52_reverse_leg_finance_probe_guard(monkeypatch):
     assert "营业收入" not in expand_query(q)
 
 
-def test_c52_reverse_leg_density_order_missing_makes_red(monkeypatch):
-    """反向腿②：摘掉 density 排序、改回纯轮转 ⇒ 高相关短段可被挤出 ⇒ 红。"""
-    import app.core.material as material
-
-    d = Dossier(question="客户B回款率是多少？")
-    d.add_source(_src("SA", "回款报告", [
-        "今日天气" + ("晴" * 200),
-        "客户B回款率四成，回款512万。",
-    ]))
-    d.add_source(_src("SB", "杂讯", ["杂讯段。" + ("杂" * 80)]))
-    d.add_source(_src("SC", "杂讯2", ["另一杂讯。" + ("讯" * 80)]))
-
-    good = pack_material(d, budget_chars=100)
-    assert "SA#p2" in good["selected"]
-
-    # 摘掉：强制 scores 全 0 ⇒ 走零分轮转，短命中可能仍在，但 density 路径被旁路
-    real_rank = material.rank_segments
-
-    def zero_rank(dossier, query=None, queries=None):
-        ranked = real_rank(dossier, query=query, queries=queries)
-        return [(sid, 0.0) for sid, _ in ranked]
-
-    monkeypatch.setattr(material, "rank_segments", zero_rank)
-    broken = pack_material(d, budget_chars=100)
-    # 期望：在零分轮转下，命中段不再享受 density 优先；
-    # 若实现仍保证命中段入选，本格用「density 键被使用」的代理断言——
-    # 即 good 的 used 结构与 scored 路径可区分。
-    # 硬锚：正常路径下 short_hit 的 density 必须高于 long_noise。
-    from app.core.bm25 import rank_segments
-    scores = dict(rank_segments(d, queries=pack_search_queries(d)))
-    assert scores.get("SA#p2", 0) > 0
-    dens_hit = scores["SA#p2"] / math.log2(max(len(d.sources[0].segments[1].text), 2))
-    dens_noise = scores.get("SA#p1", 0) / math.log2(max(len(d.sources[0].segments[0].text), 2))
-    assert dens_hit > dens_noise
-    # 若有人删掉 density 排序改回「只按绝对分、长段霸箱」，short 在紧预算下可能出局
-    # 本格写死：紧预算 60 字时 short 必须在箱内（期望写死，不读被测函数算期望）
-    tight = pack_material(d, budget_chars=60)
-    assert "SA#p2" in tight["selected"], (
-        "C-52 反向腿：紧预算下高相关短段必须入箱；"
-        f"实际 selected={sorted(tight['selected'])}"
-    )
 
 
 def test_c52_reverse_leg_pack_queries_must_not_keep_probe(monkeypatch):

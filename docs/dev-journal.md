@@ -1043,3 +1043,12 @@ C45_USE_OLD_JSON=1 OFFICIAL_RUN=/tmp/s4runs/time-20261023-173124 \
   L2＝`reconstruct_pack_selected` → 现码 `pack_material`（预算＝`pack_window.budget`），不读旧 packed 快照。
 - **不**登记进 `tests/c37_zero_ref_registry.py`。
 - **说明**：诚实 §3.4；未改预算／判定阈值；金标未进扩展词。
+
+## 23. R-C52-1＋R-C51-1 返工交账（2026-10-24 十九时50分）
+
+- **问题**：C-52 两颗反向腿下刀 0 红；门控／财务无净贡献；C-51 量尺缺逐级损失口径与四腿。
+- **决策**：补真牙①②；**摘掉**门控同义与财务判定分支（摘后 L2 54／47，不亏）；保留密度；C-51 改 `stage_losses` 主攻层并补 B1–B4。
+- **改动**：`app/core/bm25.py`／`material.py`（只做通道取舍）；`tests/test_c52_l2_packing.py`（12）；`scripts/probe_recall_funnel.py`＋`tests/test_c51_recall_funnel.py`（16）；HANDOFF 页眉只插前缀。
+- **验证**：牙①②与 B1–B4 当场下刀见红已还原；`-k "not c51 and not c52"`＝957＋#180 误红；collect=986；不 commit。
+- **开放**：#180 c49 瞬时 git 断言；#181 六案重跑换分；下一张资格线理由＝上界90剩37＝15零级闸＋22排序面。
+
