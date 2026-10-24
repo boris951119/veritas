@@ -655,6 +655,7 @@
   - **⭐ 但主漏层这个结论我判他推翻我（＝记我账第一处，教训 ⑧ 那一族第 9 次）**＝我在单里把主攻层定义成"`1−桶值` 最大那一桶"，而四桶都是**对同一个金标分母取的绝对到达率**、天然逐级嵌套（L1≥L2≥L3≥L4）⇒ **"最后一桶永远最漏"是定义的必然、不是读数**；真正有信息量的是**逐级损失**：批 1＝105→33（**装箱/收窄层丢 72 条＝69%**）→16（主张层丢 17）→6（导出层丢 10）；批 2＝87→32（**丢 55＝63%**）→17（丢 15）→6（丢 11）。⇒ **主漏在 L2 装箱层，不是 L4**；而且**只修 L4 的上界就是从 0.057 抬到 L3 的 0.152／0.195，离 0.97 仍差约 78～82 个百分点**。他的"离 0.97 差 90 点、下一票只准朝 L4 开刀"这句是照我的定义写的、我不怪他；四桶连乘 vs L4 直算那处他也处理得对（Δ=0.054／0.064＝口径必然、他当场写明理由，不硬圆）。
   - **他另外两条 §3.4 质疑也成立（记我账第二处）**＝① 我单里点名的 `accounting["material_pack_selected"]`／`unused_topic_segments` **在生产跑次产物里根本不存在**（我把 pipeline 里"某些分支才写"的键当成了永远在场；实测 18 题 `accounting` 只有 `budget／causal_claim／confidence_note／conflict_drops／dependency／elapsed_s／fact_ledger_stats／mechanical_merge／n_calls／obligation_limitation／pack_window／premise／query_rewrite／retrieval／second_pass／steps／subquestion_status／tokens`）＝他改成按 `pack_window.budget` 复算 `pack_material` 再与 `chain.jsonl` 的 `material_pack.n_selected` 对数（逐题"复算＝chain"相等，如 62=62、45=45、58=58）＝**这是正确且诚实的替代口径**；② 金标 `supporting_facts` **没有 `para_id`**（只有 `fact_id／doc_id／quote／fact_des／verdict_label`），要靠同案 `evidence_samples.json` 用 `fact_id` 联接才拿到 `doc_xxx#pN`＝他做了这层 join、并披露 `skipped_no_locator=0`；③ 批 2 只有 15 题＝吉隆三题整案超时没产物＝他点名了，没混读。
   - **🔧 R-C51-1（唯一打回件，0.1 天、纯测试面）**＝我在他复放树里下五把刀改**真实计算路径**（不是改注入夹具）＝**K1** `reconstruct_pack_selected` 的 `selected` 改成"案卷里所有段"（＝L2 假装 1.00）⇒ **6 passed＝0 红**；**K3** 摘掉"复算 vs `chain.jsonl`"交叉校验（`chain_n=None`）⇒ **0 红**；**K4** 金标 join 少一条时静默丢一条（分母偷偷缩）⇒ **0 红**；**K5** `cited_hits` 换成"全部算命中"（＝L3 假装 1.00）⇒ **0 红**；只有 **K2**（`exported` 直接等于金标全集＝L4 假装 1.00）⇒ **2 failed＝有牙**。⇒ 补法＝每桶各钉一颗"把那一桶的真实算法改坏必须红"的格子（最省事＝在合成夹具里跑**真函数**而不是注入 override：`reconstruct_pack_selected`／`cited_hits`／`export_supporting_locs`／`gold_paras_for_question` 各来一次"改坏⇒红"，再加一颗"分母少一条必须被披露成 `skipped_no_locator`、不许静默缩"）。这条与 #169 同族＝**格子不许绕开被测函数**。
+  - **单内追加（同一轮的第二落＝不新增条目号）**＝§5 的 C-51 节里已写入「#### 架构师打回（R-C51-1）」节＝**纯插入 67 行／删除 0**，内含可原样复制的返工提示词：件 A 判据＝批 1 那句「主漏在 L4」必须改读 L2、而同一次输出里四桶分子逐字不变；件 B＝B1／B2／B3／B4 四颗"把真函数换成指定坏实现必须红"的腿，其中 B2 明确要求写成**内容断言**（钉 `45` 与 `58` 两个当场数）而不是"某句字符串在场"＝#123 那一坑。提示词整段已交用户；``` 行首因此 138⇒140（新笔自带差值、不改历史行）。本笔行数账＝`HANDOFF_lines=7859`／`HANDOFF_bytes=2064558`。
   - **机械核（定点替换；脚本断言"被删行数＝预期面数＝3"）**＝`check_doc_anchors.py`＝576⇒577（他回写新增 1 处代码锚点引用）／missing=0／oob=0／ambig=0，`--include-fenced`＝677⇒678／0／0／0；表机 files=25／with_tables=21／tables=101⇒103／mismatched=0（他同笔改了 `check_markdown_tables.py` 的 docstring 附报＝那颗自一致性格子因此仍绿，我复核过不是他为自己放宽）；``` 行首 138 平；页眉 星号 1736 偶／括号净 0＝守恒；插入行违例＝0；`git diff --stat app/`＝空；整套 964 passed in 30.85s。**图 chip 本笔不挂**（同一支单不挂两次，等 C-51 收口那笔连同 L2 结论一起挂＝记在待办里）。
   - **队列与账**＝**2 张＝C-50（现队头，⚠ 尚未开工：仓里没有 `tests/test_c50_*.py`、`app/`／`scripts/build_submission_zip.py` 都没动＝他先跳去做了 C-51）→ C-51（🔧 打回等 R-C51-1）**；**入库基线仍 `958`**（他的 6 颗还没进主干，等复放通过后抬到 `964`）；`main`＝`9f42902`、tip＝本笔、**不 push**（`origin/main`＝`33ab8e3`）；**#172 不关账**（等第二轮）；#169／#171 仍在 C-50 里等关账；#173（精度闸）／#174（加权可解释）**先别开**——方向要改：下一张朝 **L2 装箱/收窄层** 开刀才买得到召回，单里的门槛定义我也一并改掉（见 §5 C-51 节末「#### 架构师订正」）。仍挂 #164／#119／#48／#141／#151。【下一件事】① 用户拍一句：下一张票从"只修 L4"改成"先修 L2（含两遍装箱／逐题重排／窗口利用率）＋L4 顺带"；② 把 R-C51-1 的返工提示词转给 Cursor；③ C-50 到底还开不开（它和 R-C51-1 都是纯测试面，可以并行排队，但别再让它占满天数）。
   - **行数账（口径＝直接跑 `scripts/ledger_counts.py` 取数＝§5 第 15 条＋教训 ⑫）**＝`HANDOFF_lines=7791`／`HANDOFF_bytes=2053319`；`AGENTS_lines=214 平`；`architecture_map_lines=709 平`；`app_lines=20386 平`／`tests_lines=21572`／`scripts_lines=13244`／`web_lines=1916 平`／`calibration_lines=907 平`；`pytest_collect_only=964`／`def_test_count=946`（注＝这几项现在是"执行方已 add 未 commit"的在飞面，不算入库基线＝dev-protocol §5 第 18 条那条"在飞交付不算基线"）。
@@ -7764,6 +7765,73 @@ OFFICIAL_CASES=/path/to/样例集 OFFICIAL_RUN=/path/to/time-run \
   ```
 - **blocker**：① 批2 吉隆 3 题无 report（LLM Timeout）→ 判据 b 的「各 18 题」未满；② L2 依赖 `pack_material` 复算而非 accounting 原键（§3.4 已披露，chain.n_selected 全题吻合）。
 
+
+#### 架构师打回（R-C51-1＝本单唯一打回件，10-24 十四时 35 分／`app/` 零 diff／0.1 天／纯探针面＋测试面）
+
+- **先说结论**＝量尺可用：四桶读数我在两批跑次上自己跑了一遍、与你的 stdout 逐字相同（批 1＝105／33／16／6、批 2＝87／32／17／6、`skipped_no_locator` 合计 0）；`-k "not c51"`＝`958 passed, 6 deselected`＝既有用例零变，`git diff --cached --stat app/` 为空我复核过。本件不是重做，是**补腿＋改一处我写歪的口径**。
+- **为什么要补腿**＝我在你的复放树里下了五把刀、改的都是**真实计算路径**（不是你注入的夹具）＝**K1** `reconstruct_pack_selected` 的 `selected` 换成"案卷里所有段"⇒`6 passed`＝0 红；**K3** 摘掉 `chain_n != pack_n` 那段留痕⇒0 红；**K4** 金标 join 少一条时 `skipped` 不计／不缩⇒0 红；**K5** `cited_hits` 换成"金标全部算命中"⇒0 红；只有 **K2**（`exported` 直接等于金标全集）⇒2 failed。＝**四桶只有 L4 有腿**，其余三桶算错了整套仍全绿＝量尺不可信（与 #86／#126／#166 同族）。
+- **为什么要改口径（这条记我账，不是你的实现问题）**＝`main_leak` 按我单里那句"`1−桶值` 最大那一桶"实现，而四桶是对同一金标分母的**绝对到达率**、天然嵌套（L1≥L2≥L3≥L4）⇒"最后一桶永远最漏"是定义的必然；批 1 现在打印「主漏在 L4」正是这个必然，逐题那列大量读"分不开"也是。**订正＝逐级损失口径**＝`stage_loss(A→B) = 前桶 numer − 后桶 numer`，主攻层＝argmax，相邻两档损失差 <15 条写"分不开"。
+
+**返工件清单（两件一次交）**
+
+- **件 A＝主攻层改成逐级损失**（`scripts/probe_recall_funnel.py`）＝`QuestionResult` 加 `stage_losses`（`L1→L2`／`L2→L3`／`L3→L4` 三档分子差）、`main_leak` 改成 argmax(`stage_losses`)＋"与次大之差 <15 条⇒分不开"（保留"分不开"这个取值）、`aggregate()` 与 `print_human()` 里「主漏在 X」那句与逐题那列都按当场读数生成（⚠ **层名不许写死在字符串里**＝教训 ⑰）。
+  - 判据 A（＝哪个数必须变）＝**改前**批 1 打印「主漏层=L4」⇒**改后**必须读 L2（＝装箱/收窄层）；**同一次输出里四桶分子必须逐字不变**（批 1＝105／33／16／6）＝只准口径变、不准数值变；批 2 同样必须 L2（87／32／17／6 不变）。
+- **件 B＝四颗"把真函数换成指定坏实现 ⇒ 某颗格子必须红"的反向腿**（`tests/test_c51_recall_funnel.py`，`monkeypatch` 打在 `scripts.probe_recall_funnel` 的函数名上；夹具期望值一律**在测试里独立写死**，不许再调被测函数算期望＝教训 ⑪／⑰）：
+  - **B1（L2 腿）**＝`reconstruct_pack_selected` 坏成返回"案卷里全部段"⇒ `l2.numer` 变成 `denom` ⇒ 那颗钉住 `l2.numer < denom`（独立期望数）的格子必须红。
+  - **B2（复算 vs chain 那条腿）**＝把 `measure_question` 里 `if chain_n is not None and chain_n != pack_n` 那段留痕摘掉（或把 `chain_pack_n_selected` 坏成恒等于复算值）⇒ 必须红。⚠ 断言要写成**内容断言**：夹具给 `pack_n=58`、`chain_n=45` ⇒ 钉 `notes` 里那句**同时含 `45` 与 `58` 两个当场数**，不许只钉"某句字符串在场"（＝#123 那个坑）。
+  - **B3（L3 腿）**＝`cited_hits` 坏成"三个集合都返回 gold 全集"⇒ `l3.numer`（及 `l3_para`／`l3_quote`）变成 `denom` ⇒ 必须红。
+  - **B4（金标 join 腿）**＝仓内临时目录造金标：`conclusions.json` 给 3 条 `supporting_facts`（同一 `question_id`），`evidence_samples.json` 只让 2 条按 `fact_id` 查出 `para_id` ⇒ 断言 `len(gold)==2` **且** `skipped==1`（两个数都独立写死）；摘掉 `skipped += 1` ⇒ 后者红，摘掉 `continue` ⇒ 前者红＝"分母偷偷缩"这条路两头都有腿。
+  - L4 那一桶已有腿（K2 ⇒ 2 红）**不用重复补**，但请在回写里点名是哪两颗格子挡住了它。
+- **禁动面（与本单第一轮同）**＝`app/` 一字不许动（判定规则、置信度合式、`pack_material` 装箱算法、`export_official` 导出语义都不碰＝本件只改探针＋测试两文件）；零真实模型调用零成本（格子只用仓内合成夹具）；官方素材与 `cases/*/out*` 不入仓；**不要 commit、不要 push**，改完 `git add -A` 交我复放。
+- **交付文件清单（我按这张表 `cmp` 逐字节核，别多别少）**＝`scripts/probe_recall_funnel.py`、`tests/test_c51_recall_funnel.py`、`docs/HANDOFF.md`（新增 `#### Cursor 回写（C-51 第二轮）`）、`docs/dev-journal.md`；⚠ 文档面**别加表格**（表机现值 103，加表要同笔改 `scripts/check_markdown_tables.py` 的 docstring 附报，否则那颗自一致性格子红＝教训 ⑥）。
+- **条数账（下限）**＝新文件 `--collect-only` 由 6 颗 ⇒ **≥11 颗**（件 A 1 颗口径格＋件 B 4 颗腿），整套＝`958`＋新增数，且 `-k "not c51"` 必须仍 `958 passed, N deselected`。
+
+**可原样复制的返工提示词（整段发给执行方）**
+
+```
+【R-C51-1 返工＝C-51 召回漏桶量尺第二轮：补四桶反向腿＋主攻层改逐级损失口径】
+
+背景一句话＝第一轮复放结果：四桶读数我在两批跑次上逐字复现（批1 105/33/16/6、批2 87/32/17/6、skipped_no_locator=0）、
+`-k "not c51"`=958 passed 6 deselected、`git diff --cached --stat app/` 为空＝量尺可用。我在你的复放树里下了五把刀改**真实计算路径**，
+只有 L4 那把有牙（K2：exported=金标全集 ⇒ 2 failed），另外四把全 0 红＝L2 复算、复算 vs chain 的留痕、金标 join、L3 命中，算错了整套仍全绿。
+本件只补这个洞＋改一处我（架构师）自己写歪的口径，不重做量尺。
+
+件 A＝主攻层口径（`scripts/probe_recall_funnel.py`；这条是我的账，不是你的实现问题）
+- 现状＝`QuestionResult.main_leak` 用 `leak_by_layer`＝`1 - Bucket.rate` 取最大。四桶是对同一金标分母的绝对到达率、天然嵌套（L1>=L2>=L3>=L4）
+  ⇒ 末桶永远最漏。现在批 1 打印「主漏在 L4」就是这个定义的必然，逐题那列大量读"分不开"也是同一原因。
+- 改成＝**逐级损失**：`stage_losses = {"L1->L2": l1.numer - l2.numer, "L2->L3": l2.numer - l3.numer, "L3->L4": l3.numer - l4.numer}`，
+  主攻层＝argmax(stage_losses)；argmax 与次大之差 < 15（条）⇒ 取值写"分不开"（保留这个取值，别删）。
+- `aggregate()`／`print_human()` 里「主漏在 X」「下一张票只准朝该层开刀」两句按当场读数生成；**层名不许写死在字符串里**（否则就是 #166 那一族的复发）。
+- `--json` 那面同步加 `stage_losses` 与改后的 `main_leak`，字段只加不减。
+- 判据 A（＝哪个数必须变）＝下面两条命令：**改前**批 1 打印「主漏层=L4」⇒**改后**必须读 L2；同一次输出里四桶分子必须逐字不变（批1 105/33/16/6、批2 87/32/17/6）。
+    PYTHONPATH=. .venv/bin/python scripts/probe_recall_funnel.py --run-dir /tmp/s4runs/time-20261023-173124
+    PYTHONPATH=. .venv/bin/python scripts/probe_recall_funnel.py --run-dir /tmp/s4runs/time-20261024-001335
+  （这两条只读已盘跑次产物＝零模型零成本；批 2 只有 15 题，吉隆 q_001-q_003 整案 Timeout 无 report，这条我已按你的 §3.4 入账、不必再解释。）
+
+件 B＝四颗反向腿格子（在 `tests/test_c51_recall_funnel.py` 里加，monkeypatch 打在 `scripts.probe_recall_funnel` 的函数名上）。
+夹具的期望值必须在测试里独立写死，不许再调用被测函数算期望。
+- B1 把 `reconstruct_pack_selected` 坏成"返回案卷全部段"⇒ `l2.numer == denom` ⇒ 钉 `l2.numer < denom`（独立期望数）的格子必须红。
+- B2 把 `measure_question` 里那段 `if chain_n is not None and chain_n != pack_n` 的留痕摘掉 ⇒ 必须红。断言写成内容断言：
+     夹具 pack_n=58／chain_n=45 ⇒ 钉 notes 那句里**同时出现 45 与 58 两个当场数**（别只钉"某句字符串在场"＝#123 的坑）。
+- B3 把 `cited_hits` 坏成"三个集合都返回 gold 全集"⇒ `l3.numer`（含 `l3_para`／`l3_quote`）变成 `denom` ⇒ 必须红。
+- B4 仓内临时目录造金标：conclusions.json 给同一 question_id 的 3 条 supporting_facts、evidence_samples.json 只让其中 2 条按 fact_id 查出 para_id
+     ⇒ 断言 `len(gold)==2` **且** `skipped==1`（两个数独立写死）。摘掉 `skipped += 1` ⇒ 后者红；摘掉 `continue` ⇒ 前者红＝"分母偷偷缩"两头有腿。
+- L4 已有腿（我的 K2 刀 ⇒ 2 红）不用重复补；回写里点名是哪两颗格子挡住它的。
+- 每颗新格都要**你自己当场下刀一次**，把 pytest 红名行原样贴进回写（自证腿，照 C-35 第二轮那三条的写法）。
+
+硬约束（违反即打回）
+1) `app/` 一字不动＝`git diff --stat app/` 必须为空；本件只碰 探针＋测试＋HANDOFF 回写＋dev-journal 四类文件。
+2) 零真实模型调用、零成本；新增格子必须**在仓内自洽**＝干净 `git clone` 里也绿，不许依赖 `~/Desktop/veritas-testcases/` 或 `cases/*/out*`。
+   现有 6 颗我在无金标的 t 树上验过是绿的，新格同样要过这一关；`DEFAULT_GOLD` 那个默认值本单不动，但别在格子里用它。
+3) 不 commit、不 push；改完 `git add -A`（先 add 再建 `.venv` 符号链接、`git ls-files .venv` 必须为 0＝纪律 ⑯）。
+4) 文档面不要新增表格（表机现值 103；加表必须同笔改 `scripts/check_markdown_tables.py` 的 docstring 附报＝教训 ⑥）。
+5) 条数账下限＝新文件 --collect-only 由 6 颗 ⇒ >=11 颗；整套 = 958 + 新增数；`-k "not c51"` 必须仍 958 passed, N deselected。
+6) 发现本单某条我写错了（函数名／键名／命令路径）或认为不该这么做，按 dev-protocol §3.4 带实测质疑来，别默默照做。
+
+交账格式（照第一轮那份）＝新增格子清单＋`--collect-only` 新文件颗数＋整套 passed 数＋`-k "not c51"` 读数＋
+件 A 两条命令的**改前／改后打印逐字存档**（要能看出四桶分子没变、只有主漏层那行变）＋四颗腿各自下刀的红名行＋
+`git diff --stat app/` 为空＋（若有）§3.4 质疑。
+```
 
 #### 架构师订正（C-51 的"主攻层"定义＝10-24 十四时 30 分由我改；不回滚他已交的量尺）
 
