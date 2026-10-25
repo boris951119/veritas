@@ -1083,3 +1083,22 @@ C45_USE_OLD_JSON=1 OFFICIAL_RUN=/tmp/s4runs/time-20261023-173124 \
 - **件②**：`material.py` 仅字数核算改 `min(len, SEGMENT_MAX)`；`probe_recall_funnel --compare-dir` 读数出口。漏桶 NEW＝L2 43／L3 15／L4 7（相对基线 40／15／7：涨／平／平）。
 - **件③**：`test_c49_a_production_surfaces_untouched` AST 集合；改名＋别名红、原样绿。
 - **测试**：`tests/test_c54_render_budget.py` 5 格（含反向腿刀测）；全集 996；不 commit。
+
+## 2026-10-25 · C-54 真跑换分终局＋吉隆超时根因（架构师裁决登记）
+
+- **日期**：2026-10-25（Asia/Shanghai）
+- **裁决**：上一笔的打回改成合入——三张对照表把归因做完：改前真跑 vs 改后真跑＝L2 40→42／L3 15→12／L4 7→5；
+  新案卷同预算只切计费口径（确定性 A/B、零模型）＝L2 40→42、增 2 失 0、可见正文＋11,121 字（＋6.4%）；
+  **两跑都按原始计费重算＝L2 40→40 且迁移 0/0，而 L3/L4 跌幅与名单逐条相同**⇒那 5 段与这 9 行无关。
+- **教训 ⑳**：单次真跑不能同时当因果证明与稳定性证明。换分判据固定拆两条腿＝甲 同码单开关确定性 A/B、
+  乙 真跑配对重复＋跑前写死分布判据；旧产物上重算 L3/L4 恒成立＝零信息量。
+- **吉隆根因**：三次失败墙钟 973.9/974.6/975.5s、`progress.json` 里 panel `elapsed_s=914.4 ≈ 3×300s`＝
+  单网关把三分析师串成一队各烧满一次超时窗；最重（4473 段）＋目录名以「2026」开头吃冷启动（模型 10GB、
+  `ollama ps` 平时为空）＋成功那次单次调用 280–400s 已贴 `config.json` 的 300s＋超时按设计不在同腿重试、
+  测量链只有一条腿⇒三个全死⇒整案报废（连 chain.jsonl 都没写）。
+- **改动**：`scripts/measure_s4_gates.py` 新增 `--timeout-seconds`（只覆盖测量侧、`config.json` 一字未动）、
+  `summary.json` 记 `llm_timeout_seconds`／`timeout_overridden`；`app/core/material.py`＋
+  `tests/test_c54_render_budget.py` 本轮入库；文档面〔127〕＋C-55 单＋AGENTS 基线句 991⇒996。
+- **验证**：`996 passed in 33.20s`／`--collect-only 996`／`def_test_count 978`／
+  `-k "not c49 and not c53"`＝`980 passed, 16 deselected`；锚点 577 平、`--include-fenced` 678 平、
+  表机 105 平 mismatched=0；吉隆单案已用 `--timeout-seconds 900` 起跑（零现金、补那 18 段分母）。

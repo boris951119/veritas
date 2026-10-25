@@ -56,6 +56,9 @@ OFFICIAL = os.environ.get(
 OUT = Path(os.environ.get("S4_OUT", "/tmp/s4runs"))
 MODEL = os.environ.get("S4_MODEL", "openai/veritas-qwen3-14b")
 BASE_URL = os.environ.get("OLLAMA_BASE", "http://127.0.0.1:11434/v1")
+# 单次调用超时的**测量侧覆盖**（None＝沿用 `config.json`）。由 `--timeout-seconds`
+# 赋值，见 `settings_for`；交件配置 `config.json` 一字不动。
+TIMEOUT_OVERRIDE: int | None = None
 TIME_GATE_S = 1800          # 官方「每专题 ≤30 分钟」
 LOCAL_HOSTS = {"127.0.0.1", "localhost", "::1", "0.0.0.0", "[::1]"}
 OTHER_KEY_ENVS = ("DEEPSEEK_API_KEY", "ANTHROPIC_API_KEY", "GEMINI_API_KEY",
@@ -93,6 +96,12 @@ def settings_for(budget: int | None):
     st.models = [MODEL]
     if budget is not None:
         st.material_char_budget = int(budget)
+    # 超时只在**测量侧**覆盖，不写进 `config.json`（那是交件配置、云端也读它）。
+    # 动因＝10-25 吉隆四次整案中断：本机单网关把三分析师串成一队，单次调用
+    # 已贴 300s 线；而超时按设计不在同腿重试（防烧穿多腿链），单模型链没有
+    # 备胎 ⇒ 一次贴线抖动直接升级成整案报废。放宽窗口不改变任何判定口径。
+    if TIMEOUT_OVERRIDE is not None:
+        st.llm_timeout_seconds = int(TIMEOUT_OVERRIDE)
     st.ocr_enabled = False
     return st.validate()
 
@@ -435,6 +444,8 @@ def run_questions(label: str, roster: list | None, only_case: str | None,
                "ref_budget": ref if align else None,
                "fixed_budget": None if align else st.material_char_budget,
                "window_tokens": window, "zh_chars_per_token": density,
+               "llm_timeout_seconds": st.llm_timeout_seconds,
+               "timeout_overridden": TIMEOUT_OVERRIDE is not None,
                "time_gate_s": TIME_GATE_S,
                "roster": None if roster is None else [x[0] for x in roster],
                "total_wall_s": total, "rows": rows,
@@ -758,6 +769,11 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--case", default=None,
                         help="只跑案名含该子串的案例（子串匹配）。solo 不给时默认「刘翔」；"
                              "time 不给＝跑全部六案（C-18 落地后补量单案墙钟用 `time --case 吉隆`）")
+    parser.add_argument("--timeout-seconds", dest="timeout_seconds", type=int, default=None,
+                        help="**只在测量侧**覆盖单次 LLM 调用超时（默认沿用 config.json 的 300s）。"
+                             "本机单网关把三分析师串成一队、单次调用已贴 300s 线，而超时按设计不在"
+                             "同腿重试＋单模型链无备胎 ⇒ 一次贴线抖动会升级成整案报废（吉隆四次中断"
+                             "的根因）。建议本机 14B 跑给 900。不改 `config.json`（交件配置）")
     parser.add_argument("--all", dest="all_cases", action="store_true",
                         help="solo 用：跑全部六案（要和 panel 侧凑成同样的 18 个题级单元才有 A/B 分母，"
                              "默认只跑刘翔一案）")
@@ -767,6 +783,11 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--from", dest="from_dir", default=None,
                         help="calib 读取的 time 产物目录（默认最近一次）")
     args = parser.parse_args(argv)
+    if args.timeout_seconds is not None:
+        if int(args.timeout_seconds) <= 0:
+            raise SystemExit(f"--timeout-seconds 必须为正整数，当前: {args.timeout_seconds}")
+        global TIMEOUT_OVERRIDE
+        TIMEOUT_OVERRIDE = int(args.timeout_seconds)
     if args.mode == "solo" and not args.case and not args.all_cases:
         args.case = "刘翔"
     OUT.mkdir(parents=True, exist_ok=True)

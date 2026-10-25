@@ -306,6 +306,13 @@ def pack_material(dossier: Dossier,
     dups = duplicate_map(dossier)
     relevance = {s["source_id"]: s for s in classify_sources(dossier)}
 
+    # C-54：计费长度＝渲染后长度（与 render_segments_block 的 SEGMENT_MAX
+    # 截断同形）。只改字数核算，不改写 seg.text、不改 SEGMENT_MAX 本身。
+    from app.ingest.segment import SEGMENT_MAX as _SEGMENT_MAX
+
+    def _billing_len(text: str) -> int:
+        return min(len(text or ""), int(_SEGMENT_MAX))
+
     eligible: list[tuple[str, str]] = []  # (source_id, seg_id)
     lengths: dict[str, int] = {}
     for src in dossier.sources:
@@ -313,7 +320,7 @@ def pack_material(dossier: Dossier,
             continue
         for seg in src.segments:
             eligible.append((src.id, seg.id))
-            lengths[seg.id] = len(seg.text)
+            lengths[seg.id] = _billing_len(seg.text)
 
     # 短议题实体名对不上正文时，相关层会把全家打成 zero → 空箱。
     # 回退：忽略零相关，按 BM25（含探针扩展）装箱，仍排除精确重复件。
@@ -323,7 +330,7 @@ def pack_material(dossier: Dossier,
                 continue
             for seg in src.segments:
                 eligible.append((src.id, seg.id))
-                lengths[seg.id] = len(seg.text)
+                lengths[seg.id] = _billing_len(seg.text)
 
     queries = pack_search_queries(dossier)
     scores = dict(rank_segments(dossier, queries=queries)
