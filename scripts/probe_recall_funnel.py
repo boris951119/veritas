@@ -135,6 +135,13 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         action="store_true",
         help="以 JSON 输出（便于复放比对）",
     )
+    p.add_argument(
+        "--compare-dir",
+        dest="compare_dir",
+        metavar="DIR",
+        default=None,
+        help="C-54 读数出口：再量一批并与 --run-dir 四桶／逐案／结论数并列",
+    )
     return p.parse_args(argv)
 
 
@@ -464,6 +471,77 @@ def print_human(run_dir: Path, results: list[QuestionResult], agg: dict) -> None
     print(f"  skipped_no_locator 合计={agg['skipped_no_locator_total']}")
 
 
+def _conclusion_stats(run_dir: Path) -> dict:
+    """C-54 读数出口：结论数＋提交面高档（confidence≥0.8）条数。"""
+    n_conc = 0
+    n_high = 0
+    for case_dir in sorted(p for p in run_dir.iterdir() if p.is_dir()):
+        if "吉隆" in case_dir.name:
+            continue
+        qroot = case_dir / "questions"
+        if not qroot.is_dir():
+            continue
+        for qdir in sorted(qroot.glob("q_*")):
+            rp = qdir / "report.json"
+            if not rp.exists():
+                continue
+            rep = json.loads(rp.read_text(encoding="utf-8"))
+            for c in rep.get("conclusions") or []:
+                if not isinstance(c, dict):
+                    continue
+                n_conc += 1
+                conf = c.get("confidence")
+                score = None
+                if isinstance(conf, (int, float)):
+                    score = float(conf)
+                elif isinstance(conf, dict):
+                    score = float(conf.get("score") or conf.get("value") or 0)
+                if score is not None and score >= 0.8:
+                    n_high += 1
+    return {"n_conclusions": n_conc, "n_high_band": n_high}
+
+
+def _print_c54_compare(
+    label_a: str, run_a: Path, res_a: list, agg_a: dict,
+    label_b: str, run_b: Path, res_b: list, agg_b: dict,
+) -> None:
+    """两批四桶并列＋逐案拆开＋结论数／高档同表（C-54 判据 c）。"""
+    print("\n=== C-54 两批四桶并列 ===")
+    ta, tb = agg_a["totals"], agg_b["totals"]
+    print(f"{'bucket':<8}{label_a:>16}{label_b:>16}")
+    for name in ("l1", "l2", "l3", "l4"):
+        a, b = ta[name], tb[name]
+        print(f"{name:<8}{a['numer']:>4}/{a['denom']:<4}"
+              f"={a['rate']:.4f}  {b['numer']:>4}/{b['denom']:<4}"
+              f"={b['rate']:.4f}")
+    sa, sb = _conclusion_stats(run_a), _conclusion_stats(run_b)
+    print(f"结论数   {sa['n_conclusions']:>16}{sb['n_conclusions']:>16}")
+    print(f"高档≥0.8 {sa['n_high_band']:>16}{sb['n_high_band']:>16}")
+    print("\n=== C-54 逐案 L2 拆开 ===")
+    by_a: dict[str, list[int]] = {}
+    by_b: dict[str, list[int]] = {}
+    for r in res_a:
+        c = by_a.setdefault(r.case, [0, 0])
+        c[0] += r.l2.numer
+        c[1] += r.l2.denom
+    for r in res_b:
+        c = by_b.setdefault(r.case, [0, 0])
+        c[0] += r.l2.numer
+        c[1] += r.l2.denom
+    print(f"{'case':30}{label_a:>12}{label_b:>12}")
+    for case in sorted(set(by_a) | set(by_b)):
+        a = by_a.get(case, [0, 0])
+        b = by_b.get(case, [0, 0])
+        print(f"  {case[:28]:28} {a[0]:3}/{a[1]:<3}     {b[0]:3}/{b[1]:<3}")
+    # 门槛提示
+    l2a, l2b = ta["l2"]["numer"], tb["l2"]["numer"]
+    l3a, l3b = ta["l3"]["numer"], tb["l3"]["numer"]
+    l4a, l4b = ta["l4"]["numer"], tb["l4"]["numer"]
+    print(f"\n判据 c 门槛（相对基线 L2=40 L3=15 L4=7；"
+          f"{label_a} 为改后重算）："
+          f"L2 {l2a}（须>40） L3 {l3a}（须≥15） L4 {l4a}（须≥7）")
+
+
 def main(argv: list[str] | None = None) -> int:
     args = _parse_args(argv)
     run_dir = Path(args.run_dir)
@@ -506,10 +584,34 @@ def main(argv: list[str] | None = None) -> int:
                     for r in results
                 ],
                 "aggregate": agg,
+                "conclusion_stats": _conclusion_stats(run_dir),
             }
             print(json.dumps(payload, ensure_ascii=False, indent=2))
         else:
             print_human(run_dir, results, agg)
+            stats = _conclusion_stats(run_dir)
+            print(f"  结论数={stats['n_conclusions']}  "
+                  f"高档≥0.8={stats['n_high_band']}")
+        if args.compare_dir:
+            cmp = Path(args.compare_dir)
+            if not cmp.is_dir():
+                print(f"compare-dir 不存在：{cmp}", file=sys.stderr)
+                return 2
+            with tempfile.TemporaryDirectory(prefix="c51-l4b-") as td2:
+                res_b = measure_run(cmp, gold_dir, l4_tmp=Path(td2))
+                if not res_b:
+                    print(f"compare-dir 无 report：{cmp}", file=sys.stderr)
+                    return 2
+                agg_b = aggregate(res_b)
+                if not args.as_json:
+                    print_human(cmp, res_b, agg_b)
+                    stats_b = _conclusion_stats(cmp)
+                    print(f"  结论数={stats_b['n_conclusions']}  "
+                          f"高档≥0.8={stats_b['n_high_band']}")
+                _print_c54_compare(
+                    "NEW改后", run_dir, results, agg,
+                    "OLD批2", cmp, res_b, agg_b,
+                )
     return 0
 
 

@@ -341,30 +341,48 @@ def test_c49_p3_c46_record_shape_untouched():
     assert "零模型" in src
 
 
+def _toplevel_func_names(path: Path) -> set[str]:
+    """ast 顶层函数名集合（与 c46 那颗同款；禁 f\"def X\" 子串假腿）。"""
+    src = path.read_text(encoding="utf-8")
+    tree = ast.parse(src, filename=str(path))
+    return {
+        node.name
+        for node in tree.body
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+    }
+
+
 def test_c49_a_production_surfaces_untouched():
-    """判据 a 改写：生产面关键入口仍在场（内容断言，非瞬时 git diff）。
+    """判据 a 改写：生产面关键入口仍在场（AST 顶层函数名集合，非子串）。
 
     C-49 原意＝本单不许动判定／导出／分析师契约。#180 证明拿工作树
-    `git diff --stat` 当常驻格会误伤并行合法改动。改为钉住这些面上的
-    公开入口符号——被删／改名就必须红；真正的"本单零 diff"仍由回写贴
+    `git diff --stat` 当常驻格会误伤并行合法改动。C-54 件③：子串
+    `\"def recompute_all\" in text` 会被「改名＋文件尾别名」骗绿——改 AST
+    集合判定（多文件逐个取集合）。真正的"本单零 diff"仍由回写贴
     `git diff --stat` 人工验收。
     """
-    confidence = (ROOT / "app" / "core" / "confidence.py").read_text(encoding="utf-8")
-    assert "def recompute_all" in confidence
-    assert "def conclude_confidence" in confidence
-
-    conflicts = (ROOT / "app" / "core" / "conflicts.py").read_text(encoding="utf-8")
-    assert "def apply_resolution" in conflicts
-    assert "def validate_conflict" in conflicts
-
-    official = (ROOT / "app" / "export" / "official.py").read_text(encoding="utf-8")
-    assert "def export_official" in official
-
-    material = (ROOT / "app" / "core" / "material.py").read_text(encoding="utf-8")
-    assert "def pack_material" in material
-    assert "def align_budget_to_window" in material
-    assert "def production_pack_messages" in material
-
-    prompts = (ROOT / "app" / "agents" / "prompts.py").read_text(encoding="utf-8")
-    assert "def render_system_prompt" in prompts
-    assert "def render_segments_block" in prompts
+    required = {
+        ROOT / "app" / "core" / "confidence.py": {
+            "recompute_all", "conclude_confidence",
+        },
+        ROOT / "app" / "core" / "conflicts.py": {
+            "apply_resolution", "validate_conflict",
+        },
+        ROOT / "app" / "export" / "official.py": {
+            "export_official",
+        },
+        ROOT / "app" / "core" / "material.py": {
+            "pack_material", "align_budget_to_window",
+            "production_pack_messages",
+        },
+        ROOT / "app" / "agents" / "prompts.py": {
+            "render_system_prompt", "render_segments_block",
+        },
+    }
+    for path, names in required.items():
+        toplevel = _toplevel_func_names(path)
+        missing = names - toplevel
+        assert not missing, (
+            f"{path.relative_to(ROOT)} 顶层函数缺失（AST 集合）："
+            f"{sorted(missing)}"
+        )

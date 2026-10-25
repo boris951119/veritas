@@ -13,6 +13,9 @@
    另附同一份新案卷「自身上限／改前同题上限」L2 换预复核（金标段键逐字、分母 87）。
    跑法：`MODE=c53 PYTHONPATH=. .venv/bin/python scripts/probe_pack_window.py`
    （可选 `RUN_NEW`／`RUN_OLD`；默认两批 `/tmp/s4runs/time-20261024-201518` 与 `…-001335`）。
+4. `MODE=c54`：C-54 件①＝逐题三栏（计费口径／渲染到达字 vs 计费字／budget 哪一刀）
+   ＋硬数 40／48／正法渲染计费 L2；近似截短对照只附报。`app/` 零 diff。
+   跑法：`MODE=c54 PYTHONPATH=. .venv/bin/python scripts/probe_pack_window.py`
 
 口径纪律（三条都踩过坑，别再犯）：
 - **入口必须是 `load_official_case`**（官方适配层只在 `run_official_case` 里调用，`app/pipeline.py:1514`）。
@@ -353,10 +356,347 @@ def mode_c53() -> None:
     _c53_l2_swap(RUN_NEW, RUN_OLD)
 
 
+# ------------------------------------------------------------------ C-54 ----
+
+
+def _pack_with_billing_cap(dossier: Dossier, budget_chars: int | None,
+                           cap: int) -> dict:
+    """正法：与 pack_material 同算法，仅 lengths=min(len(text),cap)；案卷一字不动。
+
+    用 inspect 源码替换两处 lengths 赋值后 exec——探针内本地 fork，不改 app/。
+    """
+    import inspect
+    import math  # noqa: F401 — pack_material 源码引用
+    import app.core.material as mat
+    from app.core.answer_slots import priority_segment_ids  # noqa: F401
+    from app.core.bm25 import rank_segments  # noqa: F401
+    from app.core.dup_check import duplicate_map  # noqa: F401
+    from app.core.relevance import classify_sources  # noqa: F401
+
+    src = inspect.getsource(mat.pack_material)
+    src = textwrap_dedent(src)
+    needle = "lengths[seg.id] = len(seg.text)"
+    repl = f"lengths[seg.id] = min(len(seg.text), {int(cap)})"
+    if src.count(needle) < 1:
+        raise RuntimeError("pack_material 字数核算锚点漂移，C-54 探针失效")
+    src = src.replace(needle, repl)
+    # strip leading 'def pack_material...' → keep as nested
+    ns = {
+        "Dossier": Dossier,
+        "duplicate_map": duplicate_map,
+        "classify_sources": classify_sources,
+        "rank_segments": rank_segments,
+        "priority_segment_ids": priority_segment_ids,
+        "math": math,
+        "pack_search_queries": mat.pack_search_queries,
+        "_MATERIAL_BUDGET": mat.material_budget(),
+        "_EXCLUDE_BUDGET_REASON": "预算截断",
+    }
+    # material_budget may be overridden by set_material_budget
+    ns["_MATERIAL_BUDGET"] = (
+        int(budget_chars) if budget_chars is not None
+        else mat.material_budget())
+    # Rewrite signature default path: budget = max(1, int(budget_chars or _MATERIAL_BUDGET))
+    exec(compile(src, "<c54_pack_fork>", "exec"), ns)
+    fn = ns["pack_material"]
+    return fn(dossier, budget_chars=budget_chars)
+
+
+def textwrap_dedent(s: str) -> str:
+    import textwrap
+    return textwrap.dedent(s)
+
+
+def _c54_three_columns(run: Path, label: str, window: int,
+                       density: float) -> None:
+    """逐题三栏：计费口径／渲染到达字 vs 计费字／budget 哪一刀。"""
+    from app.ingest.segment import SEGMENT_MAX
+    from app.core.material import production_pack_messages
+
+    print(f"\n======== 件① 三栏表｜{label} {run.name} ========")
+    hdr = (f"{'case':18} {'qid':5} {'bill':6} {'rend':6} {'waste':6} "
+           f"{'n>650':>5} {'pwBud':>6} {'knife':36} "
+           f"{'fit_ov':>6} {'fits':>4}")
+    print(hdr)
+    rows = _c53_rows(run)
+    tot_bill = tot_rend = tot_waste = n_long = 0
+    long_chars_cut = 0
+    for case, qid, qdir in _c53_iter_q(run):
+        rep = json.loads((qdir / "report.json").read_text(encoding="utf-8"))
+        pw = (rep.get("accounting") or {}).get("pack_window") or {}
+        pw_b = int(pw.get("budget") or 0)
+        row = rows.get((case, qid), {})
+        dos = Dossier.from_dict(rep)
+        set_material_budget(pw_b)
+        pack = pack_material(dos)
+        sel = set(pack.get("selected") or [])
+        # 计费＝原始字数合计（当前生产口径）
+        bill = 0
+        rend = 0
+        n_over = 0
+        for src in dos.sources:
+            for seg in src.segments:
+                if seg.id not in sel:
+                    continue
+                raw = len(seg.text or "")
+                bill += raw
+                arrived = min(raw, SEGMENT_MAX)
+                rend += arrived
+                if raw > SEGMENT_MAX:
+                    n_over += 1
+                    long_chars_cut += raw - SEGMENT_MAX
+        waste = bill - rend
+        tot_bill += bill
+        tot_rend += rend
+        tot_waste += waste
+        n_long += n_over
+        # 哪一刀
+        row_b = int(row.get("budget_used") or 0)
+        orig = row_b or pw_b or 80_000
+        k = _c53_knives(dos, orig, window, density)
+        winner = k["winner"]
+        if int(pw.get("n_iters") or 0) == 1 and pw.get("fits"):
+            winner = "orig已进窗(未开三刀)"
+        elif pw_b and pw_b < orig:
+            diffs = [
+                ("orig", abs(pw_b - k["k1"])),
+                ("window×density", abs(pw_b - k["k2"])),
+                ("orig×window/est0×0.92", abs(pw_b - k["k3"])),
+            ]
+            best = min(diffs, key=lambda x: x[1])
+            if best[1] <= max(50, int(pw_b * 0.03)):
+                winner = best[0]
+            else:
+                winner = f"迭代缩档≈{best[0]}(Δ{best[1]})"
+        fit_ov = int(row.get("fit_overflow_tokens") or 0)
+        fits = pw.get("fits")
+        print(f"{case[:18]:18} {qid:5} {bill:6} {rend:6} {waste:6} "
+              f"{n_over:5} {pw_b:6} {winner:36} "
+              f"{fit_ov:6} {str(fits):>4}")
+    pct = (tot_waste / max(tot_bill, 1)) * 100
+    print(f"合计 bill={tot_bill} rend={tot_rend} waste={tot_waste}"
+          f"（{pct:.1f}%）长段>{SEGMENT_MAX}＝{n_long} 段截掉 {long_chars_cut} 字")
+    print("计费口径＝当前生产＝原始字数（material.py lengths=len(seg.text)）；"
+          "rend＝Σ min(len,SEGMENT_MAX)；waste＝bill−rend")
+
+
+def _c54_l2_render_billing(run_new: Path, run_old: Path) -> dict:
+    """硬数：own 40／old-bud 48／正法渲染计费／近似截短（附报）。"""
+    from app.ingest.segment import SEGMENT_MAX
+    try:
+        from scripts.probe_recall_funnel import (
+            DEFAULT_GOLD, gold_paras_for_question,
+        )
+    except Exception:
+        from probe_recall_funnel import (  # type: ignore
+            DEFAULT_GOLD, gold_paras_for_question,
+        )
+
+    def budgets(run: Path) -> dict:
+        out = {}
+        for case, qid, qdir in _c53_iter_q(run):
+            rep = json.loads((qdir / "report.json").read_text(encoding="utf-8"))
+            pw = (rep.get("accounting") or {}).get("pack_window") or {}
+            out[(case, qid)] = int(pw.get("budget") or 0)
+        return out
+
+    old_b = budgets(run_old)
+    tot = {"own": 0, "old": 0, "render": 0, "approx": 0}
+    den = 0
+    per: dict[str, list[int]] = {}
+    print("\n======== 硬数 L2（金标段键逐字；分母须 87）========")
+    for case, qid, qdir in _c53_iter_q(run_new):
+        rep = json.loads((qdir / "report.json").read_text(encoding="utf-8"))
+        dos = Dossier.from_dict(rep)
+        gold, _sk = gold_paras_for_question(DEFAULT_GOLD / case, qid)
+        if not gold:
+            continue
+        own = int(((rep.get("accounting") or {}).get(
+            "pack_window") or {}).get("budget") or 0)
+        ob = old_b.get((case, qid), 0)
+
+        def hit_raw(budget: int) -> int:
+            if not budget:
+                return 0
+            set_material_budget(budget)
+            sel = {str(x) for x in (pack_material(dos).get("selected") or [])}
+            return sum(1 for _d, para in gold if para in sel)
+
+        def hit_render(budget: int) -> int:
+            if not budget:
+                return 0
+            set_material_budget(budget)
+            pack = _pack_with_billing_cap(dos, budget, SEGMENT_MAX)
+            sel = {str(x) for x in (pack.get("selected") or [])}
+            return sum(1 for _d, para in gold if para in sel)
+
+        def hit_approx(budget: int) -> int:
+            """架构师近似＝截短 seg.text 再装箱（会改 duplicate/relevance 输入）。"""
+            if not budget:
+                return 0
+            # 浅拷贝案卷并截短正文
+            snap = Dossier.from_dict(dos.to_dict())
+            for src in snap.sources:
+                for seg in src.segments:
+                    if len(seg.text or "") > SEGMENT_MAX:
+                        seg.text = seg.text[:SEGMENT_MAX]
+            set_material_budget(budget)
+            sel = {str(x) for x in (pack_material(snap).get("selected") or [])}
+            return sum(1 for _d, para in gold if para in sel)
+
+        h_own = hit_raw(own)
+        h_old = hit_raw(ob)
+        h_ren = hit_render(own)
+        h_apx = hit_approx(own)
+        tot["own"] += h_own
+        tot["old"] += h_old
+        tot["render"] += h_ren
+        tot["approx"] += h_apx
+        den += len(gold)
+        c = per.setdefault(case, [0, 0, 0, 0, 0])
+        c[0] += len(gold)
+        c[1] += h_own
+        c[2] += h_old
+        c[3] += h_ren
+        c[4] += h_apx
+
+    print(f"分母={den}")
+    print(f"  自身上限（原始计费） L2={tot['own']}/{den}")
+    print(f"  改前同题上限         L2={tot['old']}/{den}")
+    print(f"  正法渲染计费（同 own 预算） L2={tot['render']}/{den}")
+    print(f"  近似截短正文（附报） L2={tot['approx']}/{den}")
+    print(f"{'case':30} {'den':>3} {'own':>3} {'oldB':>3} {'正法':>3} {'近似':>3}")
+    for case, (d, a, b, r, x) in sorted(per.items()):
+        print(f"  {case[:30]:30} {d:3} {a:3} {b:3} {r:3} {x:3}")
+    if den == 87:
+        ok40 = tot["own"] == 40
+        ok48 = tot["old"] == 48
+        print(f"复现 40/87：{'✅' if ok40 else '❌'}  复现 48/87：{'✅' if ok48 else '❌'}")
+        if tot["render"] != tot["approx"]:
+            print("⚠ 正法 ≠ 近似：以正法为准；逐案差见上表（预计中美）")
+        if tot["approx"] == 43:
+            print("近似口径复现架构师 43/87：✅（附报）")
+    return {"den": den, **tot, "per": per}
+
+
+def _c54_slope(run_new: Path, run_old: Path) -> None:
+    """判据 b：解释 0.77→1.10 每字 tok 斜率跳变。
+
+    架构师口径＝题均 fit_est_tokens／题均「选中段原始字数合计」
+    （不是 fit_prompt_chars——那条含 system／围栏，两批斜率会贴死在密度 1.45）。
+    """
+    from app.ingest.segment import SEGMENT_MAX
+    print("\n======== 斜率跳变（判据 b）========")
+    for label, run in (("NEW", run_new), ("OLD批2", run_old)):
+        rows = _c53_rows(run)
+        bill_sum = tok_sum = 0
+        n = 0
+        for case, qid, qdir in _c53_iter_q(run):
+            r = rows.get((case, qid), {})
+            tk = r.get("fit_est_tokens")
+            if tk is None:
+                continue
+            rep = json.loads((qdir / "report.json").read_text(encoding="utf-8"))
+            pw_b = int(((rep.get("accounting") or {}).get(
+                "pack_window") or {}).get("budget") or 0)
+            dos = Dossier.from_dict(rep)
+            set_material_budget(pw_b)
+            sel = set(pack_material(dos).get("selected") or [])
+            bill = sum(len(seg.text or "") for src in dos.sources
+                       for seg in src.segments if seg.id in sel)
+            bill_sum += bill
+            tok_sum += int(tk)
+            n += 1
+        mean_ch = bill_sum / max(n, 1)
+        mean_tk = tok_sum / max(n, 1)
+        slope = mean_tk / max(mean_ch, 1)
+        print(f"  {label}: n={n} 题均bill={mean_ch:.0f} 题均tok={mean_tk:.0f} "
+              f"每字={slope:.4f} tok")
+    print("架构师对照：批2 19282字/14743tok≈0.77；新跑 13894字/15347tok≈1.10。"
+          "成因＝① 装箱按原始字数计费、渲染截到 SEGMENT_MAX＝计费字里有模型看不见的部分；"
+          f"② C-52 密度键偏短段⇒新跑题均 bill 更小、tok 相近⇒斜率抬升。"
+          "口径统一后 bill≈rend，斜率应回落到与渲染同形。")
+
+
+def _c54_seg_arrival_dist(run_new: Path) -> None:
+    """每段贡献的到达字数分布：付了 N 只到 min(N,650)。"""
+    from app.ingest.segment import SEGMENT_MAX
+    print("\n======== 每段到达字数分布（选中段）========")
+    buckets = {"≤650": 0, "651-1000": 0, "1001-2000": 0, ">2000": 0}
+    paid_over = arrived_over = 0
+    n_over = 0
+    for case, qid, qdir in _c53_iter_q(run_new):
+        rep = json.loads((qdir / "report.json").read_text(encoding="utf-8"))
+        pw_b = int(((rep.get("accounting") or {}).get(
+            "pack_window") or {}).get("budget") or 0)
+        dos = Dossier.from_dict(rep)
+        set_material_budget(pw_b)
+        sel = set(pack_material(dos).get("selected") or [])
+        for src in dos.sources:
+            for seg in src.segments:
+                if seg.id not in sel:
+                    continue
+                n = len(seg.text or "")
+                if n <= 650:
+                    buckets["≤650"] += 1
+                elif n <= 1000:
+                    buckets["651-1000"] += 1
+                elif n <= 2000:
+                    buckets["1001-2000"] += 1
+                else:
+                    buckets[">2000"] += 1
+                if n > SEGMENT_MAX:
+                    n_over += 1
+                    paid_over += n
+                    arrived_over += SEGMENT_MAX
+    print(f"  桶={buckets}")
+    print(f"  >{SEGMENT_MAX} 段数={n_over} 付了 {paid_over} 字"
+          f" 只到 {arrived_over} 字 浪费 {paid_over - arrived_over}")
+
+
+def mode_c54() -> None:
+    if not RUN_NEW.is_dir() or not RUN_OLD.is_dir():
+        sys.exit(f"MODE=c54 需要两批：RUN_NEW={RUN_NEW} RUN_OLD={RUN_OLD}")
+    st = Settings.from_env()
+    window = int(st.model_context_tokens)
+    density = float(st.zh_chars_per_token)
+    print(f"MODE=c54 window={window} density={density}")
+    print(f"NEW={RUN_NEW}\nOLD={RUN_OLD}")
+    _c54_three_columns(RUN_NEW, "NEW最终码", window, density)
+    _c54_three_columns(RUN_OLD, "OLD改前", window, density)
+    hard = _c54_l2_render_billing(RUN_NEW, RUN_OLD)
+    _c54_seg_arrival_dist(RUN_NEW)
+    _c54_slope(RUN_NEW, RUN_OLD)
+    # 稳定性：同案卷两种计费反解上限差——用 own budget 下 selected 数对比
+    print("\n======== 同预算两种计费：装入段数差（稳定性旁证）========")
+    from app.ingest.segment import SEGMENT_MAX
+    for case, qid, qdir in _c53_iter_q(RUN_NEW):
+        rep = json.loads((qdir / "report.json").read_text(encoding="utf-8"))
+        own = int(((rep.get("accounting") or {}).get(
+            "pack_window") or {}).get("budget") or 0)
+        dos = Dossier.from_dict(rep)
+        set_material_budget(own)
+        n_raw = int(pack_material(dos).get("n_selected") or 0)
+        n_ren = int(_pack_with_billing_cap(
+            dos, own, SEGMENT_MAX).get("n_selected") or 0)
+        if n_raw != n_ren:
+            print(f"  {case[:24]}/{qid}: raw选{n_raw} → 渲染计费选{n_ren}"
+                  f"（+{n_ren - n_raw}）budget={own}")
+    print(f"\n件① 汇总硬数：own={hard['own']}/{hard['den']} "
+          f"old={hard['old']}/{hard['den']} "
+          f"正法={hard['render']}/{hard['den']} "
+          f"近似={hard['approx']}/{hard['den']}")
+    # 件② 是否支持：正法 L2 > own 且 近似方向同号
+    support = hard["render"] > hard["own"]
+    print(f"件② 动码门槛（正法 L2 涨）：{'✅ 支持' if support else '❌ 降级披露'}")
+
 
 def main() -> None:
     if MODE == "c53":
         mode_c53()
+        return
+    if MODE == "c54":
+        mode_c54()
         return
     st = Settings.from_env()
     density = float(st.zh_chars_per_token)

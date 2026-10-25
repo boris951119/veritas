@@ -1075,3 +1075,11 @@ C45_USE_OLD_JSON=1 OFFICIAL_RUN=/tmp/s4runs/time-20261023-173124 \
 - **决策**：AST 顶层函数名集合精确成员；短语级补充带边界／写明不冒充函数名守护。
 - **改动**：仅 `tests/test_c49_instrument_gaps.py`（+`import ast`）；`app/` 与被钉 8 格零动。
 - **验证**：加后缀当场红、原样绿；991／973／975+16 deselected；不 commit。
+
+## 2026-10-25 · C-54 装箱计费＝渲染后长度（操作面登记）
+
+- **日期**：2026-10-25（Asia/Shanghai）
+- **件①**：`MODE=c54` 三栏表＋硬数 40／48／正法 43；近似亦 43、差在中美／印航组成；waste 14.9%＝30899 字／22 段与架构师前置同。
+- **件②**：`material.py` 仅字数核算改 `min(len, SEGMENT_MAX)`；`probe_recall_funnel --compare-dir` 读数出口。漏桶 NEW＝L2 43／L3 15／L4 7（相对基线 40／15／7：涨／平／平）。
+- **件③**：`test_c49_a_production_surfaces_untouched` AST 集合；改名＋别名红、原样绿。
+- **测试**：`tests/test_c54_render_budget.py` 5 格（含反向腿刀测）；全集 996；不 commit。
