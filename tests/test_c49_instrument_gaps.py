@@ -7,6 +7,7 @@
 
 from __future__ import annotations
 
+import ast
 import json
 import re
 import sys
@@ -305,10 +306,20 @@ def test_c49_p3_c46_record_shape_untouched():
     """C-46 记录形状守护仍在场（内容断言；不再拿工作树瞬时 git diff）。
 
     #180：瞬时 `git diff` 会在任何合法并行改动下误红。改钉 c46 文件内
-    关键契约名与关键断言短语——删掉／改坏这些守护就必须红。
+    关键契约名——删掉／改名就必须红。
+
+    R-C53-1：函数名用 ast 顶层集合精确成员判定（禁止 `f"def {name}" in src`
+    前缀子串假腿）；下面的短语断言只是语义补充，不冒充函数名守护。
     """
-    src = (ROOT / "tests" / "test_c46_record_shape.py").read_text(encoding="utf-8")
-    for name in (
+    path = ROOT / "tests" / "test_c46_record_shape.py"
+    src = path.read_text(encoding="utf-8")
+    tree = ast.parse(src, filename=str(path))
+    toplevel = {
+        node.name
+        for node in tree.body
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+    }
+    required = {
         "test_b_keys_present_and_probe_element_helpers",
         "test_b_export_records_have_both_keys",
         "test_c_tie_outcome_并存不裁决_empty_winner",
@@ -317,13 +328,17 @@ def test_c49_p3_c46_record_shape_untouched():
         "test_d_reverse_fabricated_statement_must_red",
         "test_e_n_calls_zero",
         "test_h_record_within_800_chars",
-    ):
-        assert f"def {name}" in src, f"c46 守护格缺失：{name}"
-    # 关键语义钉子：并列／结果键、空 winner、verbatim、零模型
-    assert "decision_path" in src
-    assert "omissions" in src
-    assert "n_calls" in src
-    assert "800" in src
+    }
+    missing = required - toplevel
+    assert not missing, f"c46 守护格缺失（AST 集合成员）：{sorted(missing)}"
+    # 短语级补充（带词边界；不是函数名守护——函数名由上面 AST 集合钉死）
+    assert re.search(r"\bdecision_path\b", src)
+    assert re.search(r"\bomissions\b", src)
+    assert re.search(r"\b800\b", src)
+    # 零模型语义：正文里的 calls["n"]／节标题「零模型」（"n_calls" 只在函数名里，
+    # 不能当独立词边界短语；函数名守护已由 AST 集合承担）
+    assert 'calls["n"]' in src
+    assert "零模型" in src
 
 
 def test_c49_a_production_surfaces_untouched():

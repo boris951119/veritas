@@ -1068,3 +1068,10 @@ C45_USE_OLD_JSON=1 OFFICIAL_RUN=/tmp/s4runs/time-20261023-173124 \
 - **不**登记进 `tests/c37_zero_ref_registry.py`。
 - **说明**：诚实 §3.4／逃逸口；未改窗口／DEFAULT／0.92；金标未放宽；零现金。
 
+## 2026-10-25 · R-C53-1 假腿变真牙（纯测试面）
+
+- **日期**：2026-10-25（Asia/Shanghai）
+- **问题**：`test_c49_p3_c46_record_shape_untouched` 用 `f"def {name}" in src` 前缀子串 ⇒ 加后缀改名仍绿。
+- **决策**：AST 顶层函数名集合精确成员；短语级补充带边界／写明不冒充函数名守护。
+- **改动**：仅 `tests/test_c49_instrument_gaps.py`（+`import ast`）；`app/` 与被钉 8 格零动。
+- **验证**：加后缀当场红、原样绿；991／973／975+16 deselected；不 commit。
