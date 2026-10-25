@@ -1102,3 +1102,46 @@ C45_USE_OLD_JSON=1 OFFICIAL_RUN=/tmp/s4runs/time-20261023-173124 \
 - **验证**：`996 passed in 33.20s`／`--collect-only 996`／`def_test_count 978`／
   `-k "not c49 and not c53"`＝`980 passed, 16 deselected`；锚点 577 平、`--include-fenced` 678 平、
   表机 105 平 mismatched=0；吉隆单案已用 `--timeout-seconds 900` 起跑（零现金、补那 18 段分母）。
+
+## 2026-10-25 · C-55 relevance 资格线包（逃逸披露）
+
+- **日期**：2026-10-25（Asia/Shanghai）
+- **件①**：`scripts/probe_c55_relevance_gate.py` 对 `time-20261023-173124` 量得金标段源 level＝high72／low18／zero15；
+  判据 a＝柬泰 9/16＋印航 6/24＝15/105 ✅；判据 b＝关零级整源出局 L2 59→59（Δ=+0）❌。
+- **逃逸**：零级闸不是本批 L2 瓶颈——CF 多装 10 段但 15 段 zero-金标 in_cf=0（BM25≈0 或 rank 深）。
+  件② 按单降级＝`relevance.py` 零 diff；c／d／e 换分腿本轮不做。
+- **件③**：`tests/test_c55_relevance_gate.py` 3 格钉「无实体⇒全 high」；摘早退 1 红、复位绿。
+- **验证**：999 passed／collect 999／def_test_count 981；`-k "not c49 and not c53 and not c55"`＝980＋19 deselected；
+  表机 docstring 同笔更新；不 commit。
+
+## 2026-10-25 · C-55 复放＝资格线方向作废＋六案 105 分母拆账（架构师裁决登记）
+
+- **复放**：base clone `c48e46b`＝`996 passed`；t＝5 文件 `cmp` 逐字节贴齐＋先 `git add -A` 后建 `.venv`（`ls-files`＝0）＝
+  `999 passed`／collect 999／def_test_count 981／`-k "not c49 and not c53 and not c55"`＝980＋19 deselected；
+  表机 107 且 docstring 同笔更新；`app/` 零 diff、判定面与 `config.json` 零命中 ⇒ ✅ 收码、基线 996⇒999、四十九张。
+- **判据 b 不是假腿**：ΔL2=0 有两种可能（反事实没生效 / 生效了但金标抢不过排序）。我比 `selected` 集合＝开闸后
+  **18 进 18 出、净 0、金标增 0**＝真生效；又在改后六案产物上复放同一切闸＝48/105→48/105＝跨码跨跑次都 +0
+  ⇒「零级闸不是本批 L2 瓶颈」站得住，逃逸口用得对。
+- **订正他的两处成因解释（数对、解释反了）**：15 段 zero-金标里 **12 段 BM25 有分（0.0017～0.0515）＝排序输、只 3 段分为 0**
+  （他写 8 段为零）；换进换出 18/18 净 0（他写"多装 10 段"）。**根因＝`app/core/material.py` 的 excluded reason 标签名实相反**：
+  `_EXCLUDE_BUDGET_REASON="预算截断"` 贴给 **score==0** 的段、`"BM25 排序未入预算"` 贴给 **score>0** 的段（`elif scores.get(...)>0` 那一支）
+  ⇒谁读标签都会读反。挂新任务：改文案＋补一颗"reason 与 score 对应关系"守护格。
+- **刀**：K1 摘 `if not entities:` 早退整块⇒**3 红**（他承诺 1 红＝更严）；K2 等价改写成 `if len(entities) == 0:`⇒1 红
+  （`test_c55_fallback_path_in_source` 是"字符串在场"型、改写法即红＝低危记账）；K3 只把测试里手搓 stub 的 `level` 从 zero 改 high、
+  **生产码一字未动**⇒1 红＝`..._reverse_must_red` 里有一段拿自己比自己（教训 ⑪／⑰／#169 同族第四次）。
+  整颗格子有真牙（K1 会让它红）⇒**不返工**，但名字不许超过断言覆盖面、下轮顺手改。
+- **⚠ 新加一条刀测纪律（记我账）**：第一次"复位"跑出 `1 failed` 是**旧 `__pycache__` 骗的**（`cp` 还原源码后 size 复原、
+  pyc 判定有效）⇒**下刀之后必须先清 `__pycache__` 再跑复位腿**，否则"复位绿"不可信、还会冤枉执行方。
+  §5 那条刀测纪律等下轮顺手补，本笔不声称已做。
+- **六案 105 分母到手**：吉隆在 `--timeout-seconds 900` 下第一次整案跑完（`time-20261025-210004`、18 题齐、无 `errors.jsonl`、
+  18/18 `fit_overflow_tokens=0`、`summary.json` 记 `llm_timeout_seconds=900`／`timeout_overridden=true`）。
+  改后码四桶＝**L1 105/105=1.0000｜L2 48/105=0.4571｜L3 14/105=0.1333｜L4 5/105=0.0476**、逐级损失 **57／34／9**
+  （57−34＝23≥15＝量尺读"主漏在 L1→L2"）、结论数 152、绝对高档 6、`skipped_no_locator=0`。**今后 L2 读数改用分母 105。**
+- **把 L1→L2 那 57 段拆开（零模型）**：关闸全开 90｜开闸全开 105｜重复件挡 0 ⇒ 零级闸名义挡 15 段、**同预算开闸买到 +0**；
+  **预算 ×2＝66（+18）、×3＝74（+26）**⇒剩下的漏是"窗口装不下"、不是"闸挡错了"。`SEGMENT_MAX` 扫描（`pack_window.budget` 不动＝
+  真进模型字数不动）＝650→48／500→49／400→50／300→51／200→54／120→60，但选中金标段"前 MAX 字覆盖率"0.9604→0.6875
+  ＝**权衡旋钮、不是免费午餐**（L2 涨、L3 大概率跌）。脚本 `/tmp/c55_arch_split.py`／`/tmp/c55_arch_sweep.py`。
+- **开放问题（等用户拍）**：资格线作为修复票作废（我 10-25 排的第③步指错一次）；L2 轴免费空间已量尽
+  （计费口径 +2／零级闸 +0／SEGMENT_MAX 是权衡／上限稳定性保可比不涨分）；而 **L2→L3＝48 段进提示词只有 14 段被引用＝34 段浪费**
+  ＝现在板子上最大的一块，且它是 C-54 那轮唯一恶化的层（25→30）⇒下一张主票＝L2→L3 引用层票，判定邻近、要授权。
+
