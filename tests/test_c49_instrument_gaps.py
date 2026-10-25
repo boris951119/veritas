@@ -9,7 +9,6 @@ from __future__ import annotations
 
 import json
 import re
-import subprocess
 import sys
 from pathlib import Path
 
@@ -303,32 +302,54 @@ def test_c49_p3_zip_selfcheck_label_aligned():
 
 
 def test_c49_p3_c46_record_shape_untouched():
-    """tests/test_c46_record_shape.py 逐字格不许动（相对 HEAD 无 diff）。"""
-    r = subprocess.run(
-        ["git", "diff", "--", "tests/test_c46_record_shape.py"],
-        cwd=ROOT,
-        capture_output=True,
-        text=True,
-        check=True,
-    )
-    assert r.stdout == "", "test_c46_record_shape.py 被本单改动了"
+    """C-46 记录形状守护仍在场（内容断言；不再拿工作树瞬时 git diff）。
+
+    #180：瞬时 `git diff` 会在任何合法并行改动下误红。改钉 c46 文件内
+    关键契约名与关键断言短语——删掉／改坏这些守护就必须红。
+    """
+    src = (ROOT / "tests" / "test_c46_record_shape.py").read_text(encoding="utf-8")
+    for name in (
+        "test_b_keys_present_and_probe_element_helpers",
+        "test_b_export_records_have_both_keys",
+        "test_c_tie_outcome_并存不裁决_empty_winner",
+        "test_c_reverse_omit_outcome_must_red",
+        "test_d_statement_is_verbatim_prefix_or_full",
+        "test_d_reverse_fabricated_statement_must_red",
+        "test_e_n_calls_zero",
+        "test_h_record_within_800_chars",
+    ):
+        assert f"def {name}" in src, f"c46 守护格缺失：{name}"
+    # 关键语义钉子：并列／结果键、空 winner、verbatim、零模型
+    assert "decision_path" in src
+    assert "omissions" in src
+    assert "n_calls" in src
+    assert "800" in src
 
 
 def test_c49_a_production_surfaces_untouched():
-    """判据 a：app/core／export/official／agents 零 diff。"""
-    r = subprocess.run(
-        [
-            "git",
-            "diff",
-            "--stat",
-            "--",
-            "app/core/",
-            "app/export/official.py",
-            "app/agents/",
-        ],
-        cwd=ROOT,
-        capture_output=True,
-        text=True,
-        check=True,
-    )
-    assert r.stdout.strip() == "", r.stdout
+    """判据 a 改写：生产面关键入口仍在场（内容断言，非瞬时 git diff）。
+
+    C-49 原意＝本单不许动判定／导出／分析师契约。#180 证明拿工作树
+    `git diff --stat` 当常驻格会误伤并行合法改动。改为钉住这些面上的
+    公开入口符号——被删／改名就必须红；真正的"本单零 diff"仍由回写贴
+    `git diff --stat` 人工验收。
+    """
+    confidence = (ROOT / "app" / "core" / "confidence.py").read_text(encoding="utf-8")
+    assert "def recompute_all" in confidence
+    assert "def conclude_confidence" in confidence
+
+    conflicts = (ROOT / "app" / "core" / "conflicts.py").read_text(encoding="utf-8")
+    assert "def apply_resolution" in conflicts
+    assert "def validate_conflict" in conflicts
+
+    official = (ROOT / "app" / "export" / "official.py").read_text(encoding="utf-8")
+    assert "def export_official" in official
+
+    material = (ROOT / "app" / "core" / "material.py").read_text(encoding="utf-8")
+    assert "def pack_material" in material
+    assert "def align_budget_to_window" in material
+    assert "def production_pack_messages" in material
+
+    prompts = (ROOT / "app" / "agents" / "prompts.py").read_text(encoding="utf-8")
+    assert "def render_system_prompt" in prompts
+    assert "def render_segments_block" in prompts

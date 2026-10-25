@@ -1052,3 +1052,19 @@ C45_USE_OLD_JSON=1 OFFICIAL_RUN=/tmp/s4runs/time-20261023-173124 \
 - **验证**：牙①②与 B1–B4 当场下刀见红已还原；`-k "not c51 and not c52"`＝957＋#180 误红；collect=986；不 commit。
 - **开放**：#180 c49 瞬时 git 断言；#181 六案重跑换分；下一张资格线理由＝上界90剩37＝15零级闸＋22排序面。
 
+## 2026-10-25 · C-53 装箱上限逐跑浮动量尺＋窗口口径对齐（操作面登记；件②披露）
+
+- **日期**：2026-10-25（Asia/Shanghai）
+- **件①**（只量、`app/` 零 diff）：`scripts/probe_pack_window.py` 加 `MODE=c53`——逐题摊开三刀（orig／window×density／orig×window/est0×0.92）＋rowBud↔pwBud＋`production_pack_messages` 复算 vs `pack_window.est_tokens`＋L2 换预核。
+  ```
+  MODE=c53 PYTHONPATH=. .venv/bin/python scripts/probe_pack_window.py \
+    --new /tmp/s4runs/time-20261024-201518 \
+    --old /tmp/s4runs/time-20261024-001335
+  ```
+  读数：自身上限 L2 **40/87**、改前同题上限 L2 **48/87**（判据 a ✅）；两批上限合计小 **24.5%**（207364 vs 274548）；NEW est 差 15/15 ≤0.3%；OLD 中美 q_001 +4727 tok（改前红）。
+- **件②**：**披露降级、不动码**（按票逃逸口）。NEW 已同形；缩水来自反解刀保守度／逐跑 est0，不是覆盖面洞。加 skills 进 fit 或加下限都会在未重跑真次下投机 L3/L4。`material.py`／`prompt_guard.py` 零 diff。
+- **件③**：`tests/test_c49_instrument_gaps.py` 两格（`test_c49_a_production_surfaces_untouched`／`test_c49_p3_c46_record_shape_untouched`）由瞬时 git diff 改写为内容断言；11→11 不删（#180）。新 `tests/test_c53_budget_window.py` 5 格＋反向腿。
+- **验证**：collect 986→991；全量 991 passed；c49+c53＝16 passed；允许面外零 diff。
+- **不**登记进 `tests/c37_zero_ref_registry.py`。
+- **说明**：诚实 §3.4／逃逸口；未改窗口／DEFAULT／0.92；金标未放宽；零现金。
+
