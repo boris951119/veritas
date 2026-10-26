@@ -9304,6 +9304,21 @@ PYTHONPATH=. .venv/bin/python scripts/probe_c58_small_to_big.py --run-dir /tmp/s
 - **交账格式**＝两臂 L2 数（含 A 臂复现值 48/105）＋H 臂新命中段清单与原 BM25 位次＋两遍逐字相同的证据＋使用的 embedding 模型名＋`git diff --stat app/`＝空＋`scripts/ledger_counts.py` 行数账＋pytest 尾行。**不 commit、不 push；`git add -A` 前先建 `.venv` 之外别留杂物。**
 - **状态行（Qoder 填）**：⬜ 已出单、未发。
 
+#### Cursor 回写（C-61）
+
+- **状态**：2026-10-27 凌晨交账。只量、零现金、`app/` 零 diff；判据 b 未过 ⇒ **逃逸披露、件② 不做**；不 commit、不 push；已 `git add -A`。
+- **探针**：`scripts/probe_c61_hybrid_retrieval.py`（真引用面）；产物 `/tmp/c61_hybrid_retrieval/`。
+- **embedding 模型**：`bge-m3:latest`（本机 ollama）。
+- **判据 a**：A 臂 L2＝**48/105** ✅（`/tmp/six2` 复现）。
+- **判据 b**：H 臂 L2＝**53/105**（Δ=+5）、lost＝**2** ⇒ ❌ 未达 ≥54 且 lost=0 ⇒ 逃逸。lost 段＝吉隆/q_002 `doc_001#p306`；王虹/q_003 `doc_003#p5`。
+- **判据 c**：选中集合完全相同的题数＝0/18 ✅。H 新命中 7 段及 BM25 原位次：吉隆/q_002 `doc_001#p291`@97；中美/q_001 `doc_023#p4`@148、`doc_047#p4`@106；刘翔/q_003 `doc_033#p6`@176；印航/q_002 `doc_007#p3`@40、`doc_010#p9`@210；印航/q_003 `doc_004#p6`@115。
+- **判据 d**：两遍指纹逐字相同 ✅ `fp=bcedeb2f8b3d27fb3d5152b7542f2fc1f13d6af684148972345e91d82a4edbe7`；pass2 同为 A48／H53／lost2／gained7。
+- **判据 e**：构造 `gold_root is None`、未读金标＝True。
+- **判据 f**：无新依赖；向量只走本机 ollama。
+- **逐案 AL2→HL2**：吉隆 6→6；中美 8→10；刘翔 8→9；印航 10→13；柬泰 6→6；王虹 10→9。
+- **件②**：门槛未过 ⇒ 不做。
+
+
 ## 6. 索引
 
 | 想知道什么 | 看哪儿 |

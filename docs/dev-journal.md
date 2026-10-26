@@ -1170,6 +1170,11 @@ C45_USE_OLD_JSON=1 OFFICIAL_RUN=/tmp/s4runs/time-20261023-173124 \
 - **R-C58-1**：`material.py` reason 恢复 4ca3929；c19／c58_193 钉正确映射。
 - **R-C58-2**：块级 max 回聚合两把源码刀有牙；件② 已逃逸、探针侧常驻守护保留。
 
+## 2026-10-27 · C-61 真·混合检索（BM25＋向量 RRF）离线量 L2
+
+- **探针**：`scripts/probe_c61_hybrid_retrieval.py`（本机 `bge-m3:latest`；RRF k=60；`app/` 零 diff）。
+- **读数**：A L2=48/105 ✅；H L2=53/105、lost=2、gained=7 ⇒ 门槛（≥54 且 lost=0）不过 ⇒ 逃逸；两遍指纹相同；产物 `/tmp/c61_hybrid_retrieval/`；不 commit。
+
 ## 2026-10-26 · C-60 四臂纸面筛选（甲／乙／丙／甲＋乙）
 
 - **探针**：`scripts/probe_c60_submission_variants.py`（构造零模型；14B 只做评判）。
