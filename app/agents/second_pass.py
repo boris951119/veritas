@@ -3,29 +3,88 @@
 第一轮编队结束后，取 unused_topic_segments 密度最高的 2–3 段，
 再发一次分析师调用（仅见这些段落）。产出走同一套引文闸与归并。
 关掉：VERITAS_SECOND_PASS=0。
+
+C-57：官方新闻议题往往命不中企业风险主题词表（延期／回款／坏账…），
+`unused_topic_segments` 会返回空 ⇒ 二次研判整题跳过。回退＝从本轮
+装箱已选且尚未被引用的段里，按 BM25（对议题）取前 limit 条——
+不读金标、不改 SEGMENT_MAX、不弱化引文闸。
 """
 
 from __future__ import annotations
 
+import os
 from typing import Callable
 
 from app.agents.base import Analyst
+from app.core.bm25 import rank_segments
 from app.core.coverage_gap import unused_topic_segments
 from app.core.evidence import Conclusion, Dossier
+from app.core.material import pack_material
 
 _DEFAULT_MAX = 3
 _FOCUS_PERSONA = (
     "定向补漏分析师：上一轮研判漏用了下列关键段落。"
-    "请【仅依据】这些段落回答议题中与段落主题相关的风险点"
-    "（延期/进度、回款/坏账、人员流失等），给出可判定结论并挂逐字引文。"
+    "请【仅依据】这些段落回答议题中与段落主题相关的要点，"
+    "给出可判定结论并挂逐字引文。"
     "不得引用清单外的段落编号。"
 )
 
 
+def _cited_segment_ids(dossier: Dossier) -> set[str]:
+    out: set[str] = set()
+    for ev in dossier.evidences:
+        out.update(str(sid) for sid in (ev.segment_ids or []))
+    return out
+
+
+def _fallback_focus_from_pack(dossier: Dossier, *, limit: int) -> list[dict]:
+    """主题词表未命中时的回退：装箱已选 ∩ 未引用，BM25 降序取 limit。"""
+    pack = set(str(x) for x in (pack_material(dossier).get("selected") or []))
+    if not pack:
+        return []
+    cited = _cited_segment_ids(dossier)
+    ranked = rank_segments(dossier)
+    out: list[dict] = []
+    for sid, score in ranked:
+        sid = str(sid)
+        if sid in cited or sid not in pack:
+            continue
+        if float(score or 0.0) <= 0.0:
+            continue
+        seg = dossier.segment(sid)
+        if seg is None:
+            continue
+        snip = (seg.text or "").strip().replace("\n", " ")
+        if len(snip) > 40:
+            snip = snip[:39] + "…"
+        out.append({
+            "segment_id": sid,
+            "source_id": seg.source_id,
+            "themes": [],
+            "density": float(score),
+            "snip": snip,
+            "focus_via": "bm25_pack_fallback",
+        })
+        if len(out) >= limit:
+            break
+    return out
+
+
 def pick_focus_segments(dossier: Dossier, *, limit: int = _DEFAULT_MAX
                         ) -> list[dict]:
-    """密度最高、尚未被引用的议题相关段（最多 limit 条）。"""
-    return unused_topic_segments(dossier, limit=max(1, int(limit)))
+    """尚未被引用的补漏焦点段（最多 limit 条）。
+
+    先走主题词密度（企业风险议题）；空则回退 BM25×装箱已选。
+    """
+    lim = max(1, int(limit))
+    primary = unused_topic_segments(dossier, limit=lim)
+    if primary:
+        return primary
+    # 配对真跑基线臂：VERITAS_SECOND_PASS_FALLBACK=0 关回退＝改前「主题词空⇒跳过」
+    if os.environ.get("VERITAS_SECOND_PASS_FALLBACK", "1").strip() in {
+            "0", "false", "False", "no", "OFF"}:
+        return []
+    return _fallback_focus_from_pack(dossier, limit=lim)
 
 
 def run_second_pass(

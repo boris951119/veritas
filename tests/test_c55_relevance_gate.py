@@ -1,17 +1,19 @@
 """C-55 件③：议题抽不出实体 ⇒ classify_sources 全判 high（宁勿错杀）。
 
-合成夹具、不读 /tmp、零模型。件① 反事实 ΔL2=0 ⇒ 件② 逃逸未动码；
-本文件只钉兜底路径。
+合成夹具、不读 /tmp、零模型。C-57 顺手清两颗低危：反向腿改真下刀生产早退；
+路径格改 AST／行为断言（不再纯字符串在场）。
 """
 
 from __future__ import annotations
 
+import ast
 from pathlib import Path
 
 from app.core.evidence import Dossier, Segment, Source, SourceType
 from app.core.relevance import classify_sources
 
 ROOT = Path(__file__).resolve().parents[1]
+_REL = ROOT / "app" / "core" / "relevance.py"
 
 
 def _src(sid: str, title: str, text: str) -> Source:
@@ -22,74 +24,89 @@ def _src(sid: str, title: str, text: str) -> Source:
     return s
 
 
-def test_c55_no_entity_fallback_all_high():
-    """议题「请分析。」抽不出实体 ⇒ 两源一律 high（score=None、reason 空）。"""
-    d = Dossier(
+def _no_entity_dossier() -> Dossier:
+    return Dossier(
         question="请分析。",
         sources=[
             _src("A", "天气快讯", "今日晴转多云，气温十八到二十五度。"),
             _src("B", "食谱", "红烧肉焯水后加冰糖炒糖色，小火慢炖。"),
         ],
     )
-    rows = classify_sources(d)
+
+
+def test_c55_no_entity_fallback_all_high():
+    """议题「请分析。」抽不出实体 ⇒ 两源一律 high（score=None、reason 空）。"""
+    rows = classify_sources(_no_entity_dossier())
     assert len(rows) == 2
     assert all(r["level"] == "high" for r in rows)
     assert all(r["score"] is None for r in rows)
     assert all(r["reason"] == "" for r in rows)
 
 
-def test_c55_no_entity_fallback_reverse_must_red():
-    """反向腿：摘掉「无实体全 high」早退 ⇒ 本格正向断言必红。
+def test_c55_no_entity_fallback_ast_early_return():
+    """行为＋AST：classify_sources 内存在「if not entities」早退且返回 high。"""
+    tree = ast.parse(_REL.read_text(encoding="utf-8"))
+    fn = next(
+        n for n in tree.body
+        if isinstance(n, ast.FunctionDef) and n.name == "classify_sources"
+    )
+    # 找 if not entities: 早退
+    found = False
+    for node in ast.walk(fn):
+        if not isinstance(node, ast.If):
+            continue
+        test = node.test
+        # `if not entities`
+        if (isinstance(test, ast.UnaryOp) and isinstance(test.op, ast.Not)
+                and isinstance(test.operand, ast.Name)
+                and test.operand.id == "entities"):
+            # 分支内应有 return
+            has_return = any(isinstance(x, ast.Return) for x in ast.walk(node))
+            assert has_return, "无实体分支必须 return"
+            found = True
+            break
+    assert found, "classify_sources 必须含 if not entities 早退"
+    # 行为：现码仍全 high
+    assert all(r["level"] == "high" for r in classify_sources(_no_entity_dossier()))
 
-    自证：临时让 extract_entities 仍返回空、但跳过早退分支（改走打分）
-    会把与议题零重合的源判成 zero——与「全 high」冲突。
+
+def test_c55_no_entity_fallback_knife_early_return_must_red():
+    """反向腿：临时改写源码摘掉早退 ⇒ 正向「全 high」红；清 pyc 后复位绿。
+
+    真下刀生产文件（非 stub 自比）；复位后必须清 __pycache__。
     """
+    import shutil
+    import importlib
     import app.core.relevance as rel
 
-    d = Dossier(
-        question="请分析。",
-        sources=[
-            _src("A", "天气快讯", "今日晴转多云，气温十八到二十五度。"),
-            _src("B", "食谱", "红烧肉焯水后加冰糖炒糖色，小火慢炖。"),
-        ],
-    )
-    # 正向：现码全 high
+    raw = _REL.read_text(encoding="utf-8")
+    old = """    if not entities:
+        # 议题抽不出实体：不做裁决，全部按 high（宁勿错杀）
+        for src in dossier.sources:
+            out.append({"source_id": src.id, "title": src.title,
+                        "level": "high", "score": None, "reason": ""})
+        return out
+"""
+    assert old in raw, "早退块字面漂移，本刀失效需改夹具"
+    knife = """    if not entities:
+        entities = []  # C-55/C-57 knife：摘掉早退
+"""
+    d = _no_entity_dossier()
     assert all(r["level"] == "high" for r in classify_sources(d))
 
-    real = rel.classify_sources
-
-    def _broken_no_early_return(dossier: Dossier):
-        """模拟删掉早退：无实体时仍走覆盖打分 ⇒ 全 zero。"""
-        from app.core.citation_check import normalize
-        from app.core.premise_check import extract_entities
-
-        entities = extract_entities(dossier.question)
-        assert not entities  # 夹具仍抽不出
-        out = []
-        for src in dossier.sources:
-            text = normalize("".join(seg.text for seg in src.segments))
-            # 无实体 ⇒ best=0 ⇒ zero（若无早退）
-            out.append({
-                "source_id": src.id, "title": src.title,
-                "level": "zero", "score": 0.0,
-                "reason": "与议题实体零重合",
-            })
-        return out
-
-    rel.classify_sources = _broken_no_early_return
+    _REL.write_text(raw.replace(old, knife, 1), encoding="utf-8")
     try:
+        pyc = ROOT / "app" / "core" / "__pycache__"
+        if pyc.is_dir():
+            shutil.rmtree(pyc)
+        importlib.reload(rel)
         broken = rel.classify_sources(d)
-        # 摘掉早退后不再全 high ⇒ 正向「全 high」不成立
         assert not all(r["level"] == "high" for r in broken)
     finally:
-        rel.classify_sources = real
+        _REL.write_text(raw, encoding="utf-8")
+        pyc = ROOT / "app" / "core" / "__pycache__"
+        if pyc.is_dir():
+            shutil.rmtree(pyc)
+        importlib.reload(rel)
 
-    # 复位后仍全 high
-    assert all(r["level"] == "high" for r in classify_sources(d))
-
-
-def test_c55_fallback_path_in_source():
-    """源码钉死早退分支字面（内容断言，非 git diff）。"""
-    src = (ROOT / "app" / "core" / "relevance.py").read_text(encoding="utf-8")
-    assert "if not entities:" in src
-    assert "全部按 high" in src or "全部视为 high" in src or "宁勿错杀" in src
+    assert all(r["level"] == "high" for r in rel.classify_sources(d))

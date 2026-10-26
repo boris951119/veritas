@@ -101,3 +101,59 @@ def test_second_pass_skipped_when_all_cited():
     sp = run_second_pass(d, [Analyst("mainstream", "x", Boom(), "m")])
     assert sp["status"] == "skipped"
     assert sp["reason"] == "no_focus"
+
+
+def _news_like_no_enterprise_theme() -> Dossier:
+    """新闻议题：命不中延期／回款／坏账等企业主题词 ⇒ 旧路 unused 为空。"""
+    d = Dossier(question="印度航空 AI171 空难事故调查结论是什么？")
+    src = Source.create("调查报告", SourceType.WEB, id="DOC1")
+    src.segments.append(Segment(
+        id="DOC1#p1", source_id="DOC1",
+        text="印度航空 AI171 航班空难调查指出燃油开关被切断是关键因素。",
+        locator="段1", index=0))
+    src.segments.append(Segment(
+        id="DOC1#p2", source_id="DOC1",
+        text="今日股市收盘上涨一点二个百分点，与空难调查无关的财经快讯。",
+        locator="段2", index=1))
+    d.add_source(src)
+    return d
+
+
+def test_c57_pick_focus_fallback_when_no_theme_words(monkeypatch):
+    """C-57 甲腿：无主题词时回退 BM25×装箱已选，焦点非空且带 focus_via。"""
+    monkeypatch.delenv("VERITAS_SECOND_PASS_FALLBACK", raising=False)
+    monkeypatch.setenv("VERITAS_SECOND_PASS_FALLBACK", "1")
+    d = _news_like_no_enterprise_theme()
+    assert unused_topic_segments(d) == []
+    focus = pick_focus_segments(d, limit=2)
+    assert focus, "回退必须给出焦点段"
+    assert all(f.get("focus_via") == "bm25_pack_fallback" for f in focus)
+    assert "DOC1#p1" in [f["segment_id"] for f in focus]
+
+
+def test_c57_pick_focus_fallback_off_matches_old_skip(monkeypatch):
+    """关回退开关 ⇒ 与改前相同：主题词空则焦点空（基线臂可复现）。"""
+    monkeypatch.setenv("VERITAS_SECOND_PASS_FALLBACK", "0")
+    d = _news_like_no_enterprise_theme()
+    assert pick_focus_segments(d, limit=2) == []
+
+
+def test_c57_fallback_reverse_must_red(monkeypatch):
+    """反向腿：摘掉回退函数 ⇒ 无主题词夹具上焦点变空（正向格会红）。"""
+    import app.agents.second_pass as sp
+
+    monkeypatch.setenv("VERITAS_SECOND_PASS_FALLBACK", "1")
+    d = _news_like_no_enterprise_theme()
+    assert pick_focus_segments(d, limit=2)  # 现码有牙
+
+    real = sp._fallback_focus_from_pack
+
+    def _broken(dossier, *, limit):
+        return []
+
+    sp._fallback_focus_from_pack = _broken
+    try:
+        assert pick_focus_segments(d, limit=2) == []
+    finally:
+        sp._fallback_focus_from_pack = real
+    assert pick_focus_segments(d, limit=2)

@@ -1114,6 +1114,16 @@ C45_USE_OLD_JSON=1 OFFICIAL_RUN=/tmp/s4runs/time-20261023-173124 \
 - **验证**：999 passed／collect 999／def_test_count 981；`-k "not c49 and not c53 and not c55"`＝980＋19 deselected；
   表机 docstring 同笔更新；不 commit。
 
+## 2026-10-25 · C-57 L2→L3 引用层（second_pass 回退）
+
+- **日期**：2026-10-25（Asia/Shanghai）
+- **件①**：探针＝`scripts/probe_c57_l2_l3_gap.py`（新，零模型只读）；合并六案产物 `c57-baseline-105`＝L2 48／L3 14／gap 34；四桶 a3／b2／c7／d0／miss22；主因 miss。
+  根因附报＝18/18 second_pass `no_focus`（企业主题词表对新闻议题空集）。
+- **件②**：`app/agents/second_pass.py` 仅一处——主题词空时 BM25×装箱已选回退；`VERITAS_SECOND_PASS_FALLBACK=0` 关回退供基线臂。
+  甲腿：18 题 focus []→非空；乙腿配对真跑在飞。
+- **件③**：c57 三格＋清 c55 stub 自比／字符串在场格；刀摘回退 1 红、清 pyc 复位绿。
+- **验证**：1002／984／`-k not c49/c53/c55/c57`＝980＋22；不 commit。
+
 ## 2026-10-25 · C-55 复放＝资格线方向作废＋六案 105 分母拆账（架构师裁决登记）
 
 - **复放**：base clone `c48e46b`＝`996 passed`；t＝5 文件 `cmp` 逐字节贴齐＋先 `git add -A` 后建 `.venv`（`ls-files`＝0）＝
