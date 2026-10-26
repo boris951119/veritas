@@ -1353,3 +1353,10 @@ C45_USE_OLD_JSON=1 OFFICIAL_RUN=/tmp/s4runs/time-20261023-173124 \
 - **订正（记我账）**＝上一条我写"模型已下载完、正在测耗时"，但第一次冒烟实际失败：这台机器直连 `huggingface.co` 超时（`Errno 60`），缓存里 `model.safetensors` 是 0 字节软链＝没拉完；显式 `HF_ENDPOINT=https://hf-mirror.com` 才跑通。规矩＝**说"环境已就绪"必须附一条真跑通的读数**，不许拿"文件在长"当就绪。
 - **对表的影响**＝对照表加一列「需不需要一次外网预置」＝本地臂需要（2.1 GB 权重、走镜像、断网跑不动）／付费臂需要网络但不装东西。两列并排才是他要的"本地 vs 付费"：**一个卡装机、一个卡联网与钱**。
 - **状态**＝C-62 在飞（等执行方交脚本）；付费臂先小请求验端点、按 `usage.total_tokens` 记账；两条真跑腿由架构师执行。
+
+
+## 2026-10-27 · C-62 精排双臂对照（执行方交账骨架）
+
+- **探针**：`scripts/probe_c62_rerank_arms.py`（默认 `--dry-run`；T＝`set_t_scorer` 可注入、本脚本不 import torch；R＝百炼原生 text-rerank 请求构造／响应解析＋`/tmp/c62_rerank/cache/`，永不付费 HTTP；四臂同一前 120 段候选集 sha）。
+- **跑法**：`PYTHONPATH=. .venv/bin/python scripts/probe_c62_rerank_arms.py --run-dir /tmp/six2`（dry-run）／加 `--run --t-scorer …`（T）／架构师填 cache 后 `--run`（R 只读缓存）。缺 `/tmp/six2` ⇒ 退出码 2。
+- **dry-run 读数**：将打分段数 2160／R 请求 18／粗估 token 561088；判据 a A=48/105；判据 b 刀① 18/18、刀② 名次常数 RRF L2=48/105；候选集 sha 逐题相同＝True；`app/` 与 `requirements*.txt` 零 diff。

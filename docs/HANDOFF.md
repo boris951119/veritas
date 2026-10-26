@@ -9375,6 +9375,47 @@ PYTHONPATH=. .venv/bin/python scripts/probe_c58_small_to_big.py --run-dir /tmp/s
 - **出单后当场量到的环境事实（架构师自跑、零模型生产调用）**＝独立 venv `/tmp/venv_rerank` 体积 **637 MB**（`torch 2.8.0`＋`sentence-transformers`，装它 < 30 s）；模型 `BAAI/bge-reranker-v2-m3` 权重实测 **2.1 GB**（`du -sh` 缓存目录）；**加载 4.4 s、120 段一批打分 1.31 s**（Apple M6／MPS）⇒18 题全跑预计 **< 1 分钟**＝**本地臂的时间成本几乎可以忽略，真正的代价是「要多装约 2.7 GB（venv 637 MB＋模型 2.1 GB）且现场得预置好」**。⚠ 第一次冒烟没出数，根因＝**这台机器直连 `huggingface.co` 不通**（`Errno 60` 超时），必须显式指 `HF_ENDPOINT=https://hf-mirror.com`＝我上一条「模型已下完、正在测多久」说早了，就地订正。
 - **状态行（Qoder 填）**：⬜ 已出单、未发（件② 真跑两臂读数与对照表由架构师执行）。
 
+#### Cursor 回写（C-62）
+
+- **状态**：2026-10-27 凌晨交账。只量、`app/` 零 diff、三份 `requirements*.txt` 零 diff；默认 `--dry-run` 已跑通（零调用、零下载、不 import torch）；T／R 真跑腿留给架构师（`--run`＋注入／缓存）；不 commit、不 push；已 `git add -A`。基线 commit＝`2fcc73b`；收集仍 `1009`。
+- **探针**：`scripts/probe_c62_rerank_arms.py`（真引用面；可注入 `set_t_scorer`／`score_candidates_local`；R 只构造／解析＋读 `/tmp/c62_rerank/cache/`，**永不 POST**）。产物 `/tmp/c62_rerank/`。
+- **`--dry-run` 完整打印（零调用证据）**：
+  ```
+  [构造] gold_root=None …
+  判据 f：构造未读金标＝True；题数＝18
+  候选集文件数＝18；唯一 sha 数＝18（每题一份）
+  判据 d：T／R 读到的候选集 sha 逐题相同＝True
+  ======== C-62 --dry-run（零调用、零下载）========
+  题数＝18
+  将要打分的段数（T／R 各）＝2160（每题前 120 段 × 18）
+  将发出的请求数（R 臂）＝18（每题 1 次 text-rerank）
+  预计 token（粗估，R 臂）＝561088
+  T 臂依赖＝独立 /tmp/venv_rerank（约 637 MB）＋BAAI/bge-reranker-v2-m3（约 2.1 GB）；本脚本不装、不 import torch
+  R 臂端点＝https://dashscope.aliyuncs.com/api/v1/services/rerank/text-rerank/text-rerank
+  R 臂模型＝qwen3-rerank（退路 gte-rerank-v2）
+  本 dry-run 未发起任何 embedding／精排／付费 HTTP。
+  ```
+- **判据 d（候选集 sha）**：T／R 各自读落盘候选集 ⇒ 逐题 sha 相同＝**True**（18/18；每题一份，唯一 sha 数＝18）。
+- **判据 b（两把保真刀）**：刀① BM25 原分走拼接路 ≡ `pack_material`＝**✅ 18/18**；刀② 名次常数＝`fuse_rankings([bm25], k=60)`（模型不参与；〔139〕K2 同形）L2＝**48/105 ✅**。⚠ 现场先试过 `1/rank` ⇒ L2 漂到 50／选中集 0/18 同生产＝当场弃用，改回 RRF 单位才回到 48。
+- **判据 a**：A 臂在 `/tmp/six2` 复现 L2＝**48/105 ✅**（墙钟 15.157 s）。
+- **H 臂**：引用 `/tmp/c61_hybrid_retrieval/summary.json`＝L2=53/105、lost=2、gained=7（不重跑）。
+- **T／R**：dry-run 未跑分；T＝`set_t_scorer` 或 `--run --t-scorer JSON`；R＝只读 cache，注释与回写均写明「**第二遍证的是缓存一致，不是模型确定性**」。
+- **R 协议落点（与单一致、未自创）**：原生 `…/api/v1/services/rerank/text-rerank/text-rerank`；`Authorization: Bearer`；body＝`input.query`／`input.documents`／`parameters.top_n`；读 `output.results[].index`＋`relevance_score`、`usage.total_tokens`。⚠ 官方 OpenAI 兼容口对 `qwen3-rerank` 用扁平 `query`／`documents`——本单钉原生嵌套形；若架构师实测嵌套被拒，按 §3.4 停手改单，本脚本不自行改扁平。另〔140〕提到 `{WorkspaceId}.cn-beijing.maas…` 形——本脚本默认通用 `dashscope.aliyuncs.com`（与出单「先用通用端点」一致），可用 env `DASHSCOPE_RERANK_URL` 覆盖。
+- **判据 f**：构造 `assert gold_root is None`＝True。
+- **判据 g 成本表（dry-run 骨架；T／R 真数待架构师）**：
+  ```
+  臂｜L2｜lost｜gained｜墙钟s｜花钱｜依赖／体积｜演示机离线
+  A｜48/105｜0｜0｜15.157｜0｜无｜能
+  H｜53/105｜2｜7｜—｜0｜本机 bge-m3（C-61 已付）｜能（需 ollama）
+  T｜None｜None｜None｜None｜0｜venv≈637MB＋模型≈2.1GB｜能（须预置权重；直连 HF 不通须镜像）
+  R｜None｜None｜None｜None｜tokens=0｜HTTP 百炼 key｜不能（需网络与 key）
+  R 缓存说明：第二遍证的是缓存一致，不是模型确定性
+  ```
+- **`git diff --stat app/`**：空。
+- **`git diff --stat requirements*.txt`**：空。
+- **`scripts/ledger_counts.py`**（交账当下）：`HANDOFF_lines=9435`／`AGENTS_lines=214`／`architecture_map_lines=709`／`app_lines=20608`／`tests_lines=22971`／`scripts_lines=16898`（含本探针 744 行）／`web_lines=1916`／`calibration_lines=907`／`pytest_collect_only=1009`／`def_test_count=991`。
+- **pytest**：`.venv/bin/python -m pytest tests -q -rs` 尾行＝**`1008 passed, 1 skipped in 32.67s`**；跳的那一格＝`tests/test_c23_corpus_max.py:117`（a-out 产物树不在本机，只附报）＝#205 同族，**不是** mcp 未装（本机 `import mcp` 通）。收集面仍 `1009`＝1008＋1 skip；既有用例零变（本单零新常驻用例）。
+
 ## 6. 索引
 
 | 想知道什么 | 看哪儿 |
