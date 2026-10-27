@@ -131,7 +131,12 @@ def test_c52_density_packing_selects_short_over_high_score_long():
     分歧样本（现场标定）：长段 raw BM25 更高，但分/log2(len) 更低；
     预算刚好装下二者之一 ⇒ 密度排序必须选短段 id。
     下刀：摘掉 `/ math.log2(max(lengths[seg_id], 2))` ⇒ 改选长段 ⇒ 本格必红。
+
+    C-70：软闸默认开后 SB（议题零重合）不再自动 zero，短杂讯会与 SA#p2
+    同箱；本格钉的是密度轴，故关软闸隔离资格面（见回写「既有断言改动清单」）。
     """
+    from app.core.relevance import set_relevance_soft_gate
+    set_relevance_soft_gate(False)
     q = "客户B回款率是多少？"
     long_hit = (
         "客户B回款率是多少？客户B回款率四成，回款512万。"

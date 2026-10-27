@@ -47,7 +47,7 @@ REGISTERED_EXCEPT_PASS_SITES = frozenset({
     "app/pipeline.py:main",
     "app/llm/model_client.py:_call_and_build",
     "app/llm/model_client.py:_notify_on_call",
-    "app/core/relevance.py:classify_sources",
+    "app/core/relevance.py:_classify_legacy",
     "app/ingest/pdf_backend.py:_extract_pypdf",
     "app/ingest/pdf_backend.py:_extract_docling#1",
     "app/ingest/pdf_backend.py:_extract_docling#2",

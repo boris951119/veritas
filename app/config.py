@@ -499,6 +499,10 @@ class Settings:
     # C-69：对撞三档文案（件②）。默认 False＝time_class 可算但文案与改前相同。
     # env VERITAS_LEDGER_TIME_CLASS；config.json ledger_time_class。
     ledger_time_class: bool = False
+    # C-70：双轴相关性软闸（取消自动 zero 整源出局）。默认 True＝先试可回滚。
+    # env VERITAS_RELEVANCE_SOFT_GATE；config.json relevance_soft_gate。
+    # ⚠ 不许顺手改 C-69 那两个开关的默认值（仍必须 False）。
+    relevance_soft_gate: bool = True
 
     # 语料收窄阈值：信源数达到该值才走索引选料（默认 50=自动；
     # 0=强制关闭，小案例到不了阈值则整卷研判、不建 .corpus）。
@@ -705,6 +709,11 @@ class Settings:
             s.ledger_time_class = False
         elif ltc in ("1", "true", "on", "yes"):
             s.ledger_time_class = True
+        rsg = (os.environ.get("VERITAS_RELEVANCE_SOFT_GATE") or "").strip().lower()
+        if rsg in ("0", "false", "off", "no"):
+            s.relevance_soft_gate = False
+        elif rsg in ("1", "true", "on", "yes"):
+            s.relevance_soft_gate = True
         return s.validate()
 
     @classmethod
@@ -770,6 +779,13 @@ class Settings:
                 s.ledger_time_class = raw_ltc
             elif isinstance(raw_ltc, (int, str)):
                 s.ledger_time_class = str(raw_ltc).strip().lower() not in (
+                    "0", "false", "off", "no", "")
+        if "relevance_soft_gate" in data:
+            raw_rsg = data.get("relevance_soft_gate")
+            if isinstance(raw_rsg, bool):
+                s.relevance_soft_gate = raw_rsg
+            elif isinstance(raw_rsg, (int, str)):
+                s.relevance_soft_gate = str(raw_rsg).strip().lower() not in (
                     "0", "false", "off", "no", "")
         select_min = data.get("corpus_select_min_sources")
         if isinstance(select_min, int) and not isinstance(select_min, bool) \

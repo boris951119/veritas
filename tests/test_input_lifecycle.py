@@ -184,8 +184,12 @@ def _mixed_dossier() -> Dossier:
 
 
 def test_irrelevant_source_classified_zero():
+    # C-70：软闸默认开＝自动路径不再产出 zero；红烧肉档改标 low（进候选但降权）
+    # 改前断言 levels["SRC3"]=="zero"；现＝"low"。关闸回归见 test_c70_*。
+    from app.core.relevance import set_relevance_soft_gate
+    set_relevance_soft_gate(True)
     levels = {s["source_id"]: s["level"] for s in classify_sources(_mixed_dossier())}
-    assert levels["SRC3"] == "zero"
+    assert levels["SRC3"] == "low"
     assert levels["SRC1"] == "high"
 
 
@@ -198,15 +202,18 @@ def test_weakly_related_source_classified_low():
 
 
 def test_zero_source_excluded_from_prompt_but_disclosed():
-    d = _mixed_dossier()
+    # C-70：软闸开＝低相关仍进提示词（标降权），不再整源出局；
+    # unadopted 只剩人工 exclude（本夹具无）⇒ 空。改前：SRC3 不进 block、进 unadopted。
     from app.agents.prompts import render_segments_block
-
+    from app.core.relevance import set_relevance_soft_gate
+    set_relevance_soft_gate(True)
+    d = _mixed_dossier()
     block = render_segments_block(d)
-    assert "SRC3" not in block and "红烧肉" not in block
+    assert "SRC3" in block and "红烧肉" in block
+    assert "低相关" in block
     assert "SRC1" in block
     unadopted = unadopted_sources(d)
-    assert [s["source_id"] for s in unadopted] == ["SRC3"]
-    assert "零重合" in unadopted[0]["reason"]
+    assert unadopted == []
 
 
 def test_no_question_entities_means_no_judgment():
@@ -228,7 +235,11 @@ def test_report_discloses_collisions_and_unadopted():
                                        ["SRC4#s1"], author="a"))
     md = render_report_md(d, HashChain(), [])
     assert "资料内数字冲突" in md and "跨信源" in md
-    assert "未采信信源" in md and "SRC3" in md
+    # C-70：软闸开＝「未采信」改聚合披露（人工排除／零重合／低相关档），
+    # 不再逐条列出 SRC3；改前断言 "SRC3" in md。
+    assert "未采信信源" in md
+    assert "低相关档" in md
+    assert "人工排除" in md
     stale = [f for f in audit_temporal(d) if f["kind"] == "stale"]
     assert stale  # 时效闸也覆盖该场景
 

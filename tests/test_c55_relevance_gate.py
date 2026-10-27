@@ -82,9 +82,17 @@ def test_c55_no_entity_fallback_knife_early_return_must_red():
     raw = _REL.read_text(encoding="utf-8")
     old = """    if not entities:
         # 议题抽不出实体：不做裁决，全部按 high（宁勿错杀）
+        # （C-55 钉在本函数的早退；软闸开时附 s_match，关时与改前逐字同）
+        soft = relevance_soft_gate_enabled()
+        vocab = match_vocab(dossier.question) if soft else []
+        out: list[dict] = []
         for src in dossier.sources:
-            out.append({"source_id": src.id, "title": src.title,
-                        "level": "high", "score": None, "reason": ""})
+            row = {"source_id": src.id, "title": src.title,
+                   "level": "high", "score": None, "reason": ""}
+            if soft:
+                row["s_rel"] = None
+                row["s_match"] = round(match_score_source(src, vocab), 3)
+            out.append(row)
         return out
 """
     assert old in raw, "早退块字面漂移，本刀失效需改夹具"

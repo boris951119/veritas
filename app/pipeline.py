@@ -252,8 +252,11 @@ def run_case(spec: RunSpec | None = None,
     # C-69：两个时间轴开关落到模块旗（须在 ingest／facts_block 之前）
     from app.core.temporal_check import set_source_time_unified
     from app.core.fact_ledger import set_ledger_time_class
+    from app.core.relevance import set_relevance_soft_gate
     set_source_time_unified(bool(getattr(settings, "source_time_unified", False)))
     set_ledger_time_class(bool(getattr(settings, "ledger_time_class", False)))
+    # C-70：相关性软闸（默认开；须在 classify_sources／装箱之前）
+    set_relevance_soft_gate(bool(getattr(settings, "relevance_soft_gate", True)))
     created_progress = get_active_progress() is None
     prog = ensure_progress(spec.out_dir)
 
@@ -367,10 +370,17 @@ def run_case(spec: RunSpec | None = None,
                           "kinds": sorted({n["kind"]
                                            for n in dossier.ingest_notes})})
         relevance = classify_sources(dossier)
+        from app.core.relevance import (
+            relevance_aggregate, relevance_soft_gate_enabled,
+        )
+        rel_agg = relevance_aggregate(dossier) if relevance_soft_gate_enabled() else {}
+        if rel_agg:
+            dossier.accounting["relevance_soft"] = rel_agg
         chain.append("relevance_layered", "pipeline", {
             "high": sum(1 for r in relevance if r["level"] == "high"),
             "low": sum(1 for r in relevance if r["level"] == "low"),
             "zero": sum(1 for r in relevance if r["level"] == "zero"),
+            "soft_gate": bool(relevance_soft_gate_enabled()),
         })
         prog.note(n_collisions=len(collisions),
                   n_zero_rel=sum(1 for r in relevance if r["level"] == "zero"))
@@ -1679,10 +1689,22 @@ def _render_excluded_sources(lines: list[str], dossier: Dossier) -> None:
             lines.append(f"- `{sid}`：{len(segs)} 段（{sample}）——{why}")
         lines.append("")
 
+    from app.core.relevance import (
+        relevance_aggregate, relevance_soft_gate_enabled,
+    )
+
     entries: list[tuple[str, str, str]] = []  # (source_id, title, reason)
-    for s in classify_sources(dossier):
-        if s["level"] == "zero":
-            entries.append((s["source_id"], s["title"], s["reason"]))
+    soft_on = relevance_soft_gate_enabled()
+    agg_line = ""
+    if soft_on:
+        # C-70 件⑥：聚合披露、不许留白；禁用比率词
+        agg = relevance_aggregate(dossier)
+        agg_line = str(agg.get("line") or "")
+        dossier.accounting.setdefault("relevance_soft", agg)
+    else:
+        for s in classify_sources(dossier):
+            if s["level"] == "zero":
+                entries.append((s["source_id"], s["title"], s["reason"]))
     dups = duplicate_map(dossier)
     for src in dossier.sources:
         if src.id in dups:
@@ -1693,12 +1715,14 @@ def _render_excluded_sources(lines: list[str], dossier: Dossier) -> None:
     ingest = [n for n in dossier.ingest_notes
               if n.get("kind") not in (
                   "corpus_select", "prompt_over_window", "pack_window_unfit")]
-    if not entries and not ingest:
+    if not entries and not ingest and not agg_line:
         return
     lines += ["## 未采信信源（未进入分析师视野）", ""]
+    if soft_on and agg_line:
+        lines.append(f"- {agg_line}")
     for sid, title, reason in entries:
         lines.append(f"- `{sid}`《{title}》——{reason}")
-    if not entries:
+    if not entries and not agg_line:
         lines.append("（无——全部信源均进入研判）")
     lines.append("")
     if ingest:
@@ -1720,11 +1744,13 @@ def run_official_case(case_dir: Path, questions: list[dict], out_dir: Path,
     from app.ingest.official_case import load_official_case
     from app.core.temporal_check import set_source_time_unified
     from app.core.fact_ledger import set_ledger_time_class
+    from app.core.relevance import set_relevance_soft_gate
 
     # 须在 load_official_case 前落地（件③ 三态 detail 读旗）
     _settings = settings or Settings.from_env()
     set_source_time_unified(bool(getattr(_settings, "source_time_unified", False)))
     set_ledger_time_class(bool(getattr(_settings, "ledger_time_class", False)))
+    set_relevance_soft_gate(bool(getattr(_settings, "relevance_soft_gate", True)))
 
     base = load_official_case(case_dir)
     deps = deps or RunDeps()
