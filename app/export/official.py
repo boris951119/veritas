@@ -121,8 +121,16 @@ schema 自定（附录 A 将「因果证据 JSON」列为非必须加分项；ru
 不做效应估计、不做完整因果引擎。
 
 ## 窗口装箱
-本次按假定窗口装箱；若现场模型窗口更大请调 VERITAS_MODEL_CTX_TOKENS；
-关闭＝VERITAS_PACK_TO_WINDOW=0。
+本次按假定窗口装箱（accounting.pack_window.window_tokens＝数值；
+rule＝align_to_window｜align_to_window_未检查｜disabled｜unchecked）。
+取值顺序＝探到的生效 num_ctx ＞ model_context_tokens_by_model 声明值 ＞
+env 显式 VERITAS_MODEL_CTX_TOKENS 当声明 ＞ 端点可探但无 num_ctx 时落
+VERITAS_MODEL_CTX_FALLBACK（默认 4096，未检查，不是安全保证；〔150〕见过
+运行时回退 2048）＞ 端点不可探时沿用全局 model_context_tokens（source＝
+unchecked_global，披露「窗口未检查（端点不可探，沿用全局 N）＝假定值，
+不是实测」——不许叫实测窗）。编队取所用模型窗的最小值。若现场更大请调
+VERITAS_MODEL_CTX_TOKENS 或 model_context_tokens_by_model；关闭＝
+VERITAS_PACK_TO_WINDOW=0。
 """
 
 

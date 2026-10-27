@@ -86,14 +86,20 @@ def align_budget_to_window(
     *,
     persona: str,
     profile_tier: str = "standard",
+    window_tokens: int | None = None,
 ) -> dict:
     """有界确定性缩档：整条生产提示词 est ≤ 窗口满值（不减 max_response_tokens）。
 
     返回 accounting["pack_window"] 形状。预算经 set_material_budget 钉死。
+    C-67：window_tokens 实参优先（编队所用模型窗的最小值）；未传则读
+    settings.model_context_tokens。公式与 0.92／zh_chars_per_token 不变。
     """
     from app.core.prompt_guard import estimate_prompt_window
 
-    window = int(getattr(settings, "model_context_tokens", 0) or 0)
+    if window_tokens is not None:
+        window = int(window_tokens)
+    else:
+        window = int(getattr(settings, "model_context_tokens", 0) or 0)
     density = float(getattr(settings, "zh_chars_per_token", 1.45) or 1.45)
     if density <= 0:
         density = 1.45

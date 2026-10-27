@@ -51,6 +51,23 @@ _CORPUS_SELECT_MAX_DEFAULT = 100
 _INGEST_MAX_FILES_DEFAULT = 500
 _INGEST_MAX_DEPTH_DEFAULT = 3
 
+# C-67：探不到且无每模声明时的保守常量（env VERITAS_MODEL_CTX_FALLBACK 可覆盖）。
+# 出处＝架构师建议档；〔150〕本机实测见过「Modelfile 没写 num_ctx ⇒ 运行时回退 2048」
+# ⇒ 本值对那种端点仍可能偏大，披露必须点名方向风险，不许报成「安全」。
+# 取值路都不许乘固定比例。R-C67-1：仅「端点可探但无 num_ctx」才落本常量；
+# 「端点不可探」改走全局假定值（unchecked_global），不许静默当实测。
+MODEL_CTX_FALLBACK_DEFAULT = 4096
+
+# 探窗三态（R-C67-1）：正整数＝探到生效 num_ctx；
+# no_num_ctx＝端点可探（拿到 /api/show）但 parameters 无 num_ctx；
+# endpoint_unprobeable＝拿不到 /api/show（404／非 Ollama／连接失败等）。
+# 调用方不许靠异常类型猜 A／B——本函数直接返回这三态。
+PROBE_NO_NUM_CTX = "no_num_ctx"
+PROBE_ENDPOINT_UNPROBEABLE = "endpoint_unprobeable"
+
+# 进程内探窗缓存：同模不重探。值＝正整数｜三态哨兵。
+_MODEL_CTX_PROBE_CACHE: dict[str, int | str] = {}
+
 
 def _coerce_positive_int(
         raw, *, default: int, name: str) -> tuple[int, str | None]:
@@ -81,6 +98,313 @@ def _coerce_corpus_select_max(raw) -> tuple[int, str | None]:
     return _coerce_positive_int(
         raw, default=_CORPUS_SELECT_MAX_DEFAULT,
         name="corpus_select_max_sources")
+
+
+def clear_model_ctx_probe_cache() -> None:
+    """测试／探针复位用：清空进程内探窗缓存。"""
+    _MODEL_CTX_PROBE_CACHE.clear()
+
+
+def _bare_model_name(model: str) -> str:
+    """litellm 前缀剥掉：openai/veritas-qwen3-14b → veritas-qwen3-14b。"""
+    text = str(model or "").strip()
+    if "/" in text:
+        return text.split("/", 1)[-1]
+    return text
+
+
+def parse_ollama_num_ctx(payload: dict) -> int | None:
+    """从 Ollama /api/show JSON 取生效 num_ctx（优先 parameters，不是原生 context_length）。"""
+    if not isinstance(payload, dict):
+        return None
+    params = str(payload.get("parameters") or "")
+    # 形如 "num_ctx                        16384\n..."
+    for line in params.splitlines():
+        parts = line.strip().split()
+        if len(parts) >= 2 and parts[0] == "num_ctx":
+            try:
+                n = int(parts[1])
+            except ValueError:
+                continue
+            if n > 0:
+                return n
+    # 兜底：parameters 里 num_ctx=N
+    for token in params.replace("\n", " ").split():
+        if token.startswith("num_ctx="):
+            try:
+                n = int(token.split("=", 1)[1])
+            except ValueError:
+                continue
+            if n > 0:
+                return n
+    return None
+
+
+def probe_model_num_ctx(
+    model: str,
+    *,
+    base_url: str | None = None,
+    timeout: float = 10.0,
+    use_cache: bool = True,
+) -> int | str:
+    """读本机 Ollama /api/show 的生效 num_ctx；返回三态（R-C67-1）。
+
+    - 正整数：parameters 里读到生效 num_ctx
+    - PROBE_NO_NUM_CTX：端点可探（拿到 JSON）但未写 num_ctx
+    - PROBE_ENDPOINT_UNPROBEABLE：拿不到 /api/show（404／连不上／非 JSON 等）
+
+    同模进程内缓存。调用方按返回值分流，不许再靠异常类型猜 A／B。
+    """
+    key = str(model or "").strip()
+    if not key:
+        return PROBE_ENDPOINT_UNPROBEABLE
+    if use_cache and key in _MODEL_CTX_PROBE_CACHE:
+        return _MODEL_CTX_PROBE_CACHE[key]
+    import urllib.request
+
+    if base_url is not None:
+        raw_base = base_url.strip()
+    else:
+        # 只探本机 Ollama（与 scripts/probe_context_window.py 同口径）。
+        # 云端 OPENAI_BASE_URL 没有 /api/show ⇒ 不算探窗端点，直接走默认本机根。
+        ollama = (os.environ.get("OLLAMA_BASE")
+                  or os.environ.get("OLLAMA_HOST") or "").strip()
+        openai_base = (os.environ.get("OPENAI_BASE_URL") or "").strip()
+        if ollama:
+            raw_base = ollama
+        elif openai_base and (
+                "127.0.0.1" in openai_base or "localhost" in openai_base):
+            raw_base = openai_base
+        else:
+            raw_base = "http://127.0.0.1:11434"
+    # OPENAI_BASE_URL／OLLAMA_BASE 常带 /v1；Ollama 原生口在根。
+    root = raw_base.rsplit("/v1", 1)[0].rstrip("/")
+    if not root:
+        value: int | str = PROBE_ENDPOINT_UNPROBEABLE
+        if use_cache:
+            _MODEL_CTX_PROBE_CACHE[key] = value
+        return value
+    bare = _bare_model_name(key)
+    try:
+        req = urllib.request.Request(
+            root + "/api/show",
+            data=json.dumps({"model": bare}).encode(),
+            headers={"Content-Type": "application/json"},
+            method="POST",
+        )
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
+            body = resp.read().decode()
+        try:
+            payload = json.loads(body)
+        except json.JSONDecodeError:
+            value = PROBE_ENDPOINT_UNPROBEABLE
+        else:
+            if not isinstance(payload, dict):
+                value = PROBE_ENDPOINT_UNPROBEABLE
+            else:
+                n = parse_ollama_num_ctx(payload)
+                value = int(n) if n is not None and int(n) > 0 else PROBE_NO_NUM_CTX
+    except Exception:  # noqa: BLE001 — 连不上／404／超时＝端点不可探（态 A）
+        value = PROBE_ENDPOINT_UNPROBEABLE
+    if use_cache:
+        _MODEL_CTX_PROBE_CACHE[key] = value
+    return value
+
+
+def lookup_declared_model_ctx(
+    settings: "Settings", model: str,
+) -> int | None:
+    """运维手写的该模型声明窗；查完整名与裸名。没有 → None。"""
+    table = getattr(settings, "model_context_tokens_by_model", None) or {}
+    if not isinstance(table, dict) or not table:
+        return None
+    key = str(model or "").strip()
+    if key in table:
+        try:
+            n = int(table[key])
+        except (TypeError, ValueError):
+            n = 0
+        return n if n > 0 else None
+    bare = _bare_model_name(key)
+    if bare in table:
+        try:
+            n = int(table[bare])
+        except (TypeError, ValueError):
+            n = 0
+        return n if n > 0 else None
+    return None
+
+
+def choose_window_tokens(
+    probed: int | None,
+    declared: int | None,
+    fallback: int,
+) -> tuple[int, str]:
+    """取值顺序写死＝探到 ＞ 声明 ＞ 保守常量。返回 (tokens, source)。
+
+    仅处理「已是正整数／None」的窄口（探针真引用格用）。
+    端点不可探／无 num_ctx 的分流在 resolve_model_window（R-C67-1）。
+    source ∈ {probed, declared, fallback}；无固定比例。
+    """
+    if probed is not None and int(probed) > 0:
+        return int(probed), "probed"
+    if declared is not None and int(declared) > 0:
+        return int(declared), "declared"
+    fb = int(fallback) if int(fallback) > 0 else MODEL_CTX_FALLBACK_DEFAULT
+    return fb, "fallback"
+
+
+def _unchecked_global_rec(model: str, global_n: int) -> dict:
+    """端点不可探 → 沿用全局假定值（不是实测）。"""
+    return {
+        "model": str(model or ""),
+        "window_tokens": int(global_n),
+        "source": "unchecked_global",
+        "rule": "align_to_window_未检查",
+        "detail": (
+            f"窗口未检查（端点不可探，沿用全局 {int(global_n)}）"
+            f"＝假定值，不是实测"
+        ),
+    }
+
+
+def _fallback_rec(model: str, tokens: int) -> dict:
+    """端点可探但无 num_ctx → 保守常量（〔150〕裸标签风险）。"""
+    return {
+        "model": str(model or ""),
+        "window_tokens": int(tokens),
+        "source": "fallback",
+        "rule": "align_to_window_未检查",
+        "detail": (
+            f"端点可探但该模型未写 num_ctx，落保守常量 {int(tokens)}（未检查；"
+            f"〔150〕本机见过 Modelfile 未写 num_ctx 时运行时回退 2048，"
+            f"本保守值仍可能偏大，不是安全保证）"
+        ),
+    }
+
+
+def resolve_model_window(
+    settings: "Settings",
+    model: str,
+    *,
+    do_probe: bool = True,
+    probe_fn=None,
+) -> dict:
+    """单模窗解析。返回 window_tokens／source／rule／detail。
+
+    顺序（R-C67-1）＝探到正整数 ＞ 每模声明 ＞ env 显式全局当声明 ＞
+    无 num_ctx→保守常量 ＞ 端点不可探→沿用全局假定值（unchecked_global）。
+    """
+    probe = probe_fn or probe_model_num_ctx
+    probe_raw: int | str | None = None
+    if do_probe:
+        try:
+            probe_raw = probe(model)
+        except Exception:  # noqa: BLE001 — 探针抛错＝端点不可探（不靠类型细分）
+            probe_raw = PROBE_ENDPOINT_UNPROBEABLE
+
+    declared = lookup_declared_model_ctx(settings, model)
+    # env 显式 VERITAS_MODEL_CTX_TOKENS 且无每模声明 → 当声明
+    # （可压住「无 num_ctx→4096」；件③ 行为腿）。
+    env_as_declared = False
+    if declared is None and getattr(settings, "model_ctx_tokens_env_set", False):
+        global_n = int(getattr(settings, "model_context_tokens", 0) or 0)
+        if global_n > 0:
+            declared = global_n
+            env_as_declared = True
+
+    fallback = int(getattr(settings, "model_context_fallback_tokens",
+                           MODEL_CTX_FALLBACK_DEFAULT)
+                   or MODEL_CTX_FALLBACK_DEFAULT)
+    global_tokens = int(getattr(settings, "model_context_tokens", 0) or 0)
+
+    # 1) 探到正整数
+    if isinstance(probe_raw, int) and int(probe_raw) > 0:
+        return {
+            "model": str(model or ""),
+            "window_tokens": int(probe_raw),
+            "source": "probed",
+            "rule": "align_to_window",
+            "detail": "source=probed",
+        }
+    # 2) 声明（每模表或 env 显式）
+    if declared is not None and int(declared) > 0:
+        source = "env_global" if env_as_declared else "declared"
+        return {
+            "model": str(model or ""),
+            "window_tokens": int(declared),
+            "source": source,
+            "rule": "align_to_window",
+            "detail": f"source={source}",
+        }
+    # 3) 端点可探但无 num_ctx → 保守常量
+    if probe_raw == PROBE_NO_NUM_CTX:
+        return _fallback_rec(model, fallback)
+    # 4) 端点不可探（或 do_probe 且返回未知哨兵）→ 沿用全局假定值
+    if do_probe and (
+            probe_raw == PROBE_ENDPOINT_UNPROBEABLE
+            or probe_raw is None
+            or (isinstance(probe_raw, str)
+                and probe_raw not in (PROBE_NO_NUM_CTX,))):
+        if global_tokens > 0:
+            return _unchecked_global_rec(model, global_tokens)
+        return _fallback_rec(model, fallback)
+    # 5) do_probe=False 且无声明：保持窄口＝保守常量（单测常用）
+    return _fallback_rec(model, fallback)
+
+
+def resolve_panel_min_window(
+    settings: "Settings",
+    models: list[str],
+    *,
+    do_probe: bool = True,
+    probe_fn=None,
+) -> dict:
+    """编队所用模型窗的最小值（甲＝保守）。models 空 ⇒ 退回 settings.models。"""
+    names = [str(m).strip() for m in (models or []) if str(m).strip()]
+    if not names:
+        names = [str(m).strip() for m in (getattr(settings, "models", None)
+                                          or []) if str(m).strip()]
+    if not names:
+        g = int(getattr(settings, "model_context_tokens", 0) or 0)
+        if g > 0:
+            rec = _unchecked_global_rec("", g)
+            return {
+                "window_tokens": rec["window_tokens"],
+                "source": rec["source"],
+                "rule": rec["rule"],
+                "detail": "编队无模型名，沿用全局假定值",
+                "per_model": [],
+                "used_fallback": False,
+            }
+        fallback = int(getattr(settings, "model_context_fallback_tokens",
+                               MODEL_CTX_FALLBACK_DEFAULT)
+                       or MODEL_CTX_FALLBACK_DEFAULT)
+        rec = _fallback_rec("", fallback)
+        return {
+            "window_tokens": rec["window_tokens"],
+            "source": rec["source"],
+            "rule": rec["rule"],
+            "detail": rec["detail"],
+            "per_model": [],
+            "used_fallback": True,
+        }
+    per = [resolve_model_window(settings, m, do_probe=do_probe,
+                                probe_fn=probe_fn) for m in names]
+    # 取最小值；并列时优先 fallback／unchecked_global（披露更保守）
+    _prio = {"fallback": 0, "unchecked_global": 1}
+    best = min(per, key=lambda r: (
+        int(r["window_tokens"]),
+        _prio.get(str(r["source"]), 2)))
+    used_fallback = any(r["source"] == "fallback" for r in per)
+    return {
+        "window_tokens": int(best["window_tokens"]),
+        "source": best["source"],
+        "rule": best["rule"],
+        "detail": best["detail"],
+        "per_model": per,
+        "used_fallback": used_fallback,
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -149,7 +473,19 @@ class Settings:
     # 模型上下文窗口（token）：发送前估算提示词是否超窗并披露（C-9 丙）。
     # 默认 16384＝本机 Ollama qwen3-14b Modelfile 实测；<=0 关闭检查
     # （关时报告须写「未检查」，不许静默当没超）。VERITAS_MODEL_CTX_TOKENS。
+    # C-67：仍是向后兼容全局单值；装箱实参优先走 resolve_panel_min_window
+    # （探到＞每模声明＞保守常量），本字段作 env 显式覆盖与 ≤0 关检查口。
     model_context_tokens: int = 16384
+    # C-67：按模型名的声明窗（config.json model_context_tokens_by_model／
+    # env VERITAS_MODEL_CTX_BY_MODEL＝JSON 对象）。键＝完整模型名或裸名。
+    model_context_tokens_by_model: dict[str, int] = field(default_factory=dict)
+    # C-67：探不到且无声明时的保守常量。不是官方安全尺——〔150〕本机见过
+    # Modelfile 未写 num_ctx ⇒ 运行时回退 2048，本值对那种端点仍可能偏大。
+    # env VERITAS_MODEL_CTX_FALLBACK 可覆盖。不许写成「安全」。
+    model_context_fallback_tokens: int = MODEL_CTX_FALLBACK_DEFAULT
+    # from_env 见到 VERITAS_MODEL_CTX_TOKENS 时置 True＝向后兼容「全局当声明」
+    # （判据 f：未置此旗＋无每模声明＋探不到 ⇒ 必须落保守常量，不许沿用 16384）。
+    model_ctx_tokens_env_set: bool = False
     # 中文字符／token 密度倒数：探针实测 ≈0.69 tok/字 → 1/0.69≈1.45。
     # 来源 scripts/probe_context_window.py（2026-10-16）。VERITAS_ZH_CHARS_PER_TOKEN。
     zh_chars_per_token: float = 1.45
@@ -315,6 +651,30 @@ class Settings:
         ctx_env = (os.environ.get("VERITAS_MODEL_CTX_TOKENS") or "").strip()
         if ctx_env.lstrip("-").isdigit():
             s.model_context_tokens = int(ctx_env)
+            s.model_ctx_tokens_env_set = True
+        by_env = (os.environ.get("VERITAS_MODEL_CTX_BY_MODEL") or "").strip()
+        if by_env:
+            try:
+                raw_by = json.loads(by_env)
+            except (json.JSONDecodeError, TypeError):
+                raw_by = None
+            if isinstance(raw_by, dict):
+                parsed: dict[str, int] = {}
+                for k, v in raw_by.items():
+                    if isinstance(v, bool):
+                        continue
+                    try:
+                        n = int(v)
+                    except (TypeError, ValueError):
+                        continue
+                    if n > 0 and str(k).strip():
+                        parsed[str(k).strip()] = n
+                if parsed:
+                    s.model_context_tokens_by_model = {
+                        **s.model_context_tokens_by_model, **parsed}
+        fb_env = (os.environ.get("VERITAS_MODEL_CTX_FALLBACK") or "").strip()
+        if fb_env.isdigit() and int(fb_env) > 0:
+            s.model_context_fallback_tokens = int(fb_env)
         zh_env = (os.environ.get("VERITAS_ZH_CHARS_PER_TOKEN") or "").strip()
         if zh_env:
             try:
@@ -355,6 +715,20 @@ class Settings:
         ctx = data.get("model_context_tokens")
         if isinstance(ctx, int) and not isinstance(ctx, bool) and ctx >= 0:
             s.model_context_tokens = ctx
+        # C-67：按模型名的声明窗表
+        by_raw = data.get("model_context_tokens_by_model")
+        if isinstance(by_raw, dict):
+            parsed_by: dict[str, int] = {}
+            for k, v in by_raw.items():
+                if isinstance(v, bool):
+                    continue
+                if isinstance(v, int) and v > 0 and str(k).strip():
+                    parsed_by[str(k).strip()] = v
+            if parsed_by:
+                s.model_context_tokens_by_model = parsed_by
+        fb = data.get("model_context_fallback_tokens")
+        if isinstance(fb, int) and not isinstance(fb, bool) and fb > 0:
+            s.model_context_fallback_tokens = fb
         zh = data.get("zh_chars_per_token")
         if isinstance(zh, (int, float)) and not isinstance(zh, bool) \
                 and float(zh) > 0:

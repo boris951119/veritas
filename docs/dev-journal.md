@@ -1611,3 +1611,22 @@ C45_USE_OLD_JSON=1 OFFICIAL_RUN=/tmp/s4runs/time-20261023-173124 \
   ⇒ 与漏斗 L1 105／L2 48／L3 14／L4 5 同向：**大头在 L3（建边／引用）与 L4（提交面交什么），不在 L2 装箱**。
 - **排期**＝新窄票 **C-68＝支撑证据提交面量尺（只量、零模型、`app/` 零 diff、四问＋Precision 反向腿）**，
   续盒扩跑（乙）排其后。**给用户的说法只有一句**：先把"我们已经量到眼前的料，最后交出去几条"这件事量清楚，再决定要不要花三倍的机器时间去多送料。
+## 2026-10-27 晚晚六〔156〕＝R-C67-1 第二轮复放通过收码（基线 `1011`⇒`1023`、五十八张）
+
+- **交付内容（他写、我代提）**＝`app/config.py` 每模窗表＋探窗三态（正整数／`no_num_ctx`／`endpoint_unprobeable`）＋
+  取值顺序（探到 ＞ 每模声明 ＞ env 显式全局 ＞ 无 num_ctx→4096 ＞ 端点不可探→沿用全局并标未检查）＋
+  `resolve_panel_min_window`（编队取最小窗）；`app/core/material.py` 多一个**可选** `window_tokens` 实参（公式未动）；
+  `app/pipeline.py` 抽出 `pack_window_for_panel`（搬家不改行为）并传窗；`app/export/official.py` 只 `_FIELD_NOTES` 一句；
+  新增 `scripts/probe_c67_window.py`（默认 dry-run）＋`tests/test_c67_window.py`（12 格，比上轮 7 格＋5）。
+- **我的复放与刀（仓库字节不动，全在 `/tmp/r67_replay`）**＝
+
+      cd /tmp/r67_replay && /Users/liuboyu/Developer/veritas/.venv/bin/python -m pytest tests -q -rs
+      # 1023 passed, 1 skipped in 36.46s｜--collect-only 1024
+      LITELLM_LOCAL_MODEL_COST_MAP=1 .venv/bin/python -u /tmp/r67_knives.py
+      # K1 1 红｜K2 3 红｜K3 2 红（A 格＋改前等价格）｜K4 1 红｜K5 1 红｜K6 1 红｜复位后 12 passed
+      LITELLM_LOCAL_MODEL_COST_MAP=1 PYTHONPATH=. .venv/bin/python /tmp/c67_check.py /tmp/r67_replay
+      # 云端 16384／unchecked_global｜裸标签 4096／fallback｜18 题装字 217,233→217,233＝1.000×
+
+- **⚠ 仪表警告（防未来的我读错）**＝`/tmp/c67_check.py` 的 B 段标题里「新(4096)」是我**写死的文案**、
+  数值取的是解析出来的窗口（本轮＝16384）⇒ 复跑请读**数值行**。文案与数值不同源就会骗人，同 `ledger_counts.py` 之权威理。
+- **判据状态**＝C-67 件② 由 🔧 转 ✅；五十八张收口。下一张＝C-68（支撑证据提交面量尺，零模型）。

@@ -196,6 +196,46 @@ class RunDeps:
     coordinator: Coordinator | None = None
 
 
+def pack_window_for_panel(
+    dossier: Dossier,
+    settings: Settings,
+    analysts: list,
+    *,
+    persona: str,
+    profile_tier: str = "standard",
+) -> dict:
+    """C-67：解析编队最小窗并 align（从 run_case 材料段抽出，行为不变）。
+
+    R-C67-1 件②：测试可 monkeypatch resolve_panel_min_window 再走本函数，
+    证明 window_tokens 实参真接到 align（删实参那行必须红）。
+    """
+    from app.config import resolve_panel_min_window
+
+    panel_models = [a.model for a in analysts if getattr(a, "model", None)]
+    # model_context_tokens≤0＝既有关检查口（unchecked、不缩档），不走解析。
+    if int(getattr(settings, "model_context_tokens", 0) or 0) <= 0:
+        return align_budget_to_window(
+            dossier, settings,
+            persona=persona, profile_tier=profile_tier)
+    resolved = resolve_panel_min_window(settings, panel_models)
+    pack_window = align_budget_to_window(
+        dossier, settings,
+        persona=persona, profile_tier=profile_tier,
+        window_tokens=int(resolved["window_tokens"]))
+    # 走保守值／未检查假定值时 rule／detail 必须留得下「为什么」
+    src = str(resolved.get("source") or "")
+    if src in ("fallback", "unchecked_global") or "未检查" in str(
+            resolved.get("rule") or ""):
+        pack_window["rule"] = str(
+            resolved.get("rule") or "align_to_window_未检查")
+        pack_window["window_source"] = src or "fallback"
+        pack_window["window_detail"] = str(resolved.get("detail") or "")
+    else:
+        pack_window["window_source"] = src
+        pack_window["window_detail"] = str(resolved.get("detail") or "")
+    return pack_window
+
+
 def run_case(spec: RunSpec | None = None,
              deps: RunDeps | None = None) -> PipelineResult:
     """跑一次完整研判。deps 可注入桩（测试零 key）。"""
@@ -484,8 +524,11 @@ def run_case(spec: RunSpec | None = None,
             if sys_len > best_len:
                 best_len = sys_len
                 align_persona, align_tier = a.persona, a.profile_tier
-        pack_window = align_budget_to_window(
-            dossier, settings,
+        # C-67：装箱窗＝编队所用模型窗的最小值（甲）；落点在本文件而非
+        # panel.py——align 只在这里调用，panel 只建 Analyst（零字节）。
+        # 实现收到 pack_window_for_panel（R-C67-1 件② 可测接线）。
+        pack_window = pack_window_for_panel(
+            dossier, settings, analysts or [],
             persona=align_persona, profile_tier=align_tier)
         dossier.accounting["pack_window"] = dict(pack_window)
         if pack_window.get("rule") == "align_to_window" and not pack_window.get("fits"):
@@ -1564,15 +1607,32 @@ def _render_prompt_window(lines: list[str], dossier: Dossier) -> None:
                 )
             else:
                 win = pack_w.get("window_tokens")
-                lines.append(
+                base = (
                     f"- 本次按假定窗口 {win} 装箱"
                     f"（budget={pack_w.get('budget')}，"
                     f"est≈{pack_w.get('est_tokens')} token，"
                     f"迭代 {pack_w.get('n_iters')}，"
-                    f"fits={pack_w.get('fits')}）；"
-                    f"若现场模型窗口更大请调 `VERITAS_MODEL_CTX_TOKENS`；"
-                    f"关闭＝`VERITAS_PACK_TO_WINDOW=0`"
+                    f"fits={pack_w.get('fits')}）"
                 )
+                if ("未检查" in rule
+                        or pack_w.get("window_source") in (
+                            "fallback", "unchecked_global")):
+                    detail = str(pack_w.get("window_detail") or (
+                        f"窗口未检查（端点不可探，沿用全局 {win}）"
+                        f"＝假定值，不是实测"
+                    ))
+                    lines.append(
+                        f"{base}；窗口来源＝{detail}；"
+                        f"若现场更大请调 `VERITAS_MODEL_CTX_TOKENS`／"
+                        f"`model_context_tokens_by_model`；"
+                        f"关闭＝`VERITAS_PACK_TO_WINDOW=0`"
+                    )
+                else:
+                    lines.append(
+                        f"{base}；"
+                        f"若现场模型窗口更大请调 `VERITAS_MODEL_CTX_TOKENS`；"
+                        f"关闭＝`VERITAS_PACK_TO_WINDOW=0`"
+                    )
         for n in unfit:
             lines.append(f"- {n.get('detail') or ''}")
         for n in notes:
