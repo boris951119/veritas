@@ -9560,7 +9560,7 @@ PYTHONPATH=. .venv/bin/python scripts/probe_c58_small_to_big.py --run-dir /tmp/s
 **开工提示词（整段贴给 Cursor，与对话里那份逐字相同）**：
 
 ```text
-你是本仓库的执行工程师。单号 C-65，基线提交 9cb8ce8，入库绿基线 1009 收集／工作树 1008 passed, 1 skipped。
+你是本仓库的执行工程师。单号 C-65，基线提交 53ce512（＝〔146〕那笔，工作树实测全绿），入库绿基线 1009 收集／工作树 1008 passed, 1 skipped。
 开工前先读 docs/dev-protocol.md 的 §2、§3（尤其 §3.0 前提核查与 §3.4 质疑通道）、§5 第 19/20/24 条、§9；工单原文在 docs/HANDOFF.md §5「C-65」那一节，逐字读它，别只看这段。
 
 做什么（三件，全在 tests/ 面）：
