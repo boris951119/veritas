@@ -63,6 +63,15 @@ def _always(dossier: Dossier) -> bool:
     return True
 
 
+def _as_of_trigger(dossier: Dossier) -> bool:
+    """as_of_discipline 触发：C-69 开关开→统一读点；关→改前 published_at／year。"""
+    from app.core.temporal_check import source_date, source_time_unified
+    if source_time_unified():
+        return any(source_date(s) for s in dossier.sources)
+    return any(s.meta.get("published_at") or s.meta.get("year")
+               for s in dossier.sources)
+
+
 @dataclass
 class GateSkill:
     """一条提示词纪律：trigger 命中时按模型档位注入对应版本。
@@ -182,8 +191,7 @@ SKILLS: list[GateSkill] = [
         description="时序冲突：旧状态被写成当前事实（快照当永恒）",
         rule="涉及状态/数值的结论必须锚定时点（「截至2025年报」「2026年3月"
              "进展」）；资料含多时点版本时，引用最新时点或明示变化。",
-        trigger=lambda d: any(s.meta.get("published_at") or s.meta.get("year")
-                              for s in d.sources),
+        trigger=lambda d: _as_of_trigger(d),
         gate="as_of",
         rule_hard="涉及状态/数值的结论必须含时点词（如「截至2025年报」「2026年"
                   "3月」）；程序核对所引信源时点与结论时点词，缺锚即打回。",

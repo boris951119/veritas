@@ -23,6 +23,18 @@ from dataclasses import dataclass
 from app.core.evidence import Dossier
 from app.core.numeric_check import _close, extract_nums
 
+# C-69：VERITAS_LEDGER_TIME_CLASS（默认关＝facts_block 文案与改前逐字相同）
+_LEDGER_TIME_CLASS = False
+
+
+def set_ledger_time_class(on: bool) -> None:
+    global _LEDGER_TIME_CLASS
+    _LEDGER_TIME_CLASS = bool(on)
+
+
+def ledger_time_class_enabled() -> bool:
+    return bool(_LEDGER_TIME_CLASS)
+
 _ENTITY_METRIC = re.compile(r"([\u4e00-\u9fffA-Za-z0-9]{2,10}?)([\u4e00-\u9fff]{2,8})$")
 _YEAR_RE = re.compile(r"^(19|20)\d{2}$")
 # 指标尾部的连接/模糊词，剥掉后才是干净指标名
@@ -68,6 +80,23 @@ class Collision:
     def cross_source(self) -> bool:
         return len({f.source_id for f in self.facts}) > 1
 
+    @property
+    def time_class(self) -> str:
+        """归一日后的时点档：same_window｜cross_day｜unknown_time。
+
+        比较一律用 YYYYMMDD（不足 8 位视空→unknown_time）；不许用原始串。
+        开关关时仍可算（件④），只是 facts_block 文案不读这一档。
+        """
+        days: list[str] = []
+        for f in self.facts:
+            digits = re.sub(r"\D", "", str(f.date or ""))
+            days.append(digits[:8] if len(digits) >= 8 else "")
+        if any(not d for d in days):
+            return "unknown_time"
+        if len(set(days)) == 1:
+            return "same_window"
+        return "cross_day"
+
 
 # 未采信数字分类计数的原因枚举（固定六键）。
 # 真分母＝「本该对撞的数字对」机械不可知——只能披露「这些数字没进台账、因为……」，
@@ -90,8 +119,15 @@ def _scan(dossier: Dossier) -> tuple[list[Fact], dict]:
     facts: list[Fact] = []
     dropped = _empty_dropped()
     n_numbers = 0
+    # C-69／R-C69-1：开关开→统一读点；关→改前内联（published_at／year 原串）
+    # 不许 try/except 静默退回——开闸却读方瞎且无人报错＝假绿入口（与 skills 一致）
+    from app.core.temporal_check import source_date, source_time_unified
+    _unified = bool(source_time_unified())
     for src in dossier.sources:
-        date = str(src.meta.get("published_at") or src.meta.get("year") or "")
+        if _unified:
+            date = source_date(src)
+        else:
+            date = str(src.meta.get("published_at") or src.meta.get("year") or "")
         for seg in src.segments:
             text = seg.text
             for num in extract_nums(text):
@@ -185,17 +221,50 @@ def find_collisions(dossier: Dossier,
 
 
 def facts_block(dossier: Dossier) -> str:
-    """对撞台账 → 分析师提示词注入块（无对撞返回空串）。"""
+    """对撞台账 → 分析师提示词注入块（无对撞返回空串）。
+
+    C-69：LEDGER_TIME_CLASS 开时按 time_class 换文案；条目一条不删、顺序不变、
+    仍截 [:8]。关时文案与改前逐字相同。
+    """
     collisions = find_collisions(dossier)
     if not collisions:
         return ""
+    if not _LEDGER_TIME_CLASS:
+        lines = ["", "资料内已知数字冲突（下列数值互相矛盾；请在 JSON 的 conclusions 里"
+                 "正面回应：采信哪一方、依据什么，或声明资料不足。"
+                 "禁止另起 Markdown 分析报告）："]
+        for c in collisions[:8]:
+            detail = "；".join(
+                f"{f.source_id}说{f.entity}{f.metric}{f.raw}"
+                + (f"（时点 {f.date}）" if f.date else "")
+                for f in c.facts)
+            lines.append(f"- {c.entity or '（未指明主体）'}·{c.metric}：{detail}")
+        return "\n".join(lines) + "\n"
+
+    # 与 app.core.precedent.TIME_UNSORTABLE_REASON 同句（避免循环 import）
+    _time_unknown = "时点不明，未据此排序"
     lines = ["", "资料内已知数字冲突（下列数值互相矛盾；请在 JSON 的 conclusions 里"
-             "正面回应：采信哪一方、依据什么，或声明资料不足。"
-             "禁止另起 Markdown 分析报告）："]
+             "正面回应。禁止另起 Markdown 分析报告）："]
     for c in collisions[:8]:
+        tc = c.time_class
+        if tc == "same_window":
+            guide = "采信哪一方、依据什么，或声明资料不足"
+        elif tc == "cross_day":
+            guide = ("这是不同日期的变化，写成时序演变（旧值→新值），"
+                     "不要判谁错")
+        else:
+            guide = f"{_time_unknown}；不要求采信某一方"
         detail = "；".join(
             f"{f.source_id}说{f.entity}{f.metric}{f.raw}"
-            + (f"（时点 {f.date}）" if f.date else "")
+            + (f"（时点 {_display_day(f.date)}）" if _display_day(f.date) else "")
             for f in c.facts)
-        lines.append(f"- {c.entity or '（未指明主体）'}·{c.metric}：{detail}")
+        lines.append(
+            f"- {c.entity or '（未指明主体）'}·{c.metric}：{detail}"
+            f"（{guide}）")
     return "\n".join(lines) + "\n"
+
+
+def _display_day(raw: str) -> str:
+    """行内时点只展示归一日（8 位）；不足则空。"""
+    digits = re.sub(r"\D", "", str(raw or ""))
+    return digits[:8] if len(digits) >= 8 else ""

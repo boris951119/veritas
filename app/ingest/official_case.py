@@ -64,6 +64,12 @@ def load_official_case(case_dir: Path) -> Dossier:
     dossier = Dossier(question="", title=Path(case_dir).name)
     n_short = 0
     n_bad_time = 0
+    # C-69 件③：三态计数（开关开才写入 detail；meta 结构不动）
+    n_full_iso = 0
+    n_present_non_iso = 0
+    n_key_missing = 0
+    from app.core.temporal_check import source_time_unified
+    unified = bool(source_time_unified())
     for doc in data:
         if not isinstance(doc, dict):
             continue
@@ -91,9 +97,17 @@ def load_official_case(case_dir: Path) -> Dossier:
                 id=para_id, source_id=doc_id, text=text, index=len(kept),
                 locator=para_id,
             ))
-        published = publish_time_or_blank(doc.get("publish_time"))
+        raw_pt = doc.get("publish_time")
+        published = publish_time_or_blank(raw_pt)
         if not published:
             n_bad_time += 1
+            raw_text = str(raw_pt or "").strip()
+            if not raw_text:
+                n_key_missing += 1
+            else:
+                n_present_non_iso += 1
+        else:
+            n_full_iso += 1
         cred = doc.get("source_credibility")
         credibility = cred if isinstance(cred, (int, float)) and not isinstance(cred, bool) else None
         if credibility is None or not 0.0 <= float(credibility) <= 1.0:
@@ -120,10 +134,26 @@ def load_official_case(case_dir: Path) -> Dossier:
         "detail": f"不足 {MIN_PARA_CHARS} 字的段落未进检索：{n_short} 条（para_id 未重编号）",
         "filtered": n_short,
     })
-    dossier.ingest_notes.append({
+    if unified:
+        detail = (
+            f"publish_time 三态：完整 ISO {n_full_iso}／"
+            f"在场但非完整 ISO {n_present_non_iso}／"
+            f"键缺失 {n_key_missing}"
+            f"（合计无法作为完整日期使用、已留空：{n_bad_time} 篇；未推断日期）"
+        )
+    else:
+        detail = (
+            f"publish_time 无法作为完整日期使用、已留空：{n_bad_time} 篇（未推断日期）"
+        )
+    note = {
         "file": "raw_documents.json",
         "kind": "official_publish_time",
-        "detail": f"publish_time 无法作为完整日期使用、已留空：{n_bad_time} 篇（未推断日期）",
+        "detail": detail,
         "unparsed": n_bad_time,
-    })
+    }
+    if unified:
+        note["n_full_iso"] = n_full_iso
+        note["n_present_non_iso"] = n_present_non_iso
+        note["n_key_missing"] = n_key_missing
+    dossier.ingest_notes.append(note)
     return dossier

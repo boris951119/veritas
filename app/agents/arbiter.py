@@ -344,8 +344,16 @@ class Coordinator:
                     src = dossier.source_of_segment(sid)
                     if src is None or src.id in seen:
                         continue
-                    date = (str(src.meta.get("published_at") or "")
-                            or str(src.meta.get("year") or ""))
+                    # C-69／R-C69-1：开关开→统一读点；关→改前内联（只动这一处）
+                    # 不许 try/except 静默退回（与 skills／fact_ledger 一致）
+                    from app.core.temporal_check import (
+                        source_date, source_time_unified,
+                    )
+                    if source_time_unified():
+                        date = source_date(src)
+                    else:
+                        date = (str(src.meta.get("published_at") or "")
+                                or str(src.meta.get("year") or ""))
                     if date:
                         seen[src.id] = f"{src.id}({date})"
             return "、".join(seen.values()) or "（信源未声明时点）"

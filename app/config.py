@@ -493,6 +493,13 @@ class Settings:
     # est ≤ 窗口；关＝VERITAS_PACK_TO_WINDOW=0，走字预算老路。
     pack_to_window: bool = True
 
+    # C-69 树10-①：日期键名统一读点（件①③）。默认 False＝生产零强制变化。
+    # env VERITAS_SOURCE_TIME_UNIFIED；config.json source_time_unified。
+    source_time_unified: bool = False
+    # C-69：对撞三档文案（件②）。默认 False＝time_class 可算但文案与改前相同。
+    # env VERITAS_LEDGER_TIME_CLASS；config.json ledger_time_class。
+    ledger_time_class: bool = False
+
     # 语料收窄阈值：信源数达到该值才走索引选料（默认 50=自动；
     # 0=强制关闭，小案例到不了阈值则整卷研判、不建 .corpus）。
     # 收窄后研判只看见 hydrate 出的小案卷，并披露「库内 N / 本次 M」。
@@ -688,6 +695,16 @@ class Settings:
             s.pack_to_window = False
         elif pack_env in ("1", "true", "on", "yes"):
             s.pack_to_window = True
+        stu = (os.environ.get("VERITAS_SOURCE_TIME_UNIFIED") or "").strip().lower()
+        if stu in ("0", "false", "off", "no"):
+            s.source_time_unified = False
+        elif stu in ("1", "true", "on", "yes"):
+            s.source_time_unified = True
+        ltc = (os.environ.get("VERITAS_LEDGER_TIME_CLASS") or "").strip().lower()
+        if ltc in ("0", "false", "off", "no"):
+            s.ledger_time_class = False
+        elif ltc in ("1", "true", "on", "yes"):
+            s.ledger_time_class = True
         return s.validate()
 
     @classmethod
@@ -739,6 +756,20 @@ class Settings:
                 s.pack_to_window = raw_pack
             elif isinstance(raw_pack, (int, str)):
                 s.pack_to_window = str(raw_pack).strip().lower() not in (
+                    "0", "false", "off", "no", "")
+        if "source_time_unified" in data:
+            raw_stu = data.get("source_time_unified")
+            if isinstance(raw_stu, bool):
+                s.source_time_unified = raw_stu
+            elif isinstance(raw_stu, (int, str)):
+                s.source_time_unified = str(raw_stu).strip().lower() not in (
+                    "0", "false", "off", "no", "")
+        if "ledger_time_class" in data:
+            raw_ltc = data.get("ledger_time_class")
+            if isinstance(raw_ltc, bool):
+                s.ledger_time_class = raw_ltc
+            elif isinstance(raw_ltc, (int, str)):
+                s.ledger_time_class = str(raw_ltc).strip().lower() not in (
                     "0", "false", "off", "no", "")
         select_min = data.get("corpus_select_min_sources")
         if isinstance(select_min, int) and not isinstance(select_min, bool) \

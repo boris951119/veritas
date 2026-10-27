@@ -21,15 +21,49 @@ from app.core.fact_ledger import Collision, find_collisions
 _YEAR_IN_TEXT = re.compile(r"(19|20)\d{2}\s*年|\d{4}[-/.]\d{1,2}")
 _DATE_TAIL = re.compile(r"(\d{4})(\d{2})(\d{2})$")
 
+# C-69：VERITAS_SOURCE_TIME_UNIFIED（默认关＝改前逐字）。
+_SOURCE_TIME_UNIFIED = False
+
+
+def set_source_time_unified(on: bool) -> None:
+    """pipeline／单测设置件① 开关；默认 False。"""
+    global _SOURCE_TIME_UNIFIED
+    _SOURCE_TIME_UNIFIED = bool(on)
+
+
+def source_time_unified() -> bool:
+    return bool(_SOURCE_TIME_UNIFIED)
+
+
+def normalize_to_day(raw: str) -> str:
+    """时点串 → YYYYMMDD；不足 8 位数字回空（不许推断日）。"""
+    digits = re.sub(r"\D", "", str(raw or "").strip())
+    return digits[:8] if len(digits) >= 8 else ""
+
 
 def source_date(src) -> str:
-    """信源时点：meta.published_at > meta.year > ''（统一成可比字符串）。"""
-    raw = str(src.meta.get("published_at") or "").strip()
-    if raw:
+    """信源时点统一读点（C-69／R-C69-1）。
+
+    开关关：改前行为＝published_at（去非数字后 ≥4 取前 8，否则原样）＞ year ＞ ''。
+    开关开：按 published_at → publish_time → year 取**第一个有值的键**，
+    归一沿用改前口径（数字 ≥4 → digits[:8]，否则原样）；**不许因不足 8 位就跳键**
+    （月粒度 published_at=2026-03 必须得 202603，不得回退 year）。
+    日粒度比较／行内展示仍要求 8 位（normalize_to_day／time_class），不足即 unknown_time。
+    """
+    if not _SOURCE_TIME_UNIFIED:
+        raw = str(src.meta.get("published_at") or "").strip()
+        if raw:
+            digits = re.sub(r"\D", "", raw)
+            return digits[:8] if len(digits) >= 4 else raw
+        year = str(src.meta.get("year") or "").strip()
+        return year
+    for key in ("published_at", "publish_time", "year"):
+        raw = str(src.meta.get(key) or "").strip()
+        if not raw:
+            continue
         digits = re.sub(r"\D", "", raw)
         return digits[:8] if len(digits) >= 4 else raw
-    year = str(src.meta.get("year") or "").strip()
-    return year
+    return ""
 
 
 def _newer_older(pair: Collision) -> tuple[list, list]:

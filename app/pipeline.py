@@ -249,6 +249,11 @@ def run_case(spec: RunSpec | None = None,
     from app.ingest.pdf_backend import set_pdf_backend
 
     set_pdf_backend(settings.pdf_backend)
+    # C-69：两个时间轴开关落到模块旗（须在 ingest／facts_block 之前）
+    from app.core.temporal_check import set_source_time_unified
+    from app.core.fact_ledger import set_ledger_time_class
+    set_source_time_unified(bool(getattr(settings, "source_time_unified", False)))
+    set_ledger_time_class(bool(getattr(settings, "ledger_time_class", False)))
     created_progress = get_active_progress() is None
     prog = ensure_progress(spec.out_dir)
 
@@ -1713,9 +1718,17 @@ def run_official_case(case_dir: Path, questions: list[dict], out_dir: Path,
     """
     from app.export.official import export_official
     from app.ingest.official_case import load_official_case
+    from app.core.temporal_check import set_source_time_unified
+    from app.core.fact_ledger import set_ledger_time_class
+
+    # 须在 load_official_case 前落地（件③ 三态 detail 读旗）
+    _settings = settings or Settings.from_env()
+    set_source_time_unified(bool(getattr(_settings, "source_time_unified", False)))
+    set_ledger_time_class(bool(getattr(_settings, "ledger_time_class", False)))
 
     base = load_official_case(case_dir)
     deps = deps or RunDeps()
+    settings = _settings
     results: list[PipelineResult] = []
     runs: list[tuple[dict, Dossier]] = []
     for question in questions:
