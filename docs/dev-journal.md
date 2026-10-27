@@ -1514,3 +1514,14 @@ C45_USE_OLD_JSON=1 OFFICIAL_RUN=/tmp/s4runs/time-20261023-173124 \
 - **判据 d 过（函数级、如实标注）**＝`VERITAS_MODEL_CTX_TOKENS=0 ⇒ rule="unchecked"、budget=80,000 原样、est/n_iters/fits=null`。
 - **⚠ 记我账＝判据 e 写窄了⇒订正成 e′**＝原判据要求现场复算的 `budget／est／n_iters` 与产物一致，实测 **18/18 不等**（budget −7.57%～+9.54%、中位 +1.93%、超 ±5% 三题；est −5.40%～+7.45%；现场 n_iters 2／3、产物多为 1）；但 **`rule／window_tokens／target_tokens` 18/18 恒等**。根因＝align 的输入不止窗＋案卷，还含 persona、`profile_tier`、运行时 `query_rewrite` 与技能注入文本。**恒等要求只该加在该恒等的量上**（§5 第 21／23 条同族：判据要写在真正可比的量上）。副产品＝**同码重算也能差 ±9%**⇒#191「上限稳定性票」当初为什么要存在，今天再添一条证据。
 - **件② 的落点建议（写在读数之后）**＝只做"每模一条声明窗＋启动探窗一次＋探不到就 `unchecked` 并保守取小窗＋披露"；**乙（逐 agent 改材料面）11/4 前不推**。状态：五十六张不变、`app/`／`config.json`／`scripts/` 零 diff、零付费。
+
+
+## 2026-10-27 晚晚二〔151〕＝C-65 复放通过收码（基线 `1008`⇒`1011`）＋我自己验收脚本栽在 `__pycache__` 上
+
+- **交付内容（只动 `tests/`）**＝`tests/test_c58_small_to_big.py`＝夹具改成"两块有正分、后块严格更高、首块仍 0 分"＋三条互相拉开的断言（`got == max`／`got < sum`／`got != 首个正分`）＋**夹具自证** `sum > max > first_positive > per[0]==0`；三颗反向刀格改共用 helper `_load_mutated_copy(name, old, new, tmp_path)`（tmp 副本＋`spec_from_file_location`，不再 `reload` 真模块、不再 `rmtree __pycache__`）；新增行为型守护格 `test_c65_knife_writes_refuse_repo_tree`（monkeypatch `Path.write_text`：目标解析在 `ROOT` 内 ⇒ `RuntimeError: refused write inside ROOT`）。新建 `tests/test_c65_judge_prompt_pinned.py`＝`JUDGE_SYSTEM` 逐字 `==` ＋ 按"口径："切开后四态定义列表 `==`（顺序也钉）。
+- **复放（tracked 态）**＝克隆 HEAD＋贴他两份文件＋`git add -A` ⇒ `1011 passed, 1 skipped in 32.08s`；我再跑 2 次同数、他连跑 5 次同数＝无 flake；`--collect-only 1012`／`def_test_count 994`；`-rs` 跳格仍＝`tests/test_c23_corpus_max.py:117`（a-out 产物树不在本机）。
+- **四把刀（改的是克隆里的 `scripts/probe_c58_small_to_big.py`，真仓库 sha 未变）**＝改前：K1 max⇒累加＝**正向格 0 咬**、K2 取首块＝3 红含正向格、**K3 取首个正分＝正向格 0 咬**、K4 不分块＝4 红含正向格；改后：K1／K3 **都咬到正向格**、K2／K4 照旧 ⇒ #198 那个"刀砍在空气上"的洞确认补上。件②：把 helper 退回写真源 ⇒ 守护格红。件③：后半句改一字 ⇒ 两格红；前半句改同义不同字 ⇒ 只逐字格红（＝四态格不守开头句）。
+- **⚠ 记我账（第三次栽在同一坑，且这次我误查了别人）**＝我的验收脚本在复位腿之后**没清 `__pycache__`**⇒源文件同尺寸、同秒数 ⇒ 旧 pyc 被判定有效、仍加载变异版 ⇒ H1 那轮冒出一颗 `test_c65_judge_system_byte_equal` 红，我一开始当成"他的交付有问题"去查。清 pyc 后相关 10 颗全绿＝**判明是我自己的程序**。⇒ 以后我的验收脚本每次复位后一律 `rm -rf tests/__pycache__ scripts/__pycache__ app/**/__pycache__` 再读数；这条纪律以前是我写给执行方的（"刀测后先清 pyc 再跑复位腿"），这次是我自己犯。⇒ **已立成 `docs/dev-protocol.md` §5 第 27 条**：pyc 有效性判据＝源文件整秒 mtime＋字节数，同长度替换＋同秒复位正好骗过它；第 20 条防"脏树"、第 27 条防"脏字节码"，两回事都要做。
+- **订正他交账一处口径（不返工）**＝"改前 K1／K3＝0 红"应写成"**改前咬不到正向格**"——总红数不是 0（另一颗刀格的"变异针漂移 assert"会红）。判别力结论成立。
+- **判执行方做对的一条**＝提示词基线写的是 `7b6a1f6`，他看到共享树已到 `59cab55`，按 §5 第 25 条在 tip 上做完、没回退旧号；三条前提核查全是真跑读数（首块 0 分；两块正分 8.456／28.180；`tmp_path` 在仓库外；tmp 副本能解析 `app.agents.base` 绝对导入）。
+- **账**＝**五十七张收口＝C-65**；`AGENTS.md` 基线句同步抬到 `1011 passed`。队列＝C-67 件②（等拍甲／乙）→ C-66 件②（等拍 3 倍墙钟）→ C-64（挂起）→ 11/4 交付面。
