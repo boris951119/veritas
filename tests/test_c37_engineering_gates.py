@@ -267,7 +267,11 @@ def scan_except_pass_sites_attach() -> list[tuple[str, int]]:
 def _is_narrative(path: str) -> bool:
     if path in ("docs/HANDOFF.md", "docs/handoff-archive.md"):
         return True
-    if path.startswith("docs/architecture-map-") and path.endswith(".html"):
+    # 叙事面有两种图：老的全景图（architecture-map-*）与 2026-10-27 起的
+    # 步骤树（architecture-tree-*，用户用它挑问题）。两者都只算"讲故事"，
+    # 不算脚本引用面＝prose 洗白路径的口径要一起锁（§0〔72〕刀⑧同源）。
+    if path.startswith(("docs/architecture-map-", "docs/architecture-tree-")) \
+            and path.endswith(".html"):
         return True
     return False
 
@@ -280,8 +284,10 @@ def scan_script_zero_refs(
     """Return sorted zero-ref script basenames under locked or variant口径.
 
     needles_mode: 'py' | 'both'
-    exclude_narrative: if True, skip HANDOFF / handoff-archive / architecture-map-*.html
-                       (and for locked, that is the trio).
+    exclude_narrative: if True, skip HANDOFF / handoff-archive / architecture-*.html
+                       （叙事面＝三种：两份台账纸＋架构图；图从 10-27 起有两种
+                       stem＝全景图 architecture-map-*／步骤树 architecture-tree-*，
+                       排除口径必须一起放宽，换图名不能把洗白路径打开）
     """
     tracked = subprocess.check_output(
         ["git", "ls-files"], cwd=ROOT, text=True
@@ -338,9 +344,12 @@ def scan_script_zero_refs_variant(kind: str) -> list[str]:
             return _is_narrative(f)
         if f in ("docs/HANDOFF.md", "docs/handoff-archive.md"):
             return True
-        if kind == "3" and f.startswith("docs/architecture-map-") and f.endswith(
-            ".html"
-        ):
+        # kind 3＝"只认 py 针"那一变体：它的图排除面必须与 _is_narrative 同宽，
+        # 否则换一张图名（map→tree）就会让 v1/v4 之差变成"排除面之差"而不是
+        # "针形之差"＝刀⑧的对照腿会咬错东西。
+        if kind == "3" and f.startswith(
+            ("docs/architecture-map-", "docs/architecture-tree-")
+        ) and f.endswith(".html"):
             return True
         return False
 
@@ -372,7 +381,7 @@ def narrative_trio_counts(name: str) -> dict[str, int]:
     surfaces = ["docs/HANDOFF.md", "docs/handoff-archive.md"]
     surfaces += [
         str(p.relative_to(ROOT))
-        for p in sorted((ROOT / "docs").glob("architecture-map-*.html"))
+        for p in sorted((ROOT / "docs").glob("architecture-*.html"))
     ]
     out: dict[str, int] = {}
     for s in surfaces:
@@ -762,13 +771,12 @@ def test_c37_knife8_narrative_mention_does_not_wash(monkeypatch):
     for name in SCRIPT_ZERO_REF_EXEMPTIONS:
         assert name in live
 
-    # 变体差：v4−v1 应等于「地图里以 X.py 字面出现、因而在 v1 被洗白」的脚本集
-    # 现树地图只有 stem ⇒ 该差为空
+    # 变体差：v4−v1 应等于「叙事图里以 X.py 字面出现、因而在 v1 被洗白」的脚本集
+    # 现树两种图都只有 stem ⇒ 该差为空；哪天有人往图里写脚本全名，这条立刻红
     v1 = set(scan_script_zero_refs_variant("1"))
     v4 = set(scan_script_zero_refs_variant("4"))
-    map_path = next((ROOT / "docs").glob("architecture-map-*.html"), None)
     map_py_hits: set[str] = set()
-    if map_path and map_path.is_file():
+    for map_path in sorted((ROOT / "docs").glob("architecture-*.html")):
         html = map_path.read_text(encoding="utf-8", errors="ignore")
         for name in SCRIPT_ZERO_REF_EXEMPTIONS:
             if name in html:
@@ -781,6 +789,25 @@ def test_c37_knife8_narrative_mention_does_not_wash(monkeypatch):
         mod._assert_script_zero_ref_equals_registry()
 
 
+
+
+def test_c37_narrative_face_covers_both_diagram_stems():
+    """叙事面两种图都算：全景图 architecture-map-*／10-27 起的步骤树 architecture-tree-*。
+
+    为什么单独一颗格＝换架构图只换文件名 stem。若排除口径钉死在旧 stem 上，
+    新图里出现的脚本名会立刻被当成"真引用"＝零引用登记表能被一张文档洗白
+    （与 §0〔72〕刀⑧同源：prose 洗白路径要一起锁，不锁新面＝旧锁失效）。
+    下刀＝删掉 _is_narrative 里 architecture-tree- 那一支 ⇒ 本格必红。
+    """
+    assert _is_narrative("docs/architecture-tree-2026-10-27.html") is True
+    assert _is_narrative("docs/architecture-map-2026-10-12.html") is True
+    # 反向腿：非图文件不许被当叙事面（否则 dev-journal 提一个脚本名就"不算引用"）
+    assert _is_narrative("docs/dev-journal.md") is False
+    assert _is_narrative("docs/architecture-notes.txt") is False
+    # 现在仓库里这张图必须真在＝别把本格做成无实物可核的自指断言
+    live = sorted(p.name for p in (ROOT / "docs").glob("architecture-*.html"))
+    assert live, "docs/ 下没有架构面 html＝本格的『图算叙事面』没有实物可对"
+    assert all(_is_narrative(f"docs/{n}") is True for n in live)
 
 
 def test_c37_knife7b_real_import_in_other_tracked_file_red():

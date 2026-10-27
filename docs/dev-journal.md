@@ -1637,3 +1637,71 @@ C45_USE_OLD_JSON=1 OFFICIAL_RUN=/tmp/s4runs/time-20261023-173124 \
 - **根因**＝dev-journal 算零引用闸的**真引用面**（只有 HANDOFF／handoff-archive／登记模块被排除）⇒ 我在〔156〕那句闲话里写了 `ledger_counts`＋`.py` 这个文件名，就给那个脚本造出第二条文档引用，C-38 那颗「改坏 dev-protocol 字面量必须红」的刀于是咬空。
 - **处置**＝去掉那个文件名（不往豁免表加键、不动刀格）；清 `__pycache__` 后整套 `1023 passed, 1 skipped in 37.10s`。
 - **写法**＝dev-journal 与 HANDOFF 不是同一种纸：**在 dev-journal 提脚本名＝发真引用**。
+## 2026-10-27 晚晚七〔158〕＝架构面换面收编（步骤树进仓成唯一架构面、旧全景图退役；基线 `1023`⇒`1024`）
+
+- **来源**＝用户 10-27 拍：「老架构图字多、很多都看不懂，我让分析师做了新的（10-27），直观、便于我发现问题」⇒
+  新那张 `docs/architecture-tree-2026-10-27.html`（27 步、点标签弹窗）不是"第二张图"、是**替代**。
+  旧全景图从 git 删除，全文留在本机桌面存档与 git 历史里；图上那句指向旧图的死链一并改成一句说明。
+- **收编时用的尺＝dev-protocol §8「图上每个数字必须回指一条量尺账」**（这条今天才补进 §8，见下）：
+  逐条 grep 交接与代码，8 条有账（48/105、×2 66、×3 74、oracle 关闸 90／全开 105、三箱并集 71、
+  小样 2.87×、近重复 22 对／486 篇＝4.5%、切段 500／650＝`app/ingest/segment.py:23`、封顶 500 份／深度 3＝`app/config.py:514`）；
+  **两处全仓查无出处**＝「本地 14B 抽检 8/8 ok」（⇒ 改标［未量］，并把"从没配对量过拓展对金标名次的净影响"写明）与
+  「提示词／装箱字数比曾到 0.3～2.3」（⇒ 换成〔150〕两条真数：服务端报的输入 token 数不可信、
+  同码同案卷重算缩档预算相对差 −7.57%～+9.54%＝18/18 题）。
+- **步骤 16「续盒看全」原来是一颗普通橙卡＝把没进生产的能力画成已具备** ⇒ 徽章改「主修·未进生产」、
+  红标改「只量过·未合入」、卡里加一句「生产里暂时还没接」，弹窗量尺补三箱 71／开大窗 ×3 的 74 更高／2.87× 墙钟。
+- **换图名必带那道闸（本笔真工程内容）**＝零引用闸的"叙事面"排除原钉死 `architecture-map-`；新图 stem 不同 ⇒
+  不放宽就等于给"在图里写一句脚本全名就把零引用脚本洗成有引用"重开口子（§0〔72〕刀⑧同族）。
+  放宽四处：`_is_narrative` 两 stem／刀⑧对照腿扫 `architecture-*.html` 全部图／variant("3") 排除面与 `_is_narrative` 同宽／
+  登记模块 docstring 与 §8 的口径句。新立一颗格＝`test_c37_narrative_face_covers_both_diagram_stems`
+  （含反向腿：dev-journal 与非 html 不许被当叙事面）。
+- **§8 补三条规则**＝① 图上的数必须回指一条账、查不出处的当场改［未量］；② 未进生产的能力必须显式标；
+  ③ 换架构面文件名要同步放宽零引用闸的叙事面排除 stem（现由那颗新格钉住）。
+- **台账键改名**＝`architecture_map_lines`／`_path` ⇒ `architecture_face_lines`／`_path`（glob `architecture-*.html`、
+  取排序最后一张、连文件名一起报）。709⇒1000 是换图不是暴涨。⚠ 本行不写那份行数账脚本的全名——
+  在 dev-journal 里写全名＝凭空给它造第二条文档引用，会把 C-38 那颗洗白刀咬空（教训见〔157〕）。
+- **复跑（本笔的验收面；文档全落完之后跑）**＝
+
+      cd /Users/liuboyu/Developer/veritas
+      find . -name __pycache__ -type d -not -path "./.venv/*" -exec rm -rf {} +
+      LITELLM_LOCAL_MODEL_COST_MAP=1 .venv/bin/python -m pytest tests -q -rs
+      # 1024 passed, 1 skipped in 37.52s（跑在文档全落完之后＝§5 第 25 条）｜跳格当场点名＝tests/test_c23_corpus_max.py:117
+      # ⚠ 中间那一遍曾读 3 failed＝我自己把针名带 `.py` 写进了 dev-journal（见下面"记我账"那条），改写法后转绿
+      LITELLM_LOCAL_MODEL_COST_MAP=1 .venv/bin/python -m pytest tests --collect-only -q
+      # 1025 tests collected
+      LITELLM_LOCAL_MODEL_COST_MAP=1 .venv/bin/python scripts/check_markdown_tables.py
+      LITELLM_LOCAL_MODEL_COST_MAP=1 .venv/bin/python scripts/check_doc_anchors.py
+      LITELLM_LOCAL_MODEL_COST_MAP=1 PYTHONPATH=. .venv/bin/python /tmp/knife219.py
+      # 实测四把（红名都点名）＝
+      # N1 叙事面只认旧 stem（删 tree 那一支）⇒ 那颗新格 1 红；主断言仍绿＝"没有针在场时口子看不见"
+      # N2 把排除面扩成"docs 下所有 md／html 都算叙事面"⇒ 那颗新格 1 红（反向腿有牙）
+      # N3 叙事面只认新 stem（删 map 那一支）⇒ 那颗新格 1 红
+      # N4 真洗白路径＝往图里写一句登记表里的脚本全名：现状码主断言绿（图不算引用面＝洗不动）；
+      #    同一份图内容改回"只认旧 stem"⇒ 主断言红，红名＝live 少了登记表里那把针（gen_eval_questions，
+      #    此处故意不接 ".py"＝写了就等于给它造一条真引用，见下一条）
+      #    （＝那条口子真的只被这条排除口径堵着）；图按 sha 逐字节还原（028a7ff4… 前后一致）
+
+- **⚠ 记我账（〔157〕同一颗坑、换了形状）**＝上面这条红名我第一版是**带着 `.py` 全名**写进 dev-journal 的，
+  写完立刻跑整套＝**3 failed**（`test_c37_script_zero_ref_equals_exemption_registry`／刀⑧／刀⑨），
+  红因＝dev-journal 算真引用面，我把针名一写，那条本就零引用的脚本立刻被判"有引用"⇒ live 少一个⇒双向相等恒红。
+  改写法（名字在场、`.py` 不接）即转绿。**⇒ 固定动作＝在真引用面（dev-journal／AGENTS／dev-protocol）里点名"零引用脚本"的红名时，
+  只写 stem、不写 `X.py` 也不写 `scripts.X`；写完必须再跑一次整套，不能只信上一遍读数**（§5 第 25 条同族：
+  文档补丁之后重跑，绿才算绿）。**⇒ 已立 dev-protocol §5 第 29 条。**
+
+- **HTML 标签平衡（§8 老规矩，动 HTML 那笔必须当场全文计数）＝收编并发那笔之后重测**＝b 0/0｜code 1/1｜li 0/0｜div 253/253｜
+  span 55/55｜small 0/0｜td 0/0｜tr 0/0｜p 34/34｜strong 4/4｜em 0/0｜a 0/0；图 1002 行、27 步、`.py` 出现 0 次、无密钥。
+
+- **⚠ 共享工作树并发写入（记我账③）**＝我 `git add` 之后提交之前，这张图又被写了一次（mtime 15:43）＝
+  新样式 `.badge-ok`＋步骤 05 挂「对比赛无影响」＋s05 弹窗重写为"主办方确认正式测集与样例同结构（raw_documents.json 预抽纯文本）"。
+  我没有回退它，而是按 §8 新尺回账，核下来口径站得住：
+
+      python3 -c "import json;d=json.load(open('<官方案>/raw_documents.json'));print(len(d),list(d[0]))"
+      # 52 篇；键＝doc_id/title/publish_time/content/paragraphs/source_credibility/content_url（正文＝纯文本）
+      grep -n "paragraphs" app/ingest/official_case.py      # :80 直接按官方 para_id＋char_start/end 切片
+      grep -n "MIN_PARA_CHARS|official_short_paragraph" app/ingest/official_case.py
+      # :18＝5 字地板、:87 丢弃计数、:120 披露；:124＝publish_time 解析不了留空（不推断）
+
+  ⇒ 七道丢料口（PDF／图片 OCR／老办公格式／压缩包／链接／扫描件零文字层）对本赛确实打不着＝徽章收下、一起入库。
+  两点如实记下：① 官方路径上仍有**我们自己的**两道闸（短段不进检索、时间留空），都已披露；
+  ② 图上只给步骤 05 挂了徽章，**步骤 06（切段劈数）严格说同样打不着**＝要不要补由用户定，我不擅自改他的图。
+  **⇒ 协议动作＝提交前重读一遍待提交面（比 index 与工作树），"我 add 过"不等于"它没再变"。**

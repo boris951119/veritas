@@ -4,7 +4,9 @@
 
 排除口径（与脚本自身同级）：
 - 引用面枚举＝`git ls-files`（tracked）。
-- 扫描时排除三份叙事面（HANDOFF／handoff-archive／architecture-map-*.html）
+- 扫描时排除叙事面：`docs/HANDOFF.md`／`docs/handoff-archive.md`／
+  `docs/architecture-*.html`（架构图两种 stem 都算＝10-26 前的全景图 map、
+  10-27 起的步骤树 tree；换图名不开新的洗白口）
   以及**本登记模块** `tests/c37_zero_ref_registry.py`。
 - 为什么登记模块必须排除：表内键就是脚本文件名字面量；一旦本文件被跟踪且
   计入引用面，四个名字会立刻被判「有引用」→ live 空 → 双向相等恒红

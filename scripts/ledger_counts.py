@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """C-37：行数账一次抄全（入库脚本）。
 
-输出 HANDOFF 行数与字节、AGENTS 行数、architecture-map 行数、
+输出 HANDOFF 行数与字节、AGENTS 行数、架构面（docs 下当前那张图，10-27 起＝
+architecture-tree-*；键名带 face 不带 map，换图不换键语义）行数、
 app/ tests/ scripts/ web/ calibration/ 各自总行数、
 pytest --collect-only 条数、grep -c '^def test_' 合计。
 
@@ -79,15 +80,19 @@ def _def_test_count() -> int:
 def collect() -> dict:
     handoff = ROOT / "docs" / "HANDOFF.md"
     agents = ROOT / "AGENTS.md"
-    # architecture-map: prefer dated file if present
-    maps = sorted((ROOT / "docs").glob("architecture-map-*.html"))
-    amap = maps[-1] if maps else ROOT / "docs" / "architecture-map.html"
+    # 架构面＝docs 下唯一那张图：2026-10-27 起是步骤树 architecture-tree-*，
+    # 之前是全景图 architecture-map-*。取排序最后那张（＝当前在用的面），
+    # 并把文件名一起报出来，免得同一个键换了图却被当成行数暴跌／暴涨。
+    maps = sorted((ROOT / "docs").glob("architecture-*.html"))
+    amap = maps[-1] if maps else ROOT / "docs" / "architecture.html"
     return {
         "HANDOFF_lines": _lines(handoff),
         "HANDOFF_bytes": _bytes(handoff),
         "AGENTS_lines": _lines(agents),
-        "architecture_map_path": str(amap.relative_to(ROOT)) if amap.exists() else "",
-        "architecture_map_lines": _lines(amap),
+        "architecture_face_path": (
+            str(amap.relative_to(ROOT)) if amap.exists() else ""
+        ),
+        "architecture_face_lines": _lines(amap),
         "app_lines": _dir_py_lines("app"),
         "tests_lines": _dir_py_lines("tests"),
         "scripts_lines": _dir_py_lines("scripts"),
@@ -145,7 +150,9 @@ def main(argv: list[str] | None = None) -> int:
         print(f"HANDOFF_lines={data['HANDOFF_lines']}")
         print(f"HANDOFF_bytes={data['HANDOFF_bytes']}")
         print(f"AGENTS_lines={data['AGENTS_lines']}")
-        print(f"architecture_map_lines={data['architecture_map_lines']} ({data['architecture_map_path']})")
+        print("architecture_face_lines="
+              f"{data['architecture_face_lines']} "
+              f"({data['architecture_face_path']})")
         print(f"app_lines={data['app_lines']}")
         print(f"tests_lines={data['tests_lines']}")
         print(f"scripts_lines={data['scripts_lines']}")
