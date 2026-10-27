@@ -1592,3 +1592,22 @@ C45_USE_OLD_JSON=1 OFFICIAL_RUN=/tmp/s4runs/time-20261023-173124 \
   ② R-C67-1 的开工提示词转发给执行方；③ 交件那 10 个云端模型的窗口怎么定（沿用 16384 并标未检查／我按供应商文档填声明值并标注未实测／先不动等 10/31 实测）；
   ④ `docs/architecture-map-2026-10-12.html` 被删＋新的 `docs/architecture-tree-2026-10-27.html` 未跟踪，怎么处置；
   ⑤ 11/4 交付面解冻时谁动手（我回填五份文档＋两份 pptx，还是你自己改）；⑥ C-64 百炼额度回来后走哪条（加购／作废／只跑单专题）。
+## 2026-10-27 晚晚五二〔155〕＝我订正一个报错的数（官方 2.4 现状＝实测 0/12），并把下一步改成先量「支撑证据提交面」
+
+- **怎么暴露的**＝用户拍「跑乙」后，按 §5 第 21 条我得先量改前分，于是零模型直接拿 `scripts/score_official.py` 的口径量 `/tmp/six2`：
+  **Recall_sup=0.0476、Precision_sup=0.1389 ⇒ 2.4.1／2.4.2 两档都是 0**。
+  我此前一直在说的「已拿 10/12、只剩 2 分」**在全仓没有任何文档出处**＝从记忆里抄的、没标跑次、没复核。
+- **可复跑命令（零模型、真引用面）**＝
+
+      PYTHONPATH=. .venv/bin/python /tmp/c66_qscore.py     # 两案每题的 2.4 比值与档
+      PYTHONPATH=. .venv/bin/python /tmp/c66_l4_gap.py     # 六案合计：金标 105｜台账 58（含金标 15）｜提交 36（命中 5）
+      C="中美AI事故预警提议（2026.9）"; PYTHONPATH=. .venv/bin/python scripts/score_official.py \
+        --evidence "/tmp/six2/$C/evidence.json" --conclusions "/tmp/six2/$C/conclusions.json" \
+        --gold-evidence "$HOME/Desktop/veritas-testcases/样例集-拓尔思-20261012/$C/evidence_samples.json" \
+        --gold-conclusions "$HOME/Desktop/veritas-testcases/样例集-拓尔思-20261012/$C/conclusions.json"
+
+- **结构读数（六案合计）**＝金标支撑段 105；证据台账里一共 58 个 `(doc_id, para_id)`，其中 15 个是金标段；
+  提交面 `supporting_facts` 一共 36 条、命中 5 条；18 条结论、每条约 2 条支撑、零支撑结论 0 条。
+  ⇒ 与漏斗 L1 105／L2 48／L3 14／L4 5 同向：**大头在 L3（建边／引用）与 L4（提交面交什么），不在 L2 装箱**。
+- **排期**＝新窄票 **C-68＝支撑证据提交面量尺（只量、零模型、`app/` 零 diff、四问＋Precision 反向腿）**，
+  续盒扩跑（乙）排其后。**给用户的说法只有一句**：先把"我们已经量到眼前的料，最后交出去几条"这件事量清楚，再决定要不要花三倍的机器时间去多送料。
