@@ -93,6 +93,12 @@ def render_segments_block(dossier: Dossier,
                     f"- 资料侧未检索到「{token}」。若确实未见相关材料，请说明缺口；"
                     "请仍先尽力依据现有资料作答，勿把未覆盖前提写成已成立事实。")
             lines.append("")
+        # C-72：要点槽纪律（关 VERITAS_CLAIM_SLOTS 时为空串，提示词与改前相同）
+        from app.core.claim_slots import claim_slots_prompt
+        slot_block = claim_slots_prompt(dossier)
+        if slot_block:
+            lines.append(slot_block.strip())
+            lines.append("")
     for src in dossier.sources:
         if src.id in duplicates:
             continue  # 重复件：不进研判（报告披露），防一致性虚增

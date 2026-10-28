@@ -719,7 +719,11 @@ class ModelClient:
         json_mode: bool,
         messages: list[dict[str, str]] | None = None,
     ) -> LLMResponse:
-        """从 litellm 响应提取内容与 token 用量（兼容 dict 与对象两种访问方式）。"""
+        """从 litellm 响应提取内容与 token 用量（兼容 dict 与对象两种访问方式）。
+
+        C-73：call_log 另记窗口账四键（只落账、不改预算／选段）。
+        embedding 两条腿不走本函数（见 embed 自 append）——本单故意不并。
+        """
         content = _get_content(response)
         input_tokens, output_tokens = _get_usage(response)
 
@@ -733,13 +737,43 @@ class ModelClient:
         self.total_tokens_used += result.total_tokens
         if self.budget_guard is not None:
             self.budget_guard.record(result.total_tokens)
+        msgs = list(messages or [])
+        prompt_chars = sum(len(str(m.get("content") or "")) for m in msgs
+                           if isinstance(m, dict))
+        # 窗口：settings 声明值；≤0＝未检查 ⇒ over_window 记 None（不许猜）
+        win_raw = int(getattr(self.settings, "model_context_tokens", 0) or 0)
+        window_tokens: int | None = win_raw if win_raw > 0 else None
+        zh = float(getattr(self.settings, "zh_chars_per_token", 1.45) or 1.45)
+        from app.core.prompt_guard import estimate_prompt_window
+        est_rec = estimate_prompt_window(
+            msgs,
+            window_tokens=win_raw if win_raw > 0 else 0,
+            zh_chars_per_token=zh,
+        )
+        # unchecked（窗未声明）⇒ 记 None＝「没估」，不许把早退假零落账
+        est_tokens = (None if win_raw <= 0
+                      else int(est_rec.get("est_tokens") or 0))
+        # 服务端真报：只读 usage.prompt_tokens；取不到＝None（严禁用 est 回填）
+        server_prompt_tokens = _get_server_prompt_tokens(response)
+        server_reported = server_prompt_tokens is not None
+        if window_tokens is None or server_prompt_tokens is None:
+            over_window: bool | None = None
+        else:
+            over_window = bool(server_prompt_tokens > window_tokens)
         entry = {
             "model": model,
             "json_mode": json_mode,
             "input_tokens": input_tokens,
             "output_tokens": output_tokens,
             "content_chars": len(content),
-            "system_hint": (messages[0]["content"] if messages else ""),  # 8.5 环节归属
+            "system_hint": (msgs[0]["content"] if msgs else ""),  # 8.5 环节归属
+            # C-73 窗口账四键
+            "prompt_chars": prompt_chars,
+            "est_tokens": est_tokens,
+            "server_prompt_tokens": server_prompt_tokens,
+            "server_reported": server_reported,
+            "over_window": over_window,
+            "window_tokens": window_tokens,
         }
         self.call_log.append(entry)
         self._notify_on_call(entry)
@@ -797,6 +831,24 @@ def _get_usage(response: Any) -> tuple[int, int]:
     prompt = _index(usage, "prompt_tokens")
     completion = _index(usage, "completion_tokens")
     return int(prompt or 0), int(completion or 0)
+
+
+def _get_server_prompt_tokens(response: Any) -> int | None:
+    """C-73：usage.prompt_tokens 的真报值；缺 usage／缺键／非数 ⇒ None。
+
+    与 `_get_usage` 同源字段，但不把缺省回落成 0（0 会冒充实报）。
+    调用方严禁用本地 est_tokens 回填本函数的 None。
+    """
+    usage = _index(response, "usage")
+    if usage is None:
+        return None
+    prompt = _index(usage, "prompt_tokens")
+    if prompt is None:
+        return None
+    try:
+        return int(prompt)
+    except (TypeError, ValueError):
+        return None
 
 
 def _get_finish_reason(response: Any) -> str | None:

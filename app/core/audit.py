@@ -28,7 +28,7 @@ from app.core.claim_check import (
 )
 from app.core.temporal_check import audit_temporal
 from app.core.untrusted import scan_injections
-from app.core.warrant_check import audit_warrant_theme
+from app.core.warrant_check import audit_parallel_coverage, audit_warrant_theme
 
 KIND_LABEL: dict[str, str] = {
     "calc": "计算复算不符",
@@ -44,6 +44,8 @@ KIND_LABEL: dict[str, str] = {
     "causation_support": "因果标注缺乏机制词支撑",
     "causal_claim_missing": "因果主张卡不完整已降级",
     "warrant_theme": "理由与主张脱节",
+    "parallel_coverage": "并列要点覆盖不全",
+    "chair_support_gap": "主席采纳要点未进提交支撑",
     "stale": "引用旧时点资料",
     "as_of": "结论未锚定时点",
     "injection": "疑似指令注入内容",
@@ -81,12 +83,31 @@ def audit_all(dossier: Dossier) -> list[dict]:
         *audit_causation_support(dossier),
         *audit_causal_claim_missing(dossier),
         *audit_warrant_theme(dossier),
+        *audit_parallel_coverage(dossier),
+        *_chair_support_audit_flags(dossier),
         *audit_temporal(dossier),
         *audit_bare_percent(dossier),
         *audit_unit_mismatch(dossier),
         *audit_unverified_sources(dossier),
         *audit_external_prior(dossier),
     ]
+
+
+def _chair_support_audit_flags(dossier: Dossier) -> list[dict]:
+    """C-72 件②：读 accounting 或当场重算主席支撑旗（关旗 → []）。"""
+    try:
+        from app.core.claim_slots import (
+            chair_support_flags, claim_slots_enabled,
+        )
+    except ImportError:
+        return []
+    if not claim_slots_enabled():
+        return []
+    acc = (dossier.accounting or {}).get("claim_slots") or {}
+    cached = acc.get("chair_support_flags")
+    if isinstance(cached, list):
+        return list(cached)
+    return chair_support_flags(dossier)
 
 
 def summarize(flags: list[dict], not_evaluated: list[dict] | None = None) -> dict:

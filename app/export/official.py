@@ -281,6 +281,41 @@ def _conclusion_support_diverged(dossier: Dossier) -> bool:
     return _majority_with_evidence(dossier) is None
 
 
+def _claim_slots_disclosure(dossier: Dossier) -> dict | None:
+    """C-72：开旗时把要点槽覆盖＋主席支撑旗写入 conclusions 行；关旗返回 None。
+
+    不改 conclusion 文本、不拼宽 supporting_facts。
+    """
+    try:
+        from app.core.claim_slots import claim_slots_enabled
+    except ImportError:
+        return None
+    if not claim_slots_enabled():
+        return None
+    acc = (dossier.accounting or {}).get("claim_slots") or {}
+    if not acc:
+        # 导出侧兜底：未走管线钩子时当场算一次
+        from app.core.claim_slots import apply_claim_slots
+        acc = apply_claim_slots(dossier) or {}
+    cov = acc.get("coverage") or {}
+    flags = acc.get("chair_support_flags") or []
+    return {
+        "coverage_rate": cov.get("rate"),
+        "n_slots": cov.get("n_slots"),
+        "n_covered": cov.get("n_covered"),
+        "rows": [
+            {"id": r.get("id"), "label": r.get("label"),
+             "status": r.get("status"), "detail": r.get("detail") or ""}
+            for r in (acc.get("rows") or [])
+            if isinstance(r, dict)
+        ],
+        "chair_support_flags": [
+            {"value": f.get("value"), "detail": f.get("detail")}
+            for f in flags if isinstance(f, dict)
+        ],
+    }
+
+
 def _conflicting_facts(dossier: Dossier) -> tuple[list[dict], int, int]:
     """冲突侧：与被交结论对立一侧的段落。
 
@@ -711,13 +746,18 @@ def export_official(runs: list[tuple[dict, Dossier]], out_dir: Path) -> dict[str
                 kept_bare_ids.append(qid)
             if diverged:
                 diverged_ids.append(qid)
-            conclusions.append({
+            row = {
                 "question_id": qid,
                 "question": str(question["question"]),
                 "conclusion": _conclusion_text(dossier),
                 "supporting_facts": supporting,
                 "conflicting_facts": conflicting,
-            })
+            }
+            # C-72：仅开 VERITAS_CLAIM_SLOTS 时写入披露键；关旗键缺席＝与改前 sha 相同
+            disc = _claim_slots_disclosure(dossier)
+            if disc is not None:
+                row["claim_slots_disclosure"] = disc
+            conclusions.append(row)
         confidence.extend(_confidence_rows(qid, dossier))
         conflict_rows, omitted = _conflict_rows(qid, dossier)
         conflicts.extend(conflict_rows)

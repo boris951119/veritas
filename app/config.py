@@ -503,6 +503,10 @@ class Settings:
     # env VERITAS_RELEVANCE_SOFT_GATE；config.json relevance_soft_gate。
     # ⚠ 不许顺手改 C-69 那两个开关的默认值（仍必须 False）。
     relevance_soft_gate: bool = True
+    # C-72 树17：要点槽＋主席支撑披露＋并列覆盖黄灯。默认 False＝生产与改前逐字相同。
+    # env VERITAS_CLAIM_SLOTS；config.json claim_slots。
+    # ⚠ 默认必须 False；整体跑开不开由 Boyu 当场拍，执行方不许自己改默认。
+    claim_slots: bool = False
 
     # 语料收窄阈值：信源数达到该值才走索引选料（默认 50=自动；
     # 0=强制关闭，小案例到不了阈值则整卷研判、不建 .corpus）。
@@ -714,6 +718,11 @@ class Settings:
             s.relevance_soft_gate = False
         elif rsg in ("1", "true", "on", "yes"):
             s.relevance_soft_gate = True
+        cs = (os.environ.get("VERITAS_CLAIM_SLOTS") or "").strip().lower()
+        if cs in ("0", "false", "off", "no"):
+            s.claim_slots = False
+        elif cs in ("1", "true", "on", "yes"):
+            s.claim_slots = True
         return s.validate()
 
     @classmethod
@@ -786,6 +795,13 @@ class Settings:
                 s.relevance_soft_gate = raw_rsg
             elif isinstance(raw_rsg, (int, str)):
                 s.relevance_soft_gate = str(raw_rsg).strip().lower() not in (
+                    "0", "false", "off", "no", "")
+        if "claim_slots" in data:
+            raw_cs = data.get("claim_slots")
+            if isinstance(raw_cs, bool):
+                s.claim_slots = raw_cs
+            elif isinstance(raw_cs, (int, str)):
+                s.claim_slots = str(raw_cs).strip().lower() not in (
                     "0", "false", "off", "no", "")
         select_min = data.get("corpus_select_min_sources")
         if isinstance(select_min, int) and not isinstance(select_min, bool) \

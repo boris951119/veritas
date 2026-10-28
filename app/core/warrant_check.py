@@ -3,6 +3,10 @@
 ① 主张命中的议题主题词须在同一段落出现；② 主张与所引段落取词不得零交集。
 拦的是「账目截止日 → 不存在人员流失」这类：引文真、数字真，但推不出主张。
 只亮黄灯，不删结论；措辞一致而语义不支撑的假支撑两条都查不出（见 docs/proposal.md 局限性）。
+
+C-72：另加行为型并列要点覆盖守护（kind=parallel_coverage）——结论含并列要点而
+引文只盖住一部分 ⇒ 黄灯＋写清缺哪一半。只亮灯、不评分、不删结论；受
+VERITAS_CLAIM_SLOTS 开关门控（关＝本条不跑，与改前逐字相同）。
 """
 
 from __future__ import annotations
@@ -60,6 +64,21 @@ def _tokens(text: str) -> set[str]:
     return out
 
 
+def _evidence_blob(dossier: Dossier, con) -> str:
+    """只看所引段落。说明是模型复述主张，写进主张里的词就会把闸放行。"""
+    blob_parts: list[str] = []
+    for ev in dossier.evidences_of(con.id):
+        hit_seg = False
+        for sid in ev.segment_ids:
+            seg = dossier.segment(sid)
+            if seg is not None and (seg.text or ""):
+                blob_parts.append(seg.text or "")
+                hit_seg = True
+        if not hit_seg:
+            blob_parts.append(ev.quote or "")
+    return "\n".join(blob_parts)
+
+
 def audit_warrant_theme(dossier: Dossier) -> list[dict]:
     """主题词脱节或措辞零交集，任一成立即黄灯。否定式放行在两条之前。"""
     flags: list[dict] = []
@@ -67,18 +86,7 @@ def audit_warrant_theme(dossier: Dossier) -> list[dict]:
         evs = dossier.evidences_of(con.id)
         if not evs:
             continue
-        # 只看所引段落。说明是模型复述主张，写进主张里的词就会把闸放行。
-        blob_parts: list[str] = []
-        for ev in evs:
-            hit_seg = False
-            for sid in ev.segment_ids:
-                seg = dossier.segment(sid)
-                if seg is not None and (seg.text or ""):
-                    blob_parts.append(seg.text or "")
-                    hit_seg = True
-            if not hit_seg:
-                blob_parts.append(ev.quote or "")
-        blob = "\n".join(blob_parts)
+        blob = _evidence_blob(dossier, con)
         statement = con.statement or ""
         if _denies(statement) and _rebuts(blob):
             continue
@@ -107,6 +115,67 @@ def audit_warrant_theme(dossier: Dossier) -> list[dict]:
             "value": "、".join(values),
             "detail": "；".join(details),
         })
+    return flags
+
+
+# 并列切分：顿号／以及／同时／一方面…另一方面／不仅…还
+_PARALLEL_SPLIT = re.compile(
+    r"(?:一方面|另一方面|不仅|而且|并且|同时|以及|还有|、|；|;)"
+)
+_PARALLEL_CUES = (
+    "一方面", "另一方面", "不仅", "同时", "以及", "并且", "还有", "、",
+)
+
+
+def _parallel_parts(statement: str) -> list[str]:
+    """主张里的并列要点；少於 2 段则不启本条。"""
+    s = (statement or "").strip()
+    if not s or not any(c in s for c in _PARALLEL_CUES):
+        return []
+    parts = [p.strip() for p in _PARALLEL_SPLIT.split(s) if p and p.strip()]
+    # 过短碎片丢掉（标点噪音）
+    parts = [p for p in parts if len(re.sub(r"\s+", "", p)) >= 4]
+    return parts if len(parts) >= 2 else []
+
+
+def audit_parallel_coverage(dossier: Dossier) -> list[dict]:
+    """并列要点只被引文盖住一部分 → 黄灯。关 CLAIM_SLOTS 时空列表。"""
+    try:
+        from app.core.claim_slots import claim_slots_enabled
+    except ImportError:
+        return []
+    if not claim_slots_enabled():
+        return []
+    flags: list[dict] = []
+    for con in dossier.conclusions:
+        if not dossier.evidences_of(con.id):
+            continue
+        parts = _parallel_parts(con.statement or "")
+        if len(parts) < 2:
+            continue
+        blob = _evidence_blob(dossier, con)
+        blob_tok = _tokens(blob)
+        missing: list[str] = []
+        covered_n = 0
+        for part in parts:
+            pt = _tokens(part)
+            if pt and (pt & blob_tok):
+                covered_n += 1
+            else:
+                missing.append(part[:30])
+        # 部分覆盖才亮（全缺／全盖都不走这条——全缺留给零交集）
+        if missing and covered_n > 0:
+            joined = "、".join(missing)
+            flags.append({
+                "kind": "parallel_coverage",
+                "severity": "medium",
+                "conclusion_id": con.id,
+                "value": joined,
+                "detail": (
+                    f"并列要点覆盖不全：引文已覆盖 {covered_n}/{len(parts)}，"
+                    f"缺「{joined}」；只亮灯，不改分、不删结论"
+                ),
+            })
     return flags
 
 

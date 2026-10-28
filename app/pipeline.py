@@ -257,6 +257,9 @@ def run_case(spec: RunSpec | None = None,
     set_ledger_time_class(bool(getattr(settings, "ledger_time_class", False)))
     # C-70：相关性软闸（默认开；须在 classify_sources／装箱之前）
     set_relevance_soft_gate(bool(getattr(settings, "relevance_soft_gate", True)))
+    # C-72：要点槽（默认关；须在分析师提示词／主席后评估之前）
+    from app.core.claim_slots import set_claim_slots
+    set_claim_slots(bool(getattr(settings, "claim_slots", False)))
     created_progress = get_active_progress() is None
     prog = ensure_progress(spec.out_dir)
 
@@ -422,7 +425,8 @@ def run_case(spec: RunSpec | None = None,
         kept = {k: v for k, v in (dossier.accounting or {}).items()
                 if k in ("corpus_select", "query_rewrite", "slot_disclosures",
                          "panel_attrition", "repair_accept_rate", "premise",
-                         "fact_ledger_stats", "prompt_window", "pack_window")}
+                         "fact_ledger_stats", "prompt_window", "pack_window",
+                         "window_ledger")}
         dossier.accounting = {
             **kept,
             "elapsed_s": round(time.monotonic() - t0, 1),
@@ -781,6 +785,9 @@ def run_case(spec: RunSpec | None = None,
                     })
             synthesis["open_issues"] = issues
         dossier.synthesis = synthesis
+        # C-72：主席落卷后评估要点槽覆盖＋主席支撑披露旗（关旗＝空操作）
+        from app.core.claim_slots import apply_claim_slots
+        apply_claim_slots(dossier)
         chain.append("chair_summary", "pipeline", {
             "mode": synthesis.get("mode"),
             "n_points": len(synthesis.get("points") or []),
@@ -797,6 +804,13 @@ def run_case(spec: RunSpec | None = None,
                   n_points=len(synthesis.get("points") or []))
 
     n_calls = len(getattr(client, "call_log", []) or [])
+    # C-73：窗口账（服务端真报）——只聚合、不改预算／选段
+    from app.core.prompt_guard import build_window_ledger
+    win_decl = int(getattr(settings, "model_context_tokens", 0) or 0)
+    dossier.accounting["window_ledger"] = build_window_ledger(
+        getattr(client, "call_log", []) or [],
+        window_tokens=win_decl if win_decl > 0 else None,
+    )
     kept = {k: v for k, v in (dossier.accounting or {}).items()
             if k in ("corpus_select", "query_rewrite", "slot_disclosures",
                      "repair_accept_rate", "panel_attrition",
@@ -805,7 +819,8 @@ def run_case(spec: RunSpec | None = None,
                      "premise", "second_pass", "conflict_drops",
                      "mechanical_merge", "fact_ledger_stats",
                      "prompt_window", "pack_window", "dependency",
-                     "corpus_select_max_disclosures", "causal_claim")}
+                     "corpus_select_max_disclosures", "causal_claim",
+                     "claim_slots", "window_ledger")}
     dossier.accounting = {
         **kept,
         "elapsed_s": round(time.monotonic() - t0, 1),
@@ -1108,6 +1123,7 @@ def render_report_md(dossier: Dossier, chain: HashChain, rejected: list[dict]) -
     # 先渲后续节一次算清 rest，再按双上限把本节插回原位（输出序不变）。
     _prec_at = len(lines)
     _render_prompt_window(lines, dossier)
+    _render_window_ledger(lines, dossier)
     _render_excluded_sources(lines, dossier)
 
     if rejected:
@@ -1601,6 +1617,16 @@ def _render_precedent_section(lines: list[str], dossier: Dossier) -> None:
     lines += render_precedent_lines(dossier)
 
 
+def _render_window_ledger(lines: list[str], dossier: Dossier) -> None:
+    """C-73：窗口账一行。无真数也必须在场（「服务端未报，未据此判定」）。"""
+    from app.core.prompt_guard import format_window_ledger_line
+
+    led = (dossier.accounting or {}).get("window_ledger")
+    # 无账也渲一行（离线重放旧产物／早退）——不许省略
+    line = format_window_ledger_line(led if isinstance(led, dict) else {})
+    lines += [line, ""]
+
+
 def _render_prompt_window(lines: list[str], dossier: Dossier) -> None:
     """模型窗口出口披露（C-9）：超窗一条；关闭检查写「未检查」。"""
     notes = [n for n in dossier.ingest_notes
@@ -1751,6 +1777,8 @@ def run_official_case(case_dir: Path, questions: list[dict], out_dir: Path,
     set_source_time_unified(bool(getattr(_settings, "source_time_unified", False)))
     set_ledger_time_class(bool(getattr(_settings, "ledger_time_class", False)))
     set_relevance_soft_gate(bool(getattr(_settings, "relevance_soft_gate", True)))
+    from app.core.claim_slots import set_claim_slots
+    set_claim_slots(bool(getattr(_settings, "claim_slots", False)))
 
     base = load_official_case(case_dir)
     deps = deps or RunDeps()
