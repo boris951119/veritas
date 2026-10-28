@@ -59,11 +59,40 @@ BASE_URL = os.environ.get("OLLAMA_BASE", "http://127.0.0.1:11434/v1")
 # 单次调用超时的**测量侧覆盖**（None＝沿用 `config.json`）。由 `--timeout-seconds`
 # 赋值，见 `settings_for`；交件配置 `config.json` 一字不动。
 TIMEOUT_OVERRIDE: int | None = None
-TIME_GATE_S = 1800          # 官方「每专题 ≤30 分钟」
+TIME_GATE_S = 1800          # 参考线秒数（2026-10-28 起官方已撤 ≤30 分钟达标线；常量保留作事实描述）
+# C-75 件①：打印用字样——数值仍比 TIME_GATE_S；旧「超／未超 + 官方半小时线」字样已撤
+TIME_GATE_LABEL = "参考线（2026-10-28 起官方已撤，只作事实描述）"
 LOCAL_HOSTS = {"127.0.0.1", "localhost", "::1", "0.0.0.0", "[::1]"}
 OTHER_KEY_ENVS = ("DEEPSEEK_API_KEY", "ANTHROPIC_API_KEY", "GEMINI_API_KEY",
                   "MX_APIKEY", "AZURE_API_KEY", "MOONSHOT_API_KEY")
 BANDS = ((0.8, 1.0), (0.6, 0.8), (0.4, 0.6), (0.0, 0.4))
+
+
+def scan_question_reports(root: Path) -> tuple[list[Path], int]:
+    """扫产物树：收集 `**/questions/<qid>/report.json`；缺报告的题目录计入跳过。
+
+    空 `time-*`／`solo-*`／`calib-*`（底下没有任何 questions 子树）也计 1 次跳过，
+    避免「空跑次目录吃掉整臂」。返回 `(report_paths, n_skipped)`；从不因空目录抛错。
+    """
+    if not root.is_dir():
+        return [], 0
+    reports = sorted(p.resolve() for p in root.glob("**/questions/*/report.json"))
+    q_dirs = [p for p in root.glob("**/questions/*") if p.is_dir()]
+    n_skipped = sum(1 for q in q_dirs if not (q / "report.json").is_file())
+    for child in sorted(p for p in root.iterdir() if p.is_dir()):
+        if not (child.name.startswith(("time-", "solo-", "calib-"))):
+            continue
+        if any(child.glob("**/questions/*")):
+            continue
+        n_skipped += 1
+    return reports, n_skipped
+
+
+def _gate_compare_phrase(wall_s: float | None) -> str:
+    """墙钟 vs TIME_GATE_S 的事实描述（不含达标／未达标语气）。"""
+    w = float(wall_s or 0)
+    side = "高于" if w > TIME_GATE_S else "不高于"
+    return f"{side}{TIME_GATE_LABEL} {TIME_GATE_S:g}s"
 
 
 def _is_local(url: str) -> bool:
@@ -350,6 +379,7 @@ def run_questions(label: str, roster: list | None, only_case: str | None,
     run_dir = OUT / f"{label}-{stamp}"
     run_dir.mkdir(parents=True, exist_ok=True)
     rows = []
+    interrupted_cases: list[str] = []
     t_all = time.monotonic()
     for case_dir in case_dirs():
         if only_case and only_case not in case_dir.name:
@@ -430,16 +460,27 @@ def run_questions(label: str, roster: list | None, only_case: str | None,
             print(f"  ⚠ {case_dir.name} 整案中断：{type(exc).__name__}: {exc}", flush=True)
             _append_jsonl(run_dir / "errors.jsonl", {
                 "case": case_dir.name, "error": f"{type(exc).__name__}: {exc}"})
+            interrupted_cases.append(case_dir.name)
         case_wall = round(time.monotonic() - t_case, 1)
         for r in rows:
             if r["case"] == case_dir.name and "wall_case_s" not in r:
                 r["wall_case_s"] = case_wall
-        print(f"  → {case_dir.name[:22]:<24} 整案墙钟 {case_wall:>7}s "
-              f"{'⚠超' if case_wall > TIME_GATE_S else '未超'} 官方 30 分钟线", flush=True)
+        if case_dir.name in interrupted_cases:
+            # C-75 件①b：中断不许被「未超线」洗白；未出结论的题单列
+            done_q = {r["qid"] for r in rows if r["case"] == case_dir.name}
+            missing_q = [q["question_id"] for q in questions if q["question_id"] not in done_q]
+            miss = "、".join(missing_q) if missing_q else "（无）"
+            print(f"  → {case_dir.name[:22]:<24} 整案中断，未据此判定"
+                  f"（墙钟 {case_wall:>7}s；未出结论的题：{miss}）", flush=True)
+        else:
+            print(f"  → {case_dir.name[:22]:<24} 整案墙钟 {case_wall:>7}s "
+                  f"{_gate_compare_phrase(case_wall)}", flush=True)
     total = round(time.monotonic() - t_all, 1)
     per_case = {}
     for r in rows:
         per_case[r["case"]] = r.get("wall_case_s")
+    # 达标／参考线统计只算完成案例（中断案单列，不当过线／未过线）
+    completed = {c: w for c, w in per_case.items() if c not in interrupted_cases}
     summary = {"label": label, "run_dir": str(run_dir), "align": align,
                "ref_budget": ref if align else None,
                "fixed_budget": None if align else st.material_char_budget,
@@ -447,21 +488,30 @@ def run_questions(label: str, roster: list | None, only_case: str | None,
                "llm_timeout_seconds": st.llm_timeout_seconds,
                "timeout_overridden": TIMEOUT_OVERRIDE is not None,
                "time_gate_s": TIME_GATE_S,
+               "time_gate_label": TIME_GATE_LABEL,
                "roster": None if roster is None else [x[0] for x in roster],
                "total_wall_s": total, "rows": rows,
                "case_wall_s": per_case,
+               "interrupted_cases": list(interrupted_cases),
                "case_sum_elapsed_s": {
                    c: round(sum(float(r["elapsed_s"] or 0) for r in rows
                                 if r["case"] == c), 1) for c in per_case},
                "over_gate": {c: (w, bool(w and w > TIME_GATE_S))
-                             for c, w in per_case.items()}}
+                             for c, w in completed.items()}}
     (run_dir / "summary.json").write_text(
         json.dumps(summary, ensure_ascii=False, indent=1), encoding="utf-8")
     print(f"\n[{label}] 总墙钟 {total}s → {run_dir}")
+    if interrupted_cases:
+        print(f"  整案中断 {len(interrupted_cases)} 案（未据此判定）："
+              + "、".join(interrupted_cases), flush=True)
     for case, wall in per_case.items():
+        if case in interrupted_cases:
+            print(f"  {case[:24]:<26} 整案中断，未据此判定"
+                  f"（墙钟 {wall or 0:>8}s）", flush=True)
+            continue
         print(f"  {case[:24]:<26} 整案墙钟 {wall or 0:>8}s "
               f"逐题 elapsed 之和 {summary['case_sum_elapsed_s'].get(case, 0):>8}s "
-              f"{'⚠超' if (wall or 0) > TIME_GATE_S else '未超'} 30 分钟线")
+              f"{_gate_compare_phrase(wall)}", flush=True)
     return summary
 
 
@@ -595,6 +645,9 @@ def cmd_calib(args) -> int:
     conf_hist: list[float] = []
     n_noscore = 0
     n_sub_missing = 0
+    # C-75 件①a：先扫一遍，空跑次／缺报告题计入跳过，不许因空目录中止整臂
+    _reports, n_scan_skipped = scan_question_reports(src)
+    report_set = {p.resolve() for p in _reports}
     for case_dir in case_dirs():
         case_run = src / case_dir.name
         if not case_run.is_dir():
@@ -608,7 +661,8 @@ def cmd_calib(args) -> int:
             gold_by_q.setdefault(str(g.get("question_id")), str(g.get("conclusion") or ""))
         for qid, gold in gold_by_q.items():
             q_dir = case_run / "questions" / qid
-            if not (q_dir / "report.json").is_file():
+            rep_path = (q_dir / "report.json").resolve()
+            if rep_path not in report_set:
                 rows.append({"case": case_dir.name, "qid": qid,
                              "agreement": "无产物", "matched": [], "why": ""})
                 continue
@@ -674,6 +728,9 @@ def cmd_calib(args) -> int:
           f"分档口径＝提交物 `confidence.json` 的行（只含 majority 态），"
           f"计入 {summary['n_ours']} 条、无分档行 {summary['n_no_band_row']} 条"
           f"（minority／conflict 态，导出层本就不交），分布见 {out_dir / 'calib.md'}")
+    # C-75 件①a：空跑次／缺报告必须显式披露跳过数（失败即跳，不许吃掉整臂）
+    print(f"扫描跳过 {n_scan_skipped}（空 time-*／缺 report.json 的题目录；"
+          f"有报告 {len(_reports)}）", flush=True)
     print("⚠ n<5 的档位没有统计意义；此表只用来定阈值，不是可对外声明的校准正确率。")
     return 0
 
