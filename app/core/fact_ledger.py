@@ -24,8 +24,8 @@ from dataclasses import dataclass
 from app.core.evidence import Dossier
 from app.core.numeric_check import _close, extract_nums
 
-# C-69：VERITAS_LEDGER_TIME_CLASS（默认关＝facts_block 文案与改前逐字相同）
-_LEDGER_TIME_CLASS = False
+# C-69：VERITAS_LEDGER_TIME_CLASS（默认开＝三档文案；Boyu 10-28 拍）
+_LEDGER_TIME_CLASS = True
 
 # C-78：对撞行派生「组内相对偏差」标签（默认关＝报告渲染与改前逐字相同；
 # 只呈现、不改 find_collisions／采信／提示词）。

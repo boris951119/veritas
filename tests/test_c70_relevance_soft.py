@@ -127,9 +127,9 @@ def test_c70_d_defaults_soft_gate_on():
     """刀：把 Settings.relevance_soft_gate 默认翻成 False ⇒ 本格红。"""
     s = Settings()
     assert s.relevance_soft_gate is True
-    # C-69 两开关仍必须 False（本单不许顺手改）
-    assert s.source_time_unified is False
-    assert s.ledger_time_class is False
+    # C-69 两开关默认开（Boyu 10-28 拍）；本格只钉「别被本单翻回关」
+    assert s.source_time_unified is True
+    assert s.ledger_time_class is True
 
 
 def test_c70_g_soft_gate_off_matches_legacy_levels():

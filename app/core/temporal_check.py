@@ -21,12 +21,12 @@ from app.core.fact_ledger import Collision, find_collisions
 _YEAR_IN_TEXT = re.compile(r"(19|20)\d{2}\s*年|\d{4}[-/.]\d{1,2}")
 _DATE_TAIL = re.compile(r"(\d{4})(\d{2})(\d{2})$")
 
-# C-69：VERITAS_SOURCE_TIME_UNIFIED（默认关＝改前逐字）。
-_SOURCE_TIME_UNIFIED = False
+# C-69：VERITAS_SOURCE_TIME_UNIFIED（默认开＝时间标签亮；Boyu 10-28 拍）。
+_SOURCE_TIME_UNIFIED = True
 
 
 def set_source_time_unified(on: bool) -> None:
-    """pipeline／单测设置件① 开关；默认 False。"""
+    """pipeline／单测设置件① 开关；生产默认 True。"""
     global _SOURCE_TIME_UNIFIED
     _SOURCE_TIME_UNIFIED = bool(on)
 

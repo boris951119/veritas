@@ -132,8 +132,7 @@ def test_c69_e_switches_off_three_json_sha_stable(tmp_path):
 
     set_source_time_unified(False)
     set_ledger_time_class(False)
-    s = Settings()
-    assert s.source_time_unified is False and s.ledger_time_class is False
+    # 本格测的是「关臂」路径（显式压 0），与生产默认开无关
 
     d = Dossier(question="客户B的回款情况如何？")
     d.add_source(_src("S1", "客户B回款率40%。",
@@ -201,14 +200,17 @@ def test_c69_g_as_of_trigger_uses_unified_reader():
     assert "as_of_discipline" in names_on
 
 
-# ---- 判据 d：默认值 ----
-def test_c69_d_defaults_are_off():
-    """刀：把 Settings 默认翻成 True ⇒ 本格红。"""
+# ---- 判据 d：默认值（Boyu 10-28 拍＝一直开着）----
+def test_c69_d_defaults_are_on():
+    """刀：把 Settings 两旗默认翻成 False ⇒ 本格红。"""
     s = Settings()
-    assert s.source_time_unified is False
-    assert s.ledger_time_class is False
-    assert source_time_unified() is False
-    assert ledger_time_class_enabled() is False
+    assert s.source_time_unified is True
+    assert s.ledger_time_class is True
+    # 模块旗与 Settings 对齐（autouse 会先压关；本格单独拉回默认开）
+    set_source_time_unified(True)
+    set_ledger_time_class(True)
+    assert source_time_unified() is True
+    assert ledger_time_class_enabled() is True
 
 
 # ---- 真引用（§5 第 26 条）----

@@ -255,8 +255,8 @@ def run_case(spec: RunSpec | None = None,
         set_ledger_outlier_tag, set_ledger_time_class,
     )
     from app.core.relevance import set_relevance_soft_gate
-    set_source_time_unified(bool(getattr(settings, "source_time_unified", False)))
-    set_ledger_time_class(bool(getattr(settings, "ledger_time_class", False)))
+    set_source_time_unified(bool(getattr(settings, "source_time_unified", True)))
+    set_ledger_time_class(bool(getattr(settings, "ledger_time_class", True)))
     # C-78：对撞行派生标签（默认关；只影响报告渲染，不进提示词）
     set_ledger_outlier_tag(bool(getattr(settings, "ledger_outlier_tag", False)))
     # C-70：相关性软闸（默认开；须在 classify_sources／装箱之前）
@@ -1800,8 +1800,8 @@ def run_official_case(case_dir: Path, questions: list[dict], out_dir: Path,
 
     # 须在 load_official_case 前落地（件③ 三态 detail 读旗）
     _settings = settings or Settings.from_env()
-    set_source_time_unified(bool(getattr(_settings, "source_time_unified", False)))
-    set_ledger_time_class(bool(getattr(_settings, "ledger_time_class", False)))
+    set_source_time_unified(bool(getattr(_settings, "source_time_unified", True)))
+    set_ledger_time_class(bool(getattr(_settings, "ledger_time_class", True)))
     set_ledger_outlier_tag(bool(getattr(_settings, "ledger_outlier_tag", False)))
     set_relevance_soft_gate(bool(getattr(_settings, "relevance_soft_gate", True)))
     from app.core.claim_slots import set_claim_slots

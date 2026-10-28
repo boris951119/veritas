@@ -493,15 +493,14 @@ class Settings:
     # est ≤ 窗口；关＝VERITAS_PACK_TO_WINDOW=0，走字预算老路。
     pack_to_window: bool = True
 
-    # C-69 树10-①：日期键名统一读点（件①③）。默认 False＝生产零强制变化。
-    # env VERITAS_SOURCE_TIME_UNIFIED；config.json source_time_unified。
-    source_time_unified: bool = False
-    # C-69：对撞三档文案（件②）。默认 False＝time_class 可算但文案与改前相同。
-    # env VERITAS_LEDGER_TIME_CLASS；config.json ledger_time_class。
-    ledger_time_class: bool = False
+    # C-69 树10-①：日期键名统一读点（件①③）。默认 True＝时间标签亮（Boyu 10-28 拍「开＝标签亮就可以、一直开着」）。
+    # env VERITAS_SOURCE_TIME_UNIFIED；config.json source_time_unified；关＝0/false/off。
+    source_time_unified: bool = True
+    # C-69：对撞三档文案（件②）。默认 True＝与上同拍。
+    # env VERITAS_LEDGER_TIME_CLASS；config.json ledger_time_class；关＝0/false/off。
+    ledger_time_class: bool = True
     # C-70：双轴相关性软闸（取消自动 zero 整源出局）。默认 True＝先试可回滚。
     # env VERITAS_RELEVANCE_SOFT_GATE；config.json relevance_soft_gate。
-    # ⚠ 不许顺手改 C-69 那两个开关的默认值（仍必须 False）。
     relevance_soft_gate: bool = True
     # C-72 树17：要点槽＋主席支撑披露＋并列覆盖黄灯。默认 False＝生产与改前逐字相同。
     # env VERITAS_CLAIM_SLOTS；config.json claim_slots。

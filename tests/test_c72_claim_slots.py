@@ -100,8 +100,8 @@ def test_c72_defaults_claim_slots_off():
     s = Settings()
     assert s.claim_slots is False
     assert claim_slots_enabled() is False
-    assert s.source_time_unified is False
-    assert s.ledger_time_class is False
+    assert s.source_time_unified is True
+    assert s.ledger_time_class is True
     assert s.relevance_soft_gate is True
 
 

@@ -149,7 +149,8 @@ def _stale_dossier(cited_old: bool, anchor_time: bool) -> Dossier:
 def test_stale_flag_when_citing_only_old_source():
     d = _stale_dossier(cited_old=True, anchor_time=True)
     flags = [f for f in audit_temporal(d) if f["kind"] == "stale"]
-    assert flags and "SRC2(2026-03)" in flags[0]["detail"]
+    # 默认开 C-69 键名统一：月粒度 published_at 归一成 202603（不是 2026-03 原样）
+    assert flags and "SRC2(202603)" in flags[0]["detail"]
 
 
 def test_no_stale_flag_when_citing_newest():
