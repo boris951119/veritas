@@ -506,10 +506,21 @@ class Settings:
     # env VERITAS_CLAIM_SLOTS；config.json claim_slots。
     # ⚠ 默认必须 False；整体跑开不开由 Boyu 当场拍，执行方不许自己改默认。
     claim_slots: bool = False
-    # C-78：对撞行「组内相对偏差（中位数±k×MAD）」派生标签。默认 False＝报告与改前逐字相同。
+    # C-78：对撞行「组内相对偏差（中位数±k×MAD）」派生标签。
+    # 默认 True＝Boyu 10-28 拍「只是打标签就开着」；关＝VERITAS_LEDGER_OUTLIER_TAG=0。
+    # 只呈现、不改 find_collisions／采信／置信度／提示词；不许说涨分。
     # env VERITAS_LEDGER_OUTLIER_TAG；config.json ledger_outlier_tag。
-    # 只呈现、不改 find_collisions／采信／置信度／提示词。
-    ledger_outlier_tag: bool = False
+    ledger_outlier_tag: bool = True
+    # C-80：规范量名填充＋覆盖披露＋分组键优先走 metric_canon。
+    # 默认 True＝Boyu 10-28 拍「现在开」；关＝VERITAS_METRIC_CANON=0。
+    # 本阶段赋值＝rule:v1（机械身份归一＋垃圾拒填），不是模型、不是别名表。
+    # env VERITAS_METRIC_CANON；config.json metric_canon。
+    metric_canon: bool = True
+    # C-79：演变链只认数值确有变化；同值多时点标「重复报道」＋黄灯。
+    # 默认 True＝Boyu 10-28 拍「那就开了」；关＝VERITAS_EVOLVE_VALUE_CHANGE=0。
+    # 只呈现／防错，不改采信／置信度；不许说已能识别重复报道／不许说涨分。
+    # env VERITAS_EVOLVE_VALUE_CHANGE；config.json evolve_value_change。
+    evolve_value_change: bool = True
 
     # 语料收窄阈值：信源数达到该值才走索引选料（默认 50=自动；
     # 0=强制关闭，小案例到不了阈值则整卷研判、不建 .corpus）。
@@ -731,6 +742,16 @@ class Settings:
             s.ledger_outlier_tag = False
         elif lot in ("1", "true", "on", "yes"):
             s.ledger_outlier_tag = True
+        mc = (os.environ.get("VERITAS_METRIC_CANON") or "").strip().lower()
+        if mc in ("0", "false", "off", "no"):
+            s.metric_canon = False
+        elif mc in ("1", "true", "on", "yes"):
+            s.metric_canon = True
+        evc = (os.environ.get("VERITAS_EVOLVE_VALUE_CHANGE") or "").strip().lower()
+        if evc in ("0", "false", "off", "no"):
+            s.evolve_value_change = False
+        elif evc in ("1", "true", "on", "yes"):
+            s.evolve_value_change = True
         return s.validate()
 
     @classmethod
@@ -817,6 +838,20 @@ class Settings:
                 s.ledger_outlier_tag = raw_lot
             elif isinstance(raw_lot, (int, str)):
                 s.ledger_outlier_tag = str(raw_lot).strip().lower() not in (
+                    "0", "false", "off", "no", "")
+        if "metric_canon" in data:
+            raw_mc = data.get("metric_canon")
+            if isinstance(raw_mc, bool):
+                s.metric_canon = raw_mc
+            elif isinstance(raw_mc, (int, str)):
+                s.metric_canon = str(raw_mc).strip().lower() not in (
+                    "0", "false", "off", "no", "")
+        if "evolve_value_change" in data:
+            raw_evc = data.get("evolve_value_change")
+            if isinstance(raw_evc, bool):
+                s.evolve_value_change = raw_evc
+            elif isinstance(raw_evc, (int, str)):
+                s.evolve_value_change = str(raw_evc).strip().lower() not in (
                     "0", "false", "off", "no", "")
         select_min = data.get("corpus_select_min_sources")
         if isinstance(select_min, int) and not isinstance(select_min, bool) \

@@ -19,7 +19,9 @@ from dataclasses import asdict, dataclass, field
 from app.core.bm25 import rank_segments
 from app.core.citation_check import check_quote
 from app.core.evidence import Dossier
-from app.core.fact_ledger import Fact, extract_facts
+from app.core.fact_ledger import (
+    Fact, extract_facts, fact_group_metric, normalize_entity,
+)
 from app.core.numeric_check import extract_nums
 from app.core.temporal_check import source_date
 
@@ -38,8 +40,27 @@ OUT_OF_WINDOW_NOTE = "该段本次未进入模型视野"
 WINDOW_UNKNOWN_NOTE = "未核对是否进窗"
 TIME_UNSORTABLE_REASON = "时点不明，未据此排序"
 
+# C-79：演变只认数值确有变化（默认开＝Boyu 10-28 拍「那就开了」；
+# 关＝VERITAS_EVOLVE_VALUE_CHANGE=0 时对照行文案回改前「时点」口径）。
+# 开时同值多时点 →「重复报道」＋黄灯，不算演变。
+_EVOLVE_VALUE_CHANGE = True
+
+REPEAT_REPORT_KIND = "repeat_report_time"
+REPEAT_REPORT_LINE = "同指标多时点数值全同，按重复报道披露，不按演变处理"
+# 同值路径禁用的演变类措辞（判据 a：删掉必红）
+_EVOLVE_FORBIDDEN_IN_SAME_VALUE = ("演变", "上升", "下降")
+
 # 展示双上限（两闸取更严者）；台账全量不受此限
 PRECEDENT_RENDER_CAP = 24
+
+
+def set_evolve_value_change(on: bool) -> None:
+    global _EVOLVE_VALUE_CHANGE
+    _EVOLVE_VALUE_CHANGE = bool(on)
+
+
+def evolve_value_change_enabled() -> bool:
+    return bool(_EVOLVE_VALUE_CHANGE)
 
 
 @dataclass
@@ -114,10 +135,22 @@ def _window_note(dossier: Dossier, para_id: str) -> str:
 
 
 def _diff_kind(a: Fact, b: Fact) -> tuple[str, str]:
-    """差异类型与描述（确定性：只看数值／时点）。"""
-    if a.date and b.date and a.date != b.date and abs(a.value - b.value) <= 1e-9:
+    """差异类型与描述（确定性：只看数值／时点）。
+
+    C-79 开闸：数值全同 ⇒ 只标「重复报道」，文案不含演变／上升／下降。
+    关闸：与改前逐字相同（同值跨日仍标「时点」）。
+    """
+    same_val = abs(a.value - b.value) <= 1e-9
+    if _EVOLVE_VALUE_CHANGE and same_val:
+        # 防错＝不算演变；desc 故意避开「演变／上升／下降」三词（判据 a）
+        return (
+            "重复报道",
+            f"同值 {a.raw}，时点 {a.date or '（缺）'} ↔ {b.date or '（缺）'}"
+            f"（重复报道，数值未变）",
+        )
+    if a.date and b.date and a.date != b.date and same_val:
         return "时点", f"同值 {a.raw}，时点 {a.date} ↔ {b.date}"
-    if abs(a.value - b.value) > 1e-9:
+    if not same_val:
         return "数字", f"{a.raw} ↔ {b.raw}"
     if a.date != b.date:
         return "时点", f"时点 {a.date or '（缺）'} ↔ {b.date or '（缺）'}"
@@ -167,31 +200,34 @@ def _candidate_pairs(dossier: Dossier) -> list[tuple[Fact, Fact, bool]]:
     """同指标、且段落都咬住议题锚的跨波次事实对。
 
     fact_ledger 的 entity 常被日期前缀拆开（「2024年1月客户B」≠「2025年6月客户B」），
-    所以这里按 metric 归并，再用议题锚过滤——不改 fact_ledger 本身。
+    所以这里按 fact_group_metric（C-80：开闸且有规范名→规范名，否则原文 metric）
+    归并，再用议题锚过滤——不改 fact_ledger 抽取本身。
     BM25 作保底召回（确定性排序），不引入新依赖。
     """
     facts = extract_facts(dossier)
     anchors = _question_anchors(dossier.question or "")
     by_metric: dict[str, list[Fact]] = {}
     for f in facts:
-        if not f.metric:
+        gmetric = fact_group_metric(f)
+        if not gmetric:
             continue
         blob = (f.entity or "") + _seg_text(dossier, f.seg_id)
         if not _shares_anchor(blob, anchors):
             continue
-        by_metric.setdefault(f.metric, []).append(f)
+        by_metric.setdefault(gmetric, []).append(f)
 
     # BM25 保底：议题高分段若含同指标数字、且尚未进 by_metric，补进来
     if dossier.question:
         ranked = rank_segments(dossier, query=dossier.question)
         top_ids = {sid for sid, score in ranked[:12] if score > 0}
         for f in facts:
-            if f.seg_id in top_ids and f.metric:
-                by_metric.setdefault(f.metric, [])
-                if f not in by_metric[f.metric]:
+            gmetric = fact_group_metric(f)
+            if f.seg_id in top_ids and gmetric:
+                by_metric.setdefault(gmetric, [])
+                if f not in by_metric[gmetric]:
                     blob = (f.entity or "") + _seg_text(dossier, f.seg_id)
                     if _shares_anchor(blob, anchors):
-                        by_metric[f.metric].append(f)
+                        by_metric[gmetric].append(f)
 
     pairs: list[tuple[Fact, Fact, bool]] = []
     seen: set[tuple[str, str]] = set()
@@ -314,6 +350,56 @@ def audit_external_prior(dossier: Dossier) -> list[dict]:
                     f"（{EXTERNAL_PRIOR_LINE}）"
                 ),
             })
+    return flags
+
+
+def audit_repeat_report(dossier: Dossier) -> list[dict]:
+    """C-79：同 (归一主体, 分组指标) 多时点且数值全同 ⇒ 黄灯（默认关）。
+
+    只披露风险面；不改采信／置信度。关闸恒 []。
+    """
+    if not _EVOLVE_VALUE_CHANGE:
+        return []
+    facts = extract_facts(dossier)
+    groups: dict[tuple[str, str], list[Fact]] = {}
+    for f in facts:
+        metric = fact_group_metric(f)
+        if not metric:
+            continue
+        gkey = (normalize_entity(f.entity), metric)
+        groups.setdefault(gkey, []).append(f)
+
+    flags: list[dict] = []
+    for gkey in sorted(groups.keys()):
+        fs = groups[gkey]
+        days: set[str] = set()
+        for f in fs:
+            digits = re.sub(r"\D", "", str(f.date or ""))
+            day = digits[:8] if len(digits) >= 8 else ""
+            if day:
+                days.add(day)
+        if len(days) < 2:
+            continue
+        values = [float(f.value) for f in fs]
+        # 全组相对第一值 1% 容差内 ⇒ 数值全同
+        pivot = values[0]
+        if not all(abs(v - pivot) <= 1e-9 for v in values):
+            continue
+        ent, metric = gkey
+        sample = fs[0]
+        flags.append({
+            "kind": REPEAT_REPORT_KIND,
+            "severity": "medium",
+            "entity": ent,
+            "metric": metric,
+            "value": sample.raw,
+            "n_dates": len(days),
+            "detail": (
+                f"{ent or '（未指明主体）'}·{metric} 在 {len(days)} 个时点"
+                f"均为 {sample.raw}（{REPEAT_REPORT_LINE}）"
+            ),
+        })
+    flags.sort(key=lambda x: (x.get("entity") or "", x.get("metric") or ""))
     return flags
 
 

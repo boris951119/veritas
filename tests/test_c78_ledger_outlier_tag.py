@@ -1,4 +1,4 @@
-"""C-78：对撞行「组内相对偏差（中位数±k×MAD）」派生标签；默认关；零判定。"""
+"""C-78：对撞行「组内相对偏差（中位数±k×MAD）」派生标签；默认开；零判定。"""
 from __future__ import annotations
 
 import hashlib
@@ -29,9 +29,10 @@ _ROOT = Path(__file__).resolve().parents[1]
 
 @pytest.fixture(autouse=True)
 def _reset_flag():
-    set_ledger_outlier_tag(False)
+    # 测完复位到生产默认（开）
+    set_ledger_outlier_tag(True)
     yield
-    set_ledger_outlier_tag(False)
+    set_ledger_outlier_tag(True)
 
 
 def _load_mutated(name: str, old: str, new: str, tmp_path: Path):
@@ -90,11 +91,11 @@ def _fixture_facts() -> list[Fact]:
 
 
 # ---- 暗开关默认 ----
-def test_c78_defaults_ledger_outlier_tag_off():
-    """刀：Settings.ledger_outlier_tag 默认翻 True ⇒ 本格红。"""
+def test_c78_defaults_ledger_outlier_tag_on():
+    """刀：Settings.ledger_outlier_tag 默认翻 False ⇒ 本格红（Boyu 拍开）。"""
     s = Settings()
-    assert s.ledger_outlier_tag is False
-    assert ledger_outlier_tag_enabled() is False
+    assert s.ledger_outlier_tag is True
+    assert ledger_outlier_tag_enabled() is True
 
 
 def test_c78_a_tag_numbers_from_data_not_constant():

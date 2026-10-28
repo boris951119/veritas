@@ -252,13 +252,18 @@ def run_case(spec: RunSpec | None = None,
     # C-69：两个时间轴开关落到模块旗（须在 ingest／facts_block 之前）
     from app.core.temporal_check import set_source_time_unified
     from app.core.fact_ledger import (
-        set_ledger_outlier_tag, set_ledger_time_class,
+        set_ledger_outlier_tag, set_ledger_time_class, set_metric_canon,
     )
+    from app.core.precedent import set_evolve_value_change
     from app.core.relevance import set_relevance_soft_gate
     set_source_time_unified(bool(getattr(settings, "source_time_unified", True)))
     set_ledger_time_class(bool(getattr(settings, "ledger_time_class", True)))
-    # C-78：对撞行派生标签（默认关；只影响报告渲染，不进提示词）
-    set_ledger_outlier_tag(bool(getattr(settings, "ledger_outlier_tag", False)))
+    # C-78：对撞行派生标签（默认开；只影响报告渲染，不进提示词）
+    set_ledger_outlier_tag(bool(getattr(settings, "ledger_outlier_tag", True)))
+    # C-80：规范量名（默认开；须在 _scan／对撞／对照之前）
+    set_metric_canon(bool(getattr(settings, "metric_canon", True)))
+    # C-79：演变只认数值变化（默认开；须在对照台账／audit 之前）
+    set_evolve_value_change(bool(getattr(settings, "evolve_value_change", True)))
     # C-70：相关性软闸（默认开；须在 classify_sources／装箱之前）
     set_relevance_soft_gate(bool(getattr(settings, "relevance_soft_gate", True)))
     # C-72：要点槽（默认关；须在分析师提示词／主席后评估之前）
@@ -1588,8 +1593,10 @@ def _render_fact_collisions(lines: list[str], dossier: Dossier) -> None:
         _scan,
         build_dispersion_tag_map,
         dispersion_notes_for_facts,
+        format_canon_disclosure,
         format_dropped_disclosure,
         ledger_outlier_tag_enabled,
+        metric_canon_enabled,
     )
 
     stats = (dossier.accounting or {}).get("fact_ledger_stats")
@@ -1613,6 +1620,9 @@ def _render_fact_collisions(lines: list[str], dossier: Dossier) -> None:
     else:
         lines += ["## 台账未采信数字分类计数", ""]
     lines.append(f"- {format_dropped_disclosure(stats)}")
+    # C-80：规范量名覆盖一行（生产者披露；「缺规范量名」预检贴标后置）
+    if metric_canon_enabled() and (stats.get("metric_canon") is not None):
+        lines.append(f"- {format_canon_disclosure(stats)}")
     tag_map = build_dispersion_tag_map(facts, k=3) if tag_on else {}
     for c in collisions:
         detail = "；".join(
@@ -1795,14 +1805,19 @@ def run_official_case(case_dir: Path, questions: list[dict], out_dir: Path,
     from app.export.official import export_official
     from app.ingest.official_case import load_official_case
     from app.core.temporal_check import set_source_time_unified
-    from app.core.fact_ledger import set_ledger_outlier_tag, set_ledger_time_class
+    from app.core.fact_ledger import (
+        set_ledger_outlier_tag, set_ledger_time_class, set_metric_canon,
+    )
+    from app.core.precedent import set_evolve_value_change
     from app.core.relevance import set_relevance_soft_gate
 
     # 须在 load_official_case 前落地（件③ 三态 detail 读旗）
     _settings = settings or Settings.from_env()
     set_source_time_unified(bool(getattr(_settings, "source_time_unified", True)))
     set_ledger_time_class(bool(getattr(_settings, "ledger_time_class", True)))
-    set_ledger_outlier_tag(bool(getattr(_settings, "ledger_outlier_tag", False)))
+    set_ledger_outlier_tag(bool(getattr(_settings, "ledger_outlier_tag", True)))
+    set_metric_canon(bool(getattr(_settings, "metric_canon", True)))
+    set_evolve_value_change(bool(getattr(_settings, "evolve_value_change", True)))
     set_relevance_soft_gate(bool(getattr(_settings, "relevance_soft_gate", True)))
     from app.core.claim_slots import set_claim_slots
     set_claim_slots(bool(getattr(_settings, "claim_slots", False)))

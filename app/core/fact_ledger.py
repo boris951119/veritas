@@ -27,12 +27,20 @@ from app.core.numeric_check import _close, extract_nums
 # C-69：VERITAS_LEDGER_TIME_CLASS（默认开＝三档文案；Boyu 10-28 拍）
 _LEDGER_TIME_CLASS = True
 
-# C-78：对撞行派生「组内相对偏差」标签（默认关＝报告渲染与改前逐字相同；
-# 只呈现、不改 find_collisions／采信／提示词）。
-_LEDGER_OUTLIER_TAG = False
+# C-78：对撞行派生「组内相对偏差」标签（默认开＝Boyu 10-28 拍「只是打标签就开着」；
+# 关＝VERITAS_LEDGER_OUTLIER_TAG=0 时报告与改前逐字相同）。
+# 只呈现、不改 find_collisions／采信／提示词。
+_LEDGER_OUTLIER_TAG = True
+
+# C-80：规范量名（默认开＝Boyu 10-28 拍「现在开」；关＝字段空＋分组仍走 metric）。
+# 本阶段赋值源＝rule:v1（机械），不许标成 model；模型契约＝件②＋配对真跑。
+_METRIC_CANON = True
 
 # 对外统一口径＝只用本标签短语（不许改写成均值／σ 口径）。
 DISPERSION_LABEL = "组内相对偏差（中位数±k×MAD）"
+
+# C-80 值域来源戳（判据 b：不许把人工常量表伪装成模型输出）
+CANON_VOCAB_SOURCE = "rule:v1"
 
 
 def set_ledger_time_class(on: bool) -> None:
@@ -51,6 +59,15 @@ def set_ledger_outlier_tag(on: bool) -> None:
 
 def ledger_outlier_tag_enabled() -> bool:
     return bool(_LEDGER_OUTLIER_TAG)
+
+
+def set_metric_canon(on: bool) -> None:
+    global _METRIC_CANON
+    _METRIC_CANON = bool(on)
+
+
+def metric_canon_enabled() -> bool:
+    return bool(_METRIC_CANON)
 
 _ENTITY_METRIC = re.compile(r"([\u4e00-\u9fffA-Za-z0-9]{2,10}?)([\u4e00-\u9fff]{2,8})$")
 _YEAR_RE = re.compile(r"^(19|20)\d{2}$")
@@ -71,6 +88,43 @@ _METRIC_STOP = {
     "前后", "左右", "其中", "以及", "出现", "存在", "发生", "进行",
 }
 
+# C-80：明显不是经营量名的页面／栏目／热线碎片（〔189〕 脏面素材）
+_JUNK_METRICS = frozenset({
+    "联系电话", "服务热线", "客服电话", "咨询电话", "投诉电话",
+    "风闻社区", "我的自选", "相关阅读", "更多评论", "分享到",
+    "扫一扫", "点击查看", "返回顶部", "版权所有",
+})
+# 像量名才给规范名；否则标缺（判据 a：缺多少、为什么缺）
+_QUANTITY_HINT = re.compile(
+    r"(率|数|量|额|价|人|死|伤|吨|元|万|亿|占比|同比|环比|"
+    r"增速|产值|营收|利润|回款|产能|库存|死亡|伤亡|面积|产量)"
+)
+
+
+def assign_metric_canon(metric: str) -> tuple[str, str]:
+    """原文指标 → (规范量名, 原因)。
+
+    本阶段＝rule:v1：去空白身份归一＋垃圾量名拒填。
+    不是别名表、不是模型；值域来源见 CANON_VOCAB_SOURCE。
+    """
+    m = (metric or "").strip()
+    if not m:
+        return "", "empty"
+    if m in _JUNK_METRICS:
+        return "", "not_quantity"
+    if not _QUANTITY_HINT.search(m):
+        return "", "no_quantity_hint"
+    # 身份归一：只压空白——不许在这里做「回款率≈收款率」别名合并
+    canon = re.sub(r"\s+", "", m)
+    return canon, "ok"
+
+
+def fact_group_metric(f: Fact) -> str:
+    """对撞／对照／离群分组键：开闸且有规范名 → 用规范名，否则原文指标。"""
+    if metric_canon_enabled() and (f.metric_canon or "").strip():
+        return f.metric_canon.strip()
+    return f.metric or ""
+
 
 @dataclass
 class Fact:
@@ -83,6 +137,9 @@ class Fact:
     source_id: str
     seg_id: str
     date: str             # 信源时点（meta.published_at/year，可空）
+    # C-80：受控规范量名（原 metric 保留供逐字引用）；空＝缺，见 canon_reason
+    metric_canon: str = ""
+    canon_reason: str = ""  # ok｜not_quantity｜no_quantity_hint｜empty｜""
 
 
 @dataclass
@@ -182,15 +239,44 @@ def _scan(dossier: Dossier) -> tuple[list[Fact], dict]:
                 if entity and entity in _ENTITY_STOP:
                     dropped["entity_stop"] += 1
                     continue
+                canon, reason = ("", "")
+                if _METRIC_CANON:
+                    canon, reason = assign_metric_canon(metric)
                 facts.append(Fact(
                     entity=entity, metric=metric, value=num.scaled,
-                    raw=num.raw, source_id=src.id, seg_id=seg.id, date=date))
-    stats = {
+                    raw=num.raw, source_id=src.id, seg_id=seg.id, date=date,
+                    metric_canon=canon, canon_reason=reason))
+    stats: dict = {
         "n_numbers": n_numbers,
         "n_facts": len(facts),
         "dropped": dropped,
     }
+    if _METRIC_CANON:
+        stats["metric_canon"] = _canon_coverage(facts)
     return facts, stats
+
+
+def _canon_coverage(facts: list[Fact]) -> dict:
+    """规范量名覆盖账（判据 a）：有多少／缺多少／按原因；值域来源可追。"""
+    by_reason: dict[str, int] = {}
+    n_ok = 0
+    n_miss = 0
+    for f in facts:
+        reason = (f.canon_reason or "").strip() or (
+            "ok" if (f.metric_canon or "").strip() else "empty"
+        )
+        if (f.metric_canon or "").strip() and reason == "ok":
+            n_ok += 1
+        else:
+            n_miss += 1
+            miss_reason = reason if reason != "ok" else "empty"
+            by_reason[miss_reason] = by_reason.get(miss_reason, 0) + 1
+    return {
+        "n_ok": n_ok,
+        "n_missing": n_miss,
+        "missing_by_reason": by_reason,
+        "vocab_source": CANON_VOCAB_SOURCE,
+    }
 
 
 def extract_facts(dossier: Dossier) -> list[Fact]:
@@ -208,11 +294,27 @@ def format_dropped_disclosure(stats: dict) -> str:
     return (f"未采信数字分类计数：共 {int(stats.get('n_numbers') or 0)} 个数字，"
             f"入台账 {int(stats.get('n_facts') or 0)} 条；{bits}")
 
+
+def format_canon_disclosure(stats: dict) -> str:
+    """预检一行：规范量名覆盖（缺多少、为什么缺；值域来源可追）。"""
+    block = stats.get("metric_canon") or {}
+    n_ok = int(block.get("n_ok") or 0)
+    n_miss = int(block.get("n_missing") or 0)
+    by = block.get("missing_by_reason") or {}
+    if by:
+        bits = "、".join(f"{k} {int(by[k])}" for k in sorted(by))
+        why = f"（{bits}）"
+    else:
+        why = ""
+    src = str(block.get("vocab_source") or CANON_VOCAB_SOURCE)
+    return f"规范量名覆盖：有 {n_ok}／缺 {n_miss}{why}；值域来源 {src}"
+
+
 def _collisions_from_facts(facts: list[Fact]) -> list[Collision]:
     """已扫描事实 → 对撞清单（不再二次扫卷）。"""
     groups: dict[tuple[str, str], list[Fact]] = {}
     for f in facts:
-        groups.setdefault((f.entity.lower(), f.metric), []).append(f)
+        groups.setdefault((f.entity.lower(), fact_group_metric(f)), []).append(f)
     out: list[Collision] = []
     for (entity, metric), fs in groups.items():
         distinct: list[Fact] = []
@@ -329,7 +431,7 @@ def build_dispersion_tag_map(
     out: dict[tuple[str, str, float], str] = {}
     groups: dict[tuple[str, str], list[Fact]] = {}
     for f in facts or []:
-        metric = f.metric or ""
+        metric = fact_group_metric(f)
         if not metric:
             continue
         gkey = (normalize_entity(f.entity), metric)

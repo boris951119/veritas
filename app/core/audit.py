@@ -58,13 +58,14 @@ KIND_LABEL: dict[str, str] = {
     "scope": "声称范围却无覆盖声明",
     "external_prior": "外部先验未与案卷核对",
     "precedent_time": "同类事件时点未排序",
+    "repeat_report_time": "重复报道型时点",
 }
 
 
 def audit_all(dossier: Dossier) -> list[dict]:
     """全部零 LLM 机械闸一次扫描：前提 + 计算/溯源/计数 + 守恒 + 话语
     + 时序 + 范围诚实 + 输入风险（注入/同源）+ 外部先验。"""
-    from app.core.precedent import audit_external_prior
+    from app.core.precedent import audit_external_prior, audit_repeat_report
 
     return [
         *([question_flag(dossier.question)] if question_flag(dossier.question)
@@ -90,6 +91,7 @@ def audit_all(dossier: Dossier) -> list[dict]:
         *audit_unit_mismatch(dossier),
         *audit_unverified_sources(dossier),
         *audit_external_prior(dossier),
+        *audit_repeat_report(dossier),
     ]
 
 
