@@ -427,3 +427,59 @@ def test_c73_knife_est_backfill_server_must_differ_from_contract(tmp_path):
     # test_c73_missing_usage_no_est_backfill 会因此红
     assert entry["server_prompt_tokens"] == entry["est_tokens"]
     assert entry["server_reported"] is True
+
+
+# ---- 〔181〕/〔182〕 记账的聚合口径（架构师自补的一小笔，C-74 前置）----
+def test_c73_weighted_density_not_pulled_by_short_leg():
+    """短提示词只许拉偏下界，不许拉偏加权口径（真产物指纹：1.24 vs 1.54）。"""
+    log = [
+        {"model": "m", "system_hint": "检索拓展",
+         "prompt_chars": 487, "est_tokens": 336,
+         "server_prompt_tokens": 391, "server_reported": True,
+         "over_window": False, "window_tokens": 16384},
+        {"model": "m", "system_hint": "你是分析师甲。",
+         "prompt_chars": 21594, "est_tokens": 14892,
+         "server_prompt_tokens": 14011, "server_reported": True,
+         "over_window": False, "window_tokens": 16384},
+    ]
+    led = build_window_ledger(log, window_tokens=16384)
+    assert led["min_true_chars_per_token"] == pytest.approx(487 / 391)
+    assert led["true_chars_per_token_weighted"] == pytest.approx(
+        (487 + 21594) / (391 + 14011))
+    assert led["true_chars_per_token_max_leg"] == pytest.approx(21594 / 14011)
+    # 反「拿下界当主口径」：两值必须真的不同（相同＝这格白写）
+    assert abs(led["true_chars_per_token_weighted"]
+               - led["min_true_chars_per_token"]) > 0.2
+
+
+def test_c73_max_leg_density_ties_take_first():
+    """并列最长取先出现＝不许吃集合序（我另一把尺在 10-② 上栽过的同族坑）。"""
+    log = [
+        {"model": "m", "system_hint": "甲", "prompt_chars": 1000,
+         "est_tokens": 700, "server_prompt_tokens": 1000,
+         "server_reported": True, "over_window": False, "window_tokens": 16384},
+        {"model": "m", "system_hint": "乙", "prompt_chars": 2000,
+         "est_tokens": 1400, "server_prompt_tokens": 1000,
+         "server_reported": True, "over_window": False, "window_tokens": 16384},
+    ]
+    led = build_window_ledger(log, window_tokens=16384)
+    assert led["true_chars_per_token_max_leg"] == pytest.approx(1.0)
+
+
+def test_c73_report_line_bias_uses_weighted_not_min():
+    """出口面数值格：那一行的百分比只许长在加权口径上（换回 min 必红）。"""
+    led = {
+        "n_calls": 2, "n_server_reported": 2, "max_server_prompt_tokens": 14011,
+        "window_tokens": 16384, "n_over_window": 0,
+        "min_true_chars_per_token": 487 / 391,          # 1.2456 → +16.4%
+        "true_chars_per_token_weighted": (487 + 21594) / (391 + 14011),
+        "true_chars_per_token_max_leg": 21594 / 14011,
+    }
+    line = format_window_ledger_line(led)
+    want = (led["true_chars_per_token_weighted"] / 1.45 - 1.0) * 100.0
+    wrong = (led["min_true_chars_per_token"] / 1.45 - 1.0) * 100.0
+    assert f"估算比服务端高报 {want:+.1f}%" in line, line
+    assert f"估算比服务端高报 {wrong:+.1f}%" not in line, line
+    # 符号格：真密度 1.65 ＞ 常量 1.45 ⇒ 一定是「高报」、数必须为正
+    assert want > 0, want
+    assert "按字数加权" in line, line

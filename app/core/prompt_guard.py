@@ -70,9 +70,20 @@ def build_window_ledger(
 
     embedding 自 append 的条目没有 server_reported 键 → 跳过（本单故意不并）。
     硬禁：聚合侧也不许用 est 回填 server_prompt_tokens。
+
+    密度三个口径并存（〔181〕/〔182〕 记的账）＝真产物里短提示词（检索拓展那种
+    487 字／391 token，模板开销占比大）会把**下界** min 拉到 1.24，而分析师长腿
+    实测 1.54 ⇒ 谁拿 min 去反推预算就会把箱子压小。故：
+    · min_true_chars_per_token＝下界，只作披露；
+    · true_chars_per_token_weighted＝Σ字数÷Σ服务端 token（按量加权，主口径）；
+    · true_chars_per_token_max_leg＝最长那条腿的密度（并列取先出现＝确定性）。
+    报告面那一行「估算比服务端高报 x%」用加权值。判定与装箱一行不读这些键。
     """
     rows_out: list[dict] = []
     densities: list[float] = []
+    sum_chars = 0
+    sum_srv = 0
+    max_leg_dens: float | None = None
     n_server = 0
     n_over = 0
     max_server: int | None = None
@@ -91,10 +102,16 @@ def build_window_ledger(
         if reported:
             n_server += 1
             srv_i = int(server)
+            if chars > 0 and srv_i > 0:
+                dens_i = chars / srv_i
+                densities.append(dens_i)
+                sum_chars += chars
+                sum_srv += srv_i
+                # 最长那条腿的密度（并列取先出现＝确定性，不看 set 序）
+                if max_server is None or srv_i > max_server:
+                    max_leg_dens = dens_i
             if max_server is None or srv_i > max_server:
                 max_server = srv_i
-            if chars > 0 and srv_i > 0:
-                densities.append(chars / srv_i)
             if over is True:
                 n_over += 1
             ratio: float | None = (est / srv_i) if srv_i > 0 else None
@@ -119,7 +136,12 @@ def build_window_ledger(
         "n_server_reported": n_server,
         "max_server_prompt_tokens": max_server,
         "window_tokens": win,
+        # ⚠ min＝下界，会被短提示词（模板开销占比大）拉偏——只作披露用；
+        # 给「按真密度对齐预算」那条路用的是下面两个（〔181〕/〔182〕 记账）。
         "min_true_chars_per_token": min_dens,
+        "true_chars_per_token_weighted": (
+            sum_chars / sum_srv) if sum_srv > 0 else None,
+        "true_chars_per_token_max_leg": max_leg_dens,
         "n_over_window": n_over,
         "rows": rows_out,
     }
@@ -137,15 +159,24 @@ def format_window_ledger_line(ledger: dict | None) -> str:
         n_miss = 0
     max_srv = led.get("max_server_prompt_tokens")
     win = led.get("window_tokens")
-    dens = led.get("min_true_chars_per_token")
-    # 估算口径偏＝现密度相对真密度的偏差（有真密度时）
-    # 现常量默认 1.45；正＝本地估偏密（高报 token）
+    # 口径优先级：按字数加权 ＞ 最长那条腿 ＞ 下界（旧产物只剩 min 时仍出得来）
+    dens = led.get("true_chars_per_token_weighted")
+    if not isinstance(dens, (int, float)) or float(dens) <= 0:
+        dens = led.get("true_chars_per_token_max_leg")
+    if not isinstance(dens, (int, float)) or float(dens) <= 0:
+        dens = led.get("min_true_chars_per_token")
+    # 估算比服务端高报多少＝(真密度 ÷ 现常量) − 1。
+    # 校验过的一条真数：最长腿 23,524 字／服务端 14,684 tok、est 16,223
+    # ⇒ est/真 − 1 ＝ +10.5%，与本式 (1.6020/1.45−1) 同数（〔182〕 后补的符号订正：
+    # 旧注释写「正＝估偏密＝高报 token」与本式符号相反，读数会反——已改式不改语义）。
     bias_txt = "—"
+    dens_txt = ""
     if isinstance(dens, (int, float)) and float(dens) > 0:
-        # 不从 settings 读，避免报告层耦合；偏置用 1.45 对照真密度
+        # 不从 settings 读，避免报告层耦合；对照真密度用现常量 1.45
         assumed = 1.45
-        bias_pct = (assumed / float(dens) - 1.0) * 100.0
+        bias_pct = (float(dens) / assumed - 1.0) * 100.0
         bias_txt = f"{bias_pct:+.1f}"
+        dens_txt = f"（真密度 {float(dens):.2f} 字/token、按字数加权）"
     if n_server <= 0 or max_srv is None:
         return (
             "窗口账（服务端真报）：服务端未报，未据此判定"
@@ -156,10 +187,10 @@ def format_window_ledger_line(ledger: dict | None) -> str:
         z_pct = 100.0 * float(max_srv) / float(win_i)
         return (
             f"窗口账（服务端真报）：本次最长提示词 {int(max_srv)}／"
-            f"窗口 {win_i}（{z_pct:.1f}%）、估算口径偏 {bias_txt}%、"
-            f"服务端未报 {n_miss} 次"
+            f"窗口 {win_i}（{z_pct:.1f}%）、估算比服务端高报 {bias_txt}%"
+            f"{dens_txt}、服务端未报 {n_miss} 次"
         )
     return (
         f"窗口账（服务端真报）：本次最长提示词 {int(max_srv)}／"
-        f"窗口未声明、估算口径偏 {bias_txt}%、服务端未报 {n_miss} 次"
+        f"窗口未声明、估算比服务端高报 {bias_txt}%{dens_txt}、服务端未报 {n_miss} 次"
     )
