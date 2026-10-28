@@ -507,6 +507,10 @@ class Settings:
     # env VERITAS_CLAIM_SLOTS；config.json claim_slots。
     # ⚠ 默认必须 False；整体跑开不开由 Boyu 当场拍，执行方不许自己改默认。
     claim_slots: bool = False
+    # C-78：对撞行「组内相对偏差（中位数±k×MAD）」派生标签。默认 False＝报告与改前逐字相同。
+    # env VERITAS_LEDGER_OUTLIER_TAG；config.json ledger_outlier_tag。
+    # 只呈现、不改 find_collisions／采信／置信度／提示词。
+    ledger_outlier_tag: bool = False
 
     # 语料收窄阈值：信源数达到该值才走索引选料（默认 50=自动；
     # 0=强制关闭，小案例到不了阈值则整卷研判、不建 .corpus）。
@@ -723,6 +727,11 @@ class Settings:
             s.claim_slots = False
         elif cs in ("1", "true", "on", "yes"):
             s.claim_slots = True
+        lot = (os.environ.get("VERITAS_LEDGER_OUTLIER_TAG") or "").strip().lower()
+        if lot in ("0", "false", "off", "no"):
+            s.ledger_outlier_tag = False
+        elif lot in ("1", "true", "on", "yes"):
+            s.ledger_outlier_tag = True
         return s.validate()
 
     @classmethod
@@ -802,6 +811,13 @@ class Settings:
                 s.claim_slots = raw_cs
             elif isinstance(raw_cs, (int, str)):
                 s.claim_slots = str(raw_cs).strip().lower() not in (
+                    "0", "false", "off", "no", "")
+        if "ledger_outlier_tag" in data:
+            raw_lot = data.get("ledger_outlier_tag")
+            if isinstance(raw_lot, bool):
+                s.ledger_outlier_tag = raw_lot
+            elif isinstance(raw_lot, (int, str)):
+                s.ledger_outlier_tag = str(raw_lot).strip().lower() not in (
                     "0", "false", "off", "no", "")
         select_min = data.get("corpus_select_min_sources")
         if isinstance(select_min, int) and not isinstance(select_min, bool) \

@@ -251,10 +251,14 @@ def run_case(spec: RunSpec | None = None,
     set_pdf_backend(settings.pdf_backend)
     # C-69：两个时间轴开关落到模块旗（须在 ingest／facts_block 之前）
     from app.core.temporal_check import set_source_time_unified
-    from app.core.fact_ledger import set_ledger_time_class
+    from app.core.fact_ledger import (
+        set_ledger_outlier_tag, set_ledger_time_class,
+    )
     from app.core.relevance import set_relevance_soft_gate
     set_source_time_unified(bool(getattr(settings, "source_time_unified", False)))
     set_ledger_time_class(bool(getattr(settings, "ledger_time_class", False)))
+    # C-78：对撞行派生标签（默认关；只影响报告渲染，不进提示词）
+    set_ledger_outlier_tag(bool(getattr(settings, "ledger_outlier_tag", False)))
     # C-70：相关性软闸（默认开；须在 classify_sources／装箱之前）
     set_relevance_soft_gate(bool(getattr(settings, "relevance_soft_gate", True)))
     # C-72：要点槽（默认关；须在分析师提示词／主席后评估之前）
@@ -346,6 +350,12 @@ def run_case(spec: RunSpec | None = None,
         facts, fact_stats = _scan(dossier)
         dossier.accounting["fact_ledger_stats"] = fact_stats
         collisions = find_collisions(dossier, facts=facts)
+        # C-78：派生标签只进 accounting／报告；默认关不写键（产物面与改前同）
+        from app.core.fact_ledger import (
+            dispersion_accounting, ledger_outlier_tag_enabled,
+        )
+        if ledger_outlier_tag_enabled():
+            dossier.accounting["ledger_outlier_tag"] = dispersion_accounting(facts)
         chain.append("fact_ledger", "pipeline", {
             "n_facts": fact_stats["n_facts"],
             "n_collisions": len(collisions),
@@ -820,7 +830,7 @@ def run_case(spec: RunSpec | None = None,
                      "mechanical_merge", "fact_ledger_stats",
                      "prompt_window", "pack_window", "dependency",
                      "corpus_select_max_disclosures", "causal_claim",
-                     "claim_slots", "window_ledger")}
+                     "claim_slots", "ledger_outlier_tag", "window_ledger")}
     dossier.accounting = {
         **kept,
         "elapsed_s": round(time.monotonic() - t0, 1),
@@ -1571,16 +1581,27 @@ def _render_fact_collisions(lines: list[str], dossier: Dossier) -> None:
 
     章旁一行写「未采信数字分类计数」（真分母机械不可知，只披露分类计数）。
     优先用 accounting 里已落盘的 stats；否则一次 _scan 兼得对撞与计数。
+    C-78：开关开时在对撞行末追加「组内相对偏差」派生标签（不改检出）。
     """
     from app.core.fact_ledger import (
-        _collisions_from_facts, _scan, format_dropped_disclosure,
+        _collisions_from_facts,
+        _scan,
+        build_dispersion_tag_map,
+        dispersion_notes_for_facts,
+        format_dropped_disclosure,
+        ledger_outlier_tag_enabled,
     )
 
     stats = (dossier.accounting or {}).get("fact_ledger_stats")
+    tag_on = ledger_outlier_tag_enabled()
     if stats is None:
         facts, stats = _scan(dossier)
         collisions = _collisions_from_facts(facts)
+    elif tag_on:
+        facts, _ = _scan(dossier)
+        collisions = find_collisions(dossier, facts=facts)
     else:
+        facts = []
         collisions = find_collisions(dossier)
     dropped = stats.get("dropped") or {}
     has_drop = any(int(v or 0) > 0 for v in dropped.values())
@@ -1592,13 +1613,18 @@ def _render_fact_collisions(lines: list[str], dossier: Dossier) -> None:
     else:
         lines += ["## 台账未采信数字分类计数", ""]
     lines.append(f"- {format_dropped_disclosure(stats)}")
+    tag_map = build_dispersion_tag_map(facts, k=3) if tag_on else {}
     for c in collisions:
         detail = "；".join(
             f"`{f.source_id}` 说 **{f.entity or '（未指明主体）'}{f.metric}** {f.raw}"
             + (f"（时点 {f.date}）" if f.date else "")
             for f in c.facts)
         tag = "跨信源" if c.cross_source else "同信源前后矛盾"
-        lines.append(f"- [{tag}] {detail}")
+        line = f"- [{tag}] {detail}"
+        notes = dispersion_notes_for_facts(c.facts, tag_map)
+        if notes:
+            line += "；" + "；".join(notes)
+        lines.append(line)
     lines.append("")
 
 
@@ -1769,13 +1795,14 @@ def run_official_case(case_dir: Path, questions: list[dict], out_dir: Path,
     from app.export.official import export_official
     from app.ingest.official_case import load_official_case
     from app.core.temporal_check import set_source_time_unified
-    from app.core.fact_ledger import set_ledger_time_class
+    from app.core.fact_ledger import set_ledger_outlier_tag, set_ledger_time_class
     from app.core.relevance import set_relevance_soft_gate
 
     # 须在 load_official_case 前落地（件③ 三态 detail 读旗）
     _settings = settings or Settings.from_env()
     set_source_time_unified(bool(getattr(_settings, "source_time_unified", False)))
     set_ledger_time_class(bool(getattr(_settings, "ledger_time_class", False)))
+    set_ledger_outlier_tag(bool(getattr(_settings, "ledger_outlier_tag", False)))
     set_relevance_soft_gate(bool(getattr(_settings, "relevance_soft_gate", True)))
     from app.core.claim_slots import set_claim_slots
     set_claim_slots(bool(getattr(_settings, "claim_slots", False)))

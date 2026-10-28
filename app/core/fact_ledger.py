@@ -18,6 +18,7 @@
 from __future__ import annotations
 
 import re
+import statistics
 from dataclasses import dataclass
 
 from app.core.evidence import Dossier
@@ -25,6 +26,13 @@ from app.core.numeric_check import _close, extract_nums
 
 # C-69：VERITAS_LEDGER_TIME_CLASS（默认关＝facts_block 文案与改前逐字相同）
 _LEDGER_TIME_CLASS = False
+
+# C-78：对撞行派生「组内相对偏差」标签（默认关＝报告渲染与改前逐字相同；
+# 只呈现、不改 find_collisions／采信／提示词）。
+_LEDGER_OUTLIER_TAG = False
+
+# 对外统一口径＝只用本标签短语（不许改写成均值／σ 口径）。
+DISPERSION_LABEL = "组内相对偏差（中位数±k×MAD）"
 
 
 def set_ledger_time_class(on: bool) -> None:
@@ -34,6 +42,15 @@ def set_ledger_time_class(on: bool) -> None:
 
 def ledger_time_class_enabled() -> bool:
     return bool(_LEDGER_TIME_CLASS)
+
+
+def set_ledger_outlier_tag(on: bool) -> None:
+    global _LEDGER_OUTLIER_TAG
+    _LEDGER_OUTLIER_TAG = bool(on)
+
+
+def ledger_outlier_tag_enabled() -> bool:
+    return bool(_LEDGER_OUTLIER_TAG)
 
 _ENTITY_METRIC = re.compile(r"([\u4e00-\u9fffA-Za-z0-9]{2,10}?)([\u4e00-\u9fff]{2,8})$")
 _YEAR_RE = re.compile(r"^(19|20)\d{2}$")
@@ -268,3 +285,106 @@ def _display_day(raw: str) -> str:
     """行内时点只展示归一日（8 位）；不足则空。"""
     digits = re.sub(r"\D", "", str(raw or ""))
     return digits[:8] if len(digits) >= 8 else ""
+
+
+# ---- C-78：组内相对偏差标签（渲染侧；不改 find_collisions）----------------
+
+def normalize_entity(entity: str) -> str:
+    """去数字、去标点、去空白后转小写（分组键用）。"""
+    text = str(entity or "")
+    text = re.sub(r"\d+", "", text)
+    text = re.sub(r"[\s\W_]+", "", text, flags=re.UNICODE)
+    return text.lower()
+
+
+def _fmt_num(v: float) -> str:
+    """稳定小数：去掉多余尾零，保证跨进程同字。"""
+    if abs(v - round(v)) < 1e-12:
+        return str(int(round(v)))
+    return f"{v:.6g}"
+
+
+def format_dispersion_note(*, value: float, med: float, mad: float, k: int) -> str:
+    """派生标签文案；数字必须来自入参（删掉数字或改成常量 ⇒ 守护格红）。"""
+    return (
+        f"{DISPERSION_LABEL}：中位 {_fmt_num(med)}，MAD {_fmt_num(mad)}，"
+        f"此值 {_fmt_num(value)} 偏离 {int(k)}×MAD ⇒ 标为可疑"
+    )
+
+
+def _fact_tag_key(f: Fact) -> tuple[str, str, float]:
+    return (f.source_id, f.seg_id, float(f.value))
+
+
+def build_dispersion_tag_map(
+    facts: list[Fact] | None,
+    *,
+    k: int = 3,
+) -> dict[tuple[str, str, float], str]:
+    """(source_id, seg_id, value) → 标签文案。
+
+    规则（C-78）：同 (归一主体, 指标) 且不同数值 ≥3；med／MAD；
+    仅 MAD>0 且 |v−med| > k×MAD 才标。组键与组内均显式排序＝确定性。
+    """
+    out: dict[tuple[str, str, float], str] = {}
+    groups: dict[tuple[str, str], list[Fact]] = {}
+    for f in facts or []:
+        metric = f.metric or ""
+        if not metric:
+            continue
+        gkey = (normalize_entity(f.entity), metric)
+        groups.setdefault(gkey, []).append(f)
+
+    for gkey in sorted(groups.keys()):
+        fs = sorted(
+            groups[gkey],
+            key=lambda x: (x.source_id, x.seg_id, float(x.value), x.raw),
+        )
+        values = [float(f.value) for f in fs]
+        distinct = sorted(set(values))
+        if len(distinct) < 3:
+            continue
+        med = float(statistics.median(values))
+        mad = float(statistics.median([abs(v - med) for v in values]))
+        if mad <= 0:
+            continue
+        lo = med - float(k) * mad
+        hi = med + float(k) * mad
+        for f in fs:
+            v = float(f.value)
+            if v < lo or v > hi:
+                out[_fact_tag_key(f)] = format_dispersion_note(
+                    value=v, med=med, mad=mad, k=int(k))
+    return out
+
+
+def dispersion_notes_for_facts(
+    facts: list[Fact] | None,
+    tag_map: dict[tuple[str, str, float], str] | None,
+) -> list[str]:
+    """某对撞行涉及的事实 → 去重后的标签列表（稳序）。"""
+    if not tag_map:
+        return []
+    notes: list[str] = []
+    seen: set[str] = set()
+    for f in sorted(
+        facts or [],
+        key=lambda x: (x.source_id, x.seg_id, float(x.value), x.raw),
+    ):
+        note = tag_map.get(_fact_tag_key(f))
+        if note and note not in seen:
+            seen.add(note)
+            notes.append(note)
+    return notes
+
+
+def dispersion_accounting(facts: list[Fact] | None) -> dict:
+    """k=3 进报告；k=5 只进 accounting 对照。"""
+    t3 = build_dispersion_tag_map(facts, k=3)
+    t5 = build_dispersion_tag_map(facts, k=5)
+    return {
+        "label": DISPERSION_LABEL,
+        "k3_n_tagged": len(t3),
+        "k5_n_tagged": len(t5),
+        "k_report": 3,
+    }
