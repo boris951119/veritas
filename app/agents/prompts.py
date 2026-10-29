@@ -69,8 +69,13 @@ def render_segments_block(dossier: Dossier,
         per_segment_chars = SEGMENT_MAX
 
     focus = {str(x) for x in (focus_segment_ids or []) if str(x).strip()}
-    pack = pack_material(dossier)
-    selected = set(pack["selected"]) | focus  # 焦点段强制入选
+    # C-29／C-99：pipeline 已写入 material_pack_selected 时只读它（含审阅软保底结果）
+    granted = (dossier.accounting or {}).get("material_pack_selected")
+    if granted is not None:
+        selected = {str(x) for x in granted} | focus
+    else:
+        pack = pack_material(dossier)
+        selected = set(pack["selected"]) | focus  # 焦点段强制入选
     relevance = {s["source_id"]: s for s in classify_sources(dossier)}
     duplicates = duplicate_map(dossier)
     lines: list[str] = [f"研判议题：{dossier.question}", ""]

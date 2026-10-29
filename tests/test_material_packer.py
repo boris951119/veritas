@@ -107,6 +107,24 @@ def test_all_in_when_under_budget():
     assert pack["n_selected"] == 6
 
 
+def test_c81_default_kwargs_match_legacy_selected():
+    """C-81：不传窄箱参数 ⇒ 与显式默认逐字同形（生产零行为变）。"""
+    d = _wide_dossier()
+    a = pack_material(d, budget_chars=80)
+    b = pack_material(
+        d, budget_chars=80,
+        max_segments=None, fill_zero_score=True, min_bm25=0.0)
+    assert a["selected"] == b["selected"]
+    assert a["n_selected"] == b["n_selected"]
+
+
+def test_c81_max_segments_caps_box():
+    d = _wide_dossier()
+    pack = pack_material(
+        d, budget_chars=100_000, max_segments=2, fill_zero_score=False)
+    assert pack["n_selected"] <= 2
+
+
 def test_tiny_budget_keeps_top_and_discloses_rest():
     from app.core.material import set_exclude_budget_reason
     from app.core.relevance import set_relevance_soft_gate

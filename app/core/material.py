@@ -297,18 +297,33 @@ def pack_search_queries(dossier: Dossier) -> list[str]:
     return out[:16]
 
 
-def pack_material(dossier: Dossier,
-                  budget_chars: int | None = None) -> dict:
+def pack_material(
+    dossier: Dossier,
+    budget_chars: int | None = None,
+    *,
+    exclude_seg_ids: set[str] | frozenset[str] | None = None,
+    max_segments: int | None = None,
+    fill_zero_score: bool = True,
+    min_bm25: float = 0.0,
+) -> dict:
     """确定性装箱：返回 {selected: set[seg_id], excluded: list[dict],
     budget, n_total, used_chars}。
 
     两段式（C-52）：① 议题槽位优先；② BM25>0 按分／log2(len) 填箱；
     零分段落再跨信源轮转保底。同案卷＋同预算 ⇒ 同结果。
+
+    ``exclude_seg_ids``＝续盒用：已装段不进本箱（C-66／树16）。
+
+    C-81（默认关＝与改前逐字同形）：``max_segments`` 硬顶段数；
+    ``fill_zero_score=False`` 关掉零分轮转灌满；``min_bm25`` 提高密度段门槛
+    （默认 0 ⇒ 仍只要 score>0）。生产路径不传这些参数。
     """
     import math
     from app.core.answer_slots import priority_segment_ids
 
     budget = max(1, int(budget_chars or _MATERIAL_BUDGET))
+    cap = None if max_segments is None else max(1, int(max_segments))
+    skip = {str(x) for x in (exclude_seg_ids or []) if str(x).strip()}
     dups = duplicate_map(dossier)
     relevance = {s["source_id"]: s for s in classify_sources(dossier)}
 
@@ -325,6 +340,8 @@ def pack_material(dossier: Dossier,
         if src.id in dups or (relevance.get(src.id) or {}).get("level") == "zero":
             continue
         for seg in src.segments:
+            if seg.id in skip:
+                continue
             eligible.append((src.id, seg.id))
             lengths[seg.id] = _billing_len(seg.text)
 
@@ -335,6 +352,8 @@ def pack_material(dossier: Dossier,
             if src.id in dups:
                 continue
             for seg in src.segments:
+                if seg.id in skip:
+                    continue
                 eligible.append((src.id, seg.id))
                 lengths[seg.id] = _billing_len(seg.text)
 
@@ -355,8 +374,13 @@ def pack_material(dossier: Dossier,
     selected: set[str] = set()
     used = 0
 
+    def _full() -> bool:
+        return cap is not None and len(selected) >= cap
+
     def _take(seg_id: str) -> bool:
         nonlocal used
+        if _full():
+            return False
         if seg_id in selected or seg_id not in lengths:
             return False
         ln = lengths[seg_id]
@@ -372,33 +396,41 @@ def pack_material(dossier: Dossier,
 
     # ① 议题槽位
     for seg_id in priority_segment_ids(dossier):
+        if _full():
+            break
         _take(seg_id)
 
-    # ② BM25>0：按 score/log2(len) 降序填剩余预算（确定性破同分用 id）
-    scored = [g for g in lengths if scores.get(g, 0.0) > 0 and g not in selected]
+    # ② BM25>min_bm25：按 score/log2(len) 降序填剩余预算（确定性破同分用 id）
+    scored = [
+        g for g in lengths
+        if scores.get(g, 0.0) > float(min_bm25) and g not in selected
+    ]
 
     def _density(seg_id: str) -> float:
         return scores.get(seg_id, 0.0) / math.log2(max(lengths[seg_id], 2))
 
     for seg_id in sorted(scored, key=lambda g: (-_density(g), g)):
-        if used >= budget:
+        if used >= budget or _full():
             break
         _take(seg_id)
 
-    # ③ 零分保底：跨信源轮转
-    while used < budget:
-        progressed = False
-        for src_id in source_order:
-            queue = by_source[src_id]
-            for i, seg_id in enumerate(queue):
-                if used + lengths[seg_id] <= budget:
-                    queue.pop(i)
-                    selected.add(seg_id)
-                    used += lengths[seg_id]
-                    progressed = True
+    # ③ 零分保底：跨信源轮转（C-81 可关＝不许灌噪声填满）
+    if fill_zero_score:
+        while used < budget and not _full():
+            progressed = False
+            for src_id in source_order:
+                if _full():
                     break
-        if not progressed:
-            break
+                queue = by_source[src_id]
+                for i, seg_id in enumerate(queue):
+                    if used + lengths[seg_id] <= budget:
+                        queue.pop(i)
+                        selected.add(seg_id)
+                        used += lengths[seg_id]
+                        progressed = True
+                        break
+            if not progressed:
+                break
 
     cut_reason = _EXCLUDE_BUDGET_REASON
     excluded = []
@@ -422,4 +454,82 @@ def pack_material(dossier: Dossier,
         "n_total": len(eligible),
         "n_selected": len(selected),
         "used_chars": used,
+    }
+
+
+# ---- 树16／C-66：续盒（多箱）------------------------------------------------------
+
+DEFAULT_MULTI_BOX_MAX = 3
+
+
+def pack_continuation_boxes(
+    dossier: Dossier,
+    *,
+    budget_chars: int | None = None,
+    max_boxes: int = DEFAULT_MULTI_BOX_MAX,
+) -> dict:
+    """逐箱剔除已装段后重装，最多 ``max_boxes`` 箱。
+
+    返回 shape：
+      boxes: [{index, selected, excluded, budget, used_chars, n_selected}, ...]
+      union_selected: set[str]   # 构造保证：首箱 ⊆ 并集
+      n_boxes / max_boxes / budget
+
+    确定性：同案卷＋同预算＋同 max_boxes ⇒ 同结果。
+    """
+    cap = max(1, int(max_boxes))
+    budget = max(1, int(budget_chars or _MATERIAL_BUDGET))
+    boxes: list[dict] = []
+    drop: set[str] = set()
+    for i in range(cap):
+        pack = pack_material(
+            dossier, budget_chars=budget, exclude_seg_ids=drop)
+        sel = {str(x) for x in (pack.get("selected") or [])}
+        if not sel:
+            break
+        boxes.append({
+            "index": i + 1,
+            "selected": sorted(sel),
+            "excluded": list(pack.get("excluded") or []),
+            "budget": int(pack.get("budget") or budget),
+            "used_chars": int(pack.get("used_chars") or 0),
+            "n_selected": len(sel),
+            "n_excluded": len(pack.get("excluded") or []),
+        })
+        drop |= sel
+    union = set()
+    for b in boxes:
+        union |= set(b["selected"])
+    # 构造不变量：首箱 ⊆ 并集（C-66 lost=0 前提）
+    if boxes:
+        assert set(boxes[0]["selected"]) <= union
+    return {
+        "boxes": boxes,
+        "union_selected": union,
+        "n_boxes": len(boxes),
+        "max_boxes": cap,
+        "budget": budget,
+    }
+
+
+def multi_box_accounting(plan: dict) -> dict:
+    """进 report.accounting['multi_box'] 的可序列化账。"""
+    boxes = plan.get("boxes") or []
+    union = sorted(str(x) for x in (plan.get("union_selected") or []))
+    return {
+        "enabled": True,
+        "n_boxes": int(plan.get("n_boxes") or 0),
+        "max_boxes": int(plan.get("max_boxes") or DEFAULT_MULTI_BOX_MAX),
+        "budget": int(plan.get("budget") or 0),
+        "n_union": len(union),
+        "union_selected": union,
+        "per_box": [
+            {
+                "index": b["index"],
+                "n_selected": b["n_selected"],
+                "used_chars": b["used_chars"],
+                "budget": b["budget"],
+            }
+            for b in boxes
+        ],
     }

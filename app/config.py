@@ -521,6 +521,21 @@ class Settings:
     # 只呈现／防错，不改采信／置信度；不许说已能识别重复报道／不许说涨分。
     # env VERITAS_EVOLVE_VALUE_CHANGE；config.json evolve_value_change。
     evolve_value_change: bool = True
+    # 树16／C-66：续盒（多箱）。首箱三分析师；第 2‥N 箱定向补答（一名分析师）。
+    # 默认 True＝Boyu 10-28 拍「先把续盒加进来」；关＝VERITAS_MULTI_BOX=0。
+    # ⚠ 墙钟约随盒数上升；不许把 L2_union 说成对单箱 48 的涨分。
+    # env VERITAS_MULTI_BOX／VERITAS_MULTI_BOX_MAX；config.json multi_box／multi_box_max。
+    multi_box: bool = True
+    multi_box_max: int = 3
+    # C-99：锚审支撑分 + A0 软保底装箱。默认 True＝Boyu 10-30 拍「默认先开」。
+    # 关＝VERITAS_REVIEW_BOOST=0。失败／测试禁真调用 → 回退现产 A0 并披露。
+    # ⚠ 增加装箱前 LLM 调用（抽锚＋批审±补召回）；不许说官方涨分。
+    # env VERITAS_REVIEW_BOOST／VERITAS_REVIEW_BOOST_B／VERITAS_REVIEW_BOOST_K；
+    # config.json review_boost／review_boost_b／review_boost_k。
+    review_boost: bool = True
+    review_boost_b: float = 7000.0
+    review_boost_k: int = 180
+    review_boost_refill: int = 40
 
     # 语料收窄阈值：信源数达到该值才走索引选料（默认 50=自动；
     # 0=强制关闭，小案例到不了阈值则整卷研判、不建 .corpus）。
@@ -752,6 +767,31 @@ class Settings:
             s.evolve_value_change = False
         elif evc in ("1", "true", "on", "yes"):
             s.evolve_value_change = True
+        mb = (os.environ.get("VERITAS_MULTI_BOX") or "").strip().lower()
+        if mb in ("0", "false", "off", "no"):
+            s.multi_box = False
+        elif mb in ("1", "true", "on", "yes"):
+            s.multi_box = True
+        mbm = (os.environ.get("VERITAS_MULTI_BOX_MAX") or "").strip()
+        if mbm.isdigit() and int(mbm) >= 1:
+            s.multi_box_max = int(mbm)
+        rb = (os.environ.get("VERITAS_REVIEW_BOOST") or "").strip().lower()
+        if rb in ("0", "false", "off", "no"):
+            s.review_boost = False
+        elif rb in ("1", "true", "on", "yes"):
+            s.review_boost = True
+        rbb = (os.environ.get("VERITAS_REVIEW_BOOST_B") or "").strip()
+        if rbb:
+            try:
+                s.review_boost_b = float(rbb)
+            except ValueError:
+                pass
+        rbk = (os.environ.get("VERITAS_REVIEW_BOOST_K") or "").strip()
+        if rbk.isdigit() and int(rbk) >= 1:
+            s.review_boost_k = int(rbk)
+        rbr = (os.environ.get("VERITAS_REVIEW_BOOST_REFILL") or "").strip()
+        if rbr.isdigit() and int(rbr) >= 0:
+            s.review_boost_refill = int(rbr)
         return s.validate()
 
     @classmethod
@@ -853,6 +893,39 @@ class Settings:
             elif isinstance(raw_evc, (int, str)):
                 s.evolve_value_change = str(raw_evc).strip().lower() not in (
                     "0", "false", "off", "no", "")
+        if "multi_box" in data:
+            raw_mb = data.get("multi_box")
+            if isinstance(raw_mb, bool):
+                s.multi_box = raw_mb
+            elif isinstance(raw_mb, (int, str)):
+                s.multi_box = str(raw_mb).strip().lower() not in (
+                    "0", "false", "off", "no", "")
+        if "multi_box_max" in data:
+            raw_mbm = data.get("multi_box_max")
+            if isinstance(raw_mbm, int) and not isinstance(raw_mbm, bool) \
+                    and raw_mbm >= 1:
+                s.multi_box_max = raw_mbm
+        if "review_boost" in data:
+            raw_rb = data.get("review_boost")
+            if isinstance(raw_rb, bool):
+                s.review_boost = raw_rb
+            elif isinstance(raw_rb, (int, str)):
+                s.review_boost = str(raw_rb).strip().lower() not in (
+                    "0", "false", "off", "no", "")
+        if "review_boost_b" in data:
+            raw_rbb = data.get("review_boost_b")
+            if isinstance(raw_rbb, (int, float)) and not isinstance(raw_rbb, bool):
+                s.review_boost_b = float(raw_rbb)
+        if "review_boost_k" in data:
+            raw_rbk = data.get("review_boost_k")
+            if isinstance(raw_rbk, int) and not isinstance(raw_rbk, bool) \
+                    and raw_rbk >= 1:
+                s.review_boost_k = raw_rbk
+        if "review_boost_refill" in data:
+            raw_rbr = data.get("review_boost_refill")
+            if isinstance(raw_rbr, int) and not isinstance(raw_rbr, bool) \
+                    and raw_rbr >= 0:
+                s.review_boost_refill = raw_rbr
         select_min = data.get("corpus_select_min_sources")
         if isinstance(select_min, int) and not isinstance(select_min, bool) \
                 and select_min >= 0:

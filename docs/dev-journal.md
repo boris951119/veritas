@@ -8,6 +8,17 @@
 
 ---
 
+
+## 批次 C-99 合入（2026-10-30）— 审阅软保底默认开
+
+- **问题**：刘翔 L2 金标段在 A0 装箱外；机械支撑分逃逸；C-98/C-99 量到「审阅分 + A0+B=7000」IMPROVE。
+- **决策**：用户拍「默认先开」。生产默认开；`VERITAS_REVIEW_BOOST=0` 回滚；桩／测试守卫／非 ModelClient／异常 → A0 披露，不吃脚本应答。
+- **改动**：`app/core/review_boost.py`（新）／`app/config.py`／`app/pipeline.py`／`app/agents/prompts.py`（granted）／`tests/test_c99_review_boost.py`。
+- **验证**：整套 `1161 passed, 1 skipped`；`-k "not c99"`＝1153；不许说官方涨分。
+- **开放**：全链路答题真跑另票；超参 B 钉死不扫；六案 lost 旁证未作合入门槛。
+
+---
+
 ## 0. 系统现状速览（审查前的定位地图）
 
 **管线顺序**（`app/pipeline.py: run_case`）：
@@ -22,7 +33,7 @@ load_case（摄取：目录遍历→压缩包安全拆封→图片/链接清单�
 → relevance_layered（信源三档：high/low/zero；人工 override 优先，
   零相关有对撞/高相关标题词汇兜底升档；zero 不进提示词但披露）
 → skills_triggered（skill 注册表按案卷特征条件注入提示词纪律）
-→ material_pack（BM25 段级精排 + 跨信源轮转装箱，预算外全披露）
+→ material_pack（BM25 段级精排 + 跨信源轮转装箱，预算外全披露；默认开 review_boost＝锚审支撑分+A0 软保底，失败回退 A0）
 → image_ocr（图片转码：网关视觉探测通过时逐字转写为低可信派生信源）
 → model_profile（1 次探测调用给模型打纪律遵从档：compliant/standard/noncompliant）
 → run_panel（≥2 分析师硬隔离并行研判；noncompliant 档注入强化规则+derived 契约）
@@ -237,6 +248,24 @@ Excel 转 md 形态未压测；650 上限对超长法律条款仍可能截断语
 - 轮转按「信源」公平而非按「信息量」公平——一个巨大高相关信源可能
   被多个低相关信源挤占预算；
 - 预算按字符计，未与模型实际 token 预算联动（中文≈1.6 字/token 粗略）。
+
+
+### C-96（2026-10-30，只量）关灌满／槽覆盖
+- 探针 `scripts/probe_c96_slot_cover.py`；刘翔主尺 A0=9/14（official_case）。
+- NoFill≡A0（箱内零分段0）；SlotCover FLAT；SlotOnly 0/14 fill≈1%。默认关、生产零 diff。
+
+
+### C-97（2026-10-30，只量）机械支撑分
+- 探针 `scripts/probe_c97_support_rank.py`；刘翔 A0=9/14。
+- SuppPri/Gate/Hard 全 ESCAPE；C85Pri 10/14 lost=1。默认关、生产零 diff。
+
+
+### C-98（2026-10-30，只量）C-85 合入评估
+- 探针 `scripts/probe_c98_c85_merge_eval.py`；boost B*=7k → 11/14 lost0；leave-one 塌；NEED_PAIR_RUN。
+
+
+### C-99（2026-10-30，只量）审阅+软保底配对
+- 刘翔 9→11 lost0；恒兴旁证 Δ0；GO_CANDIDATE 默认关。`scripts/probe_c99_pair_boost.py`
 
 ## 8. 复合输入：链接清单 + 压缩包 + 目录（本批）
 
@@ -2236,3 +2265,158 @@ C45_USE_OLD_JSON=1 OFFICIAL_RUN=/tmp/s4runs/time-20261023-173124 \
       .venv/bin/python -m pytest tests/test_c23_corpus_max.py -q -rs   # 跳格当场点名
       # 密度三键在真产物上的复算＝仓外只读脚本读 report.json 的 accounting.window_ledger.rows（Σ字数÷Σ服务端 token）
       # ⚠ 刀在拷贝树上跑（本仓惯例＝下刀不碰仓库树），复位后要核字节还原一致
+
+## 2026-10-29 零时〔C-81①〕＝改装箱哲学只量（窄进窗）；判据 b 不过⇒逃逸
+
+- **拍板**＝Boyu：①窄进窗 → ②ColBERT → ③金标分类器（前两招不行才开）。
+- **复跑**（零模型）：
+  ```
+  PYTHONPATH=. .venv/bin/python scripts/probe_c81_pack_narrow.py \
+      --run-dir /tmp/six2 --run --out /tmp/c81_pack_narrow.json
+  ```
+- **读数**＝A0 L2 48/105、装入 1637、纯度 0.0293；NZ≈A0；N20 纯度 0.0611 但 L2=22；
+  N40 L2=32 纯度 0.044；N60 L2=39 纯度 0.036。判据 a ✅／b ❌ ⇒ 生产默认不动。
+- **代码**＝`app/core/material.py` 三参数默认关；探针入仓；`tests/test_material_packer.py` 两颗默认同形／封顶格。
+
+## 2026-10-29 一时〔C-82〕＝ColBERT MaxSim 只量；L2 48→45、lost=7 ⇒ 逃逸
+
+- **模型**＝`jinaai/jina-colbert-v2`（多语；answerai-small 中文区分弱故未作主臂）via PyLate；
+  环境＝`/tmp/venv_rerank`（主 `.venv` 无 torch）。
+- **复跑**：
+  ```
+  PYTHONPATH=. .venv/bin/python scripts/probe_c82_colbert.py \
+      --run-dir /tmp/six2 --prepare --out-dir /tmp/c82_colbert
+  HF_ENDPOINT=https://hf-mirror.com \
+    /tmp/venv_rerank/bin/python scripts/score_c82_colbert_pylate.py \
+      --out-dir /tmp/c82_colbert
+  PYTHONPATH=. .venv/bin/python scripts/probe_c82_colbert.py \
+      --run-dir /tmp/six2 --run --out-dir /tmp/c82_colbert
+  ```
+- **读数**＝A0 48/105 装入 1637 纯度 0.0293；CB 45/105 装入 1714 纯度 0.0263；
+  lost=7 gained=4。判据 a ✅／b ❌。打分墙钟 68.7s。
+- **结论**＝late-interaction 在本六案未抬 L2，且净丢金标；与 C-61／C-62 同族逃逸。
+  生产默认不动。下一张＝计划③ 金标分类器只量（hold-out＋不进默认除非另拍）。
+
+## 2026-10-29 一时〔C-83〕＝金标分类器案级 hold-out；LOO 38/105＜A0 48 ⇒ 逃逸
+
+- **协议**＝案级切分；主尺留一案 LOO（池化分母 105）；辅尺训4测2×15 宏平均。
+- **模型**＝char n-gram(2–4) TF-IDF + bm25 + loglen → LogisticRegression(balanced)；
+  只量、`app/` 生产路径不接。
+- **复跑**：
+  ```
+  .venv/bin/pip install scikit-learn   # 一次性
+  PYTHONPATH=. .venv/bin/python scripts/probe_c83_gold_classifier.py \
+      --run-dir /tmp/six2 --run --out /tmp/c83_gold_clf.json
+  ```
+- **读数**＝全量 A0 48/105；LOO 池化 GC 38/105 纯度 0.0398、lost=21 gained=11；
+  训4测2 宏 ΔL2＝−4.8±4.2（＋2／−13）。判据 a ✅／b ❌。
+- **结论**＝「用四案金标训、两案测」**量得出来：跨专题无效（本特征＋线性头）**；
+  不是没做 hold-out，是 hold-out 证明泛化失败。生产默认不动。
+
+## 2026-10-29 一时半〔C-84〕＝BM25→LLM 重排→装箱只量；L2 48→49、lost=3 ⇒ 逃逸
+
+- **形态**＝树13 子智能体想法：BM25 前 K=60 → 本机 Ollama 打「支撑证据」分 → 同 `pack_material`。
+- **模型**＝`veritas-qwen3-14b:latest`；批 12；温度 0；金标不进提示词；并列按 BM25。
+- **复跑**：
+  ```
+  PYTHONPATH=. .venv/bin/python scripts/probe_c84_llm_rerank.py \
+      --run-dir /tmp/six2 --prepare --out-dir /tmp/c84_llm
+  PYTHONPATH=. .venv/bin/python scripts/probe_c84_llm_rerank.py \
+      --run-dir /tmp/six2 --score --out-dir /tmp/c84_llm
+  PYTHONPATH=. .venv/bin/python scripts/probe_c84_llm_rerank.py \
+      --run-dir /tmp/six2 --run --out-dir /tmp/c84_llm
+  ```
+- **读数**＝A0 48/105 纯度 0.0293｜LLM 49/105 纯度 0.0379；lost=3 gained=4。
+  判据 a ✅／b ❌。打分 951.7s／85 调用。
+- **结论**＝净 +1 不够门槛且丢 3 段 A0 金标；生产默认不动。
+  与 C-81／C-82／C-83 同族＝通用／语义重排抬 L2 未过线。
+
+## 2026-10-29 二时一刻〔C-84b〕＝LLM 重排提示词加约束；L2 仍 48、lost=3 ⇒ 逃逸
+
+- **改动**＝`prompt-ver=v2`：直接支撑分档、否决上限、每批满分名额、议题锚、SEG 头+尾。
+- **复跑**：
+  ```
+  PYTHONPATH=. .venv/bin/python scripts/probe_c84_llm_rerank.py \
+      --run-dir /tmp/six2 --prepare --score --run \
+      --out-dir /tmp/c84_llm_v2 --prompt-ver v2
+  ```
+- **读数**＝A0 48/105｜v2 48/105 纯度 0.0372 lost=3 gained=3；
+  对照 v1＝49/105。≥9.5 占比 19.5%→16.9%。判据 a ✅／b ❌。
+- **结论**＝约束改变了分数分布，未抬 L2；生产默认不动；排序轴提示词堆叠到此收。
+
+## 2026-10-29 三时半〔C-85〕＝先锚后审 B→自动 C；L2 48→49→52 仍逃逸
+
+- **B**＝本地 14B 抽审查锚 + 按锚批审 + 装箱。
+- **C 闸**＝B 的 L2>A0 才开；弱锚 K 外补召回再审（分≥6 并入）。
+- **复跑**：
+  ```
+  PYTHONPATH=. .venv/bin/python scripts/probe_c85_anchor_review.py \
+      --run-dir /tmp/six2 --auto --out-dir /tmp/c85_auto
+  ```
+- **读数**＝A0 48/105｜B 49/105 lost=3｜C 52/105 lost=2 gained=6。
+  判据 a ✅／b ❌（≥54 且 lost=0）。
+- **结论**＝过程对齐「审查员」后有抬，未过线；生产默认不动。
+
+## 2026-10-29 九时〔决策〕＝保留 C-85＋续盒为当前最有效组合
+
+- Boyu：先保留先锚后审（±补召回）＋增加盒子；暂无更优已量方案。
+- 续盒＝生产默认开；C-85＝只量未合入。合入另票。
+
+## 2026-10-29 十时〔C-85×3〕＝候选 180 两臂；BM25 开抬到 57、关掉崩到 36
+
+- **①** `--k 180`：B 56／C 57（lost 5／6）；对照 K60-C＝52。
+- **②** `--k 180 --no-bm25`：B 36 lost=24，跳过 C。
+- **结论**＝扩大候选有效；关 BM25 选候选不行。正式门槛仍要 lost=0。
+
+## 2026-10-29 十一时半〔C-86〕＝扩写→BM25-RRF→锚审；B=52／C=51 未超 K180
+
+- 跳过切片打标；K=120；自动 C。
+- 读数 B 52 lost=5｜C 51 纯度 0.0363 lost=6 gained=9。
+- 对照 C-85 K60-C＝52／K180-C＝57。生产默认不动。
+
+## C-87 双边打标扩写（吉隆打通，2026-10-29）
+
+- 只量：`scripts/probe_c87_bilateral_tag_expand.py`；产物 `/tmp/c87_jilong/`。
+- 约束写成可观测门（substance／hotword／unique_pool／unique_gold／lost），不当保险。
+- 吉隆 3 题：A0 6/18 → B 2/18，lost=4；unique_gold=0（label 金 2 vs BM25 金 7）。
+- 裁决：不扩六案、不进生产；主组合仍 C-85＋续盒。
+
+## C-89 装箱前白箱三态闸（2026-10-29）
+
+- 借鉴唯稳律：allow／deny／review 硬闸挂召回后装箱前；非因果发现。
+- GATE（C86 池）L2 24/105、误杀金标 45、拒标率 0.83 → 逃逸；默认关。
+- 探针 `scripts/c89_whitebox_gate.py`／`scripts/probe_c89_whitebox_gate.py`；`/tmp/c89_gate/`。
+
+## 〔C-90〕2026-10-29 二十一时 · C-85 K180 lost 分层（零模型）
+
+Qoder 第一阶段：冻结 `/tmp/c85_k180`，对照现行密度装箱 vs 分主序（长度只卡预算）。
+
+- 复现：A0 48/105，C 57，lost 6，gained 15。
+- lost-6：审查分低 3（rev 0/2/3）＋密度挤出 3（其中 2×rev=6）；未进候选＝0。
+- 分主序：59/105，lost 4，gained 15；救回 3 段 L3、新丢 1；门槛 b 逃逸。
+- 产物：`scripts/probe_c90_loss_locate.py`，`/tmp/c90_loss/summary.json`。生产默认不动。
+
+## 〔C-91〕2026-10-29 · 单窗 lost 软保底（零模型）
+
+接 C-90：修单窗 lost（①②）。锁全 A0／回补全 A0 ⇒ L2 塌回 48。A0 段融合分 +B 再分主序：B∈[7000,8000] 过门槛 b；最好约 B=7500 → 56/105 lost=0 gained=8。未进生产。
+
+## 〔C-92〕2026-10-29 · 事实槽选段只量（逃逸）
+
+按「ledger 槽＋议题短语＋BM25、分主序」只量。金标 105 中仅 39 段有台账事实。最好融合臂 L2 45/105＜A0 48，全逃逸。生产不动。
+
+## 〔214〕2026-10-29 · 选段测试金标默认改刘翔
+
+Boyu：拓尔思改过刘翔样例；其余专题金标反馈不一定全准。以后 L2／装箱只量默认刘翔（14 段分母）；六案 105 仅旁证。
+
+## 〔C-93〕2026-10-29 · 双切召回只量（逃逸）
+
+官方段↔hier-v1 自切双路 BM25，重叠映射回 para_id 后合并装箱。六案最好 RRF 47/105 lost=7（本探针 A0=46）。逃逸、默认关。探针 `scripts/probe_c93_dual_cut.py`。
+
+## 〔C-94〕2026-10-29 · 纯自切通路只量（伪分）
+
+全链路 hier-v1 自切装箱，映回官方金标得伪 L2＝45/105（A0 真 46，lost=10）。解读：切法本身非主因。默认关。`scripts/probe_c94_self_cut_pack.py`。
+
+## 〔C-95〕2026-10-29 · 刘翔主尺 C-91±C-85
+
+刘翔 14 段：A0=8；C85=9 lost1；C91 B*=0 →8；C91⊕C85 B*=0 →10 lost0 gained2；LOO 6/6。增益在融合分+分主序非六案 B。默认关。
+

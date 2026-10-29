@@ -585,20 +585,78 @@ def run_case(spec: RunSpec | None = None,
         # 钉死后全员同料：不许再传 settings.material_char_budget 实参
 
         pack = pack_material(dossier)
+        # C-99：锚审支撑分 + A0 软保底（默认开；失败／桩／测试守卫 → 回退 A0）
+        # 只在真实 ModelClient 上跑——注入桩会吃脚本应答；测试会话守卫上膛也不跑
+        review_disc: dict = {"applied": False, "reason": "skipped"}
+        from app.llm.model_client import real_call_guard_armed
+        _rb_on = bool(getattr(settings, "review_boost", True))
+        if not _rb_on:
+            review_disc = {"applied": False, "reason": "flag_off"}
+        elif client is None:
+            review_disc = {"applied": False, "reason": "no_client"}
+        elif real_call_guard_armed():
+            review_disc = {"applied": False, "reason": "test_guard_fallback_a0"}
+        elif not isinstance(client, ModelClient):
+            review_disc = {"applied": False, "reason": "non_model_client"}
+        else:
+            from app.core.review_boost import try_review_boost_pack
+
+            model_name = (
+                settings.models[0] if settings.models else ""
+            ) or ""
+
+            def _review_chat(prompt: str, _m=model_name) -> str:
+                resp = client.chat(
+                    _m, [{"role": "user", "content": prompt}],
+                    json_mode=False,
+                )
+                return str(getattr(resp, "content", "") or "")
+
+            pack, review_disc = try_review_boost_pack(
+                dossier,
+                chat=_review_chat,
+                budget_chars=pack.get("budget"),
+                enabled=True,
+                B=float(getattr(settings, "review_boost_b", 7000) or 7000),
+                k=int(getattr(settings, "review_boost_k", 180) or 180),
+                refill_n=int(getattr(settings, "review_boost_refill", 40) or 0),
+                do_refill=int(
+                    getattr(settings, "review_boost_refill", 40) or 0) > 0,
+            )
+        dossier.accounting["review_boost"] = dict(review_disc)
         # C-29：进窗标注只读这份 accounting，不许再调 pack_material（task #60）
+        # 首箱 selected＝主编队同料；续盒并集另记 multi_box（树16）
         dossier.accounting["material_pack_selected"] = sorted(pack["selected"])
+        multi_plan = None
+        if bool(getattr(settings, "multi_box", True)):
+            from app.core.material import (
+                multi_box_accounting, pack_continuation_boxes,
+            )
+            multi_plan = pack_continuation_boxes(
+                dossier,
+                budget_chars=pack.get("budget"),
+                max_boxes=int(getattr(settings, "multi_box_max", 3) or 3),
+            )
+            dossier.accounting["multi_box"] = multi_box_accounting(multi_plan)
+            dossier.accounting["material_pack_union"] = sorted(
+                multi_plan.get("union_selected") or [])
         from app.core.precedent import build_precedent_ledger
         dossier.accounting["precedent"] = build_precedent_ledger(dossier).to_dict()
         chain.append("material_pack", "pipeline", {
             "budget": pack["budget"],
             "n_total": pack["n_total"],
             "n_selected": len(pack["selected"]),
-            "n_excluded": len(pack["excluded"]),
+            "n_excluded": len(pack.get("excluded") or []),
             "pack_window": dict(pack_window),
+            "multi_box_n": (multi_plan or {}).get("n_boxes"),
+            "review_boost_applied": bool(review_disc.get("applied")),
         })
         prog.note(n_total=pack["n_total"], n_selected=len(pack["selected"]),
-                  n_excluded=len(pack["excluded"]), budget=pack["budget"],
-                  pack_fits=pack_window.get("fits"))
+                  n_excluded=len(pack.get("excluded") or []),
+                  budget=pack["budget"],
+                  pack_fits=pack_window.get("fits"),
+                  multi_box_n=(multi_plan or {}).get("n_boxes"),
+                  review_boost=bool(review_disc.get("applied")))
 
     model_of = {a.name: a.model for a in analysts}
 
@@ -658,6 +716,47 @@ def run_case(spec: RunSpec | None = None,
         dossier.rejected = rejected
         numeric = audit_numeric(dossier) + audit_counting(dossier)
         prog.note(n_rejected=len(rejected), n_numeric_flags=len(numeric))
+
+    # 树16／C-66：续盒——第 2‥N 箱定向补答（真模型路径；桩路径跳过保确定性）
+    if (bool(getattr(settings, "multi_box", True)) and not injected_client
+            and analysts and client is not None):
+        from app.agents.multi_box import run_multi_box_passes
+
+        with prog.stage("multi_box", "续盒定向研判"):
+            mb_budget = (dossier.accounting.get("multi_box") or {}).get(
+                "budget")
+            if mb_budget is None:
+                mb_budget = (dossier.accounting.get("pack_window") or {}).get(
+                    "budget")
+            mb = run_multi_box_passes(
+                dossier, analysts,
+                max_boxes=int(getattr(settings, "multi_box_max", 3) or 3),
+                budget_chars=mb_budget,
+                on_done=_on_analyst_done,
+            )
+            # 合并到已有装箱账（保留 per_box 装入面）
+            prev = dict(dossier.accounting.get("multi_box") or {})
+            prev.update({
+                "status": mb.get("status"),
+                "passes": mb.get("passes") or [],
+                "n_conclusions": mb.get("n_conclusions") or 0,
+                "reason": mb.get("reason") or "",
+            })
+            dossier.accounting["multi_box"] = prev
+            chain.append("multi_box", "pipeline", {
+                "status": mb.get("status"),
+                "n_boxes": mb.get("n_boxes"),
+                "n_conclusions": mb.get("n_conclusions"),
+                "n_passes": len(mb.get("passes") or []),
+            })
+            if mb.get("n_conclusions"):
+                more_rej = _reject_failed_citations(dossier, chain)
+                rejected = list(dossier.rejected or []) + more_rej
+                dossier.rejected = rejected
+                numeric = audit_numeric(dossier) + audit_counting(dossier)
+            prog.note(status=mb.get("status"),
+                      n_boxes=mb.get("n_boxes"),
+                      n_conclusions=mb.get("n_conclusions"))
 
     # 刀十一：第一轮引文闸后，就未引用的议题关键段再定向补一轮。
     # 注入桩路径默认跳过（离线演示/单测确定性）；真模型路径默认开。
@@ -835,7 +934,9 @@ def run_case(spec: RunSpec | None = None,
                      "mechanical_merge", "fact_ledger_stats",
                      "prompt_window", "pack_window", "dependency",
                      "corpus_select_max_disclosures", "causal_claim",
-                     "claim_slots", "ledger_outlier_tag", "window_ledger")}
+                     "claim_slots", "ledger_outlier_tag",
+                     "multi_box", "material_pack_union", "review_boost",
+                     "window_ledger")}
     dossier.accounting = {
         **kept,
         "elapsed_s": round(time.monotonic() - t0, 1),
@@ -1731,8 +1832,34 @@ def _render_excluded_sources(lines: list[str], dossier: Dossier) -> None:
     from app.core.relevance import classify_sources
 
     pack = pack_material(dossier)
+    mb = (dossier.accounting or {}).get("multi_box") or {}
+    if isinstance(mb, dict) and int(mb.get("n_boxes") or 0) > 1:
+        lines += ["## 续盒（多箱）", ""]
+        per = mb.get("per_box") or []
+        parts = [
+            f"第{b.get('index')}箱 {b.get('n_selected')} 段"
+            for b in per if isinstance(b, dict)
+        ]
+        lines.append(
+            f"- 共 {mb.get('n_boxes')} 箱"
+            f"（上限 {mb.get('max_boxes')}）："
+            + ("；".join(parts) if parts else "无明细")
+        )
+        lines.append(
+            f"- 并集装入 {mb.get('n_union')} 段"
+            f"（首箱 {len(pack.get('selected') or [])} 段；"
+            f"续盒状态 {mb.get('status') or 'planned'}）"
+        )
+        lines.append(
+            "- 墙钟随盒数上升；并集到达 ≠ 官方得分涨分。"
+        )
+        lines.append("")
     if pack["excluded"]:
         lines += ["## 因预算未进入研判的段落", ""]
+        # 续盒开启时：名单仍按首箱 excluded；并集已覆盖段在文案里注明
+        union = set()
+        if isinstance(mb, dict):
+            union = {str(x) for x in (mb.get("union_selected") or [])}
         by_source: dict[str, list[tuple[str, str]]] = {}
         for e in pack["excluded"]:
             by_source.setdefault(e["source_id"], []).append(
@@ -1742,13 +1869,19 @@ def _render_excluded_sources(lines: list[str], dossier: Dossier) -> None:
             segs = [g for g, _ in items]
             reasons = {r for _, r in items if r}
             sample = "、".join(segs[:3]) + (" 等" if len(segs) > 3 else "")
+            covered = sum(1 for g in segs if g in union)
             if WINDOW_EXCLUDE_REASON in reasons:
                 why = WINDOW_EXCLUDE_REASON
             elif "BM25 排序未入预算" in reasons:
                 why = "BM25 排序后超出资料预算，未进入分析师视野"
             else:
                 why = "超出资料预算，未进入分析师视野"
-            lines.append(f"- `{sid}`：{len(segs)} 段（{sample}）——{why}")
+            extra = (
+                f"；其中 {covered} 段已由续盒补入"
+                if covered else ""
+            )
+            lines.append(
+                f"- `{sid}`：{len(segs)} 段（{sample}）——{why}{extra}")
         lines.append("")
 
     from app.core.relevance import (
