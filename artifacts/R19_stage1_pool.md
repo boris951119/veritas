@@ -63,5 +63,5 @@
 | q_003 | 4 | 1 | 2 | 0 | — |
 
 ## 路径
-- `/Users/liuboyu/Developer/veritas-obsidian-kg-exp/artifacts/R19_stage1_pool.json`
-- `/Users/liuboyu/Developer/veritas-obsidian-kg-exp/artifacts/R19_stage1_pool.md`
+- `artifacts/R19_stage1_pool.json`
+- `artifacts/R19_stage1_pool.md`
