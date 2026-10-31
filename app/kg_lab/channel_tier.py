@@ -23,6 +23,16 @@ _CENTRAL = (
     "globaltimes.cn",
     "workercn.cn",
 )
+# 部委／外交／联合国原文站（可迁移；高于通稿转载）
+_MINISTRY = (
+    "mfa.gov.cn",
+    "fmprc.gov.cn",
+    "mod.gov.cn",
+    "gov.cn",
+    "state.gov",
+    "un.org",
+    "whitehouse.gov",
+)
 _LOCAL = (
     "shjjjc.gov.cn",
     "jfdaily.com",
@@ -61,6 +71,10 @@ def channel_tier(url: str, title: str = "") -> str:
         return "self_media"
     if any(h in host for h in _FOREIGN):
         return "foreign_media"
+    if any(h in host for h in _MINISTRY):
+        return "central_official"
+    if host.endswith(".gov.cn") or host.endswith(".gov"):
+        return "central_official"
     if any(h in host for h in _CENTRAL):
         return "central_official"
     if any(h in host for h in _LOCAL):

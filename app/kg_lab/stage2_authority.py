@@ -225,6 +225,7 @@ def _inject_pool_authority(
     k: int,
     max_inject: int = 3,
     head_keep: int = 4,
+    weights: dict[str, float] | None = None,
 ) -> list[str]:
     """仅用池内独有高权威段替换 Top-k 尾部更弱者；前 head_keep 不动。"""
     if k <= head_keep:
@@ -253,9 +254,10 @@ def _inject_pool_authority(
         meta = metas.get(pid) or {}
         # 跨案：可核验＋选项对齐＋时点 比细角色更稳（R18：金标常被标 commentary）
         # R21：portable_role 抬出的可核验转述额外加分，不改一筛 fine_role
+        # R22：意图路由权重偏置
         portable = str(meta.get("portable_role") or "")
         return (
-            portable_authority_unit(feat, meta)
+            portable_authority_unit(feat, meta, weights=weights)
             + 0.35 * float(feat.get("option_align") or feat.get("frame_align") or 0)
             + 0.25 * float(feat.get("has_time_nail") or 0)
             + 0.30 * float(feat.get("verifiability") or 0)
@@ -319,10 +321,23 @@ def authority_rerank(
     use_inbox_dedup: bool = True,
     head_keep: int = 7,
     max_inject: int = 3,
+    density_cut: bool = False,
+    gold_ids: set[str] | None = None,
+    k_min: int = 3,
+    k_max: int = 7,
 ) -> dict[str, Any]:
-    del weights  # 注入／冲突用 DEFAULT_WEIGHTS；骨干不走加权重排
+    """二筛权威重排。
+
+    density_cut=True（R22）：意图路由权重＋盒内密度约束可变 k。
+    gold_ids 仅评测披露，不参与选段。
+    """
+    from app.kg_lab.density_submit import density_constrained_submit
+    from app.kg_lab.intent_routes import classify_route, route_weights
+
     frame = frame or extract_event_frame(question)
-    intent = classify_intent(question, frame)
+    route_info = classify_route(question, frame)
+    intent = route_info.base
+    w_eff = route_weights(route_info.route, weights) if density_cut else weights
     url_of = url_of or {}
     publish_of = publish_of or {}
     box = merge_candidate_box(stage1_ranked, pool_ranked, pool=pool)
@@ -356,12 +371,14 @@ def authority_rerank(
     pairs = build_conflict_pairs(
         order + [p for p in box if p not in set(order)], feats, metas, frame,
     )
-    # 刘翔回归：head_keep≥7；冒烟可降到 3～4 让池内权威段进 Top-k
+    # 刘翔回归：head_keep≥7；冒烟／密度模式可降 head_keep 让池内权威段进前段
+    inj_k = max(k, k_max if density_cut else 7, 7)
     order = _inject_pool_authority(
         order, pool_ranked, feats, metas,
-        pool=pool, k=max(k, 7), max_inject=max_inject, head_keep=head_keep,
+        pool=pool, k=inj_k, max_inject=max_inject, head_keep=head_keep,
+        weights=w_eff,
     )
-    pairs = build_conflict_pairs(order[: max(k, 20)] + box, feats, metas, frame)
+    pairs = build_conflict_pairs(order[: max(inj_k, 20)] + box, feats, metas, frame)
     # 去重保序
     seen: set[str] = set()
     final: list[str] = []
@@ -371,22 +388,78 @@ def authority_rerank(
         seen.add(pid)
         final.append(pid)
 
+    s1_pos = {pid: i for i, (pid, _) in enumerate(stage1_ranked, 1)}
+    pool_pos = {pid: i for i, (pid, _) in enumerate(pool_ranked, 1)}
+
+    density_meta: dict[str, Any] | None = None
+    submit_k = k
+    submit_ids = final[:k]
+    if density_cut:
+        # 池内核心按路由锚点＋主机权威排序后先装，再密度约束可变 k
+        from app.kg_lab.intent_routes import core_rank_score, is_core_candidate
+
+        anchors = route_info.anchors or None
+        pool_scored: list[tuple[float, str]] = []
+        for pid, sc in pool_ranked[:pool]:
+            if float(sc) <= 0:
+                continue
+            if not is_core_candidate(
+                pid, feats=feats, metas=metas, route=route_info.route,
+                pool_pos=pool_pos, anchors=anchors, url_of=url_of,
+            ):
+                continue
+            pool_scored.append((
+                core_rank_score(
+                    pid, feats=feats, metas=metas, route=route_info.route,
+                    pool_pos=pool_pos, anchors=anchors, url_of=url_of,
+                ),
+                pid,
+            ))
+        pool_scored.sort(key=lambda x: (-x[0], x[1]))
+        pool_cores = [pid for _sc, pid in pool_scored]
+        seen_pc: set[str] = set()
+        seeded: list[str] = []
+        for pid in pool_cores + final:
+            if pid in seen_pc:
+                continue
+            seen_pc.add(pid)
+            seeded.append(pid)
+        density_meta = density_constrained_submit(
+            seeded,
+            feats=feats,
+            metas=metas,
+            route=route_info.route,
+            k_min=k_min,
+            k_max=k_max,
+            gold_ids=gold_ids,
+            pool_pos=pool_pos,
+            anchors=anchors,
+            url_of=url_of,
+        )
+        submit_ids = list(density_meta["submission"])
+        submit_k = int(density_meta["k"])
+        # 交卷序提到最前，其余保序跟上（便于 @k 辅表）
+        head = submit_ids
+        tail = [p for p in final if p not in set(head)]
+        final = head + tail
+
     ranked_rows = [
         {
             "id": pid,
             "rank": i,
-            "score": round(portable_authority_unit(feats.get(pid) or {}, metas.get(pid) or {}), 6),
+            "score": round(
+                portable_authority_unit(feats.get(pid) or {}, metas.get(pid) or {}, weights=w_eff),
+                6,
+            ),
             "penalty": 0.0,
             "option_side": str((feats.get(pid) or {}).get("option_side") or ""),
             "authority_band": str((feats.get(pid) or {}).get("authority_band") or ""),
         }
         for i, pid in enumerate(final, 1)
     ]
-    s1_pos = {pid: i for i, (pid, _) in enumerate(stage1_ranked, 1)}
-    pool_pos = {pid: i for i, (pid, _) in enumerate(pool_ranked, 1)}
-    return {
+    out: dict[str, Any] = {
         "pool_ids": box,
-        "top_ids": final[:k],
+        "top_ids": submit_ids,
         "submission": [
             {
                 "id": row["id"],
@@ -395,24 +468,39 @@ def authority_rerank(
                 "option_side": row["option_side"],
                 "authority_band": row["authority_band"],
             }
-            for row in ranked_rows[:k]
+            for row in ranked_rows[:submit_k]
         ],
         "conflict_pairs": pairs,
-        "intent": intent.to_dict(),
+        "intent": route_info.to_dict(),
         "order": ranked_rows,
-        "scores": {row["id"]: row["score"] for row in ranked_rows[:k]},
+        "scores": {row["id"]: row["score"] for row in ranked_rows[:submit_k]},
         "swallowed": swallowed,
         "near_dup_dropped": near_dup,
         "pool": len(box),
-        "k": k,
-        "n_final": min(k, len(final)),
+        "k": submit_k,
+        "n_final": len(submit_ids),
         "n_from_pool_only": sum(
             1 for pid in box
             if pool_pos.get(pid, 10**9) <= pool and s1_pos.get(pid, 10**9) > pool
         ),
         "no_query_likeness": True,
         "backbone": "inbox_stage1",
+        "density_cut": bool(density_cut),
     }
+    if density_meta is not None:
+        out["density"] = {
+            "k": density_meta["k"],
+            "n_core": density_meta["n_core"],
+            "n_filler": density_meta["n_filler"],
+            "n_other": density_meta["n_other"],
+            "proxy_density": density_meta["density"],
+            "met_target": density_meta["met_target"],
+            "gold_density": density_meta.get("gold_density"),
+            "n_gold": density_meta.get("n_gold"),
+            "route": density_meta["route"],
+            "scan": density_meta["scan"],
+        }
+    return out
 
 
 # 兼容旧测试名
