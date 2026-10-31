@@ -250,12 +250,17 @@ def _inject_pool_authority(
 
     def _promote_score(pid: str) -> float:
         feat = feats.get(pid) or {}
+        meta = metas.get(pid) or {}
         # 跨案：可核验＋选项对齐＋时点 比细角色更稳（R18：金标常被标 commentary）
+        # R21：portable_role 抬出的可核验转述额外加分，不改一筛 fine_role
+        portable = str(meta.get("portable_role") or "")
         return (
-            portable_authority_unit(feat, metas.get(pid) or {})
+            portable_authority_unit(feat, meta)
             + 0.35 * float(feat.get("option_align") or feat.get("frame_align") or 0)
             + 0.25 * float(feat.get("has_time_nail") or 0)
+            + 0.30 * float(feat.get("verifiability") or 0)
             + (0.20 if str(feat.get("option_side") or "") in {"option_a", "option_b"} else 0.0)
+            + (0.15 if portable == "media_relay" and float(feat.get("verifiability") or 0) >= 0.67 else 0.0)
         )
 
     inject = sorted(
@@ -266,21 +271,34 @@ def _inject_pool_authority(
         return order
 
     out = list(order)
-    slots = out[head_keep:k]
-    # 优先替换：低对齐／无对立侧／低可核验的尾部段
-    slots_weak = sorted(
-        slots,
-        key=lambda p: (
-            _promote_score(p),
-            p,
-        ),
-    )
-    for new_pid, victim in zip(inject, slots_weak):
-        if _promote_score(new_pid) <= _promote_score(victim) + 0.02:
+    # R21：高权威／可核验池内段插到保护头之后（进入 Top-k 前段），
+    # 而不是只置换尾部弱段（否则 @7 看不见）。
+    insert_at = max(0, int(head_keep))
+    for new_pid in inject:
+        new_sc = _promote_score(new_pid)
+        # 保护头内已有则不动；已在 Top-k 前段也不重复插
+        if new_pid in out[: max(insert_at + 3, 7)]:
             continue
-        vi = out.index(victim)
-        out[vi] = new_pid
-        out.append(victim)
+        gate = out[insert_at] if insert_at < len(out) else None
+        gate_sc = _promote_score(gate) if gate else -1.0
+        margin = -0.08 if float((feats.get(new_pid) or {}).get("verifiability") or 0) >= 0.67 else 0.0
+        if gate is not None and new_sc <= gate_sc + margin:
+            # 仍尝试置换 Top-k 内最弱者
+            slots = out[insert_at:k]
+            if not slots:
+                continue
+            victim = min(slots, key=lambda p: (_promote_score(p), p))
+            if new_sc <= _promote_score(victim) + margin:
+                continue
+            if new_pid in out:
+                out.remove(new_pid)
+            vi = out.index(victim)
+            out[vi] = new_pid
+            out.append(victim)
+            continue
+        if new_pid in out:
+            out.remove(new_pid)
+        out.insert(insert_at, new_pid)
     return out
 
 
