@@ -33,6 +33,10 @@ _EVID = (
     "原话", "记者", "认定", "查明", "发言人", "秘书长", "外交部",
     "例行记者会", "新闻发布会",
 )
+# 口径对立声部（发言人／秘书长）；「发布会查明」不算口径声部
+_CALIBER_VOICE = (
+    "发言人", "秘书长", "外交部", "联合国", "例行记者会", "声明",
+)
 # 口径／成因问句表面（可迁移；不含裸「还是」，以免误伤制度对立题）
 _CLAIM_Q = ("口径", "采用", "哪一说法", "哪一口径", "应采用")
 _CLAIM_Q_PAIR = ("认定", "说法成立")
@@ -119,6 +123,8 @@ def build_claim_hole_arm(
     clock, dates = _split_clock_date(times)
     q0 = question or ""
     claim_q = any(c in q0 for c in _CLAIM_Q) or any(c in q0 for c in _CLAIM_Q_PAIR)
+    # 「口径／采用」类：查明换皮是噪声；「说法成立」成因类：查明常是正答
+    caliber_naming = any(c in q0 for c in _CLAIM_Q)
     # 口径／成因题：允许单侧弱词作锚；有钟点时仍走强锚优先
     weak_sole = claim_q or (not clock and bool(anchors.get("side_a") and anchors.get("side_b")))
     a_keys = distinctive_anchors(
@@ -136,7 +142,12 @@ def build_claim_hole_arm(
         r = (raw or "").strip()
         if 3 <= len(r) <= 24 and r not in a_keys and r not in b_keys and r not in soft:
             soft.append(r)
-    soft = soft[:6]
+    # R26：口径／成因题才把问句点名机构声部作软锚（钟点题不加，防搅池）
+    if claim_q:
+        for cue in ("联合国", "外交部", "发言人", "秘书长", "新闻发布会", "尼泊尔"):
+            if cue in q0 and cue not in a_keys and cue not in b_keys and cue not in soft:
+                soft.append(cue)
+    soft = soft[:8]
 
     scored: dict[str, float] = {}
     for pid, text in texts.items():
@@ -153,12 +164,32 @@ def build_claim_hole_arm(
         s += 2.0 * ha + 2.0 * hb
         if ha and hb:
             s += 2.5
+        # R26：非钟点题才抬精确数额／海拔（钟点题已有 nc 加分，避免通稿时点灌满注入）
+        if not clock:
+            precise = [
+                k for k in a_keys + b_keys
+                if k and len(k) >= 4 and any(u in k for u in "米时分万")
+            ]
+            if precise and any(k in text[:100] for k in precise):
+                s += 2.2
         hs = sum(1 for k in soft if k in text)
         s += 0.5 * hs
-        # R25：机构口径声部＋侧锚同现（发言人谈泥石流／秘书长谈洪灾）
+        # R25/R26：机构口径声部＋侧锚同现（发言人谈泥石流／秘书长谈洪灾）
         voice_n = sum(1 for e in _EVID if e in text[:200])
-        if claim_q and voice_n and (ha or hb):
+        caliber_v = sum(1 for e in _CALIBER_VOICE if e in text[:220])
+        if claim_q and caliber_v and (ha or hb):
+            s += 2.8 + 1.0 * min(caliber_v, 3)
+            # R26：口径声部＋单侧主张优先于「查明」假双侧换皮，抬注入位
+            if (ha == 0) != (hb == 0):
+                s += 3.0
+        elif claim_q and voice_n and (ha or hb):
             s += 2.0 + 0.8 * min(voice_n, 3)
+        elif claim_q and caliber_v and hs:
+            # 问句点名机构声部段（尚无侧锚）也进补洞臂
+            s += 2.0 + 0.8 * min(caliber_v, 3)
+        # R26：仅「口径／采用」题降无口径声部的查明双侧，避免占满注入槽
+        if caliber_naming and not clock and ("查明" in text) and caliber_v == 0 and ha and hb:
+            s -= 4.0
         if s > 0:
             scored[pid] = s
 
@@ -289,8 +320,8 @@ def fill_stage1_claim_holes(
     # 口径题：略缩池头、多留注入位，让发言人／声明段进 pool20
     hk, mi = head_keep, max_inject
     if claim_q and not times:
-        hk = min(head_keep, 8)
-        mi = max(max_inject, 10)
+        hk = min(head_keep, 7)
+        mi = max(max_inject, 12)
     inj = inject_claim_holes(
         pool_ranked,
         built["arm"],

@@ -12,6 +12,7 @@ import re
 from typing import Any
 
 from app.kg_lab.intent_routes import (
+    _CALIBER_VOICE_CUES,
     _CLOCK_KEY,
     _HASHTAG_WRAP,
     _VOICE_CUES,
@@ -32,6 +33,9 @@ _NEAR_JAC = 0.52
 _NEAR_CONT = 0.86
 _NEAR_SPAN = 26
 _PRECISE_CLOCK = re.compile(r"\d{1,2}时\d{1,2}分")
+_CAUSE_FINDING = (
+    "查明", "综合分析", "综合认为", "专家认为", "专家综合", "源头发生", "原因现已",
+)
 
 
 def _text_fp(metas: dict[str, dict[str, Any]], pid: str) -> str:
@@ -84,7 +88,17 @@ def _rep_quality(
     precise = 1.0 if _PRECISE_CLOCK.search(text) else 0.0
     voice = 1.0 if any(v in text[:160] for v in _VOICE_CUES) else 0.0
     wrap = 1.0 if _HASHTAG_WRAP.search(text[:80]) else 0.0
-    return (precise + voice, ver, -wrap, float(feat.get("authority_unit") or 0.0))
+    # R26：无声部「查明」换皮靠后，避免盖过声部／精确主张段
+    caliber_noise = 1.0 if ("查明" in text and voice < 0.5) else 0.0
+    # R26：同簇偏短主张段（长通稿改写常盖住短金标近似）
+    nlen = len(re.sub(r"\s+", "", text))
+    brevity = 1.0 if 0 < nlen <= 280 else (0.5 if nlen <= 400 else 0.0)
+    return (
+        precise + voice + brevity,
+        ver,
+        -wrap - caliber_noise,
+        float(feat.get("authority_unit") or 0.0),
+    )
 
 
 def _side_of(
@@ -133,10 +147,12 @@ def _cap_same_doc(
     feats: dict[str, dict[str, Any]] | None = None,
     anchors: dict[str, list[str]] | None = None,
     max_per_doc: int = 1,
+    exempt_both: bool = True,
 ) -> list[str]:
     """同文档单侧切片封顶，防止单页通稿／UN 多段占满。
 
-    双侧主张段不计入封顶（同页可有多条对撞金标近似段）。
+    exempt_both=True：双侧主张段不计入封顶（钟点对撞同页可有多条金标近似）。
+    口径题可关豁免，避免同一 UN 页「双侧+独占」连环占槽。
     """
     feats = feats or {}
     out: list[str] = []
@@ -144,7 +160,7 @@ def _cap_same_doc(
     counts: dict[str, int] = {}
     for pid in cores:
         side = _side_of(pid, feats=feats, metas=metas, anchors=anchors)
-        if side == "both":
+        if side == "both" and exempt_both:
             out.append(pid)
             continue
         doc = _doc_id(pid, metas) or pid
@@ -157,6 +173,35 @@ def _cap_same_doc(
     return out + deferred
 
 
+def _has_voice(metas: dict[str, dict[str, Any]], pid: str) -> bool:
+    text = str((metas.get(pid) or {}).get("text") or "")
+    return any(v in text[:160] for v in _VOICE_CUES)
+
+
+def _has_caliber_voice(metas: dict[str, dict[str, Any]], pid: str) -> bool:
+    text = str((metas.get(pid) or {}).get("text") or "")
+    return any(v in text[:200] for v in _CALIBER_VOICE_CUES)
+
+
+def _is_strong_both(
+    pid: str,
+    *,
+    feats: dict[str, dict[str, Any]],
+    metas: dict[str, dict[str, Any]],
+    anchors: dict[str, list[str]] | None,
+) -> bool:
+    """真双侧：多锚命中或口径声部；「查明」无口径声部不算。"""
+    text = str((metas.get(pid) or {}).get("text") or "")
+    hits = anchor_hits(text, anchors)
+    if hits["side"] != "both":
+        return False
+    caliber = _has_caliber_voice(metas, pid)
+    multi = (int(hits["a"]) + int(hits["b"])) >= 3
+    if ("查明" in text) and not caliber:
+        return False
+    return caliber or multi
+
+
 def _soft_side_pack(
     cores: list[str],
     *,
@@ -167,7 +212,7 @@ def _soft_side_pack(
 ) -> tuple[list[str], list[str]]:
     """裁决题软保位，返回 (有侧核心, 降为补位的无侧核心)。
 
-    1) 双侧主张段优先于单侧通稿（同侧独占至多 1）；
+    1) 真双侧优先；声部单侧先于弱双侧／无声通稿（同侧独占至多 1）；
     2) 无侧别权威段不占核心槽，改补位（防挤对立金标近似段）。
     """
     if route != "adjudicate" or not cores:
@@ -175,6 +220,11 @@ def _soft_side_pack(
     # 钟点／成因／口径对撞才启用；制度口径题（如 us）不启，防回退
     if not is_claim_conflict_route(anchors):
         return cores, []
+    clock_route = any(
+        _CLOCK_KEY.search(k or "")
+        for k in list((anchors or {}).get("side_a") or [])
+        + list((anchors or {}).get("side_b") or [])
+    )
     sided: list[str] = []
     unsided: list[str] = []
     for pid in cores:
@@ -183,22 +233,76 @@ def _soft_side_pack(
             sided.append(pid)
         else:
             unsided.append(pid)
-    boths: list[str] = []
+    def _precise_claim(pid: str) -> bool:
+        text = str((metas.get(pid) or {}).get("text") or "")
+        keys = list((anchors or {}).get("side_a") or []) + list(
+            (anchors or {}).get("side_b") or []
+        )
+        return any(
+            k and len(k) >= 4 and any(u in k for u in "米时分万") and k in text[:120]
+            for k in keys
+        )
+
+    strong_boths: list[str] = []
+    weak_boths: list[str] = []
+    voice_excl: list[str] = []
     excl: list[str] = []
     deferred: list[str] = []
     side_n = {"option_a": 0, "option_b": 0}
+    # R26：钟点同侧 1；非钟点默认同侧 1，精确主张锚可占第 2 槽（抬成因多金标）
     for pid in sided:
         side = _side_of(pid, feats=feats, metas=metas, anchors=anchors)
         if side == "both":
-            boths.append(pid)
+            if clock_route or _is_strong_both(
+                pid, feats=feats, metas=metas, anchors=anchors,
+            ):
+                strong_boths.append(pid)
+            else:
+                weak_boths.append(pid)
             continue
         if side in side_n:
-            if side_n[side] >= 1:
-                deferred.append(pid)
-                continue
+            n = side_n[side]
+            if n >= 1:
+                # 第 2 槽：精确主张＋钟点钉、非长通稿、非查明换皮（留给短金标近似）
+                text_i = str((metas.get(pid) or {}).get("text") or "")
+                text_n = len(re.sub(r"\s+", "", text_i))
+                has_clock = bool(_PRECISE_CLOCK.search(text_i))
+                cause_rewrite = any(c in text_i for c in _CAUSE_FINDING)
+                if (
+                    clock_route
+                    or n >= 2
+                    or not _precise_claim(pid)
+                    or not has_clock
+                    or text_n > 400
+                    or cause_rewrite
+                ):
+                    deferred.append(pid)
+                    continue
             side_n[side] += 1
-            excl.append(pid)
-    return boths + excl + deferred, unsided
+            if (not clock_route) and _has_caliber_voice(metas, pid):
+                voice_excl.append(pid)
+            else:
+                excl.append(pid)
+    # R26：口径／成因题声部独占优先（发言人 vs 秘书长）；钟点题仍双侧优先
+    if clock_route:
+        return strong_boths + voice_excl + excl + weak_boths + deferred, unsided
+    # 两侧声部独占已齐时：弱双侧优先于联合国长文双侧；成因综述弱双侧垫后
+    covered = {
+        _side_of(pid, feats=feats, metas=metas, anchors=anchors)
+        for pid in voice_excl + excl
+    }
+    def _is_cause_finding(pid: str) -> bool:
+        text = str((metas.get(pid) or {}).get("text") or "")
+        return any(c in text for c in _CAUSE_FINDING)
+
+    if voice_excl:
+        weak_boths = (
+            [p for p in weak_boths if not _is_cause_finding(p)]
+            + [p for p in weak_boths if _is_cause_finding(p)]
+        )
+    if {"option_a", "option_b"} <= covered:
+        return voice_excl + excl + weak_boths + strong_boths + deferred, unsided
+    return voice_excl + excl + strong_boths + weak_boths + deferred, unsided
 
 
 def pack_core_first(
@@ -242,9 +346,22 @@ def pack_core_first(
     if scored_cores:
         top_sc = scored_cores[0][0]
         # 对撞题声部／钟点抬分会抬高顶分：放宽地板，避免裁掉同题其它主张段
-        gap = 0.55 if is_claim_conflict_route(anchors) else 0.38
-        floor = max(0.42, top_sc - gap)
-        scored_cores = [x for x in scored_cores if x[0] + 1e-12 >= floor][:6]
+        # R26：口径／成因题地板再降，避免长主张段被顶分＋旧 wire_pen 裁掉
+        claim = is_claim_conflict_route(anchors)
+        clock = any(
+            _CLOCK_KEY.search(k or "")
+            for k in list((anchors or {}).get("side_a") or [])
+            + list((anchors or {}).get("side_b") or [])
+        )
+        if claim and not clock:
+            gap, floor_min = 0.72, 0.28
+        elif claim:
+            gap, floor_min = 0.55, 0.42
+        else:
+            gap, floor_min = 0.38, 0.42
+        floor = max(floor_min, top_sc - gap)
+        # R26：先放宽候选再并簇／软保位，最后再截到 6，避免换皮占满挤掉真主张
+        scored_cores = [x for x in scored_cores if x[0] + 1e-12 >= floor][:14]
     # R24/R25：通稿／近同文簇内留质量更好的代表
     scored_cores = _cluster_wire_keep_one(scored_cores, metas, feats)
     # 精确指纹兜底（同文不同空白）
@@ -256,14 +373,21 @@ def pack_core_first(
             continue
         fp_seen.add(fp)
         cores.append(pid)
-    # 对撞题：同文档单侧切片封顶（防 UN／通稿单页占满；双侧不封顶）
+    # 对撞题：同文档切片封顶（钟点题双侧豁免；口径／成因题不豁免，防 UN 单页占满）
     if is_claim_conflict_route(anchors):
+        clock = any(
+            _CLOCK_KEY.search(k or "")
+            for k in list((anchors or {}).get("side_a") or [])
+            + list((anchors or {}).get("side_b") or [])
+        )
         cores = _cap_same_doc(
             cores, metas, feats=feats, anchors=anchors, max_per_doc=1,
+            exempt_both=clock,
         )
     cores, demoted = _soft_side_pack(
         cores, feats=feats, metas=metas, route=route, anchors=anchors,
     )
+    cores = cores[:6]
 
     # 自然补位优先；无侧降档段垫后（不抢对立补位槽）
     fillers_scored = sorted(

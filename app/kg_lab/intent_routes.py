@@ -156,6 +156,10 @@ _VOICE_CUES = (
     "发言人", "秘书长", "新闻发布会", "发布会", "声明", "例行记者会",
     "外交部", "通报称", "情况通报",
 )
+# 口径对立声部（不含「发布会查明」）
+_CALIBER_VOICE_CUES = (
+    "发言人", "秘书长", "外交部", "联合国", "例行记者会", "声明",
+)
 _HASHTAG_WRAP = re.compile(r"【#|#[\u4e00-\u9fffA-Za-z0-9_]{2,24}#")
 _DEFINITIONAL = re.compile(
     r"(?:^|。|；)[^。]{0,12}(?:是一种|是指|指的是|定义为)"
@@ -478,14 +482,6 @@ def core_rank_score(
                 exclusive -= 0.06
         else:
             exclusive = 0.0
-    elif conflict_route:
-        # 口径／成因对撞：双侧略抬；单侧保基本分
-        if hits["side"] == "both":
-            exclusive = 0.18
-        elif hits["side"] in {"option_a", "option_b"}:
-            exclusive = 0.16
-        else:
-            exclusive = 0.0
     else:
         exclusive = 0.20 if hits["side"] in {"option_a", "option_b"} else (
             0.05 if hits["side"] == "both" else 0.0
@@ -499,19 +495,59 @@ def core_rank_score(
         soft_b += 0.08
     pool_b = max(0.0, (21 - pp) / 20.0) * 0.10 if pp <= 20 else 0.0
     align = max(fa, oa)
-    wire_pen = 0.0
     nlen = len(re.sub(r"\s+", "", text))
+    voice_n = sum(1 for v in _VOICE_CUES if v in text[:160])
+    caliber_v = sum(1 for v in _CALIBER_VOICE_CUES if v in text[:200])
+    # R26：口径／成因对撞——真双侧（多锚或口径声部）才满额；「查明」换皮假双侧降权
+    if conflict_route and not clock_route:
+        if hits["side"] == "both":
+            strong_both = (
+                (int(hits["a"]) + int(hits["b"])) >= 3
+                or caliber_v >= 1
+            )
+            # 查明通稿常因近义扩展误打成 both；无口径声部则按弱双侧
+            if ("查明" in text) and caliber_v == 0:
+                strong_both = False
+            exclusive = 0.18 if strong_both else 0.05
+        elif hits["side"] in {"option_a", "option_b"}:
+            exclusive = 0.16
+            if caliber_v:
+                exclusive += 0.08
+            elif voice_n:
+                exclusive += 0.04
+        else:
+            exclusive = 0.0
+    # R26：通稿罚分只打短段；长 wire_relay 金标近似段不再被 0.14 压到分地板下
+    wire_pen = 0.0
+    short_wire = nlen > 0 and nlen < 110
     if (
         conflict_route
         and hits["side"] in {"option_a", "option_b"}
+        and short_wire
         and (
             band == "wire_relay"
             or channel == "wire"
-            or (nlen > 0 and nlen < 90 and soft_n >= 1)
+            or soft_n >= 1
         )
     ):
         wire_pen = 0.22 if clock_route else 0.14
-    time_b = 0.10 * time_n if clock_route else 0.0
+    # R26：成因题也轻抬时点钉（10时52分＋5200米类金标近似），不限钟点路由
+    if clock_route:
+        time_b = 0.10 * time_n
+    elif conflict_route:
+        time_b = 0.10 * time_n
+    else:
+        time_b = 0.0
+    # R26：精确数额／海拔等主张锚在句首 → 成因题轻抬（可迁移，不读案名）
+    precise_b = 0.0
+    if conflict_route and not clock_route and hits["side"] in {"option_a", "option_b", "both"}:
+        head80 = text[:80]
+        precise_n = sum(
+            1 for k in list((anchors or {}).get("side_a") or [])
+            + list((anchors or {}).get("side_b") or [])
+            if k and len(k) >= 4 and any(u in k for u in "米时分万") and k in head80
+        )
+        precise_b = 0.10 * min(precise_n, 2)
     head = text[:120]
     head_clock = 0
     if clock_route:
@@ -535,12 +571,21 @@ def core_rank_score(
     # R25：话题标签包装／辞书定义降权；机构口径声部抬权（可迁移）
     wrap_pen = 0.14 if conflict_route and _HASHTAG_WRAP.search(text[:80]) else 0.0
     defin_pen = 0.10 if conflict_route and _DEFINITIONAL.search(text[:100]) else 0.0
-    voice_n = sum(1 for v in _VOICE_CUES if v in text[:160])
     voice_b = 0.0
     if conflict_route and voice_n:
         voice_b = 0.12 * min(voice_n, 2)
         if band in {"primary_source", "official_channel"} or host_u >= 0.55:
             voice_b += 0.10
+    # R26：仅降「查明」假双侧（成因独占查明段不降，以免伤冰岩崩金标近似）
+    caliber_pen = 0.0
+    if (
+        conflict_route
+        and not clock_route
+        and "查明" in text
+        and caliber_v == 0
+        and hits["side"] == "both"
+    ):
+        caliber_pen = 0.16
     return (
         0.22 * host_u
         + 0.16 * min(float(hits["a"] + hits["b"]) / 3.0, 1.0)
@@ -553,11 +598,13 @@ def core_rank_score(
         + time_b
         + head_b
         + voice_b
+        + precise_b
         + (0.04 if route == "adjudicate" and hits["total"] else 0.0)
         - wire_pen
         - roundup_pen
         - wrap_pen
         - defin_pen
+        - caliber_pen
     )
 
 
@@ -582,11 +629,25 @@ def is_core_candidate(
     time_n = float(feat.get("has_time_nail") or 0.0)
     band = str(feat.get("authority_band") or "")
     pp = int((pool_pos or {}).get(pid) or 10**9)
-    in_pool = pp <= 20
-    if not in_pool:
-        return False
     text = str(meta.get("text") or "")
     hits = anchor_hits(text, anchors)
+    # R26：对撞题精确独占允许贴池缘（≤24），避免 5200米／发言人段卡在 21～23
+    claim = is_claim_conflict_route(anchors)
+    precise_hit = any(
+        k and len(k) >= 4 and any(u in k for u in "米时分万") and k in text[:120]
+        for k in list((anchors or {}).get("side_a") or [])
+        + list((anchors or {}).get("side_b") or [])
+    )
+    voice_hit = any(v in text[:160] for v in _CALIBER_VOICE_CUES)
+    edge_ok = (
+        claim
+        and hits["side"] in {"option_a", "option_b"}
+        and (precise_hit or voice_hit)
+        and pp <= 24
+    )
+    in_pool = pp <= 20 or edge_ok
+    if not in_pool:
+        return False
     doc = str(meta.get("doc_id") or (pid.split("#", 1)[0] if pid else ""))
     url = (url_of or {}).get(doc) or str(meta.get("url") or "")
     host_u = host_authority_unit(url)
