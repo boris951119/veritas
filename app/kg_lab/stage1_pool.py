@@ -36,22 +36,37 @@ def _para_neighbors(para_id: str, known: set[str], *, window: int = 1) -> list[s
 def _view_rankings(
     index: KgIndex, question: str, *, use_llm_views: bool,
 ) -> tuple[list[list[tuple[str, float]]], list[dict[str, str]], list[str]]:
+    """一筛偏召回。裁决型：对立选项＋证据臂；非裁决：保留多视图。"""
+    from app.kg_lab.question_intent import adjudication_queries, classify_intent
+
     frame = extract_event_frame(question)
-    views = all_query_views(question, use_llm=use_llm_views, frame=frame)
+    intent = classify_intent(question, frame)
+    if intent.adjudication:
+        views = adjudication_queries(question, frame)
+        # 裁决型仍可加 LLM 证据改写，但默认规则即可
+        if use_llm_views:
+            for v in all_query_views(question, use_llm=True, frame=frame):
+                if v["view"] in {"evidence", "conclusion"} and not any(
+                    v["query"] == x["query"] for x in views
+                ):
+                    views.append(v)
+    else:
+        views = all_query_views(question, use_llm=use_llm_views, frame=frame)
     rankings: list[list[tuple[str, float]]] = []
     queries: list[str] = []
     view_meta: list[dict[str, str]] = []
     for v in views:
-        # raw 已在经典臂；这里仍跑非 raw 视图
         if v["id"] == "raw":
             continue
         qq = v["query"]
         q_exp = keyword_expand_query(qq, index.rows)
-        rankings.append(index.bm25_text(qq))
+        # 视图臂用父标题＋段；不改经典臂的纯正文 BM25
+        rankings.append(index.bm25_title_text(qq))
         rankings.append(index.bm25_summary(q_exp))
-        rankings.append(index.embed_rank(qq))
+        if not intent.adjudication or v["view"] in {"evidence", "conclusion"}:
+            rankings.append(index.embed_rank(qq))
         queries.extend([qq, q_exp])
-        view_meta.append(v)
+        view_meta.append({**v, "intent": intent.kind})
     return rankings, view_meta, queries
 
 
