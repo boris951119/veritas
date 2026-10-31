@@ -26,7 +26,8 @@ _WEAK = frozenset({
 _DISTINCT = re.compile(
     r"\d|[A-Za-z]{3,}|"
     r"时|分|米|万|元|渠道|主渠道|溃决|冰岩|冰川|通稿|监控|"
-    r"买断|补偿|编制|放行|联合国|危机|沟通"
+    r"买断|补偿|编制|放行|联合国|危机|沟通|"
+    r"政府介入|政府控制|政府监管|失控|责任"
 )
 _EVID = (
     "监控", "通稿", "新闻稿", "发布会", "公报", "通报", "声明",
@@ -40,6 +41,8 @@ _CALIBER_VOICE = (
 # 口径／成因问句表面（可迁移；不含裸「还是」，以免误伤制度对立题）
 _CLAIM_Q = ("口径", "采用", "哪一说法", "哪一口径", "应采用")
 _CLAIM_Q_PAIR = ("认定", "说法成立")
+# 责任／主体对立问句（可迁移；与口径题同走补洞降门槛）
+_CLAIM_Q_RESP = ("责任", "承担", "该由", "失控", "由政府", "企业承担")
 
 _PARA_ORD = re.compile(r"^(?P<doc>.+)#p(?P<n>\d+)$")
 
@@ -122,9 +125,14 @@ def build_claim_hole_arm(
     times = expand_question_times(question)
     clock, dates = _split_clock_date(times)
     q0 = question or ""
-    claim_q = any(c in q0 for c in _CLAIM_Q) or any(c in q0 for c in _CLAIM_Q_PAIR)
+    claim_q = (
+        any(c in q0 for c in _CLAIM_Q)
+        or any(c in q0 for c in _CLAIM_Q_PAIR)
+        or any(c in q0 for c in _CLAIM_Q_RESP)
+    )
     # 「口径／采用」类：查明换皮是噪声；「说法成立」成因类：查明常是正答
     caliber_naming = any(c in q0 for c in _CLAIM_Q)
+    resp_q = any(c in q0 for c in _CLAIM_Q_RESP)
     # 口径／成因题：允许单侧弱词作锚；有钟点时仍走强锚优先
     weak_sole = claim_q or (not clock and bool(anchors.get("side_a") and anchors.get("side_b")))
     a_keys = distinctive_anchors(
@@ -187,6 +195,18 @@ def build_claim_hole_arm(
         elif claim_q and caliber_v and hs:
             # 问句点名机构声部段（尚无侧锚）也进补洞臂
             s += 2.0 + 0.8 * min(caliber_v, 3)
+        # R27：责任题抬「拉丁专名×侧锚／失控」可核验段（OpenAI 失控／政府控制）
+        if resp_q and (ha or hb):
+            latin_n = len(re.findall(r"[A-Za-z][A-Za-z0-9\.\-]{2,}", text[:220]))
+            if latin_n:
+                s += 1.8 + 0.6 * min(latin_n, 3)
+            if "失控" in text or "政府控制" in text or "政府介入" in text:
+                s += 1.5
+            # 单侧主张（企业 vs 政府）优先于空泛治理长文
+            if (ha == 0) != (hb == 0):
+                s += 4.0
+            elif ha and hb:
+                s -= 1.2
         # R26：仅「口径／采用」题降无口径声部的查明双侧，避免占满注入槽
         if caliber_naming and not clock and ("查明" in text) and caliber_v == 0 and ha and hb:
             s -= 4.0
@@ -314,14 +334,21 @@ def fill_stage1_claim_holes(
             "applied": False,
         }
     q = question or ""
-    claim_q = any(c in q for c in _CLAIM_Q) or any(c in q for c in _CLAIM_Q_PAIR)
+    claim_q = (
+        any(c in q for c in _CLAIM_Q)
+        or any(c in q for c in _CLAIM_Q_PAIR)
+        or any(c in q for c in _CLAIM_Q_RESP)
+    )
     times = expand_question_times(q)
     min_claim = 3.0 if (claim_q and not times) else 4.0
-    # 口径题：略缩池头、多留注入位，让发言人／声明段进 pool20
+    # 口径／责任题：略缩池头、多留注入位，让发言人／专名段进 pool20
     hk, mi = head_keep, max_inject
     if claim_q and not times:
         hk = min(head_keep, 7)
         mi = max(max_inject, 12)
+        if any(c in q for c in _CLAIM_Q_RESP):
+            hk = min(hk, 6)
+            mi = max(mi, 14)
     inj = inject_claim_holes(
         pool_ranked,
         built["arm"],

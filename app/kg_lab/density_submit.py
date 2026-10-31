@@ -51,8 +51,37 @@ def _doc_id(pid: str, metas: dict[str, dict[str, Any]]) -> str:
     return str(meta.get("doc_id") or (pid.split("#", 1)[0] if pid else ""))
 
 
+# R27：繁简对照折叠（新闻常见字），近同文判定用；不改原文
+_TRAD_TO_SIMP = str.maketrans({
+    "體": "体", "國": "国", "發": "发", "開": "开", "說": "说", "這": "这",
+    "為": "为", "來": "来", "對": "对", "時": "时", "會": "会", "業": "业",
+    "過": "过", "還": "还", "從": "从", "關": "关", "門": "门", "問": "问",
+    "東": "东", "車": "车", "馬": "马", "風": "风", "龍": "龙", "實": "实",
+    "驗": "验", "險": "险", "報": "报", "據": "据", "連": "连", "員": "员",
+    "廳": "厅", "場": "场", "區": "区", "處": "处", "長": "长", "經": "经",
+    "濟": "济", "與": "与", "於": "于", "後": "后", "當": "当", "個": "个",
+    "們": "们", "麼": "么", "稱": "称", "達": "达", "裡": "里", "裏": "里",
+    "奧": "奥", "亞": "亚", "產": "产", "網": "网", "絡": "络", "測": "测",
+    "試": "试", "現": "现", "週": "周", "數": "数", "頻": "频", "緊": "紧",
+    "張": "张", "創": "创", "動": "动", "擊": "击", "減": "减", "暫": "暂",
+    "級": "级", "終": "终", "統": "统", "練": "练", "聲": "声", "針": "针",
+    "頭": "头", "進": "进", "聯": "联", "總": "总", "書": "书", "記": "记",
+    "議": "议", "論": "论", "調": "调", "導": "导", "師": "师", "術": "术",
+    "應": "应", "該": "该", "認": "认", "識": "识", "證": "证", "優": "优",
+    "勢": "势", "態": "态", "況": "况", "環": "环", "節": "节", "點": "点",
+    "線": "线", "變": "变", "換": "换", "傳": "传", "協": "协", "執": "执",
+    "帶": "带", "災": "灾", "爭": "争", "緩": "缓", "間": "间", "難": "难",
+    "響": "响", "際": "际", "斷": "断", "擇": "择",
+})
+
+
+def _fold_zh(s: str) -> str:
+    """繁体新闻用字 → 简体，供近同文指纹。"""
+    return (s or "").translate(_TRAD_TO_SIMP)
+
+
 def _near_dup(na: str, nb: str) -> bool:
-    """通稿近同文：短通报改写／镜像转载。
+    """通稿近同文：短通报改写／镜像转载／繁简镜像。
 
     长段只按高 Jaccard／强包含并簇——共引同一句查明结论不算整段近同文，
     否则对立查明金标会被互相挤掉。
@@ -61,7 +90,11 @@ def _near_dup(na: str, nb: str) -> bool:
         return False
     if na[:96] == nb[:96]:
         return True
-    a, b = na[:180], nb[:180]
+    # R27：先按繁简折叠再比，避免简繁通稿各占一槽
+    fa, fb = _fold_zh(na), _fold_zh(nb)
+    if fa[:96] == fb[:96]:
+        return True
+    a, b = fa[:180], fb[:180]
     jac, cont = jaccard_containment(a, b)
     short = min(len(na), len(nb)) < 110
     if short:
@@ -93,8 +126,17 @@ def _rep_quality(
     # R26：同簇偏短主张段（长通稿改写常盖住短金标近似）
     nlen = len(re.sub(r"\s+", "", text))
     brevity = 1.0 if 0 < nlen <= 280 else (0.5 if nlen <= 400 else 0.0)
+    # R27：政府口径／可核验责任句优先作簇代表
+    resp = 0.0
+    if any(c in text for c in _RESP_GOV):
+        resp = 1.0
+    elif any(c in text for c in ("失控", "失控智能体", "入侵", "许可管理")):
+        resp = 0.66
+    # 繁简镜像簇：繁体原文常先于简体通稿转载，轻抬作代表
+    trad_n = sum(1 for c in text[:220] if ord(c) in _TRAD_TO_SIMP)
+    trad = 0.35 if trad_n >= 4 else 0.0
     return (
-        precise + voice + brevity,
+        precise + voice + brevity + resp + trad,
         ver,
         -wrap - caliber_noise,
         float(feat.get("authority_unit") or 0.0),
@@ -183,6 +225,28 @@ def _has_caliber_voice(metas: dict[str, dict[str, Any]], pid: str) -> bool:
     return any(v in text[:200] for v in _CALIBER_VOICE_CUES)
 
 
+# 责任／治理对立可核验线索（OpenAI 失控／政府控制）；裸专名路过不占侧槽
+_RESP_VERIFY = (
+    "失控", "失控智能体", "入侵", "政府控制", "政府介入", "许可管理",
+)
+_RESP_GOV = ("政府控制", "政府介入", "美国政府", "政府监管")
+
+
+def _is_strong_resp(metas: dict[str, dict[str, Any]], pid: str) -> bool:
+    text = str((metas.get(pid) or {}).get("text") or "")
+    return any(c in text for c in _RESP_VERIFY)
+
+
+def _resp_strength(metas: dict[str, dict[str, Any]], pid: str) -> int:
+    """可核验强度：政府口径 > 失控／入侵事件 > 无。"""
+    text = str((metas.get(pid) or {}).get("text") or "")
+    if any(c in text for c in _RESP_GOV):
+        return 3
+    if any(c in text for c in ("失控", "失控智能体", "入侵", "许可管理")):
+        return 2
+    return 0
+
+
 def _is_strong_both(
     pid: str,
     *,
@@ -263,21 +327,44 @@ def _soft_side_pack(
         if side in side_n:
             n = side_n[side]
             if n >= 1:
-                # 第 2 槽：精确主张＋钟点钉、非长通稿、非查明换皮（留给短金标近似）
-                text_i = str((metas.get(pid) or {}).get("text") or "")
-                text_n = len(re.sub(r"\s+", "", text_i))
-                has_clock = bool(_PRECISE_CLOCK.search(text_i))
-                cause_rewrite = any(c in text_i for c in _CAUSE_FINDING)
-                if (
-                    clock_route
-                    or n >= 2
-                    or not _precise_claim(pid)
-                    or not has_clock
-                    or text_n > 400
-                    or cause_rewrite
-                ):
-                    deferred.append(pid)
-                    continue
+                # R27：同侧后到的更强可核验段，置换先到的裸专名／较弱事件段
+                if (not clock_route) and _resp_strength(metas, pid) >= 2:
+                    prev = next(
+                        (
+                            x
+                            for x in list(excl) + list(voice_excl)
+                            if _side_of(
+                                x, feats=feats, metas=metas, anchors=anchors,
+                            )
+                            == side
+                            and _resp_strength(metas, pid) > _resp_strength(metas, x)
+                        ),
+                        None,
+                    )
+                    if prev is not None:
+                        if prev in excl:
+                            excl.remove(prev)
+                        if prev in voice_excl:
+                            voice_excl.remove(prev)
+                        deferred.append(prev)
+                        side_n[side] -= 1
+                        n = side_n[side]
+                if n >= 1:
+                    # 第 2 槽：精确主张＋钟点钉、非长通稿、非查明换皮（留给短金标近似）
+                    text_i = str((metas.get(pid) or {}).get("text") or "")
+                    text_n = len(re.sub(r"\s+", "", text_i))
+                    has_clock = bool(_PRECISE_CLOCK.search(text_i))
+                    cause_rewrite = any(c in text_i for c in _CAUSE_FINDING)
+                    if (
+                        clock_route
+                        or n >= 2
+                        or not _precise_claim(pid)
+                        or not has_clock
+                        or text_n > 400
+                        or cause_rewrite
+                    ):
+                        deferred.append(pid)
+                        continue
             side_n[side] += 1
             if (not clock_route) and _has_caliber_voice(metas, pid):
                 voice_excl.append(pid)
@@ -354,7 +441,8 @@ def pack_core_first(
             + list((anchors or {}).get("side_b") or [])
         )
         if claim and not clock:
-            gap, floor_min = 0.72, 0.28
+            # R27：责任／口径题顶分常被治理长文抬高，地板再放宽
+            gap, floor_min = 0.95, 0.22
         elif claim:
             gap, floor_min = 0.55, 0.42
         else:
