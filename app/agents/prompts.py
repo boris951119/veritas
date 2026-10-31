@@ -104,6 +104,12 @@ def render_segments_block(dossier: Dossier,
         if slot_block:
             lines.append(slot_block.strip())
             lines.append("")
+        # R29：树17 引用纪律（仅 accounting 有 tree17_cite 时注入；缺席与改前相同）
+        from app.kg_lab.tree17_cite import tree17_prompt_from_dossier
+        cite_block = tree17_prompt_from_dossier(dossier)
+        if cite_block:
+            lines.append(cite_block.strip())
+            lines.append("")
     for src in dossier.sources:
         if src.id in duplicates:
             continue  # 重复件：不进研判（报告披露），防一致性虚增

@@ -339,3 +339,209 @@ def apply_tree17_cite(
     )
     l3 = measure_l3_against_refs(plan, gold_ids=gold_ids, support_ids=support_ids)
     return {"plan": plan, "l3": l3}
+
+
+# ---------------------------------------------------------------------------
+# R29：注入分析师提示词 + 引用合规率
+# ---------------------------------------------------------------------------
+
+ACCOUNTING_KEY = "tree17_cite"
+
+
+def render_cite_prompt_block(plan: dict[str, Any] | None) -> str:
+    """把细读集／成对／标签渲染为分析师可见纪律块。无计划 → 空串。"""
+    if not plan:
+        return ""
+    close = list(plan.get("close_read") or [])
+    items = list(plan.get("items") or [])
+    by = {str(it.get("para_id")): it for it in items}
+    lines = [
+        "",
+        "【树17 引用纪律】（程序从盒内导出；违反则本轮引用不合规）",
+        "1. 细读优先：下列 segment_id 为必读带宽，结论证据应优先引用它们；",
+        "2. 冲突成对：若标注「成对必读」，support 与 oppose 两侧都须至少引用 1 条；",
+        "3. 标签：采信＝可支撑主张；对立＝须正面回应的对侧；存疑＝勿单独当铁证；",
+        "4. 禁止引用资料清单以外的 segment_id；带宽外段落仅当细读不足时补充，并在 note 标明「带宽外」。",
+    ]
+    if plan.get("pair_required"):
+        lines.append(
+            "★ 本题为冲突成对必读：证据中须同时出现 option_a（support）与 "
+            "option_b（oppose）侧各至少一条。"
+        )
+    if close:
+        lines.append("细读集（按优先序）：")
+        for pid in close:
+            it = by.get(pid) or {}
+            label = it.get("label") or LABEL_SUSPECT
+            stance = it.get("stance") or "neutral"
+            side = it.get("side") or "none"
+            ver = ((it.get("verifiability") or {}).get("score"))
+            ver_s = f"{float(ver):.2f}" if ver is not None else "?"
+            lines.append(
+                f"- {pid}｜标签={label}｜stance={stance}｜side={side}｜可核验={ver_s}"
+            )
+    # 盒内其余（非细读）只列 id，防模型看不见编号
+    rest = [str(it.get("para_id")) for it in items if not it.get("in_close_read")]
+    if rest:
+        lines.append("盒内其余（非细读，补充引用须标带宽外）：" + "、".join(rest))
+    lines.append("")
+    return "\n".join(lines)
+
+
+def tree17_prompt_from_dossier(dossier: Any) -> str:
+    """从 dossier.accounting 取树17计划并渲染；缺席 → 空串（提示词与改前相同）。"""
+    acc = getattr(dossier, "accounting", None) or {}
+    blob = acc.get(ACCOUNTING_KEY)
+    if not isinstance(blob, dict):
+        return ""
+    plan = blob.get("plan") if isinstance(blob.get("plan"), dict) else blob
+    return render_cite_prompt_block(plan)
+
+
+def attach_tree17_plan(dossier: Any, plan: dict[str, Any]) -> dict[str, Any]:
+    """写入 accounting，供 render_segments_block 注入。返回同一计划。"""
+    if getattr(dossier, "accounting", None) is None:
+        dossier.accounting = {}
+    rec = {
+        "plan": plan,
+        "close_read": list(plan.get("close_read") or []),
+        "pair_required": bool(plan.get("pair_required")),
+        "conflict_route": bool(plan.get("conflict_route")),
+    }
+    dossier.accounting[ACCOUNTING_KEY] = rec
+    return rec
+
+
+def measure_cite_compliance(
+    plan: dict[str, Any],
+    cited_ids: list[str] | set[str] | None,
+    *,
+    metas: dict[str, dict[str, Any]] | None = None,
+) -> dict[str, Any]:
+    """分析师实际引用 vs 树17计划 → 合规率三轴。
+
+    1. 冲突两侧是否都引（仅 pair_required）
+    2. 是否越出 rank 带宽（引用了非细读）
+    3. 可核验优先是否遵守（细读内引用的可核验均值 ≥ 带宽外）
+    """
+    cited = [str(x) for x in (cited_ids or []) if str(x).strip()]
+    cited_set = set(cited)
+    close = list(plan.get("close_read") or [])
+    close_set = set(close)
+    box = list(plan.get("box") or [])
+    box_set = set(box)
+    items = {str(it.get("para_id")): it for it in (plan.get("items") or [])}
+
+    # —— 1) 冲突成对 ——
+    pair_required = bool(plan.get("pair_required"))
+    side_of = {
+        pid: str((items.get(pid) or {}).get("side") or "none") for pid in box
+    }
+    cited_sides = {side_of.get(p, "none") for p in cited_set if p in box_set}
+    both_sides = (not pair_required) or (
+        "option_a" in cited_sides and "option_b" in cited_sides
+    )
+    pair_ok = both_sides
+
+    # —— 2) rank 带宽 ——
+    in_close = [p for p in cited if p in close_set]
+    out_of_band = [p for p in cited if p in box_set and p not in close_set]
+    outside_box = [p for p in cited if p not in box_set]
+    n_cited = len(cited_set)
+    in_band_rate = (
+        round(len(set(in_close)) / n_cited, 4) if n_cited else None
+    )
+    band_ok = (n_cited == 0) or (len(out_of_band) == 0 and len(outside_box) == 0)
+
+    # —— 3) 可核验优先 ——
+    def _ver(pid: str) -> float:
+        it = items.get(pid) or {}
+        v = it.get("verifiability")
+        if isinstance(v, dict) and "score" in v:
+            return float(v["score"])
+        if metas and pid in metas:
+            return float(verifiability_score(str((metas[pid] or {}).get("text") or ""))["score"])
+        return 0.0
+
+    ver_close = [_ver(p) for p in in_close]
+    ver_oob = [_ver(p) for p in out_of_band]
+    mean_close = sum(ver_close) / len(ver_close) if ver_close else None
+    mean_oob = sum(ver_oob) / len(ver_oob) if ver_oob else None
+    # 无带宽外引用 → 视为遵守；有带宽外则细读均值须 ≥ 带宽外均值
+    if not out_of_band:
+        ver_ok = True
+    elif mean_close is None:
+        ver_ok = False  # 只引带宽外、细读一条都没有
+    else:
+        ver_ok = mean_close + 1e-9 >= (mean_oob or 0.0)
+
+    axes_ok = int(pair_ok) + int(band_ok) + int(ver_ok)
+    return {
+        "n_cited": n_cited,
+        "cited_ids": sorted(cited_set),
+        "pair_required": pair_required,
+        "pair_ok": pair_ok,
+        "cited_sides": sorted(s for s in cited_sides if s and s != "none"),
+        "band_ok": band_ok,
+        "in_band_rate": in_band_rate,
+        "in_close": in_close,
+        "out_of_band": out_of_band,
+        "outside_box": outside_box,
+        "ver_ok": ver_ok,
+        "mean_ver_close": round(mean_close, 4) if mean_close is not None else None,
+        "mean_ver_oob": round(mean_oob, 4) if mean_oob is not None else None,
+        "axes_ok": axes_ok,
+        "axes_total": 3,
+        "compliance_rate": round(axes_ok / 3.0, 4),
+        "ok": axes_ok == 3,
+    }
+
+
+def extract_cited_segment_ids(payload: dict[str, Any] | None) -> list[str]:
+    """从分析师 JSON（conclusions[].evidence[].segment_id）抽引用 id。"""
+    data = payload or {}
+    cons = data.get("conclusions")
+    if not isinstance(cons, list):
+        return []
+    out: list[str] = []
+    seen: set[str] = set()
+    for con in cons:
+        if not isinstance(con, dict):
+            continue
+        for ev in con.get("evidence") or []:
+            if not isinstance(ev, dict):
+                continue
+            sid = str(ev.get("segment_id") or "").strip()
+            if sid and sid not in seen:
+                seen.add(sid)
+                out.append(sid)
+    return out
+
+
+def build_analyst_user_prompt(
+    question: str,
+    *,
+    plan: dict[str, Any],
+    metas: dict[str, dict[str, Any]],
+    per_segment_chars: int = 480,
+) -> str:
+    """kg_lab 冒烟用：议题 + 树17纪律 + 盒内段文（细读优先列出）。"""
+    lines = [f"研判议题：{question}", render_cite_prompt_block(plan).rstrip(), "", "资料清单："]
+    # 细读在前，其余在后
+    ordered = list(plan.get("close_read") or [])
+    seen = set(ordered)
+    for pid in plan.get("box") or []:
+        if pid not in seen:
+            ordered.append(pid)
+            seen.add(pid)
+    for pid in ordered:
+        text = str((metas.get(pid) or {}).get("text") or "")
+        if len(text) > per_segment_chars:
+            text = text[:per_segment_chars] + "……"
+        it = next((x for x in (plan.get("items") or []) if x.get("para_id") == pid), {})
+        tag = it.get("label") or ""
+        mark = "【细读】" if it.get("in_close_read") else "【补充】"
+        lines.append(f"{mark}[{pid}]（{tag}）{text}")
+        lines.append("")
+    lines.append("请只输出系统提示词规定的 JSON，不要输出任何其它文字。")
+    return "\n".join(lines)
