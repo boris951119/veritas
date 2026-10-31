@@ -396,11 +396,16 @@ def authority_rerank(
     submit_ids = final[:k]
     if density_cut:
         # 池内核心按路由锚点＋主机权威排序后先装，再密度约束可变 k
-        from app.kg_lab.intent_routes import core_rank_score, is_core_candidate
+        from app.kg_lab.intent_routes import (
+            core_rank_score,
+            is_claim_conflict_route,
+            is_core_candidate,
+            stage2_verifiable_slots,
+        )
 
         anchors = route_info.anchors or None
+        slots = stage2_verifiable_slots(question)
         # R26：对撞题扫描略出 pool20，让贴缘精确／声部独占仍可进密度装箱
-        from app.kg_lab.intent_routes import is_claim_conflict_route
         scan_n = pool + 4 if is_claim_conflict_route(anchors) else pool
         pool_scored: list[tuple[float, str]] = []
         for pid, sc in pool_ranked[:scan_n]:
@@ -408,13 +413,13 @@ def authority_rerank(
                 continue
             if not is_core_candidate(
                 pid, feats=feats, metas=metas, route=route_info.route,
-                pool_pos=pool_pos, anchors=anchors, url_of=url_of,
+                pool_pos=pool_pos, anchors=anchors, url_of=url_of, slots=slots,
             ):
                 continue
             pool_scored.append((
                 core_rank_score(
                     pid, feats=feats, metas=metas, route=route_info.route,
-                    pool_pos=pool_pos, anchors=anchors, url_of=url_of,
+                    pool_pos=pool_pos, anchors=anchors, url_of=url_of, slots=slots,
                 ),
                 pid,
             ))
@@ -438,6 +443,7 @@ def authority_rerank(
             pool_pos=pool_pos,
             anchors=anchors,
             url_of=url_of,
+            slots=slots,
         )
         submit_ids = list(density_meta["submission"])
         submit_k = int(density_meta["k"])
