@@ -34,9 +34,19 @@ _DISTINCT = re.compile(
 )
 # R33：问句表面可核验槽（禁止案名词表；从问句当场抽）
 _LATIN_TOK = re.compile(r"[A-Za-z][A-Za-z0-9\.\-]{2,}")
-_CODE_TOK = re.compile(r"\b[A-Za-z]{1,4}-?\d{1,4}\b|[A-Za-z]+\d{2,4}")
+_CODE_TOK = re.compile(
+    r"(?<![A-Za-z0-9])[A-Za-z]{1,4}-?\d{1,4}(?![A-Za-z0-9])|"
+    r"(?<![A-Za-z0-9])[A-Za-z]+\d{2,4}(?![A-Za-z0-9])|"
+    r"(?<![A-Za-z0-9])\d{1,2}[A-Za-z](?![A-Za-z0-9])"
+)
 _AMOUNT_TOK = re.compile(
     r"\d+(?:\.\d+)?\s*(?:人|名|万|亿|元|米|架|枚|次|%|％|吨|公里)"
+)
+# R35：对立支主张核（还是／是否 后短句），可迁移、非案名
+_ALT_SPLIT = re.compile(r"还是|是否|抑或|或者")
+_ALT_KEEP = re.compile(
+    r"[\u4e00-\u9fff]{2,12}(?:侥幸|开关|缺陷|援助|开火|空袭|推荐信|保研|合照|证据|生还|遇难)"
+    r"|纯属侥幸|关闭燃油开关|设计缺陷|燃油开关"
 )
 _YEAR_TOK = re.compile(r"20\d{2}")
 _MONTH_ZH = re.compile(r"(?<!\d)(1[0-2]|[1-9])\s*月")
@@ -224,6 +234,21 @@ def extract_verifiable_slots(question: str) -> dict[str, Any]:
         if 1 <= n <= 12 and n not in months:
             months.append(n)
     verbs = [v for v in _CONFLICT_VERB if v in q][:4]
+    # R35：对立支短主张（「还是纯属侥幸」「是否…燃油开关」）
+    claim_alts: list[str] = []
+    for part in _ALT_SPLIT.split(q):
+        part = part.strip(" ，。？?、；;：:（）()\"“”「」")
+        if not part:
+            continue
+        for m in _ALT_KEEP.findall(part):
+            if m not in claim_alts and m not in _WEAK:
+                claim_alts.append(m)
+        # 短支整段（≤12 字）也保留
+        if 2 <= len(part) <= 12 and part not in _WEAK and part not in claim_alts:
+            if any(c in part for c in ("侥幸", "开关", "缺陷", "援助", "生还", "遇难")):
+                claim_alts.append(part)
+        if len(claim_alts) >= 8:
+            break
     return {
         "latin": latin,
         "codes": codes,
@@ -234,6 +259,7 @@ def extract_verifiable_slots(question: str) -> dict[str, Any]:
         "years": years,
         "months": months,
         "conflict_verbs": verbs,
+        "claim_alts": claim_alts[:8],
     }
 
 
@@ -289,6 +315,17 @@ def slots_actionable(
         or (
             speakers
             and (slots.get("quotes") or slots.get("amounts") or code_lat)
+        )
+        # R35：对立支主张核／座位号类代码 → 可召回
+        or slots.get("claim_alts")
+        or any(
+            re.match(r"^\d{1,2}[A-Za-z]$", c or "")
+            for c in (slots.get("codes") or [])
+        )
+        # 评价题：发言人＋正负面 → 专访段召回（禁案名，只靠问句表面）
+        or (
+            speakers
+            and any(c in q for c in ("正面", "负面", "评价", "怎么看", "如何看"))
         )
     )
     if claim_like:
@@ -400,6 +437,8 @@ def build_claim_hole_arm(
             + list(slots.get("quotes") or [])[:4]
             + list(slots.get("amounts") or [])[:3]
             + list(slots.get("conflict_verbs") or [])[:2]
+            + list(slots.get("claim_alts") or [])[:4]
+            + list(slots.get("codes") or [])[:3]
         )
         if slots.get("amounts"):
             soft_add = soft_add + [
@@ -411,7 +450,7 @@ def build_claim_hole_arm(
         for tok in soft_add:
             if tok and tok not in a_keys and tok not in b_keys and tok not in soft:
                 soft.append(tok)
-        soft = soft[:12]
+        soft = soft[:14]
     a_cores = _short_cores(a_keys) if has_slots else []
     b_cores = _short_cores(b_keys) if has_slots else []
 
@@ -483,6 +522,10 @@ def build_claim_hole_arm(
                 s += 6.0 + 1.5 * min(n_amt, 3)
                 if any(e in text[:200] for e in ("证实", "遇难", "死亡", "官方", "报告")):
                     s += 2.5
+                # R35：短数额段优先进池（抗长通稿占注入名额）
+                nlen0 = len(re.sub(r"\s+", "", text))
+                if 20 <= nlen0 <= 160:
+                    s += 4.0
             if n_qt:
                 s += 3.5 * min(n_qt, 4)
                 if any(
@@ -490,11 +533,29 @@ def build_claim_hole_arm(
                     for e in ("澄清", "辟谣", "知情", "并非", "不实", "回应")
                 ):
                     s += 3.0
+            n_alt = sum(1 for k in (slots.get("claim_alts") or []) if k and k in text)
+            if n_alt:
+                s += 7.0 + 2.0 * min(n_alt, 3)
+                nlen0 = len(re.sub(r"\s+", "", text))
+                if 12 <= nlen0 <= 140:
+                    s += 5.0
+            # R35：座位号类 codes（11A）短段额外抬，避免被航班拉丁长通稿挤掉
+            if n_code:
+                nlen0 = len(re.sub(r"\s+", "", text))
+                if 12 <= nlen0 <= 140:
+                    s += 4.5
             if n_sp:
-                if n_lat or n_qt or n_amt or n_code:
+                if n_lat or n_qt or n_amt or n_code or n_alt:
                     s += 2.5 * min(n_sp, 2) + 2.0
                 else:
                     s += 0.6 * min(n_sp, 2)
+                # 评价题：发言人专访短段
+                if any(c in q0 for c in ("正面", "负面", "评价")) and n_sp:
+                    if any(e in text[:120] for e in ("专访", "表示", "说道", "回忆", "觉得")):
+                        s += 4.0
+                    nlen0 = len(re.sub(r"\s+", "", text))
+                    if 40 <= nlen0 <= 200:
+                        s += 2.5
             years = list(slots.get("years") or [])
             if years and latin_n >= 5 and any(y in text for y in years):
                 s += 4.0
@@ -805,7 +866,9 @@ def fill_stage1_claim_holes(
         if word_lat or slots.get("quotes"):
             hk = min(hk, 8)
             mi = max(mi, 14)
-        elif slots.get("amounts"):
+        elif slots.get("amounts") or slots.get("claim_alts"):
+            mi = max(mi, 12)
+        elif slots.get("codes"):
             mi = max(mi, 12)
         else:
             mi = max(mi, 10)

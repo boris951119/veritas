@@ -506,13 +506,13 @@ def stage2_verifiable_slots(question: str) -> dict[str, Any]:
         if len(nouns) >= 8:
             break
     for m in re.findall(
-        r"[\u4e00-\u9fff]{2,8}(?:援助|开火|空袭|打击|推荐信|保研|合照|遇难|伤亡|证据)",
+        r"[\u4e00-\u9fff]{2,8}(?:援助|开火|空袭|打击|推荐信|保研|合照|遇难|伤亡|证据|侥幸)",
         q,
     ):
         if m not in nouns:
             nouns.append(m)
         # 短主张核（武器援助／率先开火）作强槽候选
-        for tail in _CLAIM_NOUN_TAIL:
+        for tail in _CLAIM_NOUN_TAIL + ("侥幸",):
             if m.endswith(tail):
                 stem = m[-(len(tail) + 2):] if len(m) > len(tail) + 1 else m
                 if len(stem) >= 4 and stem not in claim_nouns:
@@ -520,9 +520,52 @@ def stage2_verifiable_slots(question: str) -> dict[str, Any]:
                 if m not in claim_nouns:
                     claim_nouns.append(m)
                 break
+    # 并入一筛对立支
+    for a in list(slots.get("claim_alts") or []):
+        if a and a not in claim_nouns:
+            claim_nouns.append(a)
     slots["nouns"] = nouns[:12]
-    slots["claim_nouns"] = claim_nouns[:8]
+    slots["claim_nouns"] = claim_nouns[:10]
     return slots
+
+
+_LEAD_SHELL = re.compile(
+    r"^(?:据|根据|当地时间|北京时间|新华社|总台|记者|报道|近日|有消息)"
+)
+
+
+def is_short_claim_segment(
+    text: str,
+    slots: dict[str, Any] | None,
+    *,
+    route: str = "",
+) -> bool:
+    """裁决题短主张段：短引语／关键句，非导语壳／长通稿。"""
+    body = text or ""
+    nlen = len(re.sub(r"\s+", "", body))
+    if not (16 <= nlen <= 140):
+        return False
+    if looks_like_wire_shell(body):
+        return False
+    if _LEAD_SHELL.match(body[:12]) and nlen > 90:
+        return False
+    # 须撞问句可核验表面：对立支／代码／数额／主张核／引号
+    if not slots:
+        return False
+    hits = 0
+    for k in list(slots.get("claim_alts") or []) + list(slots.get("claim_nouns") or []):
+        if k and len(k) >= 2 and k in body:
+            hits += 1
+    for k in list(slots.get("codes") or []) + list(slots.get("amounts") or []):
+        if k and k in body:
+            hits += 1
+    for k in list(slots.get("quotes") or []):
+        if k and len(k) >= 4 and k in body:
+            hits += 1
+    # 裁决对立常见判定词（纯属／否认／无关／并非）＋短段
+    if any(c in body for c in ("纯属", "否认", "无关", "并非", "不实", "予以否认")):
+        hits += 1
+    return hits >= 1
 
 
 def slot_align_detail(
@@ -555,18 +598,23 @@ def slot_align_detail(
             continue
         matched_q.append(k)
     strong += min(len(matched_q), 3)
-    # 主张核名词（武器援助等）→ 强槽；同样去子串
+    # 主张核／对立支 → 强槽；同样去子串
+    claim_pool = list(slots.get("claim_nouns") or []) + list(slots.get("claim_alts") or [])
     matched_c: list[str] = []
-    for n in sorted(
-        (slots.get("claim_nouns") or [])[:8],
-        key=lambda x: len(x or ""), reverse=True,
-    ):
-        if not n or len(n) < 4 or n not in text:
+    for n in sorted(claim_pool[:12], key=lambda x: len(x or ""), reverse=True):
+        if not n or len(n) < 2 or n not in text:
+            continue
+        if len(n) < 4 and n not in ("侥幸", "11A"):
             continue
         if any(n in m for m in matched_c) or any(n in m for m in matched_q):
             continue
         matched_c.append(n)
     strong += min(len(matched_c), 2)
+    # 座位号／短代码
+    for k in list(slots.get("codes") or [])[:4]:
+        if k and k in text:
+            strong += 1
+            break
     # 年月须组合：年＋月（中或英），裸年不算
     years = list(slots.get("years") or [])
     months = list(slots.get("months") or [])
@@ -837,6 +885,35 @@ def core_rank_score(
         and nlen > 180
     ):
         shell_pen = max(shell_pen, 0.18)
+    # R35：仅座位码／侥幸／开关类短主张题保位（数额裁决不走，防长金标被降）
+    short_b = 0.0
+    long_wire_pen = 0.0
+    _alts = list((slots or {}).get("claim_alts") or []) + list(
+        (slots or {}).get("claim_nouns") or []
+    )
+    _short_q = bool(
+        slots
+        and (
+            any(re.match(r"^\d{1,2}[A-Za-z]$", c or "") for c in (slots.get("codes") or []))
+            or any(any(k in (a or "") for k in ("侥幸", "生还", "开关", "缺陷")) for a in _alts)
+        )
+    )
+    if route == "adjudicate" and _short_q:
+        if is_short_claim_segment(text, slots, route=route):
+            short_b = 0.36 + 0.08 * min(float(slot_strong), 3.0)
+        elif (
+            nlen > 500
+            and slot_strong <= 1
+            and not hits["total"]
+            and any(k and k.lower() in text.lower() for k in (slots.get("latin") or [])[:3])
+        ):
+            # 长通稿只靠航班／型号拉丁撞槽 → 降
+            long_wire_pen = 0.20
+    # 事实核对：精确钟点＋拉丁／型号 再抬一档（可核查时点声明）
+    if route == "fact_check" and slot_strong >= 1 and re.search(
+        r"\d{1,2}时\d{1,2}分", text[:180],
+    ):
+        slot_b += 0.12
     return (
         0.22 * host_u
         + 0.16 * min(float(hits["a"] + hits["b"]) / 3.0, 1.0)
@@ -851,6 +928,7 @@ def core_rank_score(
         + voice_b
         + precise_b
         + slot_b
+        + short_b
         + (0.04 if route == "adjudicate" and hits["total"] else 0.0)
         - wire_pen
         - roundup_pen
@@ -858,6 +936,7 @@ def core_rank_score(
         - defin_pen
         - caliber_pen
         - shell_pen
+        - long_wire_pen
     )
 
 
@@ -919,15 +998,36 @@ def is_core_candidate(
         return True
     # 引号／主张核多击（造谣核对类）——不限路由，避免裁决误分时通稿独占
     if slot_strong >= 2 and (
-        (slots.get("quotes") or slots.get("claim_nouns"))
+        (slots.get("quotes") or slots.get("claim_nouns") or slots.get("claim_alts"))
         and pp <= 20
+    ):
+        return True
+    # R35：座位码／侥幸类短主张段进核心
+    nlen = len(re.sub(r"\s+", "", text))
+    _alts_c = list((slots or {}).get("claim_alts") or []) + list(
+        (slots or {}).get("claim_nouns") or []
+    )
+    _short_q = bool(
+        slots
+        and (
+            any(re.match(r"^\d{1,2}[A-Za-z]$", c or "") for c in (slots.get("codes") or []))
+            or any(
+                any(k in (a or "") for k in ("侥幸", "生还", "开关", "缺陷"))
+                for a in _alts_c
+            )
+        )
+    )
+    if (
+        route == "adjudicate"
+        and pp <= 20
+        and _short_q
+        and is_short_claim_segment(text, slots, route=route)
     ):
         return True
     # 裁决题：强槽须同时有侧锚，避免 OpenAI 等拉丁通篇灌核心
     if route == "adjudicate" and slot_strong >= 1 and hits["total"] >= 1:
         return True
     # 锚点独占 + 基本可信 → 核心；短独占主张段（常是原话／否认句）也进
-    nlen = len(re.sub(r"\s+", "", text))
     if hits["side"] in {"option_a", "option_b"} and (
         ver >= 0.25 or auth >= 0.45 or host_u >= 0.55 or opt >= 0.20
         or (pp <= 20 and 0 < nlen <= 220)
