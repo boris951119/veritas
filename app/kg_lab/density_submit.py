@@ -34,7 +34,7 @@ def pack_core_first(
     anchors: dict[str, list[str]] | None = None,
     url_of: dict[str, str] | None = None,
 ) -> tuple[list[str], list[str], list[str]]:
-    """核心按 rank 分排序；近同文最多保留 2 条（高主机优先），再拼补位／其余。"""
+    """核心按 rank 分排序；近同文去重后再拼补位／其余。"""
     scored_cores: list[tuple[float, str]] = []
     fillers: list[str] = []
     rest: list[str] = []

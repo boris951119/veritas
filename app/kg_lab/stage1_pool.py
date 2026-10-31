@@ -130,6 +130,19 @@ def fuse_r19(
     # 交卷／@k：纯经典，不受填池搅动
     submit_ranked = [(pid, round(float(sc), 6)) for pid, sc in classic if float(sc) > 0]
 
+    # R23：主张／时点短锚补洞——只动 pool，不改 submit
+    from app.kg_lab.stage1_claim_holes import fill_stage1_claim_holes
+
+    hole = fill_stage1_claim_holes(
+        [(pid, float(sc)) for pid, sc in pool_ranked if float(sc) > 0],
+        list(index.rows),
+        question,
+        bm25_text=index.bm25_text,
+        head_keep=10,
+        max_inject=8,
+    )
+    pool_ranked = list(hole["pool_ranked"])
+
     # 披露：视图独有进前 50 的段数
     classic_top = {pid for pid, _ in classic[:50] if float(_) > 0}
     n_view_fill = sum(
@@ -145,6 +158,14 @@ def fuse_r19(
         "n_classic_paraphrase": len(rule_paraphrase_questions(question, n=1)),
         "n_neighbor_added": added_nb,
         "n_view_fill": n_view_fill,
+        "n_claim_injected": int(hole.get("n_injected") or 0),
+        "n_claim_injected_in_pool20": int(hole.get("n_injected_in_pool20") or 0),
+        "claim_hole": {
+            "applied": bool(hole.get("applied")),
+            "clock": list((hole.get("claim") or {}).get("clock") or []),
+            "side_a": list((hole.get("claim") or {}).get("side_a") or []),
+            "side_b": list((hole.get("claim") or {}).get("side_b") or []),
+        },
         "classic_head": classic_head,
         "classic_top_in_pool20": sum(
             1 for pid, _ in pool_ranked[:20] if classic_pos.get(pid, 10**9) <= 20
