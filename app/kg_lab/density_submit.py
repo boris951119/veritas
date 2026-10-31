@@ -20,6 +20,7 @@ from app.kg_lab.intent_routes import (
     core_rank_score,
     is_claim_conflict_route,
     is_core_candidate,
+    is_short_claim_segment,
     related_filler,
     slot_align_detail,
     slot_align_hits,
@@ -435,11 +436,31 @@ def pack_core_first(
         else:
             rest.append(pid)
 
-    # R34：事实核对／引号主张题按强槽优先装箱；普通裁决题保原分序（防中美AI回退）
+    # R34/R35：事实核对／引号题强槽优先；裁决题短主张优先于长通稿
     _quote_pack = bool(
-        slots and (slots.get("quotes") or slots.get("claim_nouns"))
+        slots and (
+            slots.get("quotes")
+            or slots.get("claim_nouns")
+            or slots.get("claim_alts")
+        )
     )
     _slot_pack = route == "fact_check" or _quote_pack
+    # 仅「侥幸／座位码」类短主张题启用短段优先；数额裁决／吉隆长精密段走原分序
+    def _seat_or_luck_q() -> bool:
+        if not slots:
+            return False
+        if any(
+            re.match(r"^\d{1,2}[A-Za-z]$", c or "")
+            for c in (slots.get("codes") or [])
+        ):
+            return True
+        alts = list(slots.get("claim_alts") or []) + list(slots.get("claim_nouns") or [])
+        return any(
+            any(k in (a or "") for k in ("侥幸", "生还", "开关", "缺陷"))
+            for a in alts
+        )
+
+    _adj_short = route == "adjudicate" and _seat_or_luck_q()
 
     def _core_strong(pid: str) -> int:
         text = str((metas.get(pid) or {}).get("text") or "")
@@ -448,15 +469,22 @@ def pack_core_first(
 
     def _core_key(item: tuple[float, str]) -> tuple:
         sc, pid = item
+        text = str((metas.get(pid) or {}).get("text") or "")
+        nlen = len(re.sub(r"\s+", "", text))
+        if _adj_short:
+            short = 1 if is_short_claim_segment(text, slots, route=route) else 0
+            long_wire = 1 if (nlen > 500 and not short) else 0
+            return (-short, long_wire, -sc, pid)
         if not _slot_pack:
             return (-sc, pid)
-        text = str((metas.get(pid) or {}).get("text") or "")
         tl = text.lower()
         strong = _core_strong(pid)
         clock = 1 if re.search(
             r"\d{1,2}时\d{1,2}分|\d{1,2}:\d{2}\s*(?:AM|PM|am|pm)",
             text[:180],
         ) else 0
+        # 钟点可核查与强槽合成秩，避免 F-16 通稿(strong=3)压过「时点+F-16」金标近似
+        rank = strong + 2 * clock
         en_attack = 1 if any(
             e in tl for e in ("launched an", "launched a", "opened fire", "airstrike")
         ) else 0
@@ -466,13 +494,12 @@ def pack_core_first(
                 "felt ", "原话", "访谈", "官方视频", "原始出处", "亲口", "英文访谈",
             )
         ) else 0
-        # 外交劝和／汇总壳即使撞槽也靠后
         diplo = 1 if any(
             c in text[:160] for c in (
                 "劝和促谈", "高度关注", "穿梭调停", "汇总多方", "以下是", "时间线",
             )
         ) else 0
-        return (-strong, -clock, -en_attack, -primary, diplo, -sc, pid)
+        return (-rank, -clock, -en_attack, -primary, diplo, -sc, pid)
 
     scored_cores.sort(key=_core_key)
     # 只保留分数靠前的核心，避免假核心灌满 k=7（宁少勿滥）
@@ -495,11 +522,19 @@ def pack_core_first(
         else:
             gap, floor_min = 0.38, 0.42
         floor = max(floor_min, top_sc - gap)
-        # R34：强槽≥2 豁免分地板（抗通稿顶分误砍；仅 slot_pack 路径）
+        # R34/R35：强槽≥2 或短主张 豁免分地板
         scored_cores = [
             x for x in scored_cores
             if x[0] + 1e-12 >= floor
             or (_slot_pack and _core_strong(x[1]) >= 2)
+            or (
+                _adj_short
+                and is_short_claim_segment(
+                    str((metas.get(x[1]) or {}).get("text") or ""),
+                    slots,
+                    route=route,
+                )
+            )
         ][:14]
     # R24/R25：通稿／近同文簇内留质量更好的代表
     scored_cores = _cluster_wire_keep_one(scored_cores, metas, feats, slots=slots)
