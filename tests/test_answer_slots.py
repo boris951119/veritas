@@ -178,6 +178,7 @@ def test_two_issuers_require_a_named_subject(tmp_path):
     d = _dossier("2024年半年度归母净利润是多少？", [
         "甲乙丙丁股份有限公司与戊己庚辛股份有限公司同期披露净利润。",
     ])
+    d.sources[0].title = "甲乙丙丁股份有限公司与戊己庚辛股份有限公司"
     from app.core.answer_slots import slot_intent
     intent = slot_intent(d.question, d)
     assert any("多家股份公司" in t for t in intent["clarify"])
@@ -188,7 +189,8 @@ def test_two_issuers_require_a_named_subject(tmp_path):
     case.mkdir()
     (case / "manifest.yaml").write_text(
         "question: 2024年半年度归母净利润是多少？\nsources:\n"
-        "  - file: a.txt\n    type: report\n",
+        "  - file: a.txt\n    type: report\n"
+        "    title: 甲乙丙丁股份有限公司与戊己庚辛股份有限公司\n",
         encoding="utf-8")
     (case / "a.txt").write_text(
         "甲乙丙丁股份有限公司与戊己庚辛股份有限公司2024年半年度归母净利润。",
@@ -236,9 +238,10 @@ def test_bare_ge_aspect_still_clarifies_multi_issuer():
     """「各方面」不含分配性主体量词，多家仍要澄清。"""
     from app.core.answer_slots import slot_intent
 
-    d = _dossier("各方面风险怎么样？", [
+    d = _dossier("公司各方面风险怎么样？", [
         "甲乙丙丁股份有限公司与戊己庚辛股份有限公司同期披露。",
     ])
+    d.sources[0].title = "甲乙丙丁股份有限公司与戊己庚辛股份有限公司"
     intent = slot_intent(d.question, d)
     assert any("多家股份公司" in t for t in intent["clarify"])
 

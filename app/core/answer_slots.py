@@ -484,6 +484,8 @@ _NAMED_ORG = re.compile(
     r"[\u4e00-\u9fffA-Za-z0-9]{2,30}?" + _ORG_SUFFIX)
 _ISSUER = re.compile(
     r"[\u4e00-\u9fffA-Za-z0-9]{4,40}?股份有限公司")
+# 企业口径：指标别名，或题面点到公司／业绩／报表／子公司。
+_ENTERPRISE_CUE = re.compile(r"公司|业绩|报表|子公司")
 _SUBSIDIARY_ASK = re.compile(r"子公司|参股公司|合营公司|联营公司")
 # 分配性量词：题面已要求「多家都看」，不再因案卷多主体逼用户点名一家。
 # 不裸匹配「各/全部/所有」，避免「各方面」「各项指标」误放行。
@@ -498,11 +500,19 @@ def _distributive_subject(question: str) -> bool:
     return bool(_DISTRIBUTIVE_SUBJECT.search(question or ""))
 
 
+def _enterprise_question(question: str) -> bool:
+    """题面是企业口径：已识别财务指标，或点到公司／业绩／报表／子公司。"""
+    q = question or ""
+    if _match_ask_metrics(_strip_ratio_mentions(q)):
+        return True
+    return bool(_ENTERPRISE_CUE.search(q))
+
+
 def _subject_tips(question: str, dossier: Dossier | None) -> list[str]:
-    """主体未点名：只说「子公司」，或多家上市公司却只说「公司」。
+    """主体未点名：只说「子公司」，或企业题面下标题级多家股份公司未点名。
 
     单一发行人公告里的「公司/本公司」不澄清——那就是这家上市公司。
-    题面含分配性量词（各客户/分别/…）时，多家主体改为披露，不进澄清。
+    非企业题面、正文顺带提及、分配性量词，都不进澄清（改为披露）。
     """
     q = question or ""
     tips: list[str] = []
@@ -511,8 +521,9 @@ def _subject_tips(question: str, dossier: Dossier | None) -> list[str]:
         tips.append(
             "对象主体未锁定「子公司」：请写出子公司全称，"
             "勿默认合并报表或任意一家")
-    issuers = _issuers_in_dossier(dossier)
-    if (len(issuers) >= 2 and not _question_locks_issuer(q, issuers)
+    issuers = _issuers_in_titles(dossier)
+    if (_enterprise_question(q) and len(issuers) >= 2
+            and not _question_locks_issuer(q, issuers)
             and not _distributive_subject(q)):
         shown = "、".join(issuers[:3])
         tips.append(
@@ -522,30 +533,65 @@ def _subject_tips(question: str, dossier: Dossier | None) -> list[str]:
 
 
 def _subject_disclosures(question: str, dossier: Dossier | None) -> list[str]:
-    """分配性多主体：不早退，只披露本次是整卷多主体研判。"""
+    """多家股份公司不早退时仍把线索留在披露里。"""
     q = question or ""
-    if not _distributive_subject(q):
-        return []
-    issuers = _issuers_in_dossier(dossier)
-    if len(issuers) < 2 or _question_locks_issuer(q, issuers):
-        return []
-    return ["本次为多主体整卷研判，未逐一分卷"]
+    title_issuers = _issuers_in_titles(dossier)
+    body_issuers = _issuers_in_body(dossier)
+    mentioned = _collapse_orgs([*title_issuers, *body_issuers])
+    notes: list[str] = []
+    if (_distributive_subject(q) and len(mentioned) >= 2
+            and not _question_locks_issuer(q, mentioned)):
+        notes.append("本次为多主体整卷研判，未逐一分卷")
+    if (not _enterprise_question(q) and len(mentioned) >= 2
+            and not _question_locks_issuer(q, mentioned)
+            and not _distributive_subject(q)):
+        shown = "、".join(mentioned[:3])
+        notes.append(
+            f"资料中有多家股份公司（{shown}），本题非企业口径，未据此早退")
+    if (_enterprise_question(q) and len(title_issuers) < 2
+            and len(body_issuers) >= 2
+            and not _question_locks_issuer(q, body_issuers)
+            and not _distributive_subject(q)):
+        shown = "、".join(body_issuers[:3])
+        notes.append(
+            f"正文顺带提及多家股份公司（{shown}），标题未声明主体，未据此早退")
+    return notes
 
 
 def _named_orgs(text: str) -> list[str]:
     return _collapse_orgs(_NAMED_ORG.findall(text or ""))
 
 
-def _issuers_in_dossier(dossier: Dossier | None) -> list[str]:
+def _declared_subject_blobs(dossier: Dossier | None) -> list[str]:
+    """信源标题与 manifest 声明的主体。正文不进这里。"""
+    if dossier is None:
+        return []
+    blobs: list[str] = []
+    for src in dossier.sources:
+        blobs.append(str(getattr(src, "title", "") or ""))
+        meta = getattr(src, "meta", None) or {}
+        for key in ("subject", "issuer", "主体"):
+            blobs.append(str(meta.get(key) or ""))
+    return blobs
+
+
+def _issuers_in_titles(dossier: Dossier | None) -> list[str]:
+    return _collapse_orgs(_ISSUER.findall("\n".join(_declared_subject_blobs(dossier))))
+
+
+def _issuers_in_body(dossier: Dossier | None) -> list[str]:
     if dossier is None:
         return []
     blob = []
     for src in dossier.sources:
-        blob.append(str(getattr(src, "title", "") or ""))
-        blob.append(str((getattr(src, "meta", None) or {}).get("file") or ""))
         for seg in src.segments:
             blob.append(seg.text or "")
     return _collapse_orgs(_ISSUER.findall("\n".join(blob)))
+
+
+def _issuers_in_dossier(dossier: Dossier | None) -> list[str]:
+    """标题级主体。正文顺带提及不计入机构数。"""
+    return _issuers_in_titles(dossier)
 
 
 def _collapse_orgs(names: list[str]) -> list[str]:

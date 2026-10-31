@@ -171,8 +171,52 @@ class LLMResponse:
         return self.input_tokens + self.output_tokens
 
 
+class RealCallGuardedError(RuntimeError):
+    """测试会话里试图发起真 LLM 调用（钱与网络都花在这里）。
+
+    为什么要有它：`self._completion_fn or _default_completion_fn()` 这个兜底
+    写法意味着——**某个测试只要忘了注入假客户端，就会静默走到真网关**。
+    `.env` 里的 key 在 `app/config.py` import 时就已经进进程，所以"这条测试
+    不花钱"过去全靠写测试的人记得塞桩，没有任何机器拦阻。测试跑完是绿的，
+    账单是花的，人只在月底发现。
+
+    上膛方：`tests/conftest.py`（只在测试里调 `arm_no_real_calls()`）。
+    生产入口（`python -m app.pipeline`、工作台、MCP `run_judgment`）不上膛，
+    行为一字不变——这道闸只把「忘了塞桩」从"静默花钱"变成"当场报错"。
+    """
+
+
+_GUARD_ARMED = False
+
+
+def arm_no_real_calls() -> None:
+    """上膛：此后任何落回默认 litellm 的调用都被拦死（测试会话专用）。"""
+    global _GUARD_ARMED
+    _GUARD_ARMED = True
+
+
+def disarm_no_real_calls() -> None:
+    """卸膛：仅给守卫自身的回归测试用，业务与测试会话不得调用。"""
+    global _GUARD_ARMED
+    _GUARD_ARMED = False
+
+
+def real_call_guard_armed() -> bool:
+    return _GUARD_ARMED
+
+
+def _guard_default_call(kind: str) -> None:
+    if _GUARD_ARMED:
+        raise RealCallGuardedError(
+            f"测试会话禁止真发起 {kind} 调用：调用方没有注入假客户端"
+            "（completion_fn/embedding_fn）。这通常意味着新加的测试忘了塞桩——"
+            "真走下去会拿 .env 里的网关 key 花钱。请注入桩，"
+            "确实需要真调用的手工验模型请另走 scripts/bench_*.py。")
+
+
 def _default_completion_fn() -> CompletionFn:
     """懒加载 litellm.completion（沙箱/测试环境无需安装）。"""
+    _guard_default_call("completion")
     try:
         import litellm
     except ImportError as exc:  # pragma: no cover - 环境缺依赖时的明确报错
@@ -186,6 +230,7 @@ def _default_completion_fn() -> CompletionFn:
 
 def _default_embedding_fn() -> EmbeddingFn:
     """懒加载 litellm.embedding（同 completion 的懒加载模式）。"""
+    _guard_default_call("embedding")
     try:
         import litellm
     except ImportError as exc:  # pragma: no cover
@@ -195,6 +240,33 @@ def _default_embedding_fn() -> EmbeddingFn:
         ) from exc
     litellm.suppress_debug_info = True
     return litellm.embedding
+
+
+def _resolve_completion_fn(injected: CompletionFn | None) -> CompletionFn:
+    """没注入桩 = 配置错误，不再静默兜底到真网关。
+
+    旧写法是 `self._completion_fn or _default_completion_fn()`——测试忘了传桩
+    就一路走到真 litellm 花钱（守卫能拦住花钱，但拦不住「这个入口本来就该报错」）。
+    现在缺省即抛：生产由工厂显式传 None→走默认真调用，测试必须传桩。
+    """
+    if injected is not None:
+        return injected
+    if real_call_guard_armed():
+        raise RealCallGuardedError(
+            "ModelClient 没有注入 completion_fn，且当前是测试会话（守卫已上膛）："
+            "请给测试注入桩客户端，不要让它落回真网关")
+    return _default_completion_fn()
+
+
+def _resolve_embedding_fn(injected: EmbeddingFn | None) -> EmbeddingFn:
+    """同 `_resolve_completion_fn`：测试会话里缺桩即报错。"""
+    if injected is not None:
+        return injected
+    if real_call_guard_armed():
+        raise RealCallGuardedError(
+            "ModelClient 没有注入 embedding_fn，且当前是测试会话（守卫已上膛）："
+            "请给测试注入桩，不要让它落回真网关")
+    return _default_embedding_fn()
 
 
 def _get_embedding(response: Any) -> tuple[list[float], int]:
@@ -450,7 +522,7 @@ class ModelClient:
         if use_json:
             kwargs["response_format"] = {"type": "json_object"}
 
-        completion = self._completion_fn or _default_completion_fn()
+        completion = _resolve_completion_fn(self._completion_fn)
 
         # factory26 r7b：响应构建（含 content 校验）纳入重试与墙钟范围——
         # 网关偶发返回 message.content 缺失的响应，构建在重试外会让该
@@ -592,7 +664,7 @@ class ModelClient:
                 self._notify_on_call(entry)
                 return cached
 
-        embedding = self._embedding_fn or _default_embedding_fn()
+        embedding = _resolve_embedding_fn(self._embedding_fn)
         embed_kwargs: dict[str, Any] = {
             "model": model,
             "input": [text],
@@ -647,7 +719,11 @@ class ModelClient:
         json_mode: bool,
         messages: list[dict[str, str]] | None = None,
     ) -> LLMResponse:
-        """从 litellm 响应提取内容与 token 用量（兼容 dict 与对象两种访问方式）。"""
+        """从 litellm 响应提取内容与 token 用量（兼容 dict 与对象两种访问方式）。
+
+        C-73：call_log 另记窗口账四键（只落账、不改预算／选段）。
+        embedding 两条腿不走本函数（见 embed 自 append）——本单故意不并。
+        """
         content = _get_content(response)
         input_tokens, output_tokens = _get_usage(response)
 
@@ -661,13 +737,43 @@ class ModelClient:
         self.total_tokens_used += result.total_tokens
         if self.budget_guard is not None:
             self.budget_guard.record(result.total_tokens)
+        msgs = list(messages or [])
+        prompt_chars = sum(len(str(m.get("content") or "")) for m in msgs
+                           if isinstance(m, dict))
+        # 窗口：settings 声明值；≤0＝未检查 ⇒ over_window 记 None（不许猜）
+        win_raw = int(getattr(self.settings, "model_context_tokens", 0) or 0)
+        window_tokens: int | None = win_raw if win_raw > 0 else None
+        zh = float(getattr(self.settings, "zh_chars_per_token", 1.45) or 1.45)
+        from app.core.prompt_guard import estimate_prompt_window
+        est_rec = estimate_prompt_window(
+            msgs,
+            window_tokens=win_raw if win_raw > 0 else 0,
+            zh_chars_per_token=zh,
+        )
+        # unchecked（窗未声明）⇒ 记 None＝「没估」，不许把早退假零落账
+        est_tokens = (None if win_raw <= 0
+                      else int(est_rec.get("est_tokens") or 0))
+        # 服务端真报：只读 usage.prompt_tokens；取不到＝None（严禁用 est 回填）
+        server_prompt_tokens = _get_server_prompt_tokens(response)
+        server_reported = server_prompt_tokens is not None
+        if window_tokens is None or server_prompt_tokens is None:
+            over_window: bool | None = None
+        else:
+            over_window = bool(server_prompt_tokens > window_tokens)
         entry = {
             "model": model,
             "json_mode": json_mode,
             "input_tokens": input_tokens,
             "output_tokens": output_tokens,
             "content_chars": len(content),
-            "system_hint": (messages[0]["content"] if messages else ""),  # 8.5 环节归属
+            "system_hint": (msgs[0]["content"] if msgs else ""),  # 8.5 环节归属
+            # C-73 窗口账四键
+            "prompt_chars": prompt_chars,
+            "est_tokens": est_tokens,
+            "server_prompt_tokens": server_prompt_tokens,
+            "server_reported": server_reported,
+            "over_window": over_window,
+            "window_tokens": window_tokens,
         }
         self.call_log.append(entry)
         self._notify_on_call(entry)
@@ -725,6 +831,24 @@ def _get_usage(response: Any) -> tuple[int, int]:
     prompt = _index(usage, "prompt_tokens")
     completion = _index(usage, "completion_tokens")
     return int(prompt or 0), int(completion or 0)
+
+
+def _get_server_prompt_tokens(response: Any) -> int | None:
+    """C-73：usage.prompt_tokens 的真报值；缺 usage／缺键／非数 ⇒ None。
+
+    与 `_get_usage` 同源字段，但不把缺省回落成 0（0 会冒充实报）。
+    调用方严禁用本地 est_tokens 回填本函数的 None。
+    """
+    usage = _index(response, "usage")
+    if usage is None:
+        return None
+    prompt = _index(usage, "prompt_tokens")
+    if prompt is None:
+        return None
+    try:
+        return int(prompt)
+    except (TypeError, ValueError):
+        return None
 
 
 def _get_finish_reason(response: Any) -> str | None:

@@ -12,6 +12,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from app.agents.base import Analyst
+from app.core.evidence import Dossier
 from app.pipeline import run_case
 from app.pipeline import RunDeps, RunSpec
 from app.server import create_app
@@ -48,10 +49,48 @@ def test_pipeline_audits_in_chain_and_report(case_dir):
                               analysts=[Analyst("mainstream", "测", FakeClient(), "m")]))
     events = {r.event for r in result.chain.records}
     assert {"premise_check", "numeric_audit", "discourse_audit"} <= events
-    # 正确算式 + 数字全部可溯源 → 报告警示段亮绿灯
+    # 这份桩案卷只有 1 份信源、没有「计数:M/N」写法——多道闸压根没对象可查。
+    # 2026-10-13 之前报告在这里写「全部通过」，那是把「没查」说成「查过」；
+    # 现在必须显影未执行清单，且不许出现「全部通过」。
     assert "机械核对警示" in result.report_md
-    assert "全部通过" in result.report_md
+    assert "未能执行" in result.report_md and "不等于" in result.report_md
+    assert "全部通过" not in result.report_md
     assert result.chain.verify_chain().ok
+
+
+def test_report_says_full_pass_only_when_nothing_was_exempt(monkeypatch):
+    """反向用例：闸全部进场且零亮灯时，才准写「全部通过」。"""
+    from app.core.audit import summarize
+
+    lines: list[str] = []
+    monkeypatch.setattr(
+        "app.pipeline.audit_scan",
+        lambda d: {"flags": [], "not_evaluated": [],
+                   "summary": summarize([], [])})
+    from app.pipeline import _render_flags_section
+
+    _render_flags_section(lines, Dossier(question="客户B的回款情况如何？"))
+    md = "\n".join(lines)
+    assert "全部通过" in md and "未能执行" not in md
+
+
+def test_report_keeps_full_pass_claim_out_when_gates_skipped(monkeypatch):
+    """只要有一道闸未进场，绿灯文案就必须让位给未执行声明。"""
+    from app.core.audit import summarize
+    from app.core.gate_applicability import not_evaluated
+
+    d = Dossier(question="客户B的回款情况如何？")
+    notes = not_evaluated(d)
+    lines: list[str] = []
+    monkeypatch.setattr(
+        "app.pipeline.audit_scan",
+        lambda dossier: {"flags": [], "not_evaluated": notes,
+                         "summary": summarize([], notes)})
+    from app.pipeline import _render_flags_section
+
+    _render_flags_section(lines, d)
+    md = "\n".join(lines)
+    assert notes and "全部通过" not in md and "未能执行" in md
 
 
 def test_pipeline_flags_wrong_calculation(case_dir):
@@ -92,6 +131,28 @@ def test_dossier_payload_carries_audit(client):
     assert "audit" in data
     assert data["audit"]["n_flags"] == len(data["audit"]["flags"])
     assert data["audit"]["n_high"] == 0
+
+
+def test_payload_recomputes_ledger_for_legacy_artifacts(client):
+    """存量产物 accounting 里没有台账键（早于 2026-10-13 白名单）时，
+    工作台仍须即时复算——否则留痕在新数据上有、在旧案卷上「消失」。"""
+    import json
+
+    api, case_dir = client
+    report = case_dir / "out" / "report.json"
+    raw = json.loads(report.read_text(encoding="utf-8"))
+    acc = raw.get("accounting") or {}
+    for key in ("subquestion_status", "obligation_limitation"):
+        acc.pop(key, None)
+    report.write_text(json.dumps(raw, ensure_ascii=False), encoding="utf-8")
+
+    data = api.get("/api/dossier", params={"case": "demo"}).json()
+    ledger = data["accounting"].get("subquestion_status") or []
+    assert ledger, "旧产物也要有完整性判据"
+    assert {"text", "status", "source"} <= set(ledger[0])
+    # 未执行的闸同样必须出现在载荷里（报告与工作台共用这套口径）
+    assert "not_evaluated" in data["audit"]
+    assert data["audit"]["clean"] is False
 
 
 def test_human_edit_introducing_outside_number_flags(client):

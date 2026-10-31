@@ -12,6 +12,11 @@
 - layout_parsed      版式引擎入卷（Docling 等，派生低可信，meta.parser）
 - empty              空文件/扫描件（零段落不入卷）
 - invalid_parse      解析失败（披露，不炸 run）
+- dir_truncated      目录遍历封顶（超 max_files / max_depth，披露未入卷数）
+- ingest_cap         摄取封顶非法值回落默认（C-7，env／config.json）
+- hidden_dir_skipped 工具名单外隐藏目录（不入卷但披露目录名与文件数）
+- import_refused      导入拒收（深层路径／隐藏路径／单文件过大）
+- prompt_over_window  提示词估算超模型窗口（出口披露，服务端可能剪头）
 
 分诊是确定性代码不是 skill：skill 注册表只放「教模型的提示词纪律」，
 守门判定永远归代码（可复现、可审计、不可被注入）。
@@ -31,6 +36,11 @@ ROUTE_LABEL: dict[str, str] = {
     "empty": "空文件",
     "invalid_parse": "解析失败",
     "unsupported_format": "格式暂不支持",
+    "dir_truncated": "目录遍历封顶",
+    "ingest_cap": "封顶回落",
+    "hidden_dir_skipped": "隐藏目录未入卷",
+    "import_refused": "导入拒收",
+    "prompt_over_window": "提示词超模型窗口",
     # 派生路由（零相关/重复在渲染期出现，同表统一标签）
     "zero": "零相关排除",
     "dup": "重复排除",
@@ -43,4 +53,7 @@ ROUTE_ORDER: dict[str, int] = {
     "links_disclosed": 6, "image_disclosed": 7,
     "zero": 8, "dup": 9, "empty": 10,
     "invalid_parse": 11, "archive_unsupported": 12, "unsupported_format": 13,
+    "dir_truncated": 14, "ingest_cap": 15,
+    "hidden_dir_skipped": 16, "import_refused": 17,
+    "prompt_over_window": 18,
 }

@@ -1,0 +1,2111 @@
+{
+  "ticket": "R17-tag-decouple",
+  "defaults": {
+    "expand_top_n": 16,
+    "n_paraphrase": 1,
+    "pool": 20,
+    "frozen_stage1": "R9 coeff (same as R12)",
+    "use_llm_lexicon": false,
+    "prefer_ids_gold_train_only": true,
+    "model_policy": "local-qwen3-14b-default; dashscope only if user says 用线上"
+  },
+  "schema_table": [
+    {
+      "category": "speaker_role",
+      "tag": "official_primary",
+      "stage": [
+        "stage1"
+      ],
+      "rule": "通报操作句／制度句／当事人第一人称或本人渠道／转述框／评论线索；当事人称谓由问句主体注入后拼「X表示／X称」。"
+    },
+    {
+      "category": "speaker_role",
+      "tag": "official_reprint",
+      "stage": [
+        "stage1"
+      ],
+      "rule": "通报操作句／制度句／当事人第一人称或本人渠道／转述框／评论线索；当事人称谓由问句主体注入后拼「X表示／X称」。"
+    },
+    {
+      "category": "speaker_role",
+      "tag": "institution_def",
+      "stage": [
+        "stage1"
+      ],
+      "rule": "通报操作句／制度句／当事人第一人称或本人渠道／转述框／评论线索；当事人称谓由问句主体注入后拼「X表示／X称」。"
+    },
+    {
+      "category": "speaker_role",
+      "tag": "party_primary",
+      "stage": [
+        "stage1"
+      ],
+      "rule": "通报操作句／制度句／当事人第一人称或本人渠道／转述框／评论线索；当事人称谓由问句主体注入后拼「X表示／X称」。"
+    },
+    {
+      "category": "speaker_role",
+      "tag": "party_relay",
+      "stage": [
+        "stage1"
+      ],
+      "rule": "通报操作句／制度句／当事人第一人称或本人渠道／转述框／评论线索；当事人称谓由问句主体注入后拼「X表示／X称」。"
+    },
+    {
+      "category": "speaker_role",
+      "tag": "opposition_framing",
+      "stage": [
+        "stage1"
+      ],
+      "rule": "通报操作句／制度句／当事人第一人称或本人渠道／转述框／评论线索；当事人称谓由问句主体注入后拼「X表示／X称」。"
+    },
+    {
+      "category": "speaker_role",
+      "tag": "mixed_summary",
+      "stage": [
+        "stage1",
+        "stage2"
+      ],
+      "rule": "通报操作句／制度句／当事人第一人称或本人渠道／转述框／评论线索；当事人称谓由问句主体注入后拼「X表示／X称」。"
+    },
+    {
+      "category": "speaker_role",
+      "tag": "media_relay",
+      "stage": [
+        "stage1"
+      ],
+      "rule": "通报操作句／制度句／当事人第一人称或本人渠道／转述框／评论线索；当事人称谓由问句主体注入后拼「X表示／X称」。"
+    },
+    {
+      "category": "speaker_role",
+      "tag": "commentary",
+      "stage": [
+        "stage1",
+        "stage2"
+      ],
+      "rule": "通报操作句／制度句／当事人第一人称或本人渠道／转述框／评论线索；当事人称谓由问句主体注入后拼「X表示／X称」。"
+    },
+    {
+      "category": "source_fine_comment",
+      "tag": "party_comment",
+      "stage": [
+        "stage1"
+      ],
+      "rule": "commentary 再拆制度说明／时间线综述／当事人评论／纯观点；relay 再拆通报／当事人原话／次级。"
+    },
+    {
+      "category": "source_fine_comment",
+      "tag": "institutional_gloss",
+      "stage": [
+        "stage1"
+      ],
+      "rule": "commentary 再拆制度说明／时间线综述／当事人评论／纯观点；relay 再拆通报／当事人原话／次级。"
+    },
+    {
+      "category": "source_fine_comment",
+      "tag": "mixed_roundup",
+      "stage": [
+        "stage1",
+        "stage2"
+      ],
+      "rule": "commentary 再拆制度说明／时间线综述／当事人评论／纯观点；relay 再拆通报／当事人原话／次级。"
+    },
+    {
+      "category": "source_fine_comment",
+      "tag": "pure_opinion",
+      "stage": [
+        "stage1",
+        "stage2"
+      ],
+      "rule": "commentary 再拆制度说明／时间线综述／当事人评论／纯观点；relay 再拆通报／当事人原话／次级。"
+    },
+    {
+      "category": "source_fine_relay",
+      "tag": "relay_official_bulletin",
+      "stage": [
+        "stage1"
+      ],
+      "rule": "commentary 再拆制度说明／时间线综述／当事人评论／纯观点；relay 再拆通报／当事人原话／次级。"
+    },
+    {
+      "category": "source_fine_relay",
+      "tag": "relay_party_primary",
+      "stage": [
+        "stage1"
+      ],
+      "rule": "commentary 再拆制度说明／时间线综述／当事人评论／纯观点；relay 再拆通报／当事人原话／次级。"
+    },
+    {
+      "category": "source_fine_relay",
+      "tag": "relay_secondary",
+      "stage": [
+        "stage1"
+      ],
+      "rule": "commentary 再拆制度说明／时间线综述／当事人评论／纯观点；relay 再拆通报／当事人原话／次级。"
+    },
+    {
+      "category": "channel_tier",
+      "tag": "central_official",
+      "stage": [
+        "stage1"
+      ],
+      "rule": "按 URL／标题媒体档，与可信度浮点脱钩。"
+    },
+    {
+      "category": "channel_tier",
+      "tag": "local_official",
+      "stage": [
+        "stage1"
+      ],
+      "rule": "按 URL／标题媒体档，与可信度浮点脱钩。"
+    },
+    {
+      "category": "channel_tier",
+      "tag": "market_media",
+      "stage": [
+        "stage1"
+      ],
+      "rule": "按 URL／标题媒体档，与可信度浮点脱钩。"
+    },
+    {
+      "category": "channel_tier",
+      "tag": "foreign_media",
+      "stage": [
+        "stage1"
+      ],
+      "rule": "按 URL／标题媒体档，与可信度浮点脱钩。"
+    },
+    {
+      "category": "channel_tier",
+      "tag": "self_media",
+      "stage": [
+        "stage1"
+      ],
+      "rule": "按 URL／标题媒体档，与可信度浮点脱钩。"
+    },
+    {
+      "category": "channel_tier",
+      "tag": "other",
+      "stage": [
+        "stage1"
+      ],
+      "rule": "按 URL／标题媒体档，与可信度浮点脱钩。"
+    },
+    {
+      "category": "claim_grain",
+      "tag": "claim_full",
+      "stage": [
+        "stage1"
+      ],
+      "rule": "问句激活的主张族：段内命中族内原词或同义→claim_full；只命中框架证据词→claim_keyword。"
+    },
+    {
+      "category": "claim_grain",
+      "tag": "claim_keyword",
+      "stage": [
+        "stage1"
+      ],
+      "rule": "问句激活的主张族：段内命中族内原词或同义→claim_full；只命中框架证据词→claim_keyword。"
+    },
+    {
+      "category": "amount_attr",
+      "tag": "amount_status",
+      "stage": [
+        "stage1"
+      ],
+      "rule": "问句含金额线索且摘要槽有 amount_status。"
+    },
+    {
+      "category": "time_attr",
+      "tag": "time_anchor",
+      "stage": [
+        "stage1"
+      ],
+      "rule": "问句含时点线索且摘要槽有 procedure_dates。"
+    },
+    {
+      "category": "subject_attr",
+      "tag": "subject_match",
+      "stage": [
+        "stage1"
+      ],
+      "rule": "commentary 再拆制度说明／时间线综述／当事人评论／纯观点；relay 再拆通报／当事人原话／次级。"
+    },
+    {
+      "category": "subject_attr",
+      "tag": "subject_x_channel",
+      "stage": [
+        "stage1"
+      ],
+      "rule": "commentary 再拆制度说明／时间线综述／当事人评论／纯观点；relay 再拆通报／当事人原话／次级。"
+    },
+    {
+      "category": "bait_signals",
+      "tag": "title_bait",
+      "stage": [
+        "stage2"
+      ],
+      "rule": "标题党／小节蹭分／跨主张偏题转载／伪制度说明——只进二筛加减，不进一筛系数。"
+    },
+    {
+      "category": "bait_signals",
+      "tag": "section_bait",
+      "stage": [
+        "stage2"
+      ],
+      "rule": "标题党／小节蹭分／跨主张偏题转载／伪制度说明——只进二筛加减，不进一筛系数。"
+    },
+    {
+      "category": "bait_signals",
+      "tag": "offtopic_cross_claim",
+      "stage": [
+        "stage2"
+      ],
+      "rule": "标题党／小节蹭分／跨主张偏题转载／伪制度说明——只进二筛加减，不进一筛系数。"
+    },
+    {
+      "category": "bait_signals",
+      "tag": "fake_gloss",
+      "stage": [
+        "stage2"
+      ],
+      "rule": "标题党／小节蹭分／跨主张偏题转载／伪制度说明——只进二筛加减，不进一筛系数。"
+    },
+    {
+      "category": "dedup_signals",
+      "tag": "stitch",
+      "stage": [
+        "stage2"
+      ],
+      "rule": "commentary 再拆制度说明／时间线综述／当事人评论／纯观点；relay 再拆通报／当事人原话／次级。"
+    },
+    {
+      "category": "dedup_signals",
+      "tag": "near_dup",
+      "stage": [
+        "stage2"
+      ],
+      "rule": "commentary 再拆制度说明／时间线综述／当事人评论／纯观点；relay 再拆通报／当事人原话／次级。"
+    },
+    {
+      "category": "dedup_signals",
+      "tag": "same_quote_cluster",
+      "stage": [
+        "stage2"
+      ],
+      "rule": "commentary 再拆制度说明／时间线综述／当事人评论／纯观点；relay 再拆通报／当事人原话／次级。"
+    },
+    {
+      "category": "slice_extra",
+      "tag": "identity_synonym",
+      "stage": [
+        "stage1"
+      ],
+      "rule": "commentary 再拆制度说明／时间线综述／当事人评论／纯观点；relay 再拆通报／当事人原话／次级。"
+    },
+    {
+      "category": "slice_extra",
+      "tag": "resume_noise",
+      "stage": [
+        "stage1"
+      ],
+      "rule": "commentary 再拆制度说明／时间线综述／当事人评论／纯观点；relay 再拆通报／当事人原话／次级。"
+    },
+    {
+      "category": "slice_extra",
+      "tag": "identity_resume",
+      "stage": [
+        "stage1"
+      ],
+      "rule": "commentary 再拆制度说明／时间线综述／当事人评论／纯观点；relay 再拆通报／当事人原话／次级。"
+    },
+    {
+      "category": "claim_family",
+      "tag": "leave",
+      "stage": [
+        "stage1",
+        "stage2"
+      ],
+      "rule": "commentary 再拆制度说明／时间线综述／当事人评论／纯观点；relay 再拆通报／当事人原话／次级。"
+    },
+    {
+      "category": "claim_family",
+      "tag": "money",
+      "stage": [
+        "stage1",
+        "stage2"
+      ],
+      "rule": "commentary 再拆制度说明／时间线综述／当事人评论／纯观点；relay 再拆通报／当事人原话／次级。"
+    },
+    {
+      "category": "claim_family",
+      "tag": "post",
+      "stage": [
+        "stage1",
+        "stage2"
+      ],
+      "rule": "commentary 再拆制度说明／时间线综述／当事人评论／纯观点；relay 再拆通报／当事人原话／次级。"
+    }
+  ],
+  "tagging_rules": {
+    "speaker_role": "通报操作句／制度句／当事人第一人称或本人渠道／转述框／评论线索；当事人称谓由问句主体注入后拼「X表示／X称」。",
+    "source_fine": "commentary 再拆制度说明／时间线综述／当事人评论／纯观点；relay 再拆通报／当事人原话／次级。",
+    "channel_tier": "按 URL／标题媒体档，与可信度浮点脱钩。",
+    "claim_grain": "问句激活的主张族：段内命中族内原词或同义→claim_full；只命中框架证据词→claim_keyword。",
+    "amount_attr": "问句含金额线索且摘要槽有 amount_status。",
+    "time_attr": "问句含时点线索且摘要槽有 procedure_dates。",
+    "bait_signals": "标题党／小节蹭分／跨主张偏题转载／伪制度说明——只进二筛加减，不进一筛系数。",
+    "dedup": "拼段丢掉、近同文与同引语簇只留更高渠道／官方原文代表。"
+  },
+  "stage1_features": [
+    "subject_match",
+    "subject_x_channel",
+    "claim_full",
+    "claim_keyword",
+    "amount_status",
+    "time_anchor",
+    "credibility",
+    "channel_self",
+    "identity_synonym",
+    "resume_noise",
+    "identity_resume",
+    "role_official_primary",
+    "role_official_reprint",
+    "role_institution_def",
+    "role_party_primary",
+    "role_party_relay",
+    "role_opposition_framing",
+    "role_mixed_summary",
+    "role_media_relay",
+    "role_commentary",
+    "tier_central_official",
+    "tier_local_official",
+    "tier_market_media",
+    "tier_foreign_media",
+    "tier_self_media",
+    "tier_other",
+    "cmt_party_comment",
+    "cmt_institutional_gloss",
+    "cmt_mixed_roundup",
+    "cmt_pure_opinion",
+    "relay_official_bulletin",
+    "relay_party_primary",
+    "relay_secondary"
+  ],
+  "stage2_features": [
+    "title_bait",
+    "section_bait",
+    "offtopic_cross_claim",
+    "fake_gloss",
+    "mixed_roundup",
+    "mixed_summary",
+    "pure_opinion",
+    "commentary",
+    "stitch",
+    "near_dup",
+    "same_quote_cluster",
+    "r9_comment",
+    "r9_relay",
+    "fine_role",
+    "channel_tier"
+  ],
+  "train": {
+    "slug": "liuxiang",
+    "name": "刘翔编制“二选一”事件",
+    "n_union": 362,
+    "questions": [
+      {
+        "qid": "q_001",
+        "question": "这笔49.4万元应认定为买断费还是自主择业经济补偿金，以哪方口径为准？",
+        "n_l2": 4,
+        "cuts": {
+          "4": {
+            "hits": 4,
+            "gold_total": 4,
+            "nongold": 0,
+            "hit_ids": [
+              "doc_002#p3",
+              "doc_024#p1",
+              "doc_025#p6",
+              "doc_035#p7"
+            ],
+            "nongold_ids": []
+          },
+          "5": {
+            "hits": 4,
+            "gold_total": 4,
+            "nongold": 1,
+            "hit_ids": [
+              "doc_002#p3",
+              "doc_024#p1",
+              "doc_025#p6",
+              "doc_035#p7"
+            ],
+            "nongold_ids": [
+              "doc_033#p2"
+            ]
+          },
+          "7": {
+            "hits": 4,
+            "gold_total": 4,
+            "nongold": 3,
+            "hit_ids": [
+              "doc_002#p3",
+              "doc_024#p1",
+              "doc_025#p6",
+              "doc_035#p7"
+            ],
+            "nongold_ids": [
+              "doc_033#p2",
+              "doc_043#p1",
+              "doc_012#p5"
+            ]
+          }
+        },
+        "outside_top7": [],
+        "stage1_top7": [
+          "doc_002#p3",
+          "doc_012#p2",
+          "doc_035#p7",
+          "doc_030#p5",
+          "doc_029#p6",
+          "doc_024#p1",
+          "doc_025#p6"
+        ]
+      },
+      {
+        "qid": "q_002",
+        "question": "拖了11年才安置，是刘翔不愿走还是体育局未放行，哪一方说法站得住？",
+        "n_l2": 5,
+        "cuts": {
+          "4": {
+            "hits": 2,
+            "gold_total": 5,
+            "nongold": 2,
+            "hit_ids": [
+              "doc_002#p3",
+              "doc_009#p5"
+            ],
+            "nongold_ids": [
+              "doc_011#p7",
+              "doc_041#p1"
+            ]
+          },
+          "5": {
+            "hits": 3,
+            "gold_total": 5,
+            "nongold": 2,
+            "hit_ids": [
+              "doc_002#p3",
+              "doc_009#p5",
+              "doc_051#p3"
+            ],
+            "nongold_ids": [
+              "doc_011#p7",
+              "doc_041#p1"
+            ]
+          },
+          "7": {
+            "hits": 4,
+            "gold_total": 5,
+            "nongold": 3,
+            "hit_ids": [
+              "doc_002#p3",
+              "doc_009#p5",
+              "doc_029#p7",
+              "doc_051#p3"
+            ],
+            "nongold_ids": [
+              "doc_011#p7",
+              "doc_041#p1",
+              "doc_051#p5"
+            ]
+          }
+        },
+        "outside_top7": [
+          {
+            "id": "doc_028#p1",
+            "stage1_rank": 5,
+            "inbox_rank": null,
+            "why": "二筛后不在名单"
+          }
+        ],
+        "stage1_top7": [
+          "doc_012#p2",
+          "doc_002#p3",
+          "doc_051#p3",
+          "doc_043#p1",
+          "doc_028#p1",
+          "doc_041#p6",
+          "doc_035#p7"
+        ]
+      },
+      {
+        "qid": "q_003",
+        "question": "刘翔退役至今是否真有编制与岗位，官方称其在编不在岗能否以人事档案证实？",
+        "n_l2": 5,
+        "cuts": {
+          "4": {
+            "hits": 3,
+            "gold_total": 5,
+            "nongold": 1,
+            "hit_ids": [
+              "doc_002#p3",
+              "doc_006#p3",
+              "doc_012#p5"
+            ],
+            "nongold_ids": [
+              "doc_046#p3"
+            ]
+          },
+          "5": {
+            "hits": 4,
+            "gold_total": 5,
+            "nongold": 1,
+            "hit_ids": [
+              "doc_002#p3",
+              "doc_006#p3",
+              "doc_012#p5",
+              "doc_033#p5"
+            ],
+            "nongold_ids": [
+              "doc_046#p3"
+            ]
+          },
+          "7": {
+            "hits": 4,
+            "gold_total": 5,
+            "nongold": 3,
+            "hit_ids": [
+              "doc_002#p3",
+              "doc_006#p3",
+              "doc_012#p5",
+              "doc_033#p5"
+            ],
+            "nongold_ids": [
+              "doc_046#p3",
+              "doc_027#p3",
+              "doc_050#p10"
+            ]
+          }
+        },
+        "outside_top7": [
+          {
+            "id": "doc_033#p6",
+            "stage1_rank": 11,
+            "inbox_rank": 10,
+            "why": "二筛名次 10，Top-7 外"
+          }
+        ],
+        "stage1_top7": [
+          "doc_002#p3",
+          "doc_012#p2",
+          "doc_012#p5",
+          "doc_027#p3",
+          "doc_050#p10",
+          "doc_033#p5",
+          "doc_046#p3"
+        ]
+      }
+    ],
+    "lexicons": [
+      {
+        "qid": "q_001",
+        "lexicon": {
+          "actors": [],
+          "actor_aliases": {
+            "体育局": [
+              "体育局",
+              "竞体中心",
+              "竞技体育训练管理中心"
+            ],
+            "官方": [
+              "官方",
+              "体育局"
+            ]
+          },
+          "family_surfaces": {
+            "money": [
+              "买断费",
+              "买断",
+              "经济补偿金",
+              "经济补偿",
+              "补偿金",
+              "自主择业",
+              "组织安置"
+            ]
+          },
+          "family_frames": {
+            "money": [
+              "经济补偿办法"
+            ]
+          },
+          "active_families": [
+            "money"
+          ],
+          "party_voice": [
+            "不是我不想走",
+            "没让我走",
+            "不想走",
+            "不愿走",
+            "深夜发文",
+            "再发文",
+            "直言",
+            "发文称",
+            "全文如下",
+            "微博发问",
+            "他最后说",
+            "我一直没有离开",
+            "由我来说",
+            "我已经"
+          ],
+          "gloss": [
+            "还在单位",
+            "还在该单位",
+            "公务员",
+            "坐班",
+            "体制内",
+            "副书记",
+            "行政级别",
+            "职位"
+          ],
+          "bulletin": [
+            "按规定给予",
+            "自愿选择自主择业",
+            "组织安置",
+            "我们予以充分尊重",
+            "情况通报",
+            "妥善安置",
+            "自主择业申请",
+            "按规定给予了",
+            "自主择业经济补偿金",
+            "自愿选择自主择业申请",
+            "我们深表敬意"
+          ],
+          "institution": [
+            "制度框架",
+            "对应的表述",
+            "经济补偿办法",
+            "制度设计",
+            "《自主择业"
+          ],
+          "official_voice": [
+            "工作人员表示",
+            "工作人员称",
+            "回应记者",
+            "也曾解释",
+            "解释说",
+            "情况通报",
+            "统一发公告",
+            "按规定",
+            "我们予以",
+            "官方称",
+            "官方说"
+          ],
+          "identity_synonyms": [
+            "不是公务员",
+            "并非公务员",
+            "没有行政级别",
+            "无行政级别",
+            "不会坐班",
+            "不坐班",
+            "行政级别",
+            "团委副书记"
+          ],
+          "resume_noise": [
+            "伤退",
+            "被绊倒",
+            "单脚跳",
+            "缔造历史"
+          ],
+          "claim_frames": [
+            {
+              "triggers": [
+                "买断",
+                "补偿",
+                "自主择业",
+                "万元",
+                "金额",
+                "经济补偿"
+              ],
+              "evidence": [
+                "经济补偿办法"
+              ]
+            }
+          ],
+          "source": "question+file",
+          "slug": "liuxiang"
+        }
+      },
+      {
+        "qid": "q_002",
+        "lexicon": {
+          "actors": [
+            "刘翔",
+            "体育局"
+          ],
+          "actor_aliases": {
+            "体育局": [
+              "体育局",
+              "竞体中心",
+              "竞技体育训练管理中心"
+            ],
+            "官方": [
+              "官方",
+              "体育局"
+            ]
+          },
+          "family_surfaces": {
+            "leave": [
+              "不愿走",
+              "不想走",
+              "未放行",
+              "没让我走",
+              "不让走",
+              "不是我不想走"
+            ]
+          },
+          "family_frames": {
+            "leave": [
+              "自主择业",
+              "组织安置",
+              "申请表",
+              "还在单位",
+              "还在该单位"
+            ]
+          },
+          "active_families": [
+            "leave"
+          ],
+          "party_voice": [
+            "不是我不想走",
+            "没让我走",
+            "不想走",
+            "不愿走",
+            "深夜发文",
+            "再发文",
+            "直言",
+            "发文称",
+            "全文如下",
+            "微博发问",
+            "他最后说",
+            "我一直没有离开",
+            "由我来说",
+            "我已经"
+          ],
+          "gloss": [
+            "还在单位",
+            "还在该单位",
+            "公务员",
+            "坐班",
+            "体制内",
+            "副书记",
+            "行政级别",
+            "职位"
+          ],
+          "bulletin": [
+            "按规定给予",
+            "自愿选择自主择业",
+            "组织安置",
+            "我们予以充分尊重",
+            "情况通报",
+            "妥善安置",
+            "自主择业申请",
+            "按规定给予了",
+            "自主择业经济补偿金",
+            "自愿选择自主择业申请",
+            "我们深表敬意"
+          ],
+          "institution": [
+            "制度框架",
+            "对应的表述",
+            "经济补偿办法",
+            "制度设计",
+            "《自主择业"
+          ],
+          "official_voice": [
+            "工作人员表示",
+            "工作人员称",
+            "回应记者",
+            "也曾解释",
+            "解释说",
+            "情况通报",
+            "统一发公告",
+            "按规定",
+            "我们予以",
+            "官方称",
+            "官方说"
+          ],
+          "identity_synonyms": [
+            "不是公务员",
+            "并非公务员",
+            "没有行政级别",
+            "无行政级别",
+            "不会坐班",
+            "不坐班",
+            "行政级别",
+            "团委副书记"
+          ],
+          "resume_noise": [
+            "伤退",
+            "被绊倒",
+            "单脚跳",
+            "缔造历史"
+          ],
+          "claim_frames": [
+            {
+              "triggers": [
+                "不愿走",
+                "不想走",
+                "未放行",
+                "没让我走",
+                "不让走"
+              ],
+              "evidence": [
+                "自主择业",
+                "组织安置",
+                "申请表",
+                "还在单位",
+                "还在该单位"
+              ]
+            }
+          ],
+          "source": "question+file",
+          "slug": "liuxiang"
+        }
+      },
+      {
+        "qid": "q_003",
+        "lexicon": {
+          "actors": [
+            "官方",
+            "刘翔"
+          ],
+          "actor_aliases": {
+            "体育局": [
+              "体育局",
+              "竞体中心",
+              "竞技体育训练管理中心"
+            ],
+            "官方": [
+              "官方",
+              "体育局"
+            ]
+          },
+          "family_surfaces": {
+            "post": [
+              "在编不在岗",
+              "编制",
+              "岗位"
+            ]
+          },
+          "family_frames": {
+            "post": [
+              "公务员",
+              "坐班",
+              "体制内",
+              "职位",
+              "副书记",
+              "人事关系",
+              "不是公务员",
+              "并非公务员",
+              "没有行政级别",
+              "无行政级别",
+              "不会坐班",
+              "不坐班",
+              "行政级别",
+              "团委副书记"
+            ]
+          },
+          "active_families": [
+            "post"
+          ],
+          "party_voice": [
+            "不是我不想走",
+            "没让我走",
+            "不想走",
+            "不愿走",
+            "深夜发文",
+            "再发文",
+            "直言",
+            "发文称",
+            "全文如下",
+            "微博发问",
+            "他最后说",
+            "我一直没有离开",
+            "由我来说",
+            "我已经"
+          ],
+          "gloss": [
+            "还在单位",
+            "还在该单位",
+            "公务员",
+            "坐班",
+            "体制内",
+            "副书记",
+            "行政级别",
+            "职位"
+          ],
+          "bulletin": [
+            "按规定给予",
+            "自愿选择自主择业",
+            "组织安置",
+            "我们予以充分尊重",
+            "情况通报",
+            "妥善安置",
+            "自主择业申请",
+            "按规定给予了",
+            "自主择业经济补偿金",
+            "自愿选择自主择业申请",
+            "我们深表敬意"
+          ],
+          "institution": [
+            "制度框架",
+            "对应的表述",
+            "经济补偿办法",
+            "制度设计",
+            "《自主择业"
+          ],
+          "official_voice": [
+            "工作人员表示",
+            "工作人员称",
+            "回应记者",
+            "也曾解释",
+            "解释说",
+            "情况通报",
+            "统一发公告",
+            "按规定",
+            "我们予以",
+            "官方称",
+            "官方说"
+          ],
+          "identity_synonyms": [
+            "公务员",
+            "坐班",
+            "体制内",
+            "职位",
+            "副书记",
+            "人事关系",
+            "不是公务员",
+            "并非公务员",
+            "没有行政级别",
+            "无行政级别",
+            "不会坐班",
+            "不坐班",
+            "行政级别",
+            "团委副书记"
+          ],
+          "resume_noise": [
+            "伤退",
+            "被绊倒",
+            "单脚跳",
+            "缔造历史"
+          ],
+          "claim_frames": [
+            {
+              "triggers": [
+                "编制",
+                "岗位",
+                "在编不在岗",
+                "人事档案"
+              ],
+              "evidence": [
+                "公务员",
+                "坐班",
+                "体制内",
+                "职位",
+                "副书记",
+                "人事关系",
+                "不是公务员",
+                "并非公务员",
+                "没有行政级别",
+                "无行政级别",
+                "不会坐班",
+                "不坐班",
+                "行政级别",
+                "团委副书记"
+              ]
+            }
+          ],
+          "source": "question+file",
+          "slug": "liuxiang"
+        }
+      }
+    ],
+    "gold_in_pool20": 14,
+    "gold_total": 14,
+    "stage1_sum7": 10,
+    "prefer_gold_cluster": true,
+    "leak_any_bad": false,
+    "wall_s": 5.5
+  },
+  "train_cuts": {
+    "4": {
+      "hits": 9,
+      "gold_total": 14,
+      "nongold": 3
+    },
+    "5": {
+      "hits": 11,
+      "gold_total": 14,
+      "nongold": 4
+    },
+    "7": {
+      "hits": 12,
+      "gold_total": 14,
+      "nongold": 9
+    }
+  },
+  "smoke": [
+    {
+      "slug": "jilong",
+      "name": "2026·8·26 吉隆口岸泥石流灾害",
+      "n_union": 1202,
+      "questions": [
+        {
+          "qid": "q_001",
+          "question": "吉隆口岸泥石流灾害的起始时刻，应以官方通稿的8月26日10时30分许为准，还是以监控记录的10时52分至59分为准？",
+          "n_l2": 3,
+          "cuts": {
+            "4": {
+              "hits": 0,
+              "gold_total": 3,
+              "nongold": 4,
+              "hit_ids": [],
+              "nongold_ids": [
+                "doc_038#p1",
+                "doc_132#p7",
+                "doc_001#p80",
+                "doc_001#p177"
+              ]
+            },
+            "5": {
+              "hits": 0,
+              "gold_total": 3,
+              "nongold": 5,
+              "hit_ids": [],
+              "nongold_ids": [
+                "doc_038#p1",
+                "doc_132#p7",
+                "doc_001#p80",
+                "doc_001#p177",
+                "doc_043#p5"
+              ]
+            },
+            "7": {
+              "hits": 0,
+              "gold_total": 3,
+              "nongold": 7,
+              "hit_ids": [],
+              "nongold_ids": [
+                "doc_038#p1",
+                "doc_132#p7",
+                "doc_001#p80",
+                "doc_001#p177",
+                "doc_043#p5",
+                "doc_001#p85",
+                "doc_001#p291"
+              ]
+            }
+          },
+          "outside_top7": [
+            {
+              "id": "doc_001#p2",
+              "stage1_rank": 154,
+              "inbox_rank": null,
+              "why": "一筛第 154，池 20 外"
+            },
+            {
+              "id": "doc_001#p21",
+              "stage1_rank": 186,
+              "inbox_rank": null,
+              "why": "一筛第 186，池 20 外"
+            },
+            {
+              "id": "doc_001#p237",
+              "stage1_rank": null,
+              "inbox_rank": null,
+              "why": "一筛未入围"
+            }
+          ],
+          "stage1_top7": [
+            "doc_038#p1",
+            "doc_132#p7",
+            "doc_001#p80",
+            "doc_001#p177",
+            "doc_229#p2",
+            "doc_043#p5",
+            "doc_001#p85"
+          ]
+        },
+        {
+          "qid": "q_002",
+          "question": "中方称泥石流、联合国与尼泊尔称洪灾或山崩，评估伤亡与受灾统计时应采用哪一口径？",
+          "n_l2": 4,
+          "cuts": {
+            "4": {
+              "hits": 1,
+              "gold_total": 4,
+              "nongold": 3,
+              "hit_ids": [
+                "doc_001#p291"
+              ],
+              "nongold_ids": [
+                "doc_170#p15",
+                "doc_209#p4",
+                "doc_211#p6"
+              ]
+            },
+            "5": {
+              "hits": 2,
+              "gold_total": 4,
+              "nongold": 3,
+              "hit_ids": [
+                "doc_001#p291",
+                "doc_001#p306"
+              ],
+              "nongold_ids": [
+                "doc_170#p15",
+                "doc_209#p4",
+                "doc_211#p6"
+              ]
+            },
+            "7": {
+              "hits": 2,
+              "gold_total": 4,
+              "nongold": 5,
+              "hit_ids": [
+                "doc_001#p291",
+                "doc_001#p306"
+              ],
+              "nongold_ids": [
+                "doc_170#p15",
+                "doc_209#p4",
+                "doc_211#p6",
+                "doc_219#p3",
+                "doc_043#p5"
+              ]
+            }
+          },
+          "outside_top7": [
+            {
+              "id": "doc_001#p2",
+              "stage1_rank": 172,
+              "inbox_rank": null,
+              "why": "一筛第 172，池 20 外"
+            },
+            {
+              "id": "doc_001#p235",
+              "stage1_rank": 277,
+              "inbox_rank": null,
+              "why": "一筛第 277，池 20 外"
+            },
+            {
+              "id": "doc_001#p139",
+              "why": "装箱未选入",
+              "stage1_rank": null,
+              "inbox_rank": null
+            },
+            {
+              "id": "doc_001#p422",
+              "why": "装箱未选入",
+              "stage1_rank": null,
+              "inbox_rank": null
+            },
+            {
+              "id": "doc_001#p424",
+              "why": "装箱未选入",
+              "stage1_rank": null,
+              "inbox_rank": null
+            },
+            {
+              "id": "doc_001#p430",
+              "why": "装箱未选入",
+              "stage1_rank": null,
+              "inbox_rank": null
+            },
+            {
+              "id": "doc_001#p45",
+              "why": "装箱未选入",
+              "stage1_rank": null,
+              "inbox_rank": null
+            }
+          ],
+          "stage1_top7": [
+            "doc_170#p15",
+            "doc_209#p4",
+            "doc_334#p6",
+            "doc_001#p291",
+            "doc_211#p6",
+            "doc_092#p3",
+            "doc_001#p306"
+          ]
+        },
+        {
+          "qid": "q_003",
+          "question": "官方与中科院认定的海拔约5200米冰川断裂冰岩崩，与媒体所称上游冰湖溃决，哪一说法成立？",
+          "n_l2": 6,
+          "cuts": {
+            "4": {
+              "hits": 0,
+              "gold_total": 6,
+              "nongold": 4,
+              "hit_ids": [],
+              "nongold_ids": [
+                "doc_063#p15",
+                "doc_079#p1",
+                "doc_132#p7",
+                "doc_211#p6"
+              ]
+            },
+            "5": {
+              "hits": 0,
+              "gold_total": 6,
+              "nongold": 5,
+              "hit_ids": [],
+              "nongold_ids": [
+                "doc_063#p15",
+                "doc_079#p1",
+                "doc_132#p7",
+                "doc_211#p6",
+                "doc_110#p6"
+              ]
+            },
+            "7": {
+              "hits": 0,
+              "gold_total": 6,
+              "nongold": 7,
+              "hit_ids": [],
+              "nongold_ids": [
+                "doc_063#p15",
+                "doc_079#p1",
+                "doc_132#p7",
+                "doc_211#p6",
+                "doc_110#p6",
+                "doc_219#p3",
+                "doc_313#p8"
+              ]
+            }
+          },
+          "outside_top7": [
+            {
+              "id": "doc_001#p2",
+              "stage1_rank": 53,
+              "inbox_rank": null,
+              "why": "一筛第 53，池 20 外"
+            },
+            {
+              "id": "doc_001#p233",
+              "stage1_rank": 29,
+              "inbox_rank": null,
+              "why": "一筛第 29，池 20 外"
+            },
+            {
+              "id": "doc_001#p237",
+              "stage1_rank": null,
+              "inbox_rank": null,
+              "why": "一筛未入围"
+            },
+            {
+              "id": "doc_001#p419",
+              "stage1_rank": 116,
+              "inbox_rank": null,
+              "why": "一筛第 116，池 20 外"
+            },
+            {
+              "id": "doc_001#p422",
+              "stage1_rank": 196,
+              "inbox_rank": null,
+              "why": "一筛第 196，池 20 外"
+            },
+            {
+              "id": "doc_001#p85",
+              "stage1_rank": 27,
+              "inbox_rank": null,
+              "why": "一筛第 27，池 20 外"
+            }
+          ],
+          "stage1_top7": [
+            "doc_063#p15",
+            "doc_079#p1",
+            "doc_132#p7",
+            "doc_211#p6",
+            "doc_110#p6",
+            "doc_219#p3",
+            "doc_313#p8"
+          ]
+        }
+      ],
+      "lexicons": [
+        {
+          "qid": "q_001",
+          "lexicon": {
+            "actors": [
+              "官方"
+            ],
+            "actor_aliases": {},
+            "family_surfaces": {},
+            "family_frames": {},
+            "active_families": [],
+            "party_voice": [
+              "不是我不想走",
+              "没让我走",
+              "不想走",
+              "不愿走",
+              "深夜发文",
+              "再发文",
+              "直言",
+              "发文称",
+              "全文如下",
+              "微博发问",
+              "他最后说",
+              "我一直没有离开",
+              "由我来说",
+              "我已经"
+            ],
+            "gloss": [
+              "还在单位",
+              "还在该单位",
+              "公务员",
+              "坐班",
+              "体制内",
+              "副书记",
+              "行政级别",
+              "职位"
+            ],
+            "bulletin": [
+              "按规定给予",
+              "自愿选择自主择业",
+              "组织安置",
+              "我们予以充分尊重",
+              "情况通报",
+              "妥善安置",
+              "自主择业申请",
+              "按规定给予了",
+              "自主择业经济补偿金",
+              "自愿选择自主择业申请",
+              "我们深表敬意"
+            ],
+            "institution": [
+              "制度框架",
+              "对应的表述",
+              "经济补偿办法",
+              "制度设计",
+              "《自主择业"
+            ],
+            "official_voice": [
+              "工作人员表示",
+              "工作人员称",
+              "回应记者",
+              "也曾解释",
+              "解释说",
+              "情况通报",
+              "统一发公告",
+              "按规定",
+              "我们予以",
+              "官方称",
+              "官方说"
+            ],
+            "identity_synonyms": [],
+            "resume_noise": [],
+            "claim_frames": [],
+            "source": "question",
+            "slug": "jilong"
+          }
+        },
+        {
+          "qid": "q_002",
+          "lexicon": {
+            "actors": [],
+            "actor_aliases": {},
+            "family_surfaces": {},
+            "family_frames": {},
+            "active_families": [],
+            "party_voice": [
+              "不是我不想走",
+              "没让我走",
+              "不想走",
+              "不愿走",
+              "深夜发文",
+              "再发文",
+              "直言",
+              "发文称",
+              "全文如下",
+              "微博发问",
+              "他最后说",
+              "我一直没有离开",
+              "由我来说",
+              "我已经"
+            ],
+            "gloss": [
+              "还在单位",
+              "还在该单位",
+              "公务员",
+              "坐班",
+              "体制内",
+              "副书记",
+              "行政级别",
+              "职位"
+            ],
+            "bulletin": [
+              "按规定给予",
+              "自愿选择自主择业",
+              "组织安置",
+              "我们予以充分尊重",
+              "情况通报",
+              "妥善安置",
+              "自主择业申请",
+              "按规定给予了",
+              "自主择业经济补偿金",
+              "自愿选择自主择业申请",
+              "我们深表敬意"
+            ],
+            "institution": [
+              "制度框架",
+              "对应的表述",
+              "经济补偿办法",
+              "制度设计",
+              "《自主择业"
+            ],
+            "official_voice": [
+              "工作人员表示",
+              "工作人员称",
+              "回应记者",
+              "也曾解释",
+              "解释说",
+              "情况通报",
+              "统一发公告",
+              "按规定",
+              "我们予以",
+              "官方称",
+              "官方说"
+            ],
+            "identity_synonyms": [],
+            "resume_noise": [],
+            "claim_frames": [],
+            "source": "question",
+            "slug": "jilong"
+          }
+        },
+        {
+          "qid": "q_003",
+          "lexicon": {
+            "actors": [
+              "官方"
+            ],
+            "actor_aliases": {},
+            "family_surfaces": {},
+            "family_frames": {},
+            "active_families": [],
+            "party_voice": [
+              "不是我不想走",
+              "没让我走",
+              "不想走",
+              "不愿走",
+              "深夜发文",
+              "再发文",
+              "直言",
+              "发文称",
+              "全文如下",
+              "微博发问",
+              "他最后说",
+              "我一直没有离开",
+              "由我来说",
+              "我已经"
+            ],
+            "gloss": [
+              "还在单位",
+              "还在该单位",
+              "公务员",
+              "坐班",
+              "体制内",
+              "副书记",
+              "行政级别",
+              "职位"
+            ],
+            "bulletin": [
+              "按规定给予",
+              "自愿选择自主择业",
+              "组织安置",
+              "我们予以充分尊重",
+              "情况通报",
+              "妥善安置",
+              "自主择业申请",
+              "按规定给予了",
+              "自主择业经济补偿金",
+              "自愿选择自主择业申请",
+              "我们深表敬意"
+            ],
+            "institution": [
+              "制度框架",
+              "对应的表述",
+              "经济补偿办法",
+              "制度设计",
+              "《自主择业"
+            ],
+            "official_voice": [
+              "工作人员表示",
+              "工作人员称",
+              "回应记者",
+              "也曾解释",
+              "解释说",
+              "情况通报",
+              "统一发公告",
+              "按规定",
+              "我们予以",
+              "官方称",
+              "官方说"
+            ],
+            "identity_synonyms": [],
+            "resume_noise": [],
+            "claim_frames": [],
+            "source": "question",
+            "slug": "jilong"
+          }
+        }
+      ],
+      "gold_in_pool20": 2,
+      "gold_total": 13,
+      "stage1_sum7": 2,
+      "prefer_gold_cluster": false,
+      "leak_any_bad": false,
+      "wall_s": 22.3
+    },
+    {
+      "slug": "us_cn_ai",
+      "name": "中美AI事故预警提议（2026.9）",
+      "n_union": 534,
+      "questions": [
+        {
+          "qid": "q_001",
+          "question": "AI事故通报热线到底能否在2026年11月的中美对话后就绪启用，还是如WIRED所称短期不会就绪？",
+          "n_l2": 6,
+          "cuts": {
+            "4": {
+              "hits": 0,
+              "gold_total": 6,
+              "nongold": 4,
+              "hit_ids": [],
+              "nongold_ids": [
+                "doc_047#p2",
+                "doc_045#p1",
+                "doc_049#p2",
+                "doc_036#p1"
+              ]
+            },
+            "5": {
+              "hits": 0,
+              "gold_total": 6,
+              "nongold": 5,
+              "hit_ids": [],
+              "nongold_ids": [
+                "doc_047#p2",
+                "doc_045#p1",
+                "doc_049#p2",
+                "doc_036#p1",
+                "doc_035#p12"
+              ]
+            },
+            "7": {
+              "hits": 0,
+              "gold_total": 6,
+              "nongold": 7,
+              "hit_ids": [],
+              "nongold_ids": [
+                "doc_047#p2",
+                "doc_045#p1",
+                "doc_049#p2",
+                "doc_036#p1",
+                "doc_035#p12",
+                "doc_025#p7",
+                "doc_035#p6"
+              ]
+            }
+          },
+          "outside_top7": [
+            {
+              "id": "doc_004#p4",
+              "stage1_rank": 38,
+              "inbox_rank": null,
+              "why": "一筛第 38，池 20 外"
+            },
+            {
+              "id": "doc_007#p10",
+              "stage1_rank": 41,
+              "inbox_rank": null,
+              "why": "一筛第 41，池 20 外"
+            },
+            {
+              "id": "doc_009#p12",
+              "stage1_rank": 162,
+              "inbox_rank": null,
+              "why": "一筛第 162，池 20 外"
+            },
+            {
+              "id": "doc_016#p5",
+              "stage1_rank": 109,
+              "inbox_rank": null,
+              "why": "一筛第 109，池 20 外"
+            },
+            {
+              "id": "doc_023#p4",
+              "stage1_rank": 140,
+              "inbox_rank": null,
+              "why": "一筛第 140，池 20 外"
+            },
+            {
+              "id": "doc_047#p4",
+              "stage1_rank": null,
+              "inbox_rank": null,
+              "why": "一筛未入围"
+            }
+          ],
+          "stage1_top7": [
+            "doc_047#p2",
+            "doc_045#p1",
+            "doc_049#p2",
+            "doc_047#p6",
+            "doc_036#p1",
+            "doc_035#p12",
+            "doc_025#p7"
+          ]
+        },
+        {
+          "qid": "q_002",
+          "question": "中美AI对话机制应定性为危机管理安排，还是联合国主渠道下的全球AI治理安排？",
+          "n_l2": 3,
+          "cuts": {
+            "4": {
+              "hits": 0,
+              "gold_total": 3,
+              "nongold": 4,
+              "hit_ids": [],
+              "nongold_ids": [
+                "doc_045#p1",
+                "doc_047#p2",
+                "doc_049#p2",
+                "doc_023#p12"
+              ]
+            },
+            "5": {
+              "hits": 0,
+              "gold_total": 3,
+              "nongold": 5,
+              "hit_ids": [],
+              "nongold_ids": [
+                "doc_045#p1",
+                "doc_047#p2",
+                "doc_049#p2",
+                "doc_023#p12",
+                "doc_035#p9"
+              ]
+            },
+            "7": {
+              "hits": 0,
+              "gold_total": 3,
+              "nongold": 7,
+              "hit_ids": [],
+              "nongold_ids": [
+                "doc_045#p1",
+                "doc_047#p2",
+                "doc_049#p2",
+                "doc_023#p12",
+                "doc_035#p9",
+                "doc_045#p3",
+                "doc_047#p6"
+              ]
+            }
+          },
+          "outside_top7": [
+            {
+              "id": "doc_005#p3",
+              "stage1_rank": 4,
+              "inbox_rank": 9,
+              "why": "二筛名次 9，Top-7 外"
+            },
+            {
+              "id": "doc_011#p3",
+              "stage1_rank": 13,
+              "inbox_rank": 14,
+              "why": "二筛名次 14，Top-7 外"
+            },
+            {
+              "id": "doc_018#p12",
+              "stage1_rank": 216,
+              "inbox_rank": null,
+              "why": "一筛第 216，池 20 外"
+            },
+            {
+              "id": "doc_009#p12",
+              "why": "装箱未选入",
+              "stage1_rank": null,
+              "inbox_rank": null
+            }
+          ],
+          "stage1_top7": [
+            "doc_045#p1",
+            "doc_047#p6",
+            "doc_047#p1",
+            "doc_005#p3",
+            "doc_047#p2",
+            "doc_049#p2",
+            "doc_047#p3"
+          ]
+        },
+        {
+          "qid": "q_003",
+          "question": "AI失控责任该由OpenAI管理层等企业承担，还是如Anthropic、奥尔特曼所主张由政府介入承担？",
+          "n_l2": 4,
+          "cuts": {
+            "4": {
+              "hits": 0,
+              "gold_total": 4,
+              "nongold": 4,
+              "hit_ids": [],
+              "nongold_ids": [
+                "doc_026#p12",
+                "doc_045#p3",
+                "doc_047#p2",
+                "doc_025#p7"
+              ]
+            },
+            "5": {
+              "hits": 0,
+              "gold_total": 4,
+              "nongold": 5,
+              "hit_ids": [],
+              "nongold_ids": [
+                "doc_026#p12",
+                "doc_045#p3",
+                "doc_047#p2",
+                "doc_025#p7",
+                "doc_022#p6"
+              ]
+            },
+            "7": {
+              "hits": 0,
+              "gold_total": 4,
+              "nongold": 7,
+              "hit_ids": [],
+              "nongold_ids": [
+                "doc_026#p12",
+                "doc_045#p3",
+                "doc_047#p2",
+                "doc_025#p7",
+                "doc_022#p6",
+                "doc_035#p12",
+                "doc_058#p4"
+              ]
+            }
+          },
+          "outside_top7": [
+            {
+              "id": "doc_017#p10",
+              "stage1_rank": 71,
+              "inbox_rank": null,
+              "why": "一筛第 71，池 20 外"
+            },
+            {
+              "id": "doc_017#p12",
+              "stage1_rank": 11,
+              "inbox_rank": 11,
+              "why": "二筛名次 11，Top-7 外"
+            },
+            {
+              "id": "doc_017#p9",
+              "stage1_rank": 70,
+              "inbox_rank": null,
+              "why": "一筛第 70，池 20 外"
+            },
+            {
+              "id": "doc_058#p2",
+              "stage1_rank": 50,
+              "inbox_rank": null,
+              "why": "一筛第 50，池 20 外"
+            }
+          ],
+          "stage1_top7": [
+            "doc_026#p12",
+            "doc_045#p3",
+            "doc_047#p2",
+            "doc_025#p7",
+            "doc_022#p6",
+            "doc_035#p12",
+            "doc_058#p4"
+          ]
+        }
+      ],
+      "lexicons": [
+        {
+          "qid": "q_001",
+          "lexicon": {
+            "actors": [],
+            "actor_aliases": {},
+            "family_surfaces": {},
+            "family_frames": {},
+            "active_families": [],
+            "party_voice": [
+              "不是我不想走",
+              "没让我走",
+              "不想走",
+              "不愿走",
+              "深夜发文",
+              "再发文",
+              "直言",
+              "发文称",
+              "全文如下",
+              "微博发问",
+              "他最后说",
+              "我一直没有离开",
+              "由我来说",
+              "我已经"
+            ],
+            "gloss": [
+              "还在单位",
+              "还在该单位",
+              "公务员",
+              "坐班",
+              "体制内",
+              "副书记",
+              "行政级别",
+              "职位"
+            ],
+            "bulletin": [
+              "按规定给予",
+              "自愿选择自主择业",
+              "组织安置",
+              "我们予以充分尊重",
+              "情况通报",
+              "妥善安置",
+              "自主择业申请",
+              "按规定给予了",
+              "自主择业经济补偿金",
+              "自愿选择自主择业申请",
+              "我们深表敬意"
+            ],
+            "institution": [
+              "制度框架",
+              "对应的表述",
+              "经济补偿办法",
+              "制度设计",
+              "《自主择业"
+            ],
+            "official_voice": [
+              "工作人员表示",
+              "工作人员称",
+              "回应记者",
+              "也曾解释",
+              "解释说",
+              "情况通报",
+              "统一发公告",
+              "按规定",
+              "我们予以",
+              "官方称",
+              "官方说"
+            ],
+            "identity_synonyms": [],
+            "resume_noise": [],
+            "claim_frames": [],
+            "source": "question",
+            "slug": "us_cn_ai"
+          }
+        },
+        {
+          "qid": "q_002",
+          "lexicon": {
+            "actors": [],
+            "actor_aliases": {},
+            "family_surfaces": {},
+            "family_frames": {},
+            "active_families": [],
+            "party_voice": [
+              "不是我不想走",
+              "没让我走",
+              "不想走",
+              "不愿走",
+              "深夜发文",
+              "再发文",
+              "直言",
+              "发文称",
+              "全文如下",
+              "微博发问",
+              "他最后说",
+              "我一直没有离开",
+              "由我来说",
+              "我已经"
+            ],
+            "gloss": [
+              "还在单位",
+              "还在该单位",
+              "公务员",
+              "坐班",
+              "体制内",
+              "副书记",
+              "行政级别",
+              "职位"
+            ],
+            "bulletin": [
+              "按规定给予",
+              "自愿选择自主择业",
+              "组织安置",
+              "我们予以充分尊重",
+              "情况通报",
+              "妥善安置",
+              "自主择业申请",
+              "按规定给予了",
+              "自主择业经济补偿金",
+              "自愿选择自主择业申请",
+              "我们深表敬意"
+            ],
+            "institution": [
+              "制度框架",
+              "对应的表述",
+              "经济补偿办法",
+              "制度设计",
+              "《自主择业"
+            ],
+            "official_voice": [
+              "工作人员表示",
+              "工作人员称",
+              "回应记者",
+              "也曾解释",
+              "解释说",
+              "情况通报",
+              "统一发公告",
+              "按规定",
+              "我们予以",
+              "官方称",
+              "官方说"
+            ],
+            "identity_synonyms": [],
+            "resume_noise": [],
+            "claim_frames": [],
+            "source": "question",
+            "slug": "us_cn_ai"
+          }
+        },
+        {
+          "qid": "q_003",
+          "lexicon": {
+            "actors": [],
+            "actor_aliases": {},
+            "family_surfaces": {},
+            "family_frames": {},
+            "active_families": [],
+            "party_voice": [
+              "不是我不想走",
+              "没让我走",
+              "不想走",
+              "不愿走",
+              "深夜发文",
+              "再发文",
+              "直言",
+              "发文称",
+              "全文如下",
+              "微博发问",
+              "他最后说",
+              "我一直没有离开",
+              "由我来说",
+              "我已经"
+            ],
+            "gloss": [
+              "还在单位",
+              "还在该单位",
+              "公务员",
+              "坐班",
+              "体制内",
+              "副书记",
+              "行政级别",
+              "职位"
+            ],
+            "bulletin": [
+              "按规定给予",
+              "自愿选择自主择业",
+              "组织安置",
+              "我们予以充分尊重",
+              "情况通报",
+              "妥善安置",
+              "自主择业申请",
+              "按规定给予了",
+              "自主择业经济补偿金",
+              "自愿选择自主择业申请",
+              "我们深表敬意"
+            ],
+            "institution": [
+              "制度框架",
+              "对应的表述",
+              "经济补偿办法",
+              "制度设计",
+              "《自主择业"
+            ],
+            "official_voice": [
+              "工作人员表示",
+              "工作人员称",
+              "回应记者",
+              "也曾解释",
+              "解释说",
+              "情况通报",
+              "统一发公告",
+              "按规定",
+              "我们予以",
+              "官方称",
+              "官方说"
+            ],
+            "identity_synonyms": [],
+            "resume_noise": [],
+            "claim_frames": [],
+            "source": "question",
+            "slug": "us_cn_ai"
+          }
+        }
+      ],
+      "gold_in_pool20": 3,
+      "gold_total": 13,
+      "stage1_sum7": 1,
+      "prefer_gold_cluster": false,
+      "leak_any_bad": false,
+      "wall_s": 14.3
+    }
+  ],
+  "smoke_cuts": {
+    "4": {
+      "hits": 1,
+      "gold_total": 26,
+      "nongold": 23
+    },
+    "5": {
+      "hits": 2,
+      "gold_total": 26,
+      "nongold": 28
+    },
+    "7": {
+      "hits": 2,
+      "gold_total": 26,
+      "nongold": 40
+    }
+  },
+  "r16_ref": {
+    "holdout_at7": null,
+    "note": "R16 全五案；本冒烟只跑吉隆+中美AI"
+  },
+  "changed_files": [
+    "app/kg_lab/tag_schema.py",
+    "app/kg_lab/case_lexicon.py",
+    "app/kg_lab/multidim_weight.py",
+    "app/kg_lab/r9_buckets.py",
+    "app/kg_lab/inbox_rerank.py",
+    "app/kg_lab/source_role.py",
+    "app/kg_lab/slice_dims.py",
+    "app/kg_lab/query_expand.py",
+    "vaults/kg-lab/lexicon/liuxiang.json",
+    "scripts/kg_lab/run_r17_tag_decouple.py",
+    "tests/test_kg_lab_r17_tag_decouple.py"
+  ],
+  "risks": [
+    "主张族目录仍含就业／安置类通用词（买断／编制等），不是人名，但跨域案可能误激族。",
+    "主体抽取是浅规则，复杂问句可能漏机构别名；可用 case_lexicon 或 use_llm=True（本地14B）补。",
+    "本跑关闭了金标 prefer_ids，通稿簇代表与 R12 训练跑不完全同分布。",
+    "一筛系数仍在刘翔上拟合；解耦词表不等于跨案重拟合。"
+  ],
+  "wall_s": 42.2,
+  "reading": "刘翔池20 @7＝12/14（目标 ≥12/14，R12 为 13/14）。冒烟两案 @7＝2/26；池内金标 5/26。"
+}

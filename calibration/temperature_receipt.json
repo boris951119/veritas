@@ -1,0 +1,140 @@
+{
+  "chosen_T": 1.0,
+  "default_T_production": 1.0,
+  "T_domain": [
+    0.7,
+    1.3
+  ],
+  "T_step": 0.05,
+  "n": 226,
+  "mean_pooled": 0.693676,
+  "cv": [
+    {
+      "T": 0.7,
+      "oos_ece": 0.056502,
+      "degeneracy_ok": true,
+      "degeneracy_reason": "ok"
+    },
+    {
+      "T": 0.75,
+      "oos_ece": 0.056503,
+      "degeneracy_ok": true,
+      "degeneracy_reason": "ok"
+    },
+    {
+      "T": 0.8,
+      "oos_ece": 0.056504,
+      "degeneracy_ok": true,
+      "degeneracy_reason": "ok"
+    },
+    {
+      "T": 0.85,
+      "oos_ece": 0.056505,
+      "degeneracy_ok": true,
+      "degeneracy_reason": "ok"
+    },
+    {
+      "T": 0.9,
+      "oos_ece": 0.056506,
+      "degeneracy_ok": true,
+      "degeneracy_reason": "ok"
+    },
+    {
+      "T": 0.95,
+      "oos_ece": 0.056507,
+      "degeneracy_ok": true,
+      "degeneracy_reason": "ok"
+    },
+    {
+      "T": 1.0,
+      "oos_ece": 0.056508,
+      "degeneracy_ok": true,
+      "degeneracy_reason": "ok"
+    },
+    {
+      "T": 1.05,
+      "oos_ece": 0.057699,
+      "degeneracy_ok": true,
+      "degeneracy_reason": "ok"
+    },
+    {
+      "T": 1.1,
+      "oos_ece": 0.061727,
+      "degeneracy_ok": true,
+      "degeneracy_reason": "ok"
+    },
+    {
+      "T": 1.15,
+      "oos_ece": 0.05651,
+      "degeneracy_ok": true,
+      "degeneracy_reason": "ok"
+    },
+    {
+      "T": 1.2,
+      "oos_ece": 0.057668,
+      "degeneracy_ok": true,
+      "degeneracy_reason": "ok"
+    },
+    {
+      "T": 1.25,
+      "oos_ece": 0.057546,
+      "degeneracy_ok": true,
+      "degeneracy_reason": "ok"
+    },
+    {
+      "T": 1.3,
+      "oos_ece": 0.058414,
+      "degeneracy_ok": true,
+      "degeneracy_reason": "ok"
+    }
+  ],
+  "bins": [
+    {
+      "bin": "0.0-0.2",
+      "n": 0,
+      "lo": 0.0,
+      "hi": 0.2,
+      "acc": null,
+      "conf": null
+    },
+    {
+      "bin": "0.2-0.4",
+      "n": 0,
+      "lo": 0.2,
+      "hi": 0.4,
+      "acc": null,
+      "conf": null
+    },
+    {
+      "bin": "0.4-0.6",
+      "n": 33,
+      "lo": 0.4,
+      "hi": 0.6,
+      "acc": 0.545455,
+      "conf": 0.554694
+    },
+    {
+      "bin": "0.6-0.8",
+      "n": 164,
+      "lo": 0.6,
+      "hi": 0.8,
+      "acc": 0.676829,
+      "conf": 0.698577
+    },
+    {
+      "bin": "0.8-1.0",
+      "n": 29,
+      "lo": 0.8,
+      "hi": 1.0,
+      "acc": 0.517241,
+      "conf": 0.82411
+    }
+  ],
+  "AUC": 0.600715,
+  "ECE": 0.056508,
+  "degeneracy_ok": true,
+  "degeneracy_reason": "ok",
+  "mapping": "score = clip01(mean + T*(raw - mean)); mean = pooled of that submit/fold",
+  "note": "T≤0.7 可把 ECE 刷低到挤箱退化值；常数预测子 ECE=0；ECE 单独下降 ≠ 改进。生产默认 T=1.0。",
+  "replay": ".venv/bin/python scripts/fit_temperature.py --labels calibration/labels_self.jsonl --out calibration/temperature_receipt.json"
+}
