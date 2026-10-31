@@ -41,38 +41,52 @@ def build_corpus_rows(
     case_slug: str,
     para_ids: set[str],
 ) -> list[dict[str, Any]]:
-    """每段一行：原文、摘要字段、doc_id。"""
+    """每段一行：原文、摘要字段、doc_id；R20 带 publish_time／父标题进检索面。"""
     smap = segment_map(dossier)
     doc_of: dict[str, str] = {}
     title_of: dict[str, str] = {}
     cred_of: dict[str, float | None] = {}
+    pub_of: dict[str, str] = {}
     for src in dossier.sources:
         raw_cred = (src.meta or {}).get("source_credibility")
         if isinstance(raw_cred, (int, float)) and not isinstance(raw_cred, bool):
             cred: float | None = float(raw_cred)
         else:
             cred = float(src.credibility) if src.credibility is not None else None
+        meta = src.meta or {}
+        pub = str(
+            meta.get("publish_time")
+            or meta.get("published_at")
+            or meta.get("published_time")
+            or ""
+        ).strip()
         for seg in src.segments:
             sid = str(seg.id)
             doc_of[sid] = str(src.id)
             title_of[sid] = str(src.title or "")
             cred_of[sid] = cred
+            pub_of[sid] = pub
     rows: list[dict[str, Any]] = []
     for pid in sorted(para_ids):
         if pid not in smap:
             continue
         doc_id = doc_of[pid]
         text = smap[pid].text or ""
+        title = title_of.get(pid, "") or ""
         summary = load_summary(case_slug, doc_id, pid) or {}
         stext = summary.get("summary_text") or summary_blob(summary)
+        # 父标题进索引（低成本）：title\ntext 作检索面，原文 text 仍单独保留
+        titled = (title + "\n" + text).strip() if title else text
         rows.append({
             "doc_id": doc_id,
             "para_id": pid,
-            "title": title_of.get(pid, ""),
+            "title": title,
+            "publish_time": pub_of.get(pid, ""),
             "source_credibility": cred_of.get(pid),
             "text": text,
+            "title_text": titled,
             "summary_text": stext,
-            "union_text": (text + "\n" + stext).strip(),
+            "union_text": (titled + "\n" + stext).strip(),
             "entities": list(summary.get("entities") or []),
             "keywords": list(summary.get("keywords") or []),
         })
@@ -119,7 +133,11 @@ class KgIndex:
         self.case_slug = case_slug
         self.rows = rows
         self.by_id = {r["para_id"]: r for r in rows}
+        # 经典臂保持纯正文，避免父标题搅动已拟合 RRF
         self._docs_text = [(r["para_id"], _tokens(r["text"])) for r in rows]
+        self._docs_title_text = [
+            (r["para_id"], _tokens(r.get("title_text") or r["text"])) for r in rows
+        ]
         self._docs_summary = [
             (r["para_id"], _tokens(r["summary_text"] or "")) for r in rows
         ]
@@ -130,6 +148,10 @@ class KgIndex:
 
     def bm25_text(self, query: str) -> list[tuple[str, float]]:
         return _bm25_rank(self._docs_text, query)
+
+    def bm25_title_text(self, query: str) -> list[tuple[str, float]]:
+        """父标题＋段：仅给一筛多视图／裁决臂用。"""
+        return _bm25_rank(self._docs_title_text, query)
 
     def bm25_summary(self, query: str) -> list[tuple[str, float]]:
         return _bm25_rank(self._docs_summary, query)

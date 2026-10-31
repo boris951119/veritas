@@ -439,6 +439,7 @@ def _meta_from_row(row: dict[str, Any], lex: CaseLexicon | None = None) -> dict[
         "doc_id": str(row.get("doc_id") or ""),
         "title": title,
         "text": text,
+        "publish_time": str(row.get("publish_time") or ""),
         "norm": na,
         "role": info["role"],
         "fine_role": fine["role"],

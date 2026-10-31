@@ -48,11 +48,12 @@ _SCOPE = (
 )
 
 # 选项表面 → 可迁移近义检索词（非案情硬族）
+# 近义只扩同侧说法；禁止把对立口径互相写进同一选项（否则 option_side=both 失真）
 _OPT_PARAPHRASE_RULES: tuple[tuple[re.Pattern[str], tuple[str, ...]], ...] = (
-    (re.compile(r"不愿走|不想走"), ("不愿走", "不想走", "没让我走", "想走")),
+    (re.compile(r"不愿走|不想走"), ("不愿走", "不想走", "想走")),
     (re.compile(r"未放行|不放行|没放行"), ("未放行", "没让我走", "不放", "放行")),
-    (re.compile(r"买断费"), ("买断费", "买断", "自主择业")),
-    (re.compile(r"自主择业(?:经济补偿金)?"), ("自主择业经济补偿金", "自主择业", "经济补偿")),
+    (re.compile(r"买断费|^买断$"), ("买断费", "买断")),
+    (re.compile(r"自主择业(?:经济补偿金)?|经济补偿金"), ("自主择业经济补偿金", "自主择业", "经济补偿金", "经济补偿")),
     (re.compile(r"在编不在岗"), ("在编不在岗", "在编", "不在岗", "编制", "岗位")),
     (re.compile(r"泥石流"), ("泥石流", "洪灾", "山崩", "冰岩崩")),
     (re.compile(r"冰湖溃决|冰川断裂"), ("冰湖溃决", "冰川断裂", "冰岩崩")),
@@ -254,9 +255,14 @@ def option_side(text: str, frame: EventFrame) -> str:
     if len(frame.options) < 2:
         return ""
     a, b = frame.options[0], frame.options[1]
-    body = text or ""
-    keys_a = option_paraphrases(a)
-    keys_b = option_paraphrases(b)
+    body = (text or "")
+    # 去掉跨选项共享近义，避免双方同时命中
+    keys_a = [k for k in option_paraphrases(a) if k and k not in option_paraphrases(b)]
+    keys_b = [k for k in option_paraphrases(b) if k and k not in option_paraphrases(a)]
+    if not keys_a:
+        keys_a = [a]
+    if not keys_b:
+        keys_b = [b]
     ha = any(k in body for k in keys_a)
     hb = any(k in body for k in keys_b)
     if ha and not hb:
