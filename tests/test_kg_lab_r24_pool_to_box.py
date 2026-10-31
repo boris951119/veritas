@@ -70,17 +70,27 @@ def test_near_dup_catches_wire_variants():
     assert _near_dup(a, b)
 
 
-def test_near_dup_spares_long_claim_siblings():
-    """共引同一查明句的长段不应并簇（否则金标互挤）。"""
-    shared = (
-        "北京时间8月26日上午10时52分左右，尼泊尔境内蓝塘里壤峰北坡一条冰川在海拔约5200米处断裂发生冰岩崩，"
-        "高位快速坠落至4000米左右，冲刷山体形成巨型泥石流"
+def test_near_dup_spares_weak_overlap_long_siblings():
+    """仅短共引、低 Jaccard 的长段不并簇。"""
+    a = _norm(
+        "北京时间8月26日上午10时52分左右发生冰岩崩。" + "现场损毁情况如下。" * 8
     )
-    a = _norm(shared + "，高速冲击约22公里后直达吉隆口岸。" + "记者在现场看到损毁严重。" * 4)
     b = _norm(
-        "新闻发布会上获悉，灾害原因现已查明。" + shared + "。专家还指出预警窗口极短。" + "后续救援进展。" * 4
+        "新闻发布会称灾害原因另有解释。" + "专家强调预警窗口极短。" * 8
     )
     assert not _near_dup(a, b)
+
+
+def test_near_dup_merges_press_rewrite():
+    """同一查明结论的发布会换皮应并簇。"""
+    shared = (
+        "西藏吉隆泥石流灾害原因现已查明，中国科学院成都山地所冰冻圈应急减灾团队通过分析遥感监测数据"
+        "和现场回传资料，结合实地踏勘走访综合认为：北京时间8月26日上午10时52分左右，尼泊尔境内"
+        "蓝塘里壤峰北坡一条冰川在海拔约5200米处断裂发生冰岩崩"
+    )
+    a = _norm("新华社电 记者从新闻发布会获悉，" + shared + "，直达吉隆口岸。")
+    b = _norm("2026年8月30日消息，从新闻发布会上获悉，" + shared + "，附属设施被夷为平地。")
+    assert _near_dup(a, b)
 
 
 def test_pack_keeps_one_wire_and_both_side():
