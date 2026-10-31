@@ -148,6 +148,29 @@ _WEAK_SIDE = frozenset({
 # 纯「N分」残片易误命中「10时59分」这类无关钟点（R24）
 _AMBIG_MIN_ONLY = re.compile(r"^\d{1,2}分$")
 _CLOCK_KEY = re.compile(r"\d{1,2}时\d{1,2}分")
+# 成因／口径对立表面（可迁移，非案名）
+_CLAIM_CONFLICT_CUES = (
+    "崩", "溃", "洪灾", "洪水", "山崩", "泥石流", "冰岩", "冰川", "米",
+)
+_VOICE_CUES = (
+    "发言人", "秘书长", "新闻发布会", "发布会", "声明", "例行记者会",
+    "外交部", "通报称", "情况通报",
+)
+_HASHTAG_WRAP = re.compile(r"【#|#[\u4e00-\u9fffA-Za-z0-9_]{2,24}#")
+_DEFINITIONAL = re.compile(
+    r"(?:^|。|；)[^。]{0,12}(?:是一种|是指|指的是|定义为)"
+)
+
+
+def is_claim_conflict_route(anchors: dict[str, list[str]] | None) -> bool:
+    """钟点对撞，或两侧均含成因／口径对立线索 → 启用软保位。"""
+    keys_a = list((anchors or {}).get("side_a") or [])
+    keys_b = list((anchors or {}).get("side_b") or [])
+    if any(_CLOCK_KEY.search(k or "") for k in keys_a + keys_b):
+        return True
+    def _hit(keys: list[str]) -> bool:
+        return any(any(c in (k or "") for c in _CLAIM_CONFLICT_CUES) for k in keys)
+    return _hit(keys_a) and _hit(keys_b)
 
 
 def _filter_side_keys(keys: list[str]) -> list[str]:
@@ -439,8 +462,10 @@ def core_rank_score(
         for k in list((anchors or {}).get("side_a") or [])
         + list((anchors or {}).get("side_b") or [])
     )
-    # R24 钟点对撞题：双侧／句首钟点优先、短通稿降权；其它题贴近 R22 原式以免伤 us
-    if clock_route and route == "adjudicate":
+    claim_route = is_claim_conflict_route(anchors)
+    conflict_route = (clock_route or claim_route) and route == "adjudicate"
+    # R24/R25 对撞题：双侧／句首钟点／机构口径优先；其它题贴近 R22 原式以免伤 us
+    if conflict_route and clock_route:
         if hits["side"] == "both" and (clock_a + clock_b) >= 1:
             exclusive = 0.20 + 0.10 * min(float(clock_a + clock_b), 2.0) + 0.12
             if clock_a >= 1 and clock_b >= 1:
@@ -451,6 +476,14 @@ def core_rank_score(
             exclusive = 0.14
             if (clock_a + clock_b) == 0:
                 exclusive -= 0.06
+        else:
+            exclusive = 0.0
+    elif conflict_route:
+        # 口径／成因对撞：双侧略抬；单侧保基本分
+        if hits["side"] == "both":
+            exclusive = 0.18
+        elif hits["side"] in {"option_a", "option_b"}:
+            exclusive = 0.16
         else:
             exclusive = 0.0
     else:
@@ -469,8 +502,7 @@ def core_rank_score(
     wire_pen = 0.0
     nlen = len(re.sub(r"\s+", "", text))
     if (
-        clock_route
-        and route == "adjudicate"
+        conflict_route
         and hits["side"] in {"option_a", "option_b"}
         and (
             band == "wire_relay"
@@ -478,7 +510,7 @@ def core_rank_score(
             or (nlen > 0 and nlen < 90 and soft_n >= 1)
         )
     ):
-        wire_pen = 0.22
+        wire_pen = 0.22 if clock_route else 0.14
     time_b = 0.10 * time_n if clock_route else 0.0
     head = text[:120]
     head_clock = 0
@@ -500,6 +532,15 @@ def core_rank_score(
         and (clock_a + clock_b) >= 1
     ):
         roundup_pen = 0.22
+    # R25：话题标签包装／辞书定义降权；机构口径声部抬权（可迁移）
+    wrap_pen = 0.14 if conflict_route and _HASHTAG_WRAP.search(text[:80]) else 0.0
+    defin_pen = 0.10 if conflict_route and _DEFINITIONAL.search(text[:100]) else 0.0
+    voice_n = sum(1 for v in _VOICE_CUES if v in text[:160])
+    voice_b = 0.0
+    if conflict_route and voice_n:
+        voice_b = 0.12 * min(voice_n, 2)
+        if band in {"primary_source", "official_channel"} or host_u >= 0.55:
+            voice_b += 0.10
     return (
         0.22 * host_u
         + 0.16 * min(float(hits["a"] + hits["b"]) / 3.0, 1.0)
@@ -511,9 +552,12 @@ def core_rank_score(
         + pool_b
         + time_b
         + head_b
+        + voice_b
         + (0.04 if route == "adjudicate" and hits["total"] else 0.0)
         - wire_pen
         - roundup_pen
+        - wrap_pen
+        - defin_pen
     )
 
 

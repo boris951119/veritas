@@ -8,12 +8,16 @@ R24：通稿／近同文簇内只留代表；裁决题软保对立侧／双侧�
 
 from __future__ import annotations
 
+import re
 from typing import Any
 
 from app.kg_lab.intent_routes import (
     _CLOCK_KEY,
+    _HASHTAG_WRAP,
+    _VOICE_CUES,
     anchor_hits,
     core_rank_score,
+    is_claim_conflict_route,
     is_core_candidate,
     related_filler,
 )
@@ -27,6 +31,7 @@ K_MAX = 7
 _NEAR_JAC = 0.52
 _NEAR_CONT = 0.86
 _NEAR_SPAN = 26
+_PRECISE_CLOCK = re.compile(r"\d{1,2}时\d{1,2}分")
 
 
 def _text_fp(metas: dict[str, dict[str, Any]], pid: str) -> str:
@@ -35,6 +40,11 @@ def _text_fp(metas: dict[str, dict[str, Any]], pid: str) -> str:
 
 def _norm_body(metas: dict[str, dict[str, Any]], pid: str) -> str:
     return _norm(str((metas.get(pid) or {}).get("text") or ""))
+
+
+def _doc_id(pid: str, metas: dict[str, dict[str, Any]]) -> str:
+    meta = metas.get(pid) or {}
+    return str(meta.get("doc_id") or (pid.split("#", 1)[0] if pid else ""))
 
 
 def _near_dup(na: str, nb: str) -> bool:
@@ -54,8 +64,27 @@ def _near_dup(na: str, nb: str) -> bool:
         if jac >= _NEAR_JAC or cont >= _NEAR_CONT:
             return True
         return longest_shared_span(a, b, min_len=18) >= _NEAR_SPAN
-    # 长段：近全文转载才并
-    return jac >= 0.68 or (cont >= 0.92 and jac >= 0.50)
+    # 长段：近全文转载，或「同一查明结论」长共茎改写（发布会／通稿换皮）
+    if jac >= 0.72 or (cont >= 0.92 and jac >= 0.55):
+        return True
+    span = longest_shared_span(a, b, min_len=36)
+    return jac >= 0.45 and span >= 56
+
+
+def _rep_quality(
+    pid: str,
+    *,
+    feats: dict[str, dict[str, Any]],
+    metas: dict[str, dict[str, Any]],
+) -> tuple[float, float, float, float]:
+    """簇代表质量：精确钟点／机构声部／可核验优先；话题标签包装靠后。"""
+    text = str((metas.get(pid) or {}).get("text") or "")
+    feat = feats.get(pid) or {}
+    ver = float(feat.get("verifiability") or 0.0)
+    precise = 1.0 if _PRECISE_CLOCK.search(text) else 0.0
+    voice = 1.0 if any(v in text[:160] for v in _VOICE_CUES) else 0.0
+    wrap = 1.0 if _HASHTAG_WRAP.search(text[:80]) else 0.0
+    return (precise + voice, ver, -wrap, float(feat.get("authority_unit") or 0.0))
 
 
 def _side_of(
@@ -75,17 +104,57 @@ def _side_of(
 def _cluster_wire_keep_one(
     scored_cores: list[tuple[float, str]],
     metas: dict[str, dict[str, Any]],
+    feats: dict[str, dict[str, Any]] | None = None,
 ) -> list[tuple[float, str]]:
-    """通稿／近同文簇：已按分降序，簇内只留最先（最高分）一条。"""
+    """通稿／近同文簇：质量更好的代表可替换高分包装段。"""
+    feats = feats or {}
     kept: list[tuple[float, str]] = []
     norms: list[str] = []
     for sc, pid in scored_cores:
         body = _norm_body(metas, pid)
-        if any(_near_dup(body, kn) for kn in norms):
+        dup_at = next((i for i, kn in enumerate(norms) if _near_dup(body, kn)), None)
+        if dup_at is None:
+            kept.append((sc, pid))
+            norms.append(body)
             continue
-        kept.append((sc, pid))
-        norms.append(body)
+        old_sc, old_pid = kept[dup_at]
+        if _rep_quality(pid, feats=feats, metas=metas) > _rep_quality(
+            old_pid, feats=feats, metas=metas,
+        ):
+            kept[dup_at] = (sc, pid)
+            norms[dup_at] = body
     return kept
+
+
+def _cap_same_doc(
+    cores: list[str],
+    metas: dict[str, dict[str, Any]],
+    *,
+    feats: dict[str, dict[str, Any]] | None = None,
+    anchors: dict[str, list[str]] | None = None,
+    max_per_doc: int = 1,
+) -> list[str]:
+    """同文档单侧切片封顶，防止单页通稿／UN 多段占满。
+
+    双侧主张段不计入封顶（同页可有多条对撞金标近似段）。
+    """
+    feats = feats or {}
+    out: list[str] = []
+    deferred: list[str] = []
+    counts: dict[str, int] = {}
+    for pid in cores:
+        side = _side_of(pid, feats=feats, metas=metas, anchors=anchors)
+        if side == "both":
+            out.append(pid)
+            continue
+        doc = _doc_id(pid, metas) or pid
+        n = counts.get(doc, 0)
+        if n >= max_per_doc:
+            deferred.append(pid)
+            continue
+        counts[doc] = n + 1
+        out.append(pid)
+    return out + deferred
 
 
 def _soft_side_pack(
@@ -103,13 +172,8 @@ def _soft_side_pack(
     """
     if route != "adjudicate" or not cores:
         return cores, []
-    # 仅钟点对撞题启用双侧优先／同侧封顶；其它对立题只做近同文簇（防伤 us）
-    clock_route = any(
-        _CLOCK_KEY.search(k or "")
-        for k in list((anchors or {}).get("side_a") or [])
-        + list((anchors or {}).get("side_b") or [])
-    )
-    if not clock_route:
+    # 钟点／成因／口径对撞才启用；制度口径题（如 us）不启，防回退
+    if not is_claim_conflict_route(anchors):
         return cores, []
     sided: list[str] = []
     unsided: list[str] = []
@@ -177,10 +241,12 @@ def pack_core_first(
     # 只保留分数靠前的核心，避免假核心灌满 k=7（宁少勿滥）
     if scored_cores:
         top_sc = scored_cores[0][0]
-        floor = max(0.42, top_sc - 0.38)
+        # 对撞题声部／钟点抬分会抬高顶分：放宽地板，避免裁掉同题其它主张段
+        gap = 0.55 if is_claim_conflict_route(anchors) else 0.38
+        floor = max(0.42, top_sc - gap)
         scored_cores = [x for x in scored_cores if x[0] + 1e-12 >= floor][:6]
-    # R24：通稿／近同文簇内留代表（比精确指纹更宽）
-    scored_cores = _cluster_wire_keep_one(scored_cores, metas)
+    # R24/R25：通稿／近同文簇内留质量更好的代表
+    scored_cores = _cluster_wire_keep_one(scored_cores, metas, feats)
     # 精确指纹兜底（同文不同空白）
     cores: list[str] = []
     fp_seen: set[str] = set()
@@ -190,6 +256,11 @@ def pack_core_first(
             continue
         fp_seen.add(fp)
         cores.append(pid)
+    # 对撞题：同文档单侧切片封顶（防 UN／通稿单页占满；双侧不封顶）
+    if is_claim_conflict_route(anchors):
+        cores = _cap_same_doc(
+            cores, metas, feats=feats, anchors=anchors, max_per_doc=1,
+        )
     cores, demoted = _soft_side_pack(
         cores, feats=feats, metas=metas, route=route, anchors=anchors,
     )
