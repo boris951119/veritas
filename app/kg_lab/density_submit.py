@@ -2,6 +2,8 @@
 
 优先保证「核心段」占比 ≥ 2/3；不够则缩小 k。
 高相关非核心只补位，不回填稀释。不读金标 id。
+
+R24：通稿／近同文簇内只留代表；裁决题软保对立侧／双侧入盒。
 """
 
 from __future__ import annotations
@@ -9,19 +11,130 @@ from __future__ import annotations
 from typing import Any
 
 from app.kg_lab.intent_routes import (
+    _CLOCK_KEY,
+    anchor_hits,
     core_rank_score,
     is_core_candidate,
     related_filler,
 )
-from app.kg_lab.source_role import _norm
+from app.kg_lab.source_role import _norm, jaccard_containment, longest_shared_span
 
 TARGET_DENSITY = 2.0 / 3.0
 K_MIN = 3
 K_MAX = 7
 
+# 近同文／通稿茎簇：Jaccard／包含度／最长共茎任一过阈即并簇
+_NEAR_JAC = 0.52
+_NEAR_CONT = 0.86
+_NEAR_SPAN = 26
+
 
 def _text_fp(metas: dict[str, dict[str, Any]], pid: str) -> str:
     return _norm(str((metas.get(pid) or {}).get("text") or ""))[:96]
+
+
+def _norm_body(metas: dict[str, dict[str, Any]], pid: str) -> str:
+    return _norm(str((metas.get(pid) or {}).get("text") or ""))
+
+
+def _near_dup(na: str, nb: str) -> bool:
+    """通稿近同文：短通报改写／镜像转载。
+
+    长段只按高 Jaccard／强包含并簇——共引同一句查明结论不算整段近同文，
+    否则对立查明金标会被互相挤掉。
+    """
+    if not na or not nb:
+        return False
+    if na[:96] == nb[:96]:
+        return True
+    a, b = na[:180], nb[:180]
+    jac, cont = jaccard_containment(a, b)
+    short = min(len(na), len(nb)) < 110
+    if short:
+        if jac >= _NEAR_JAC or cont >= _NEAR_CONT:
+            return True
+        return longest_shared_span(a, b, min_len=18) >= _NEAR_SPAN
+    # 长段：近全文转载才并
+    return jac >= 0.68 or (cont >= 0.92 and jac >= 0.50)
+
+
+def _side_of(
+    pid: str,
+    *,
+    feats: dict[str, dict[str, Any]],
+    metas: dict[str, dict[str, Any]],
+    anchors: dict[str, list[str]] | None,
+) -> str:
+    text = str((metas.get(pid) or {}).get("text") or "")
+    hits = anchor_hits(text, anchors)
+    if hits["side"]:
+        return str(hits["side"])
+    return str((feats.get(pid) or {}).get("option_side") or "") or "other"
+
+
+def _cluster_wire_keep_one(
+    scored_cores: list[tuple[float, str]],
+    metas: dict[str, dict[str, Any]],
+) -> list[tuple[float, str]]:
+    """通稿／近同文簇：已按分降序，簇内只留最先（最高分）一条。"""
+    kept: list[tuple[float, str]] = []
+    norms: list[str] = []
+    for sc, pid in scored_cores:
+        body = _norm_body(metas, pid)
+        if any(_near_dup(body, kn) for kn in norms):
+            continue
+        kept.append((sc, pid))
+        norms.append(body)
+    return kept
+
+
+def _soft_side_pack(
+    cores: list[str],
+    *,
+    feats: dict[str, dict[str, Any]],
+    metas: dict[str, dict[str, Any]],
+    route: str,
+    anchors: dict[str, list[str]] | None,
+) -> tuple[list[str], list[str]]:
+    """裁决题软保位，返回 (有侧核心, 降为补位的无侧核心)。
+
+    1) 双侧主张段优先于单侧通稿（同侧独占至多 1）；
+    2) 无侧别权威段不占核心槽，改补位（防挤对立金标近似段）。
+    """
+    if route != "adjudicate" or not cores:
+        return cores, []
+    # 仅钟点对撞题启用双侧优先／同侧封顶；其它对立题只做近同文簇（防伤 us）
+    clock_route = any(
+        _CLOCK_KEY.search(k or "")
+        for k in list((anchors or {}).get("side_a") or [])
+        + list((anchors or {}).get("side_b") or [])
+    )
+    if not clock_route:
+        return cores, []
+    sided: list[str] = []
+    unsided: list[str] = []
+    for pid in cores:
+        side = _side_of(pid, feats=feats, metas=metas, anchors=anchors)
+        if side in {"option_a", "option_b", "both"}:
+            sided.append(pid)
+        else:
+            unsided.append(pid)
+    boths: list[str] = []
+    excl: list[str] = []
+    deferred: list[str] = []
+    side_n = {"option_a": 0, "option_b": 0}
+    for pid in sided:
+        side = _side_of(pid, feats=feats, metas=metas, anchors=anchors)
+        if side == "both":
+            boths.append(pid)
+            continue
+        if side in side_n:
+            if side_n[side] >= 1:
+                deferred.append(pid)
+                continue
+            side_n[side] += 1
+            excl.append(pid)
+    return boths + excl + deferred, unsided
 
 
 def pack_core_first(
@@ -34,7 +147,7 @@ def pack_core_first(
     anchors: dict[str, list[str]] | None = None,
     url_of: dict[str, str] | None = None,
 ) -> tuple[list[str], list[str], list[str]]:
-    """核心按 rank 分排序；近同文去重后再拼补位／其余。"""
+    """核心按 rank 分排序；近同文／通稿茎簇去重后再拼补位／其余。"""
     scored_cores: list[tuple[float, str]] = []
     fillers: list[str] = []
     rest: list[str] = []
@@ -66,7 +179,9 @@ def pack_core_first(
         top_sc = scored_cores[0][0]
         floor = max(0.42, top_sc - 0.38)
         scored_cores = [x for x in scored_cores if x[0] + 1e-12 >= floor][:6]
-    # 近同文：同指纹只留分最高的 1 条（宁少勿滥；部委镜像不重复占盒）
+    # R24：通稿／近同文簇内留代表（比精确指纹更宽）
+    scored_cores = _cluster_wire_keep_one(scored_cores, metas)
+    # 精确指纹兜底（同文不同空白）
     cores: list[str] = []
     fp_seen: set[str] = set()
     for sc, pid in scored_cores:
@@ -75,8 +190,11 @@ def pack_core_first(
             continue
         fp_seen.add(fp)
         cores.append(pid)
+    cores, demoted = _soft_side_pack(
+        cores, feats=feats, metas=metas, route=route, anchors=anchors,
+    )
 
-    # 补位也按核心分轻排
+    # 自然补位优先；无侧降档段垫后（不抢对立补位槽）
     fillers_scored = sorted(
         fillers,
         key=lambda p: -core_rank_score(
@@ -84,8 +202,18 @@ def pack_core_first(
             pool_pos=pool_pos, anchors=anchors, url_of=url_of,
         ),
     )
-    packed = cores + fillers_scored + rest
-    return packed, cores, fillers_scored
+    fill_kept: list[str] = []
+    fill_norms = [_norm_body(metas, p) for p in cores]
+    for pid in fillers_scored + demoted:
+        if pid in cores or pid in fill_kept:
+            continue
+        body = _norm_body(metas, pid)
+        if any(_near_dup(body, kn) for kn in fill_norms):
+            continue
+        fill_kept.append(pid)
+        fill_norms.append(body)
+    packed = cores + fill_kept + rest
+    return packed, cores, fill_kept
 
 
 def choose_density_k(

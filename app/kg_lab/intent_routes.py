@@ -145,6 +145,22 @@ _WEAK_SIDE = frozenset({
     "对话", "通报", "政府", "介入", "泥石", "石流", "官方", "数据",
     "全球", "安排", "机制", "企业",
 })
+# 纯「N分」残片易误命中「10时59分」这类无关钟点（R24）
+_AMBIG_MIN_ONLY = re.compile(r"^\d{1,2}分$")
+_CLOCK_KEY = re.compile(r"\d{1,2}时\d{1,2}分")
+
+
+def _filter_side_keys(keys: list[str]) -> list[str]:
+    """去掉易误伤的短时点残片；保留完整钟点键。"""
+    has_clock = any(_CLOCK_KEY.search(k or "") for k in keys)
+    out: list[str] = []
+    for k in keys:
+        if not k:
+            continue
+        if has_clock and _AMBIG_MIN_ONLY.fullmatch(k):
+            continue
+        out.append(k)
+    return out
 
 
 def _anchors_from_side(side: str) -> list[str]:
@@ -261,6 +277,8 @@ def route_option_anchors(question: str) -> dict[str, list[str]]:
     shared = set(keys_a) & set(keys_b)
     keys_a = [k for k in keys_a if k not in shared and k not in _WEAK_SIDE]
     keys_b = [k for k in keys_b if k not in shared and k not in _WEAK_SIDE]
+    keys_a = _filter_side_keys(keys_a)
+    keys_b = _filter_side_keys(keys_b)
     soft = [c for c in soft if c not in keys_a and c not in keys_b]
     return {
         "side_a": keys_a[:10],
@@ -275,10 +293,14 @@ def route_option_anchors(question: str) -> dict[str, list[str]]:
 def anchor_hits(text: str, anchors: dict[str, list[str]] | None) -> dict[str, Any]:
     body = text or ""
     if not anchors:
-        return {"a": 0, "b": 0, "side": "", "total": 0, "soft": 0}
-    ha = sum(1 for k in anchors.get("side_a") or [] if k and k in body)
-    hb = sum(1 for k in anchors.get("side_b") or [] if k and k in body)
+        return {"a": 0, "b": 0, "side": "", "total": 0, "soft": 0, "clock_a": 0, "clock_b": 0}
+    keys_a = _filter_side_keys(list(anchors.get("side_a") or []))
+    keys_b = _filter_side_keys(list(anchors.get("side_b") or []))
+    ha = sum(1 for k in keys_a if k and k in body)
+    hb = sum(1 for k in keys_b if k and k in body)
     hs = sum(1 for k in anchors.get("soft") or [] if k and k in body)
+    clock_a = sum(1 for k in keys_a if k and _CLOCK_KEY.search(k) and k in body)
+    clock_b = sum(1 for k in keys_b if k and _CLOCK_KEY.search(k) and k in body)
     side = ""
     if ha and not hb:
         side = "option_a"
@@ -288,7 +310,10 @@ def anchor_hits(text: str, anchors: dict[str, list[str]] | None) -> dict[str, An
         side = "both"
     elif ha or hb:
         side = "option_a" if ha else "option_b"
-    return {"a": ha, "b": hb, "side": side, "total": ha + hb + hs, "soft": hs}
+    return {
+        "a": ha, "b": hb, "side": side, "total": ha + hb + hs, "soft": hs,
+        "clock_a": clock_a, "clock_b": clock_b,
+    }
 
 
 def host_authority_unit(url: str) -> float:
@@ -388,7 +413,10 @@ def core_rank_score(
     anchors: dict[str, list[str]] | None = None,
     url_of: dict[str, str] | None = None,
 ) -> float:
-    """核心排序分：锚点命中＋主机权威＋可核验。不读金标 id。"""
+    """核心排序分：锚点命中＋主机权威＋可核验。不读金标 id。
+
+    R24：裁决题优先「双侧／可核验时点」；短单侧通稿降权，避免近同文占满盒。
+    """
     feat = feats.get(pid) or {}
     meta = metas.get(pid) or {}
     text = str(meta.get("text") or "")
@@ -396,24 +424,82 @@ def core_rank_score(
     auth = float(feat.get("authority_unit") or 0.0)
     fa = float(feat.get("frame_align") or 0.0)
     oa = float(feat.get("option_align") or 0.0)
+    time_n = float(feat.get("has_time_nail") or 0.0)
     pp = int((pool_pos or {}).get(pid) or 10**9)
     doc = str(meta.get("doc_id") or (pid.split("#", 1)[0] if pid else ""))
     url = (url_of or {}).get(doc) or str(meta.get("url") or "")
     host_u = host_authority_unit(url)
     hits = anchor_hits(text, anchors)
-    exclusive = 0.20 if hits["side"] in {"option_a", "option_b"} else (
-        0.05 if hits["side"] == "both" else 0.0
+    band = str(feat.get("authority_band") or "")
+    channel = str(meta.get("channel") or "")
+    clock_a = int(hits.get("clock_a") or 0)
+    clock_b = int(hits.get("clock_b") or 0)
+    clock_route = any(
+        _CLOCK_KEY.search(k or "")
+        for k in list((anchors or {}).get("side_a") or [])
+        + list((anchors or {}).get("side_b") or [])
     )
+    # R24 钟点对撞题：双侧／句首钟点优先、短通稿降权；其它题贴近 R22 原式以免伤 us
+    if clock_route and route == "adjudicate":
+        if hits["side"] == "both" and (clock_a + clock_b) >= 1:
+            exclusive = 0.20 + 0.10 * min(float(clock_a + clock_b), 2.0) + 0.12
+            if clock_a >= 1 and clock_b >= 1:
+                exclusive += 0.08
+        elif hits["side"] == "both":
+            exclusive = 0.06
+        elif hits["side"] in {"option_a", "option_b"}:
+            exclusive = 0.14
+            if (clock_a + clock_b) == 0:
+                exclusive -= 0.06
+        else:
+            exclusive = 0.0
+    else:
+        exclusive = 0.20 if hits["side"] in {"option_a", "option_b"} else (
+            0.05 if hits["side"] == "both" else 0.0
+        )
     soft_n = float(hits.get("soft") or 0)
     soft_b = 0.28 * min(soft_n / 2.0, 1.0)
     # 软锚＋高权威带：抬「通报／沟通渠道」类金标近似段
-    band = str(feat.get("authority_band") or "")
     if soft_n >= 1 and band in {"primary_source", "official_channel"}:
         soft_b += 0.28
     if soft_n >= 2:
         soft_b += 0.08
     pool_b = max(0.0, (21 - pp) / 20.0) * 0.10 if pp <= 20 else 0.0
     align = max(fa, oa)
+    wire_pen = 0.0
+    nlen = len(re.sub(r"\s+", "", text))
+    if (
+        clock_route
+        and route == "adjudicate"
+        and hits["side"] in {"option_a", "option_b"}
+        and (
+            band == "wire_relay"
+            or channel == "wire"
+            or (nlen > 0 and nlen < 90 and soft_n >= 1)
+        )
+    ):
+        wire_pen = 0.22
+    time_b = 0.10 * time_n if clock_route else 0.0
+    head = text[:120]
+    head_clock = 0
+    if clock_route:
+        for k in (anchors or {}).get("side_a") or []:
+            if k and _CLOCK_KEY.search(k) and k in head:
+                head_clock += 1
+        for k in (anchors or {}).get("side_b") or []:
+            if k and _CLOCK_KEY.search(k) and k in head:
+                head_clock += 1
+    head_b = 0.14 * min(head_clock, 2) if clock_route else 0.0
+    roundup_pen = 0.0
+    if (
+        clock_route
+        and route == "adjudicate"
+        and hits["side"] == "both"
+        and nlen > 320
+        and head_clock == 0
+        and (clock_a + clock_b) >= 1
+    ):
+        roundup_pen = 0.22
     return (
         0.22 * host_u
         + 0.16 * min(float(hits["a"] + hits["b"]) / 3.0, 1.0)
@@ -423,7 +509,11 @@ def core_rank_score(
         + 0.10 * auth
         + 0.08 * align
         + pool_b
+        + time_b
+        + head_b
         + (0.04 if route == "adjudicate" and hits["total"] else 0.0)
+        - wire_pen
+        - roundup_pen
     )
 
 
