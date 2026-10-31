@@ -122,15 +122,21 @@ def plan_close_read(
     question: str,
     anchors: dict[str, list[str]] | None = None,
     close_k: int = DEFAULT_CLOSE_K,
+    align_to_box: bool = False,
 ) -> dict[str, Any]:
     """对盒内段做树17引用计划：细读带宽＋标签＋冲突成对检查。
 
     不改 box 顺序；只产出分析师前的引用指令面。
+    R30：align_to_box=True 时细读带宽与盒 k 对齐（少而密盒＝整盒可引）。
     """
     box = [str(p) for p in (box or []) if p]
     anchors = anchors or route_option_anchors(question or "")
     conflict = is_claim_conflict_route(anchors)
-    k = max(1, min(int(close_k), len(box))) if box else 0
+    req_k = int(close_k) if close_k is not None else DEFAULT_CLOSE_K
+    if align_to_box and box:
+        k = len(box)
+    else:
+        k = max(1, min(req_k, len(box))) if box else 0
 
     # 按可核验分在盒内重排「细读候选」，但最终 close_read 仍须覆盖冲突两侧
     scored: list[tuple[float, int, str, dict[str, Any], str]] = []
@@ -236,9 +242,12 @@ def plan_close_read(
         "pair_required": pair_required,
         "pair_violation": pair_violation,
         "both_sides_cited": both_sides_cited,
-        "close_k_requested": int(close_k),
+        "close_k_requested": req_k,
         "close_k_effective": len(close),
-        "bandwidth_expanded": bandwidth_expanded,
+        "align_to_box": bool(align_to_box),
+        "bandwidth_expanded": bandwidth_expanded or (
+            bool(align_to_box) and len(close) == len(box) and len(box) > 0
+        ),
         "box": box,
         "close_read": close,
         "items": items,
@@ -330,12 +339,14 @@ def apply_tree17_cite(
     question: str,
     anchors: dict[str, list[str]] | None = None,
     close_k: int = DEFAULT_CLOSE_K,
+    align_to_box: bool = False,
     gold_ids: set[str] | list[str] | None = None,
     support_ids: set[str] | list[str] | None = None,
 ) -> dict[str, Any]:
     """一站式：引用计划 + L3 对照读数。"""
     plan = plan_close_read(
-        box, metas=metas, question=question, anchors=anchors, close_k=close_k,
+        box, metas=metas, question=question, anchors=anchors,
+        close_k=close_k, align_to_box=align_to_box,
     )
     l3 = measure_l3_against_refs(plan, gold_ids=gold_ids, support_ids=support_ids)
     return {"plan": plan, "l3": l3}
@@ -355,21 +366,24 @@ def render_cite_prompt_block(plan: dict[str, Any] | None) -> str:
     close = list(plan.get("close_read") or [])
     items = list(plan.get("items") or [])
     by = {str(it.get("para_id")): it for it in items}
+    aligned = bool(plan.get("align_to_box")) and len(close) == len(list(plan.get("box") or []))
     lines = [
         "",
         "【树17 引用纪律】（程序从盒内导出；违反则本轮引用不合规）",
-        "1. 细读优先：下列 segment_id 为必读带宽，结论证据应优先引用它们；",
+        "1. 细读带宽：结论证据的 segment_id【只许】使用下列细读集；不得引用细读集以外的编号；",
         "2. 冲突成对：若标注「成对必读」，support 与 oppose 两侧都须至少引用 1 条；",
         "3. 标签：采信＝可支撑主张；对立＝须正面回应的对侧；存疑＝勿单独当铁证；",
-        "4. 禁止引用资料清单以外的 segment_id；带宽外段落仅当细读不足时补充，并在 note 标明「带宽外」。",
+        "4. 禁止编造资料清单／细读集以外的 segment_id。",
     ]
+    if aligned:
+        lines.append("★ 本盒已与细读带宽对齐：盒内段落均属可引用细读集。")
     if plan.get("pair_required"):
         lines.append(
             "★ 本题为冲突成对必读：证据中须同时出现 option_a（support）与 "
             "option_b（oppose）侧各至少一条。"
         )
     if close:
-        lines.append("细读集（按优先序）：")
+        lines.append("细读集（按优先序；唯一允许引用的 segment_id）：")
         for pid in close:
             it = by.get(pid) or {}
             label = it.get("label") or LABEL_SUSPECT
@@ -380,10 +394,12 @@ def render_cite_prompt_block(plan: dict[str, Any] | None) -> str:
             lines.append(
                 f"- {pid}｜标签={label}｜stance={stance}｜side={side}｜可核验={ver_s}"
             )
-    # 盒内其余（非细读）只列 id，防模型看不见编号
+    # 盒内其余：对齐模式下不应出现；未对齐时仅披露、禁止引用
     rest = [str(it.get("para_id")) for it in items if not it.get("in_close_read")]
     if rest:
-        lines.append("盒内其余（非细读，补充引用须标带宽外）：" + "、".join(rest))
+        lines.append(
+            "盒内非细读（【禁止】作为 evidence.segment_id）：" + "、".join(rest)
+        )
     lines.append("")
     return "\n".join(lines)
 
@@ -524,24 +540,140 @@ def build_analyst_user_prompt(
     plan: dict[str, Any],
     metas: dict[str, dict[str, Any]],
     per_segment_chars: int = 480,
+    include_non_close: bool = False,
 ) -> str:
-    """kg_lab 冒烟用：议题 + 树17纪律 + 盒内段文（细读优先列出）。"""
+    """kg_lab 冒烟用：议题 + 树17纪律 + 细读段文。
+
+    R30：默认只渲染细读集（与「只许引用细读」一致）；include_non_close
+    仅用于对照实验。
+    """
     lines = [f"研判议题：{question}", render_cite_prompt_block(plan).rstrip(), "", "资料清单："]
-    # 细读在前，其余在后
     ordered = list(plan.get("close_read") or [])
-    seen = set(ordered)
-    for pid in plan.get("box") or []:
-        if pid not in seen:
-            ordered.append(pid)
-            seen.add(pid)
+    if include_non_close:
+        seen = set(ordered)
+        for pid in plan.get("box") or []:
+            if pid not in seen:
+                ordered.append(pid)
+                seen.add(pid)
     for pid in ordered:
         text = str((metas.get(pid) or {}).get("text") or "")
         if len(text) > per_segment_chars:
             text = text[:per_segment_chars] + "……"
         it = next((x for x in (plan.get("items") or []) if x.get("para_id") == pid), {})
         tag = it.get("label") or ""
-        mark = "【细读】" if it.get("in_close_read") else "【补充】"
+        mark = "【细读】" if it.get("in_close_read") else "【禁止引用】"
         lines.append(f"{mark}[{pid}]（{tag}）{text}")
         lines.append("")
     lines.append("请只输出系统提示词规定的 JSON，不要输出任何其它文字。")
     return "\n".join(lines)
+
+
+def filter_payload_to_close_band(
+    payload: dict[str, Any] | None,
+    plan: dict[str, Any],
+) -> dict[str, Any]:
+    """机械剪枝：丢掉细读集外的 evidence；结论若被剪空则整条丢掉。"""
+    data = dict(payload or {})
+    close = set(plan.get("close_read") or [])
+    cons_in = data.get("conclusions")
+    if not isinstance(cons_in, list):
+        return {"conclusions": [], "n_dropped_evidence": 0, "n_dropped_conclusions": 0}
+    out_cons: list[dict[str, Any]] = []
+    n_drop_ev = 0
+    n_drop_con = 0
+    for con in cons_in:
+        if not isinstance(con, dict):
+            n_drop_con += 1
+            continue
+        evs_in = con.get("evidence") or []
+        if not isinstance(evs_in, list):
+            evs_in = []
+        kept_ev: list[dict[str, Any]] = []
+        for ev in evs_in:
+            if not isinstance(ev, dict):
+                n_drop_ev += 1
+                continue
+            sid = str(ev.get("segment_id") or "").strip()
+            if sid and sid in close:
+                kept_ev.append(ev)
+            else:
+                n_drop_ev += 1
+        if not kept_ev:
+            n_drop_con += 1
+            continue
+        new_con = dict(con)
+        new_con["evidence"] = kept_ev
+        out_cons.append(new_con)
+    return {
+        "conclusions": out_cons,
+        "n_dropped_evidence": n_drop_ev,
+        "n_dropped_conclusions": n_drop_con,
+    }
+
+
+def repair_cites_to_band(
+    payload: dict[str, Any] | None,
+    plan: dict[str, Any],
+    *,
+    question: str,
+    metas: dict[str, dict[str, Any]],
+    generate_fn: Any | None = None,
+    system_prompt: str = "",
+) -> dict[str, Any]:
+    """带宽修复：先机械剪枝；若仍无引用／成对失败则一轮重抽。
+
+    generate_fn(prompt) -> {"parsed": dict, ...}；缺省不调用模型，只剪枝。
+    """
+    close = set(plan.get("close_read") or [])
+    raw_cited = extract_cited_segment_ids(payload)
+    oob = [p for p in raw_cited if p not in close]
+    filtered = filter_payload_to_close_band(payload, plan)
+    cited_after = extract_cited_segment_ids(filtered)
+    compliance = measure_cite_compliance(plan, cited_after, metas=metas)
+    repaired = False
+    repair_raw = ""
+    # 需要重抽：剪完无结论，或成对题剪后不成对
+    need_regen = (
+        generate_fn is not None
+        and oob
+        and (
+            not filtered.get("conclusions")
+            or (plan.get("pair_required") and not compliance["pair_ok"])
+        )
+    )
+    if need_regen:
+        allowed = "、".join(plan.get("close_read") or []) or "(空)"
+        forbid = "、".join(oob)
+        user = build_analyst_user_prompt(
+            question, plan=plan, metas=metas, include_non_close=False,
+        )
+        repair_prompt = (
+            (system_prompt + "\n\n" if system_prompt else "")
+            + user
+            + "\n\n【修复】上一轮引用了细读带宽外编号："
+            + forbid
+            + "。请重新作答：evidence.segment_id 只许使用："
+            + allowed
+            + "。只输出 JSON。"
+        )
+        resp = generate_fn(repair_prompt)
+        parsed = (resp or {}).get("parsed") if isinstance(resp, dict) else {}
+        if not isinstance(parsed, dict):
+            parsed = {}
+        repair_raw = str((resp or {}).get("raw") or "") if isinstance(resp, dict) else ""
+        filtered2 = filter_payload_to_close_band(parsed, plan)
+        if filtered2.get("conclusions"):
+            filtered = filtered2
+            repaired = True
+            cited_after = extract_cited_segment_ids(filtered)
+            compliance = measure_cite_compliance(plan, cited_after, metas=metas)
+    return {
+        "payload": {"conclusions": filtered.get("conclusions") or []},
+        "cited_ids": cited_after,
+        "compliance": compliance,
+        "oob_before": oob,
+        "n_dropped_evidence": int(filtered.get("n_dropped_evidence") or 0),
+        "n_dropped_conclusions": int(filtered.get("n_dropped_conclusions") or 0),
+        "repaired_by_regen": repaired,
+        "repair_raw_chars": len(repair_raw),
+    }
