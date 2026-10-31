@@ -118,8 +118,8 @@ def _clean_side(s: str) -> str:
 
 _TOPIC_CUES = (
     "通报热线", "沟通渠道", "通报", "热线", "就绪", "中美对话", "主渠道",
-    "危机管理", "政府介入", "冰岩崩", "冰湖溃决", "冰川断裂", "泥石流",
-    "洪灾", "山崩", "监控", "通稿", "联合国主渠道",
+    "危机管理", "政府介入", "失控", "责任", "冰岩崩", "冰湖溃决", "冰川断裂",
+    "泥石流", "洪灾", "山崩", "监控", "通稿", "联合国主渠道",
 )
 # 问句主题 → 可迁移近义软锚（不是案专名）
 _SOFT_EXPAND: dict[str, tuple[str, ...]] = {
@@ -131,7 +131,9 @@ _SOFT_EXPAND: dict[str, tuple[str, ...]] = {
     "中美对话": ("中美对话", "人工智能对话"),
     "主渠道": ("联合国主渠道", "主渠道"),
     "危机管理": ("危机管理", "危机沟通"),
-    "政府介入": ("政府介入", "政府控制", "政府"),
+    "政府介入": ("政府介入", "政府控制", "美国政府", "政府监管"),
+    "失控": ("失控", "失控智能体", "安全隔离"),
+    "责任": ("责任", "承担责任", "责任保险"),
     "泥石流": ("泥石流",),
     "洪灾": ("洪灾", "洪水"),
     "山崩": ("山崩", "冰岩崩"),
@@ -152,6 +154,10 @@ _CLOCK_KEY = re.compile(r"\d{1,2}时\d{1,2}分")
 _CLAIM_CONFLICT_CUES = (
     "崩", "溃", "洪灾", "洪水", "山崩", "泥石流", "冰岩", "冰川", "米",
 )
+# 主体×责任／治理对立（企业专名 vs 政府介入）
+_GOV_RESP_CUES = (
+    "政府", "企业", "责任", "承担", "介入", "监管", "失控", "管理层",
+)
 _VOICE_CUES = (
     "发言人", "秘书长", "新闻发布会", "发布会", "声明", "例行记者会",
     "外交部", "通报称", "情况通报",
@@ -167,14 +173,22 @@ _DEFINITIONAL = re.compile(
 
 
 def is_claim_conflict_route(anchors: dict[str, list[str]] | None) -> bool:
-    """钟点对撞，或两侧均含成因／口径对立线索 → 启用软保位。"""
+    """钟点对撞，或两侧均含成因／口径对立线索，或主体×责任对立 → 启用软保位。"""
     keys_a = list((anchors or {}).get("side_a") or [])
     keys_b = list((anchors or {}).get("side_b") or [])
     if any(_CLOCK_KEY.search(k or "") for k in keys_a + keys_b):
         return True
-    def _hit(keys: list[str]) -> bool:
-        return any(any(c in (k or "") for c in _CLAIM_CONFLICT_CUES) for k in keys)
-    return _hit(keys_a) and _hit(keys_b)
+    def _hit(keys: list[str], cues: tuple[str, ...]) -> bool:
+        return any(any(c in (k or "") for c in cues) for k in keys)
+    if _hit(keys_a, _CLAIM_CONFLICT_CUES) and _hit(keys_b, _CLAIM_CONFLICT_CUES):
+        return True
+    # R27：一侧拉丁／机构主体，一侧政府／责任口径
+    all_keys = keys_a + keys_b + list((anchors or {}).get("soft") or [])
+    has_corp = any(re.search(r"[A-Za-z]{3,}", k or "") for k in keys_a + keys_b)
+    has_gov = _hit(all_keys, _GOV_RESP_CUES)
+    if has_corp and has_gov and keys_a and keys_b:
+        return True
+    return False
 
 
 def _filter_side_keys(keys: list[str]) -> list[str]:
@@ -281,6 +295,19 @@ def route_option_anchors(question: str) -> dict[str, list[str]]:
         for k in _anchors_from_side(s):
             if k not in keys_b:
                 keys_b.append(k)
+    # R27：「还是」清洗会丢掉半句拉丁专名（Anthropic 等）——从原半句补回
+    if "还是" in q:
+        left, right = q.split("还是", 1)
+        for m in _LATIN.finditer(left):
+            tok = m.group(0)
+            if len(tok) >= 3 and tok.lower() not in {"ai", "or", "the", "and"}:
+                if tok not in keys_a and tok not in keys_b:
+                    keys_a.append(tok)
+        for m in _LATIN.finditer(right):
+            tok = m.group(0)
+            if len(tok) >= 3 and tok.lower() not in {"ai", "or", "the", "and"}:
+                if tok not in keys_b and tok not in keys_a:
+                    keys_b.append(tok)
     # 问句主题 → 软锚（含近义扩展）；弱词不进侧锚
     soft: list[str] = []
     for cue in _TOPIC_CUES:
@@ -515,6 +542,17 @@ def core_rank_score(
                 exclusive += 0.08
             elif voice_n:
                 exclusive += 0.04
+            # R27：可核验责任独占抬；裸专名点赞／路过提及降
+            strong_resp = any(
+                c in text for c in (
+                    "失控", "失控智能体", "入侵", "政府控制", "政府介入", "许可管理",
+                )
+            )
+            if strong_resp:
+                exclusive += 0.14
+            elif re.search(r"[A-Za-z]{3,}", text[:200]):
+                # 裸专名路过（Anthropic 点名无失控／政府控制）大幅降
+                exclusive -= 0.18
         else:
             exclusive = 0.0
     # R26：通稿罚分只打短段；长 wire_relay 金标近似段不再被 0.14 压到分地板下
