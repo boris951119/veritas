@@ -67,9 +67,27 @@ SLICE_EXTRA: tuple[str, ...] = (
     "identity_resume",
 )
 
-# 抽象主张族（类别名，不是案情专名）。问句命中族的触发面后，
-# 用 lexicon 里该族的表面词表做对齐／蹭分判断。
+# R17 遗留抽象主张族（R19 一筛主路径不再依赖；保留供对照／二筛兼容）
 CLAIM_FAMILIES: tuple[str, ...] = ("leave", "money", "post")
+
+# R19 可迁移元数据
+AUTHORITY_BANDS: tuple[str, ...] = (
+    "primary_source",
+    "official_channel",
+    "wire_relay",
+    "market",
+    "unknown",
+)
+EVENT_FRAME_KEYS: tuple[str, ...] = (
+    "frame_align",
+    "option_side",
+    "has_time_nail",
+    "has_amount_nail",
+    "scope_hit",
+    "applicability",
+    "authority_unit",
+)
+QUERY_VIEWS: tuple[str, ...] = ("raw", "conclusion", "cause", "evidence")
 
 TAG_CATEGORIES: dict[str, tuple[str, ...]] = {
     "speaker_role": SPEAKER_ROLES,
@@ -84,6 +102,9 @@ TAG_CATEGORIES: dict[str, tuple[str, ...]] = {
     "dedup_signals": DEDUP_SIGNALS,
     "slice_extra": SLICE_EXTRA,
     "claim_family": CLAIM_FAMILIES,
+    "authority_band": AUTHORITY_BANDS,
+    "event_frame": EVENT_FRAME_KEYS,
+    "query_view": QUERY_VIEWS,
 }
 
 # ---------------------------------------------------------------------------
@@ -102,6 +123,12 @@ STAGE1_FEATURES: tuple[str, ...] = (
     "identity_synonym",
     "resume_noise",
     "identity_resume",
+    # R19 可迁移
+    "frame_align",
+    "authority_unit",
+    "has_time_nail",
+    "has_amount_nail",
+    "scope_hit",
     # 独热由打标写入；系数表按名取
     *(f"role_{r}" for r in SPEAKER_ROLES),
     *(f"tier_{t}" for t in CHANNEL_TIERS),
@@ -136,11 +163,14 @@ TAGGING_RULES: dict[str, str] = {
     ),
     "source_fine": "commentary 再拆制度说明／时间线综述／当事人评论／纯观点；relay 再拆通报／当事人原话／次级。",
     "channel_tier": "按 URL／标题媒体档，与可信度浮点脱钩。",
-    "claim_grain": "问句激活的主张族：段内命中族内原词或同义→claim_full；只命中框架证据词→claim_keyword。",
-    "amount_attr": "问句含金额线索且摘要槽有 amount_status。",
-    "time_attr": "问句含时点线索且摘要槽有 procedure_dates。",
+    "claim_grain": "R17：主张族 full/keyword。R19 主路径改用问句对立选项＋事件框架键 frame_align。",
+    "amount_attr": "问句含金额线索且摘要槽有 amount_status；R19 另有 has_amount_nail。",
+    "time_attr": "问句含时点线索且摘要槽有 procedure_dates；R19 另有 has_time_nail。",
     "bait_signals": "标题党／小节蹭分／跨主张偏题转载／伪制度说明——只进二筛加减，不进一筛系数。",
     "dedup": "拼段丢掉、近同文与同引语簇只留更高渠道／官方原文代表。",
+    "authority_band": "可迁移权威档：一手／官方渠道／通讯社转述／市场／未知。",
+    "event_frame": "时点×主体×对立选项／定性；无 leave/money/post 硬族。",
+    "query_view": "检索改写视图：原句／结论／原因／证据。",
 }
 
 
