@@ -21,6 +21,8 @@ from app.kg_lab.intent_routes import (
     is_claim_conflict_route,
     is_core_candidate,
     related_filler,
+    slot_align_detail,
+    slot_align_hits,
 )
 from app.kg_lab.source_role import _norm, jaccard_containment, longest_shared_span
 
@@ -113,6 +115,7 @@ def _rep_quality(
     *,
     feats: dict[str, dict[str, Any]],
     metas: dict[str, dict[str, Any]],
+    slots: dict[str, Any] | None = None,
 ) -> tuple[float, float, float, float]:
     """簇代表质量：精确钟点／机构声部／可核验优先；话题标签包装靠后。"""
     text = str((metas.get(pid) or {}).get("text") or "")
@@ -135,8 +138,10 @@ def _rep_quality(
     # 繁简镜像簇：繁体原文常先于简体通稿转载，轻抬作代表
     trad_n = sum(1 for c in text[:220] if ord(c) in _TRAD_TO_SIMP)
     trad = 0.35 if trad_n >= 4 else 0.0
+    # R34：问句可核验槽对齐优先作簇代表（抗通稿壳）
+    slot_q = min(1.5, 0.35 * float(slot_align_hits(text, slots)))
     return (
-        precise + voice + brevity + resp + trad,
+        precise + voice + brevity + resp + trad + slot_q,
         ver,
         -wrap - caliber_noise,
         float(feat.get("authority_unit") or 0.0),
@@ -161,6 +166,7 @@ def _cluster_wire_keep_one(
     scored_cores: list[tuple[float, str]],
     metas: dict[str, dict[str, Any]],
     feats: dict[str, dict[str, Any]] | None = None,
+    slots: dict[str, Any] | None = None,
 ) -> list[tuple[float, str]]:
     """通稿／近同文簇：质量更好的代表可替换高分包装段。"""
     feats = feats or {}
@@ -174,8 +180,8 @@ def _cluster_wire_keep_one(
             norms.append(body)
             continue
         old_sc, old_pid = kept[dup_at]
-        if _rep_quality(pid, feats=feats, metas=metas) > _rep_quality(
-            old_pid, feats=feats, metas=metas,
+        if _rep_quality(pid, feats=feats, metas=metas, slots=slots) > _rep_quality(
+            old_pid, feats=feats, metas=metas, slots=slots,
         ):
             kept[dup_at] = (sc, pid)
             norms[dup_at] = body
@@ -401,6 +407,7 @@ def pack_core_first(
     pool_pos: dict[str, int] | None = None,
     anchors: dict[str, list[str]] | None = None,
     url_of: dict[str, str] | None = None,
+    slots: dict[str, Any] | None = None,
 ) -> tuple[list[str], list[str], list[str]]:
     """核心按 rank 分排序；近同文／通稿茎簇去重后再拼补位／其余。"""
     scored_cores: list[tuple[float, str]] = []
@@ -413,25 +420,65 @@ def pack_core_first(
         seen.add(pid)
         if is_core_candidate(
             pid, feats=feats, metas=metas, route=route,
-            pool_pos=pool_pos, anchors=anchors, url_of=url_of,
+            pool_pos=pool_pos, anchors=anchors, url_of=url_of, slots=slots,
         ):
             sc = core_rank_score(
                 pid, feats=feats, metas=metas, route=route,
-                pool_pos=pool_pos, anchors=anchors, url_of=url_of,
+                pool_pos=pool_pos, anchors=anchors, url_of=url_of, slots=slots,
             )
             scored_cores.append((sc, pid))
         elif related_filler(
             pid, feats=feats, metas=metas, route=route,
-            anchors=anchors, pool_pos=pool_pos, url_of=url_of,
+            anchors=anchors, pool_pos=pool_pos, url_of=url_of, slots=slots,
         ):
             fillers.append(pid)
         else:
             rest.append(pid)
 
-    scored_cores.sort(key=lambda x: (-x[0], x[1]))
+    # R34：事实核对／引号主张题按强槽优先装箱；普通裁决题保原分序（防中美AI回退）
+    _quote_pack = bool(
+        slots and (slots.get("quotes") or slots.get("claim_nouns"))
+    )
+    _slot_pack = route == "fact_check" or _quote_pack
+
+    def _core_strong(pid: str) -> int:
+        text = str((metas.get(pid) or {}).get("text") or "")
+        strong, _ = slot_align_detail(text, slots)
+        return int(strong)
+
+    def _core_key(item: tuple[float, str]) -> tuple:
+        sc, pid = item
+        if not _slot_pack:
+            return (-sc, pid)
+        text = str((metas.get(pid) or {}).get("text") or "")
+        tl = text.lower()
+        strong = _core_strong(pid)
+        clock = 1 if re.search(
+            r"\d{1,2}时\d{1,2}分|\d{1,2}:\d{2}\s*(?:AM|PM|am|pm)",
+            text[:180],
+        ) else 0
+        en_attack = 1 if any(
+            e in tl for e in ("launched an", "launched a", "opened fire", "airstrike")
+        ) else 0
+        primary = 1 if any(
+            (c in tl) if c.endswith(" ") else (c in text)
+            for c in (
+                "felt ", "原话", "访谈", "官方视频", "原始出处", "亲口", "英文访谈",
+            )
+        ) else 0
+        # 外交劝和／汇总壳即使撞槽也靠后
+        diplo = 1 if any(
+            c in text[:160] for c in (
+                "劝和促谈", "高度关注", "穿梭调停", "汇总多方", "以下是", "时间线",
+            )
+        ) else 0
+        return (-strong, -clock, -en_attack, -primary, diplo, -sc, pid)
+
+    scored_cores.sort(key=_core_key)
     # 只保留分数靠前的核心，避免假核心灌满 k=7（宁少勿滥）
     if scored_cores:
-        top_sc = scored_cores[0][0]
+        # 地板按全局最高分算（勿用强槽排序后的队首分，否则会误砍低分高强槽金标近似）
+        top_sc = max(x[0] for x in scored_cores)
         # 对撞题声部／钟点抬分会抬高顶分：放宽地板，避免裁掉同题其它主张段
         # R26：口径／成因题地板再降，避免长主张段被顶分＋旧 wire_pen 裁掉
         claim = is_claim_conflict_route(anchors)
@@ -448,10 +495,14 @@ def pack_core_first(
         else:
             gap, floor_min = 0.38, 0.42
         floor = max(floor_min, top_sc - gap)
-        # R26：先放宽候选再并簇／软保位，最后再截到 6，避免换皮占满挤掉真主张
-        scored_cores = [x for x in scored_cores if x[0] + 1e-12 >= floor][:14]
+        # R34：强槽≥2 豁免分地板（抗通稿顶分误砍；仅 slot_pack 路径）
+        scored_cores = [
+            x for x in scored_cores
+            if x[0] + 1e-12 >= floor
+            or (_slot_pack and _core_strong(x[1]) >= 2)
+        ][:14]
     # R24/R25：通稿／近同文簇内留质量更好的代表
-    scored_cores = _cluster_wire_keep_one(scored_cores, metas, feats)
+    scored_cores = _cluster_wire_keep_one(scored_cores, metas, feats, slots=slots)
     # 精确指纹兜底（同文不同空白）
     cores: list[str] = []
     fp_seen: set[str] = set()
@@ -482,7 +533,7 @@ def pack_core_first(
         fillers,
         key=lambda p: -core_rank_score(
             p, feats=feats, metas=metas, route=route,
-            pool_pos=pool_pos, anchors=anchors, url_of=url_of,
+            pool_pos=pool_pos, anchors=anchors, url_of=url_of, slots=slots,
         ),
     )
     fill_kept: list[str] = []
@@ -604,11 +655,12 @@ def density_constrained_submit(
     pool_pos: dict[str, int] | None = None,
     anchors: dict[str, list[str]] | None = None,
     url_of: dict[str, str] | None = None,
+    slots: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """主入口。gold_ids 仅评测披露真实金标密度，不参与选段。"""
     packed, core_list, fill_list = pack_core_first(
         order, feats=feats, metas=metas, route=route,
-        pool_pos=pool_pos, anchors=anchors, url_of=url_of,
+        pool_pos=pool_pos, anchors=anchors, url_of=url_of, slots=slots,
     )
     cores = set(core_list)
     fillers = set(fill_list)

@@ -456,6 +456,171 @@ def route_weights(route: str, base: dict[str, float] | None = None) -> dict[str,
 
 _INST_META = frozenset({"institution_def", "official_primary", "official_reprint"})
 
+# R34：问句可核验槽↔切片对齐（无案专名）；通稿壳降权
+_SLOT_WEAK = frozenset({
+    "是否", "属实", "流传", "说法", "这一", "一方", "双方", "原意",
+    "指什么", "还是", "正面", "负面", "评价", "本人", "问题", "事件",
+    "官方", "媒体", "报道", "称", "有何", "对此",
+})
+_CONFLICT_EN = (
+    "fired", "firing", "attack", "launched", "launch",
+    "strike", "airstrike", "shelling", "clashed", "clash",
+)
+_ROUNDUP_CUE = (
+    "时间线", "以下是", "综合报道", "持续关注", "均称", "多方",
+    "盘点", "速览", "一文看懂", "最新消息汇总", "汇总多方",
+    "完整读下来", "看起来更像", "评论文章",
+)
+_DIPLO_SHELL_CUE = (
+    "劝和促谈", "高度关注", "穿梭调停", "会见柬", "会见泰",
+)
+_MONTH_EN = {
+    1: ("january", "jan."), 2: ("february", "feb."), 3: ("march", "mar."),
+    4: ("april", "apr."), 5: ("may", "may"), 6: ("june", "jun."),
+    7: ("july", "jul."), 8: ("august", "aug."), 9: ("september", "sep."),
+    10: ("october", "oct."), 11: ("november", "nov."), 12: ("december", "dec."),
+}
+
+
+_CLAIM_NOUN_TAIL = (
+    "援助", "开火", "空袭", "打击", "推荐信", "保研", "合照", "遇难", "伤亡", "证据",
+)
+_PRIMARY_LATIN_CUE = (
+    "felt ", "原话", "访谈", "官方视频", "原始出处", "亲口", "英文访谈",
+)
+
+
+def stage2_verifiable_slots(question: str) -> dict[str, Any]:
+    """二筛用可核验槽：复用一筛抽取＋问句内容名词（武器／推荐信等）。"""
+    from app.kg_lab.stage1_claim_holes import extract_verifiable_slots
+
+    slots = dict(extract_verifiable_slots(question or ""))
+    q = question or ""
+    nouns: list[str] = []
+    claim_nouns: list[str] = []
+    # 标点切段（武器援助／率先开火）比整句滑窗更稳
+    for part in re.split(r"[，。？?、；;：:\s／/]+", q):
+        part = part.strip()
+        if 2 <= len(part) <= 12 and part not in _SLOT_WEAK and part not in nouns:
+            nouns.append(part)
+        if len(nouns) >= 8:
+            break
+    for m in re.findall(
+        r"[\u4e00-\u9fff]{2,8}(?:援助|开火|空袭|打击|推荐信|保研|合照|遇难|伤亡|证据)",
+        q,
+    ):
+        if m not in nouns:
+            nouns.append(m)
+        # 短主张核（武器援助／率先开火）作强槽候选
+        for tail in _CLAIM_NOUN_TAIL:
+            if m.endswith(tail):
+                stem = m[-(len(tail) + 2):] if len(m) > len(tail) + 1 else m
+                if len(stem) >= 4 and stem not in claim_nouns:
+                    claim_nouns.append(stem)
+                if m not in claim_nouns:
+                    claim_nouns.append(m)
+                break
+    slots["nouns"] = nouns[:12]
+    slots["claim_nouns"] = claim_nouns[:8]
+    return slots
+
+
+def slot_align_detail(
+    text: str, slots: dict[str, Any] | None,
+) -> tuple[int, int]:
+    """强槽命中（拉丁／数额／引号／年月组合／主张核）与弱名词分计。
+
+    裸年份不记强槽（防 2026 通篇灌核心伤裁决题）；
+    冲突动词须搭拉丁／年月／主张核，或英文冲突词，才记强槽。
+    """
+    if not slots or not text:
+        return 0, 0
+    tl = text.lower()
+    strong = 0
+    for k in slots.get("latin") or []:
+        if k and k.lower() in tl:
+            strong += 1
+    for k in slots.get("codes") or []:
+        if k and k.lower() in tl:
+            strong += 1
+    for k in slots.get("amounts") or []:
+        if k and k in text:
+            strong += 1
+    # 引号：只计≥4字且去子串重复（防「荐信／保研」碎片把通稿抬到 strong=10）
+    matched_q: list[str] = []
+    for k in sorted((slots.get("quotes") or []), key=lambda x: len(x or ""), reverse=True):
+        if not k or len(k) < 4 or k not in text:
+            continue
+        if any(k in m for m in matched_q):
+            continue
+        matched_q.append(k)
+    strong += min(len(matched_q), 3)
+    # 主张核名词（武器援助等）→ 强槽；同样去子串
+    matched_c: list[str] = []
+    for n in sorted(
+        (slots.get("claim_nouns") or [])[:8],
+        key=lambda x: len(x or ""), reverse=True,
+    ):
+        if not n or len(n) < 4 or n not in text:
+            continue
+        if any(n in m for m in matched_c) or any(n in m for m in matched_q):
+            continue
+        matched_c.append(n)
+    strong += min(len(matched_c), 2)
+    # 年月须组合：年＋月（中或英），裸年不算
+    years = list(slots.get("years") or [])
+    months = list(slots.get("months") or [])
+    year_hit = bool(years and any(y in text for y in years))
+    month_hit = False
+    if months:
+        for mnum in months[:2]:
+            ens = _MONTH_EN.get(int(mnum), ())
+            if any(e in tl for e in ens):
+                month_hit = True
+                break
+            if f"{int(mnum)}月" in text or f"{int(mnum)} 月" in text:
+                month_hit = True
+                break
+    if year_hit and month_hit:
+        strong += 2
+    # 冲突：英文冲突词直接强；中文冲突须已有其它强槽或年月组合
+    if slots.get("conflict_verbs"):
+        if any(e in tl for e in _CONFLICT_EN):
+            strong += 1
+        elif (strong >= 1 or (year_hit and month_hit)) and any(
+            v in text for v in (slots.get("conflict_verbs") or [])
+        ):
+            strong += 1
+    weak = 0
+    for n in list(slots.get("nouns") or [])[:8]:
+        if n and len(n) >= 3 and n in text:
+            weak += 1
+    return strong, weak
+
+
+def slot_align_hits(text: str, slots: dict[str, Any] | None) -> int:
+    """综合分：强槽权重高；裸名词不单独抬核心。"""
+    strong, weak = slot_align_detail(text, slots)
+    if strong <= 0:
+        return 0
+    return 2 * strong + min(weak, 3)
+
+
+def looks_like_wire_shell(
+    text: str,
+    *,
+    band: str = "",
+    slot_hits: int = 0,
+) -> bool:
+    """综述／外交劝和壳。有槽仍可判壳（关键词被包进汇总文）。"""
+    body = text or ""
+    head = body[:160]
+    if any(c in head for c in _ROUNDUP_CUE):
+        return True
+    if any(c in head for c in _DIPLO_SHELL_CUE):
+        return True
+    return False
+
 
 def core_rank_score(
     pid: str,
@@ -466,10 +631,12 @@ def core_rank_score(
     pool_pos: dict[str, int] | None = None,
     anchors: dict[str, list[str]] | None = None,
     url_of: dict[str, str] | None = None,
+    slots: dict[str, Any] | None = None,
 ) -> float:
     """核心排序分：锚点命中＋主机权威＋可核验。不读金标 id。
 
     R24：裁决题优先「双侧／可核验时点」；短单侧通稿降权，避免近同文占满盒。
+    R34：问句可核验槽对齐抬分；无槽通稿壳降权（尤其非裁决题）。
     """
     feat = feats.get(pid) or {}
     meta = metas.get(pid) or {}
@@ -486,6 +653,7 @@ def core_rank_score(
     hits = anchor_hits(text, anchors)
     band = str(feat.get("authority_band") or "")
     channel = str(meta.get("channel") or "")
+    slot_hits = slot_align_hits(text, slots)
     clock_a = int(hits.get("clock_a") or 0)
     clock_b = int(hits.get("clock_b") or 0)
     clock_route = any(
@@ -624,6 +792,51 @@ def core_rank_score(
         and hits["side"] == "both"
     ):
         caliber_pen = 0.16
+    # R34：可核验槽对齐抬（事实核对题加重；强槽计数拉开档，防通稿壳压过）
+    slot_strong, _ = slot_align_detail(text, slots)
+    _quote_q = bool(slots and (slots.get("quotes") or slots.get("claim_nouns")))
+    _slot_boost_route = route == "fact_check" or _quote_q
+    if _slot_boost_route and slot_strong >= 1:
+        slot_b = 0.22 + 0.12 * min(float(slot_strong), 4.0) + 0.04 * min(
+            float(slot_hits), 4.0,
+        )
+        # 一手拉丁原话／访谈出处相对二手解读抬
+        _tl = text.lower()
+        if any(
+            (c in _tl) if c.endswith(" ") else (c in text)
+            for c in _PRIMARY_LATIN_CUE
+        ):
+            slot_b += 0.16
+        # 精确钟点＋槽：可核查时点陈述优先于无时点通稿
+        if re.search(
+            r"\d{1,2}时\d{1,2}分|\d{1,2}:\d{2}\s*(?:AM|PM|am|pm)",
+            text[:180],
+        ):
+            slot_b += 0.14
+        # 英文开战陈述（launched/attack＋年月）相对外交劝和稿
+        if any(e in _tl for e in ("launched an", "launched a", "opened fire")):
+            slot_b += 0.18
+        # 引号主张核命中多 → 澄清原文优先于标题党转载
+        if _quote_q and slot_strong >= 3:
+            slot_b += 0.10
+    elif slot_hits:
+        slot_b = 0.08 * min(float(slot_hits), 4.0)
+    else:
+        slot_b = 0.0
+    shell_pen = 0.0
+    if _slot_boost_route and looks_like_wire_shell(
+        text, band=band, slot_hits=slot_hits,
+    ):
+        # 有强槽的壳降权轻一点，无槽壳重罚
+        shell_pen = 0.22 if slot_strong >= 1 else 0.32
+    # 非裁决题：无强槽的权威通稿壳再降一档（防独占盒位）
+    if (
+        route == "fact_check"
+        and slot_strong <= 0
+        and band in {"official_channel", "wire_relay"}
+        and nlen > 180
+    ):
+        shell_pen = max(shell_pen, 0.18)
     return (
         0.22 * host_u
         + 0.16 * min(float(hits["a"] + hits["b"]) / 3.0, 1.0)
@@ -637,12 +850,14 @@ def core_rank_score(
         + head_b
         + voice_b
         + precise_b
+        + slot_b
         + (0.04 if route == "adjudicate" and hits["total"] else 0.0)
         - wire_pen
         - roundup_pen
         - wrap_pen
         - defin_pen
         - caliber_pen
+        - shell_pen
     )
 
 
@@ -655,6 +870,7 @@ def is_core_candidate(
     pool_pos: dict[str, int] | None = None,
     anchors: dict[str, list[str]] | None = None,
     url_of: dict[str, str] | None = None,
+    slots: dict[str, Any] | None = None,
 ) -> bool:
     """线上「金标近似」：池内＋（锚点命中／强可核验主机）。不读金标 id。"""
     feat = feats.get(pid) or {}
@@ -669,6 +885,8 @@ def is_core_candidate(
     pp = int((pool_pos or {}).get(pid) or 10**9)
     text = str(meta.get("text") or "")
     hits = anchor_hits(text, anchors)
+    slot_strong, _slot_weak = slot_align_detail(text, slots)
+    slot_hits = slot_align_hits(text, slots)
     # R26：对撞题精确独占允许贴池缘（≤24），避免 5200米／发言人段卡在 21～23
     claim = is_claim_conflict_route(anchors)
     precise_hit = any(
@@ -683,7 +901,9 @@ def is_core_candidate(
         and (precise_hit or voice_hit)
         and pp <= 24
     )
-    in_pool = pp <= 20 or edge_ok
+    # R34：事实核对题强槽对齐可贴池缘；裁决题不靠拉丁灌核心
+    slot_edge = route == "fact_check" and slot_strong >= 1 and pp <= 22
+    in_pool = pp <= 20 or edge_ok or slot_edge
     if not in_pool:
         return False
     doc = str(meta.get("doc_id") or (pid.split("#", 1)[0] if pid else ""))
@@ -691,12 +911,26 @@ def is_core_candidate(
     host_u = host_authority_unit(url)
     sc = core_rank_score(
         pid, feats=feats, metas=metas, route=route,
-        pool_pos=pool_pos, anchors=anchors, url_of=url_of,
+        pool_pos=pool_pos, anchors=anchors, url_of=url_of, slots=slots,
     )
 
-    # 锚点独占 + 基本可信 → 核心
+    # R34：事实核对题——池内强槽对齐进核心（抗 wire_relay 误伤）
+    if route == "fact_check" and slot_strong >= 1:
+        return True
+    # 引号／主张核多击（造谣核对类）——不限路由，避免裁决误分时通稿独占
+    if slot_strong >= 2 and (
+        (slots.get("quotes") or slots.get("claim_nouns"))
+        and pp <= 20
+    ):
+        return True
+    # 裁决题：强槽须同时有侧锚，避免 OpenAI 等拉丁通篇灌核心
+    if route == "adjudicate" and slot_strong >= 1 and hits["total"] >= 1:
+        return True
+    # 锚点独占 + 基本可信 → 核心；短独占主张段（常是原话／否认句）也进
+    nlen = len(re.sub(r"\s+", "", text))
     if hits["side"] in {"option_a", "option_b"} and (
         ver >= 0.25 or auth >= 0.45 or host_u >= 0.55 or opt >= 0.20
+        or (pp <= 20 and 0 < nlen <= 220)
     ):
         return True
     # 双侧锚点 + 高权威主机
@@ -740,11 +974,12 @@ def related_filler(
     anchors: dict[str, list[str]] | None = None,
     pool_pos: dict[str, int] | None = None,
     url_of: dict[str, str] | None = None,
+    slots: dict[str, Any] | None = None,
 ) -> bool:
     """高相关非核心：只允许补位，不可回填稀释。"""
     if is_core_candidate(
         pid, feats=feats, metas=metas, route=route,
-        pool_pos=pool_pos, anchors=anchors, url_of=url_of,
+        pool_pos=pool_pos, anchors=anchors, url_of=url_of, slots=slots,
     ):
         return False
     feat = feats.get(pid) or {}
@@ -753,9 +988,19 @@ def related_filler(
     ver = float(feat.get("verifiability") or 0.0)
     auth = float(feat.get("authority_unit") or 0.0)
     side = str(feat.get("option_side") or "")
+    band = str(feat.get("authority_band") or "")
     text = str(meta.get("text") or "")
     hits = anchor_hits(text, anchors)
+    slot_hits = slot_align_hits(text, slots)
+    # R34：事实核对／引号主张题——综述／外交壳不进补位，防占满 k_min
+    _quote_q = bool(slots and (slots.get("quotes") or slots.get("claim_nouns")))
+    if (route == "fact_check" or _quote_q) and looks_like_wire_shell(
+        text, band=band, slot_hits=slot_hits,
+    ):
+        return False
     if hits["total"] >= 1:
+        return True
+    if slot_hits >= 1:
         return True
     if route == "adjudicate":
         return side in {"option_a", "option_b"} or opt >= 0.25
