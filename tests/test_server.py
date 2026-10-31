@@ -302,13 +302,17 @@ def test_remove_evidence(api):
 
 
 def test_evidence_relation_update_chains(api):
+    """改成 causation 且无主张卡 ⇒ C-32 管线降级为 correlation，链仍 +1。"""
     before = _get(api + "/api/dossier?case=demo")
     ev = before["dossier"]["evidences"][0]
     after = _post(api + "/api/evidence/relation",
                   {"case": "demo", "evidence_id": ev["id"],
                    "relation": "causation"})
     hit = next(e for e in after["dossier"]["evidences"] if e["id"] == ev["id"])
-    assert hit["relation"] == "causation"
+    # C-32：缺主张卡硬降级；declared_relation 保留原声明
+    assert hit["relation"] == "correlation"
+    assert hit.get("declared_relation") == "causation"
+    assert hit.get("degraded_reason")
     assert after["chain"]["n_records"] == before["chain"]["n_records"] + 1
     assert after["chain"]["ok"] is True
 

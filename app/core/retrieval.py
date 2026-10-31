@@ -15,8 +15,8 @@ SemanticSearch = Callable[[str, list[str]], list[tuple[str, float]] | None]
 _SEMANTIC_SEARCH: SemanticSearch | None = None
 
 _DEFAULT_NOTE = (
-    "检索为字面 BM25，命中词表时在原问上补充同义词。"
-    "词表外的说法仍可能未进入本次材料；未进入不等于已审完全库。"
+    "检索为字面 BM25；有模型时按规则做同义拓展（主体锁定、禁捏造数字/换主体），"
+    "词表为兜底。未进入不等于已审完全库。"
     "假引文与无源数字仍会被闸拦住。向量重排未启用。"
 )
 
@@ -60,7 +60,7 @@ def retrieval_record(query_rewrite: dict | None = None) -> dict:
         head += "（已请求向量检索，未接入实现，已退回字面检索）"
     if used == "bm25":
         tail = (
-            "。命中词表时在原问上补充同义词；词表外的说法仍可能未进入本次材料；"
+            "。有模型时按规则同义拓展（过主体/数字闸），词表兜底；"
             "未进入不等于已审完全库。假引文与无源数字仍会被闸拦住。向量重排未启用。"
         )
     else:

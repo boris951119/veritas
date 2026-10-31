@@ -336,15 +336,16 @@ def _resp(content: str):
     return SimpleNamespace(content=content)
 
 
-def _run_offline(case_dir: Path, stub_cls) -> None:
+def _run_offline(case_dir: Path, stub_cls, out_dir: Path | None = None) -> None:
     dossier = load_case(case_dir)
-    result = run_case(RunSpec(case_dir=case_dir, out_dir=case_dir / "out_offline"),
+    dest = out_dir if out_dir is not None else case_dir / "out_offline"
+    result = run_case(RunSpec(case_dir=case_dir, out_dir=dest),
                       RunDeps(client=stub_cls(dossier)))
     print(result.report_md)
     print(f"[离线演示] {case_dir.name} 报告与日志已写入 {result.out_dir}")
 
 
-def main() -> int:
+def main(out_root: Path | None = None) -> int:
     try:
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     except Exception:
@@ -352,11 +353,14 @@ def main() -> int:
     from app.core.hashchain import ensure_demo_chain_key
 
     ensure_demo_chain_key()  # 离线产物默认带 HMAC，导出审计包可验签
-    _run_offline(_REPO / "cases" / "demo-solid-state", BatteryStubClient)
+    _run_offline(_REPO / "cases" / "demo-solid-state", BatteryStubClient,
+                 None if out_root is None else out_root / "demo-solid-state")
     print("\n" + "=" * 60 + "\n")
-    _run_offline(_REPO / "cases" / "bi-delivery-risk", DeliveryRiskStubClient)
+    _run_offline(_REPO / "cases" / "bi-delivery-risk", DeliveryRiskStubClient,
+                 None if out_root is None else out_root / "bi-delivery-risk")
     print("\n" + "=" * 60 + "\n")
-    _run_offline(_REPO / "cases" / "rumor-vs-official", RumorVsOfficialStubClient)
+    _run_offline(_REPO / "cases" / "rumor-vs-official", RumorVsOfficialStubClient,
+                 None if out_root is None else out_root / "rumor-vs-official")
     return 0
 
 

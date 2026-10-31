@@ -13,6 +13,7 @@ import uuid
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
+from typing import Any
 
 
 def _new_id(prefix: str) -> str:
@@ -147,7 +148,15 @@ class Source:
 
 @dataclass
 class EvidenceNode:
-    """证据：一条逐字引文 + 所指出处段落 + 关系/等级标注。"""
+    """证据：一条逐字引文 + 所指出处段落 + 关系/等级标注。
+
+    C-32 结构化因果主张（证据级；不做效应估计／完整因果引擎）：
+    - causal_claim：四要素 intervention／outcome／population／counterfactual
+    - mechanism_completeness：direct｜indirect｜correlation_only
+    - missing_links：mediator／temporal／contrast（indirect 必填）
+    - design_tier：rct｜quasi｜observational｜claim_only（只展示，不进分）
+    - declared_relation／degraded_reason：降级留痕（改 relation 值实现降级）
+    """
 
     id: str
     conclusion_id: str
@@ -159,6 +168,13 @@ class EvidenceNode:
     weight: float = 1.0           # 人工可调权重（修改后触发重算）
     author: str = ""              # 产出该证据的智能体
     verified: bool | None = None  # 引文核对结果（audit 时回填）
+    # C-32 主张卡与降级留痕（旧 dict 缺键 → from_dict 落默认）
+    causal_claim: dict | None = None
+    mechanism_completeness: str = "correlation_only"
+    missing_links: list = field(default_factory=list)
+    design_tier: str = "claim_only"
+    declared_relation: str = ""
+    degraded_reason: str = ""
 
     @classmethod
     def create(cls, conclusion_id: str, quote: str, segment_ids: list[str], **kw) -> "EvidenceNode":
@@ -171,18 +187,34 @@ class EvidenceNode:
             "segment_ids": self.segment_ids, "relation": self.relation.value,
             "level": self.level.value, "note": self.note, "weight": self.weight,
             "author": self.author, "verified": self.verified,
+            "causal_claim": dict(self.causal_claim) if self.causal_claim else None,
+            "mechanism_completeness": self.mechanism_completeness or "correlation_only",
+            "missing_links": list(self.missing_links or []),
+            "design_tier": self.design_tier or "claim_only",
+            "declared_relation": self.declared_relation or self.relation.value,
+            "degraded_reason": self.degraded_reason or "",
         }
 
     @classmethod
     def from_dict(cls, d: dict) -> "EvidenceNode":
+        rel = RelationKind(d.get("relation", "correlation"))
+        declared = str(d.get("declared_relation") or "") or rel.value
+        claim = d.get("causal_claim")
         return cls(
             id=str(d["id"]), conclusion_id=str(d["conclusion_id"]),
             quote=str(d.get("quote", "")),
             segment_ids=[str(x) for x in d.get("segment_ids") or []],
-            relation=RelationKind(d.get("relation", "correlation")),
+            relation=rel,
             level=EvidenceLevel(d.get("level", "C")),
             note=str(d.get("note", "")), weight=float(d.get("weight", 1.0)),
             author=str(d.get("author", "")), verified=d.get("verified"),
+            causal_claim=dict(claim) if isinstance(claim, dict) else None,
+            mechanism_completeness=str(
+                d.get("mechanism_completeness") or "correlation_only"),
+            missing_links=[str(x) for x in (d.get("missing_links") or [])],
+            design_tier=str(d.get("design_tier") or "claim_only"),
+            declared_relation=declared,
+            degraded_reason=str(d.get("degraded_reason") or ""),
         )
 
 
@@ -190,10 +222,12 @@ class EvidenceNode:
 class Conclusion:
     """结论：由某个研判智能体产出，挂证据链、置信度与少数意见。
 
-    status 状态机：
-    - majority 默认态（独立结论或归并/仲裁后的多数结论）；
+    status 状态机（自由字符串、无枚举校验；下列四态由生产赋值／默认值形成）：
+    - majority 默认态（独立结论或归并/仲裁后的多数结论；字段默认值）；
     - dissent  少数意见：仲裁落败但按榜单要求保留，不参与主表置信度排序；
-    - merged   已并入归并组，仅作溯源保留（其证据已转挂到组结论）。
+    - merged   已并入归并组，仅作溯源保留（其证据已转挂到组结论）；
+    - insufficient 资料不足：由 app/pipeline.py:770 与 app/agents/ingress.py:126
+      两处赋值写出（本文件无第三处赋值；不进提交物 confidence.json）。
     """
 
     id: str
@@ -206,6 +240,18 @@ class Conclusion:
     confidence: float = 0.0                # 0-1（confidence 融合后回填）
     confidence_parts: dict = field(default_factory=dict)  # 分量解释
     dissent: list[dict] = field(default_factory=list)     # 少数意见记录
+    # 覆盖声明三态（None=未声明）：partial 必带局限、unknown 必带理由，
+    # 非法状态在构造阶段就抛——见 app/core/scope_state.py
+    coverage: Any = None
+    # C-13：结论→结论依赖（self 以 depends_on 中每条为前提）；premise_broken
+    # 由机械侧写入已失效上游 id，只亮牌不改写下游。旧 report.json 缺键兜空。
+    depends_on: list[str] = field(default_factory=list)
+    premise_broken: list[str] = field(default_factory=list)
+
+    def __post_init__(self) -> None:
+        from app.core.scope_state import Coverage
+
+        self.coverage = Coverage.parse(self.coverage)
 
     @classmethod
     def create(cls, statement: str, author: str = "", **kw) -> "Conclusion":
@@ -223,6 +269,9 @@ class Conclusion:
             "status": self.status,
             "evidence_ids": self.evidence_ids, "confidence": self.confidence,
             "confidence_parts": self.confidence_parts, "dissent": self.dissent,
+            "coverage": self.coverage.to_dict() if self.coverage else None,
+            "depends_on": list(self.depends_on or []),
+            "premise_broken": list(self.premise_broken or []),
         }
 
     @classmethod
@@ -237,7 +286,58 @@ class Conclusion:
             confidence=float(d.get("confidence", 0.0)),
             confidence_parts=dict(d.get("confidence_parts") or {}),
             dissent=list(d.get("dissent") or []),
+            coverage=d.get("coverage"),        # 旧产物没这字段 → None（未声明）
+            depends_on=[str(x) for x in d.get("depends_on") or []],
+            premise_broken=[str(x) for x in d.get("premise_broken") or []],
         )
+
+
+_FACE_STATUSES = ("majority", "insufficient", "dissent", "merged")
+
+
+def conclusion_face(dossier: "Dossier") -> dict[str, int]:
+    """按 status 逐态计数（全仓唯一实现）。返回 total＋四态＋other。"""
+    out = {k: 0 for k in _FACE_STATUSES}
+    out["other"] = 0
+    for con in dossier.conclusions:
+        st = str(con.status or "majority")
+        if st in _FACE_STATUSES:
+            out[st] += 1
+        else:
+            out["other"] += 1
+    out["total"] = sum(out[k] for k in (*_FACE_STATUSES, "other"))
+    return out
+
+
+def conclusion_face_pooled(dossiers: list["Dossier"]) -> dict[str, int]:
+    """多案卷 pooled 面＝逐态相加（同一套键）。"""
+    out = {k: 0 for k in (*_FACE_STATUSES, "other", "total")}
+    for d in dossiers:
+        face = conclusion_face(d)
+        for k in out:
+            out[k] += int(face.get(k) or 0)
+    return out
+
+
+# 两个面（字段说明.md／report.md）共用；点名工件，不许写「本文件」。
+_FACE_ARTIFACT = "confidence.json"
+
+
+def format_conclusion_face_line(face: dict[str, int], *, surface: str) -> str:
+    """样本面披露句；surface＝「本次提交物 pooled」或「本案卷」。"""
+    n = int(face.get("majority") or 0)
+    k = int(face.get("insufficient") or 0)
+    d = int(face.get("dissent") or 0)
+    mm = int(face.get("merged") or 0)
+    m = int(face.get("total") or 0)
+    return (
+        f"{surface}：提交物 {_FACE_ARTIFACT} 仅含消解后 majority 态结论 {n} 条；"
+        f"内部结论 {m} 条（逐态：majority {n}／insufficient {k}／"
+        f"dissent {d}／merged {mm}＝归并组成员的溯源副本、其证据已转挂组结论；"
+        f"不含副本 {m - mm} 条）。"
+        f"未进 {_FACE_ARTIFACT} 的 {k + d + mm} 条，成因见各题 "
+        f"questions/<question_id>/report.json 与同目录 chain.jsonl。"
+    )
 
 
 @dataclass
@@ -255,6 +355,11 @@ class Dossier:
     panel: list[str] = field(default_factory=list)  # 参与研判的分析师名
     # 被引文核对打回的证据清单（EvidenceRef dict + problems；持久化供工作台展示）
     rejected: list[dict] = field(default_factory=list)
+    # 物化时证据没落地的丢弃留痕（五格 reason 见 record_parse_drop）
+    # （与 rejected 分家：pipeline 会对 rejected 整体赋值，解析期写进 rejected 会被盖掉）
+    parse_drops: list[dict] = field(default_factory=list)
+    # 分析师本轮 0 结论的形态留痕（无 conclusion_id，与 parse_drops 分家）
+    empty_runs: list[dict] = field(default_factory=list)
     # 摄取阶段披露：解析失败/空文件/扫描件/含图未解析（输入夹层「标」职能）
     ingest_notes: list[dict] = field(default_factory=list)
     # 输入分诊账本：每个文件（含压缩包条目）一条 {file, route, reason}——
@@ -322,6 +427,8 @@ class Dossier:
             "conclusions": [c.to_dict() for c in self.conclusions],
             "conflicts": self.conflicts,
             "rejected": self.rejected,
+            "parse_drops": self.parse_drops,
+            "empty_runs": self.empty_runs,
             "ingest_notes": self.ingest_notes,
             "triage": self.triage,
             "synthesis": self.synthesis,
@@ -338,6 +445,8 @@ class Dossier:
             conclusions=[Conclusion.from_dict(c) for c in d.get("conclusions") or []],
             conflicts=list(d.get("conflicts") or []),
             rejected=list(d.get("rejected") or []),
+            parse_drops=list(d.get("parse_drops") or []),
+            empty_runs=list(d.get("empty_runs") or []),
             ingest_notes=list(d.get("ingest_notes") or []),
             triage=list(d.get("triage") or []),
             synthesis=dict(d.get("synthesis") or {}),
@@ -354,3 +463,33 @@ class Dossier:
     @classmethod
     def from_json(cls, path: Path) -> "Dossier":
         return cls.from_dict(json.loads(Path(path).read_text(encoding="utf-8")))
+
+
+def record_parse_drop(
+    dossier: Dossier, *, conclusion_id: str, author: str, ev, kind: str,
+    segment_id: str = "",
+) -> None:
+    """结论留下、证据没落地，或整条结论没入卷时的留痕。五格 reason 只在这里写。"""
+    if kind == "not_object":
+        reason = "证据条目不是对象（渲染层拿不到）"
+        segment_id = ""
+    elif kind == "missing_id":
+        reason = "未给出 segment_id"
+        segment_id = ""
+    elif kind == "missing_segment":
+        reason = f"引用段落不存在（segment_id={segment_id}）"
+    elif kind == "conclusion_not_object":
+        reason = "结论条目非法：非对象"
+        segment_id = ""
+    elif kind == "conclusion_empty_statement":
+        reason = "结论条目 statement 为空"
+        segment_id = ""
+    else:
+        raise ValueError(f"未知的 parse_drop 种类：{kind}")
+    dossier.parse_drops.append({
+        "conclusion_id": conclusion_id,
+        "author": author,
+        "segment_id": segment_id,
+        "quote_head": str(ev.get("quote") or "")[:60] if isinstance(ev, dict) else str(ev)[:60],
+        "reason": reason,
+    })

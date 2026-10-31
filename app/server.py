@@ -22,11 +22,20 @@ from pathlib import Path
 
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.responses import FileResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict, Field
 
 from app.agents.chair import refresh_synthesis_after_human
-from app.core.audit import audit_all, summarize
+from app.core.audit import audit_all, audit_scan, summarize
+from app.core.gate_applicability import not_evaluated_note
 from app.core.confidence import recompute_all
+from app.core.dependency import (
+    add_dependency,
+    collect_affected,
+    mutation_seed_ids,
+    refresh_premise_broken,
+    remove_dependency,
+    validate_dependency_edge,
+)
 from app.core.evidence import Dossier
 from app.core.hashchain import HashChain
 from app.core.human_ops import edit_conclusion, override_resolution
@@ -193,17 +202,50 @@ def _dossier_payload(out_dir: Path, clearance: str = "confidential") -> dict:
     # 机械核对警示在所服务的视图上即时重算——人工修改与文件篡改都
     # 逃不过下一次读取（「改数字即红」的工作台侧实现）
     view, _stats = redact_dossier(dossier, clearance)
-    flags = audit_all(view)
+    # 机械核对：亮了哪些灯 + 哪些闸本次没进场（未执行不许写成「通过」）
+    scan = audit_scan(view)
+    flags, ne = scan["flags"], scan["not_evaluated"]
+    # 完整性判据台账同样即时复算：存量产物的 accounting 里没这两个键（早于
+    # 2026-10-13 的落盘白名单），不在这里补算的话工作台就显示成「没有判据」
+    accounting = dict(dossier.accounting or {})
+    if not accounting.get("subquestion_status"):
+        from app.core.coverage_gap import ledger_limitation, subquestion_status
+
+        ledger = subquestion_status(view)
+        if ledger:
+            accounting["subquestion_status"] = ledger
+            limitation = ledger_limitation(ledger)
+            if limitation:
+                accounting["obligation_limitation"] = limitation
+    # C-20：band／band_rel 只挂展示 payload，不改 report.json
+    from app.core.confidence import (
+        band_count_dict,
+        band_of,
+        band_rel_of,
+        row_score_of,
+    )
+
+    dossier_view = view.to_dict()
+    cons = list(dossier_view.get("conclusions") or [])
+    scores = [row_score_of(c.get("confidence_parts")) for c in cons]
+    for con, score in zip(cons, scores):
+        con["band"] = band_of(score)
+        con["band_rel"] = band_rel_of(scores, score)
+    accounting["band_counts"] = band_count_dict(scores, absolute=True)
+    accounting["band_rel_counts"] = band_count_dict(scores, absolute=False)
+    accounting["band_n"] = len(scores)
     case_name, out_rel = _case_and_out_label(out_dir)
     writable = out_dir.parent.name != "history"
     return {
         "case": case_name,
         "out_dir": out_rel,
         "writable": writable,
-        "dossier": view.to_dict(),
-        "audit": {"flags": flags, **summarize(flags),
+        "dossier": dossier_view,
+        "audit": {"flags": flags, **scan["summary"],
+                  "not_evaluated": ne,
+                  "not_evaluated_note": not_evaluated_note(ne),
                   "skills": skill_status(view)},
-        "accounting": dict(dossier.accounting or {}),
+        "accounting": accounting,
         "timeline": [
             {"index": r.index, "ts": r.ts, "actor": r.actor, "event": r.event}
             for r in chain.records
@@ -236,7 +278,8 @@ def _mutate(cases_root: Path | None, case: str, event: str,
     同一产物目录写锁串行。若客户端带来打开时的账本条数且已过期，
     拒绝写入，避免后保存的人盖掉先保存的人。
     mutate_fn 可返回 dict——并入链事件 payload（审计计数等）并随响应
-    回传（resp["op"]），供前端提示「本次修改新引入了什么」。"""
+    回传（resp["op"]），供前端提示「本次修改新引入了什么」。
+    C-13：recompute_all 后写入受影响下游集合与 premise_broken 黄牌。"""
     from app.core.edit_lock import out_edit_lock
 
     out_dir = _find_out_dir(cases_root, case)
@@ -247,18 +290,26 @@ def _mutate(cases_root: Path | None, case: str, event: str,
             raise HTTPException(
                 409, "这份结果刚被别人改过，请刷新后再改。")
         _ensure_pristine(out_dir)
+        seeds = mutation_seed_ids(dossier, payload)
         extra = mutate_fn(dossier)
+        if not isinstance(extra, dict):
+            extra = {}
+        # C-32：主张卡降级须在重算前（与 pipeline finalize 同序）
+        from app.core.causal_claim import apply_causal_claim_gates
+        apply_causal_claim_gates(dossier)
         recompute_all(dossier, n_panel=max(1, len(dossier.panel)))
+        refresh_premise_broken(dossier)
+        affected = collect_affected(seeds, dossier)
+        extra = {**extra, "affected_downstream": affected}
         refresh_synthesis_after_human(dossier)
         chain.append(event, "human", {
-            **payload, **(extra or {}),
+            **payload, **extra,
             **({} if base_rev is None else {"base_rev": int(base_rev)}),
         })
         dossier.to_json(out_dir / "report.json")
         chain.to_jsonl(out_dir / "chain.jsonl")
         result = _dossier_payload(out_dir)
-        if extra:
-            result["op"] = extra
+        result["op"] = extra
         return result
 
 
@@ -322,6 +373,18 @@ class ConflictOverrideReq(BaseModel):
     base_rev: int | None = None
 
 
+class ConclusionDependsReq(BaseModel):
+    """人工增删结论依赖边（评分 3.1.3 人工介入落点）。"""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    case: str
+    from_id: str = Field(alias="from")
+    to: str
+    action: str  # add | remove
+    base_rev: int | None = None
+
+
 class CaseResetReq(BaseModel):
     case: str
     base_rev: int | None = None
@@ -377,7 +440,7 @@ def create_app(cases_root: Path | None = None) -> FastAPI:
                 if (d / sub / "report.json").is_file():
                     out_dir = sub
                     break
-            n_files = len(_collect_files(d))
+            n_files = len(_collect_files(d).files)
             man = load_yaml_robust(d / "manifest.yaml") or {}
             imported = bool(man.get("imported")) or d.name.startswith("user-")
             try:
@@ -713,6 +776,29 @@ def create_app(cases_root: Path | None = None) -> FastAPI:
                        {"conclusion_id": req.conclusion_id,
                         "statement": req.statement}, apply,
                        base_rev=req.base_rev)
+
+    @app.post("/api/conclusion/depends")
+    def conclusion_depends_api(req: ConclusionDependsReq) -> dict:
+        """人工增删结论依赖边；同样过机械校验（人也不能造环／自环）。"""
+        action = (req.action or "").strip().lower()
+        if action not in ("add", "remove"):
+            raise HTTPException(422, "action 须为 add 或 remove")
+
+        def apply(d: Dossier) -> dict:
+            if action == "add":
+                reason = validate_dependency_edge(d, req.from_id, req.to)
+                if reason:
+                    raise HTTPException(422, reason)
+                add_dependency(d, req.from_id, req.to)
+            else:
+                if d.conclusion(req.from_id) is None:
+                    raise HTTPException(404, f"结论不存在: {req.from_id}")
+                remove_dependency(d, req.from_id, req.to)
+            return {"from": req.from_id, "to": req.to, "action": action}
+
+        return _mutate(cases_root, req.case, "conclusion_depends",
+                       {"from": req.from_id, "to": req.to, "action": action},
+                       apply, base_rev=req.base_rev)
 
     @app.post("/api/conflict/override")
     def override_conflict_api(req: ConflictOverrideReq) -> dict:

@@ -1,4 +1,4 @@
-"""检索问句：词表扩展始终在；不完整问句才对照上一句补成一条。"""
+"""检索问句：模型同义拓展（约束+机械闸）为主；词表兜底。"""
 
 from types import SimpleNamespace
 
@@ -7,6 +7,7 @@ from app.core.bm25 import fuse_rankings, rank_segments
 from app.core.evidence import Dossier, Segment, Source, SourceType
 from app.core.query_rewrite import (
     collect_search_queries,
+    expand_for_retrieval,
     needs_context,
     parse_rewrite_payload,
     prepare_search_info,
@@ -34,6 +35,15 @@ def test_sanitize_keeps_entity_and_drops_drift():
     assert got == ["某制造公司资金链与停产停工", "某制造公司流动性危机"]
 
 
+def test_sanitize_drops_invented_number_and_swapped_subject():
+    original = "南山铝业2024年累计现金分红比例为多少"
+    assert sanitize_variants(original, [
+        "南山铝业2025年累计现金分红比例",  # 捏造年份
+        "中国银行2024年累计现金分红比例",  # 张冠李戴
+        "南山铝业2024年现金分红占比",  # 合法同义
+    ]) == ["南山铝业2024年现金分红占比"]
+
+
 def test_collect_search_queries_puts_original_first():
     q = "南山铝业净利润"
     qs = collect_search_queries(q, ["南山铝业归母净利", "无关"])
@@ -43,7 +53,6 @@ def test_collect_search_queries_puts_original_first():
 
 
 def test_fuse_rankings_promotes_multi_hit():
-    # A 只在第一路靠前，B 两路都靠前 → B 融合分应更高或至少进前排
     r1 = [("A", 3.0), ("B", 2.0), ("C", 1.0)]
     r2 = [("B", 3.0), ("D", 2.0), ("A", 0.0)]
     fused = dict(fuse_rankings([r1, r2]))
@@ -57,7 +66,6 @@ def test_multi_query_ranks_paraphrase_hit():
         _src("OFF", "官方通报：某制造公司资金链紧张但未停工。"),
         _src("WX", "今天天气不错适合出游。"),
     ])
-    # 单路「倒闭」更容易先打到谣言；加上「资金链/停工」后官方应进前排
     single = [sid for sid, sc in rank_segments(d) if sc > 0]
     multi = [sid for sid, sc in rank_segments(
         d, queries=["某制造公司会不会倒闭？", "某制造公司资金链停工"]) if sc > 0]
@@ -75,30 +83,35 @@ def test_needs_context_only_when_incomplete():
     assert not needs_context("其他公司2024年净利润是多少")
 
 
-def test_complete_question_does_not_call_model():
-    class Boom:
+def test_complete_question_calls_model_for_expand():
+    class Ok:
         def chat(self, *a, **k):
-            raise AssertionError("完整问句不应调用模型")
+            return SimpleNamespace(content=(
+                '{"queries":["南山铝业2024年现金分红占比",'
+                '"中国银行2024年分红比例"]}'  # 第二条应被闸掉
+            ))
 
     info = prepare_search_info(
         "南山铝业2024年累计现金分红比例为多少",
-        prior="上一句不该被用到", client=Boom(), model="m",
+        client=Ok(), model="m",
     )
-    assert info["status"] == "skipped"
-    assert info["reason"] == "complete"
-    assert info["variants"] == []
+    assert info["status"] == "ok"
+    assert info["reason"] == "expand"
+    assert info["variants"] == ["南山铝业2024年现金分红占比"]
+    assert "未替换原议题" in info["note"]
     assert "南山铝业2024年累计现金分红比例为多少" in info["queries"][0]
 
 
-def test_incomplete_without_prior_does_not_guess():
-    class Boom:
+def test_incomplete_without_prior_does_not_invent_subject():
+    class Ok:
         def chat(self, *a, **k):
-            raise AssertionError("没有上一句不应调用模型")
+            return SimpleNamespace(
+                content='{"queries":["中国银行净利润是多少","归母净利润"]}')
 
-    info = prepare_search_info("它的净利润呢", client=Boom(), model="m")
-    assert info["status"] == "skipped"
-    assert info["reason"] == "no_prior"
-    assert info["variants"] == []
+    info = prepare_search_info("它的净利润呢", client=Ok(), model="m")
+    # 无上一句时不得采纳换主体；纯指标同义可留
+    assert "中国银行" not in "".join(info["variants"])
+    assert info["original"] == "它的净利润呢"
 
 
 def test_rewrite_soft_fails_on_bad_client():
@@ -120,7 +133,7 @@ def test_rewrite_fills_subject_from_prior_only():
     class Ok:
         def chat(self, *a, **k):
             return SimpleNamespace(
-                content='{"query":"南山铝业净利润是多少"}')
+                content='{"queries":["南山铝业净利润是多少"]}')
 
     latest = "它的净利润呢"
     prior = "南山铝业2024年累计现金分红比例是多少"
@@ -142,6 +155,16 @@ def test_sanitize_standalone_drops_invented_company():
         latest, prior, "中国银行净利润是多少") == ""
     assert sanitize_standalone(
         latest, prior, "南山铝业净利润是多少") == "南山铝业净利润是多少"
+
+
+def test_expand_for_retrieval_uses_queries_array():
+    class Ok:
+        def chat(self, *a, **k):
+            return SimpleNamespace(
+                content='{"queries":["某制造公司停产了吗","某制造公司倒闭传闻"]}')
+
+    raw = expand_for_retrieval("某制造公司会不会倒闭？", "", Ok(), "m")
+    assert len(raw) == 2
 
 
 def test_parse_rewrite_payload_tolerates_junk():
@@ -203,4 +226,3 @@ def test_retrieval_boundary_on_report_and_embedding_falls_back(monkeypatch):
     md = render_report_md(d, HashChain(), [])
     assert "检索边界" in md
     assert "向量重排未启用" in md
-    assert "同义词" in md
