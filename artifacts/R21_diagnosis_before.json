@@ -1,0 +1,449 @@
+[
+  {
+    "slug": "liuxiang",
+    "n_gold": 14,
+    "gold_fine_role": {
+      "official_primary": 3,
+      "official_reprint": 2,
+      "institution_def": 1,
+      "party_relay": 2,
+      "opposition_framing": 2,
+      "commentary": 2,
+      "media_relay": 2
+    },
+    "gold_authority_band": {
+      "primary_source": 4,
+      "official_channel": 3,
+      "unknown": 5,
+      "wire_relay": 2
+    },
+    "neighbor_fine_role": {
+      "official_primary": 4,
+      "official_reprint": 2,
+      "commentary": 9,
+      "opposition_framing": 6,
+      "media_relay": 1,
+      "mixed_summary": 1,
+      "party_primary": 1
+    },
+    "mislabel_low_auth_or_comment": 6,
+    "mislabel_rate": 0.4286,
+    "samples": [
+      {
+        "qid": "q_001",
+        "pid": "doc_002#p3",
+        "fine_role": "official_primary",
+        "authority_band": "primary_source",
+        "signals": [
+          "bulletin_operative",
+          "title_bureau",
+          "bureau_primary"
+        ],
+        "text_head": "9月1日，刘翔递交了自愿选择自主择业申请表，并签署了有关协议；9月7日，人事关系手续基本办理完结，并按规定给予了自主择业"
+      },
+      {
+        "qid": "q_001",
+        "pid": "doc_024#p1",
+        "fine_role": "official_reprint",
+        "authority_band": "official_channel",
+        "signals": [
+          "bulletin_operative",
+          "title_bureau",
+          "bulletin_header",
+          "reprint_outlet_or_headline"
+        ],
+        "text_head": "上海体育局回应刘翔买断 情况通报 刘翔同志是我国优秀田径运动员，也是镌刻上海历史的功勋运动员，为体育事业作出了突出贡献。"
+      },
+      {
+        "qid": "q_001",
+        "pid": "doc_025#p6",
+        "fine_role": "institution_def",
+        "authority_band": "primary_source",
+        "signals": [
+          "statute"
+        ],
+        "text_head": "在运动员退役安置的制度框架中，“买断”对应的表述是“自主择业”——依据2003年发布的《自主择业退役运动员经济补偿办法》"
+      },
+      {
+        "qid": "q_001",
+        "pid": "doc_035#p7",
+        "fine_role": "official_reprint",
+        "authority_band": "official_channel",
+        "signals": [
+          "bulletin_operative",
+          "bulletin_header",
+          "reprint_outlet_or_headline"
+        ],
+        "text_head": "9月7日，人事关系手续基本办理完结，并按规定给予了自主择业经济补偿金。对于刘翔同志将2015年4月以来全部工资收入捐赠用"
+      },
+      {
+        "qid": "q_002",
+        "pid": "doc_002#p3",
+        "fine_role": "official_primary",
+        "authority_band": "primary_source",
+        "signals": [
+          "bulletin_operative",
+          "title_bureau",
+          "bureau_primary"
+        ],
+        "text_head": "9月1日，刘翔递交了自愿选择自主择业申请表，并签署了有关协议；9月7日，人事关系手续基本办理完结，并按规定给予了自主择业"
+      },
+      {
+        "qid": "q_002",
+        "pid": "doc_009#p5",
+        "fine_role": "party_relay",
+        "authority_band": "unknown",
+        "signals": [
+          "party_speech",
+          "party_attributed"
+        ],
+        "text_head": "但刘翔对这个回应并不买账，继续于深夜发文：“不是我不想走，而是你没让我走”“十年物是人非，当断不断必有后患，人生本是断舍"
+      },
+      {
+        "qid": "q_002",
+        "pid": "doc_028#p1",
+        "fine_role": "opposition_framing",
+        "authority_band": "unknown",
+        "signals": [
+          "party_speech",
+          "opposition_frame"
+        ],
+        "text_head": "每经评论员 付克友 刘翔上热搜了。这位雅典奥运会110米栏金牌得主，8月26日突然在微博发问：“体育局让我买断或当教练上"
+      },
+      {
+        "qid": "q_002",
+        "pid": "doc_029#p7",
+        "fine_role": "commentary",
+        "authority_band": "wire_relay",
+        "signals": [
+          "commentary_cue"
+        ],
+        "text_head": "9月2日：刘翔将2015年4月退役至今体制发放的全部工资及补助（共计982935元），全数捐赠给中华慈善总会，用于西藏泥"
+      },
+      {
+        "qid": "q_002",
+        "pid": "doc_051#p3",
+        "fine_role": "media_relay",
+        "authority_band": "wire_relay",
+        "signals": [
+          "media_frame"
+        ],
+        "text_head": "针对刘翔在个人微博发文情况，上海市体育局回应称，刘翔是上海的优秀运动员，为上海体育作出了突出贡献，是镌刻上海历史的功勋体"
+      },
+      {
+        "qid": "q_003",
+        "pid": "doc_002#p3",
+        "fine_role": "official_primary",
+        "authority_band": "primary_source",
+        "signals": [
+          "bulletin_operative",
+          "title_bureau",
+          "bureau_primary"
+        ],
+        "text_head": "9月1日，刘翔递交了自愿选择自主择业申请表，并签署了有关协议；9月7日，人事关系手续基本办理完结，并按规定给予了自主择业"
+      },
+      {
+        "qid": "q_003",
+        "pid": "doc_006#p3",
+        "fine_role": "opposition_framing",
+        "authority_band": "unknown",
+        "signals": [
+          "party_speech",
+          "opposition_frame"
+        ],
+        "text_head": "刘翔表示，官方说按规定处理“在编不在岗”，但其退役至今，没有接到过任何编制及岗位。"
+      },
+      {
+        "qid": "q_003",
+        "pid": "doc_012#p5",
+        "fine_role": "media_relay",
+        "authority_band": "official_channel",
+        "signals": [
+          "media_frame",
+          "title_bureau"
+        ],
+        "text_head": "上海体育局发布该声明的背景是，体育局因应巡视组整改要求清理“在编不在岗”人员，刘翔因长期人事关系在体育系统却无实际岗位，"
+      }
+    ]
+  },
+  {
+    "slug": "jilong",
+    "n_gold": 13,
+    "gold_fine_role": {
+      "commentary": 9,
+      "media_relay": 4
+    },
+    "gold_authority_band": {
+      "unknown": 7,
+      "wire_relay": 5,
+      "official_channel": 1
+    },
+    "neighbor_fine_role": {
+      "commentary": 4,
+      "media_relay": 4
+    },
+    "mislabel_low_auth_or_comment": 9,
+    "mislabel_rate": 0.6923,
+    "samples": [
+      {
+        "qid": "q_001",
+        "pid": "doc_001#p2",
+        "fine_role": "commentary",
+        "authority_band": "unknown",
+        "signals": [
+          "default"
+        ],
+        "text_head": "北京时间2026年8月26日上午10时52分左右，尼泊尔境内蓝塘里壤峰北坡一条冰川在海拔约5200米处断裂发生冰岩崩，高"
+      },
+      {
+        "qid": "q_001",
+        "pid": "doc_001#p21",
+        "fine_role": "commentary",
+        "authority_band": "wire_relay",
+        "signals": [
+          "commentary_cue"
+        ],
+        "text_head": "北京时间2026年8月26日上午10时52分左右，尼泊尔境内蓝塘里壤峰北坡一条冰川在海拔约5200米处断裂发生冰岩崩，高"
+      },
+      {
+        "qid": "q_001",
+        "pid": "doc_001#p237",
+        "fine_role": "commentary",
+        "authority_band": "unknown",
+        "signals": [
+          "default"
+        ],
+        "text_head": "2026年8月30日消息，从西藏自治区人民政府新闻办公室召开的新闻发布会上获悉，西藏泥石流灾害原因现已查明，中科院成都山"
+      },
+      {
+        "qid": "q_002",
+        "pid": "doc_001#p2",
+        "fine_role": "commentary",
+        "authority_band": "unknown",
+        "signals": [
+          "default"
+        ],
+        "text_head": "北京时间2026年8月26日上午10时52分左右，尼泊尔境内蓝塘里壤峰北坡一条冰川在海拔约5200米处断裂发生冰岩崩，高"
+      },
+      {
+        "qid": "q_002",
+        "pid": "doc_001#p235",
+        "fine_role": "commentary",
+        "authority_band": "unknown",
+        "signals": [
+          "default"
+        ],
+        "text_head": "2026年8月30日，西藏吉隆“8·26”泥石流灾害新闻发布会介绍：这次灾害是气候变暖长期作用下冰川失稳所致，灾害暴发突"
+      },
+      {
+        "qid": "q_002",
+        "pid": "doc_001#p291",
+        "fine_role": "media_relay",
+        "authority_band": "official_channel",
+        "signals": [
+          "media_frame"
+        ],
+        "text_head": "| 中国外交部 | 2026年8月27日，外交部发言人林剑主持例行记者会。总台央视记者问：8月26日，因尼泊尔一侧发生泥"
+      },
+      {
+        "qid": "q_002",
+        "pid": "doc_001#p306",
+        "fine_role": "media_relay",
+        "authority_band": "wire_relay",
+        "signals": [
+          "media_frame"
+        ],
+        "text_head": "| 联合国 | 秘书长 | 当地时间2026年8月26日，联合国秘书长古特雷斯通过新闻发言人办公室发表声明，对中国和尼泊"
+      },
+      {
+        "qid": "q_003",
+        "pid": "doc_001#p2",
+        "fine_role": "commentary",
+        "authority_band": "unknown",
+        "signals": [
+          "default"
+        ],
+        "text_head": "北京时间2026年8月26日上午10时52分左右，尼泊尔境内蓝塘里壤峰北坡一条冰川在海拔约5200米处断裂发生冰岩崩，高"
+      },
+      {
+        "qid": "q_003",
+        "pid": "doc_001#p233",
+        "fine_role": "media_relay",
+        "authority_band": "wire_relay",
+        "signals": [
+          "media_frame"
+        ],
+        "text_head": "2026年8月27日，自然资源部专家分析，此次灾害是由尼泊尔境内高位冰川崩塌引发的碎屑流链式灾害。冰崩物质高速下泄，沿沟"
+      },
+      {
+        "qid": "q_003",
+        "pid": "doc_001#p237",
+        "fine_role": "commentary",
+        "authority_band": "unknown",
+        "signals": [
+          "default"
+        ],
+        "text_head": "2026年8月30日消息，从西藏自治区人民政府新闻办公室召开的新闻发布会上获悉，西藏泥石流灾害原因现已查明，中科院成都山"
+      },
+      {
+        "qid": "q_003",
+        "pid": "doc_001#p419",
+        "fine_role": "commentary",
+        "authority_band": "unknown",
+        "signals": [
+          "default"
+        ],
+        "text_head": "| 中国自然资源航空物探遥感中心正高级工程师郭兆成介绍，通过专家研判，高分辨率遥感图像显示，吉隆口岸上游尼泊尔境内东林藏"
+      },
+      {
+        "qid": "q_003",
+        "pid": "doc_001#p422",
+        "fine_role": "commentary",
+        "authority_band": "wire_relay",
+        "signals": [
+          "default"
+        ],
+        "text_head": "| 自然资源部专家分析，此次灾害是由尼泊尔境内高位冰川崩塌引发的碎屑流链式灾害。冰崩物质高速下泄，沿沟道裹挟冰碛物演变为"
+      }
+    ]
+  },
+  {
+    "slug": "us_cn_ai",
+    "n_gold": 13,
+    "gold_fine_role": {
+      "commentary": 12,
+      "media_relay": 1
+    },
+    "gold_authority_band": {
+      "unknown": 10,
+      "wire_relay": 3
+    },
+    "neighbor_fine_role": {
+      "commentary": 18
+    },
+    "mislabel_low_auth_or_comment": 12,
+    "mislabel_rate": 0.9231,
+    "samples": [
+      {
+        "qid": "q_001",
+        "pid": "doc_004#p4",
+        "fine_role": "commentary",
+        "authority_band": "unknown",
+        "signals": [
+          "default"
+        ],
+        "text_head": "七、双方同意建立中美人工智能对话，交流人工智能相关风险和惠益。下次对话将于今年11月举行。双方同意建立人工智能事件的沟通"
+      },
+      {
+        "qid": "q_001",
+        "pid": "doc_007#p10",
+        "fine_role": "commentary",
+        "authority_band": "unknown",
+        "signals": [
+          "default"
+        ],
+        "text_head": "七、双方同意建立中美人工智能对话，交流人工智能相关风险和惠益。下次对话将于今年11月举行。双方同意建立人工智能事件的沟通"
+      },
+      {
+        "qid": "q_001",
+        "pid": "doc_009#p12",
+        "fine_role": "commentary",
+        "authority_band": "unknown",
+        "signals": [
+          "default"
+        ],
+        "text_head": "The two countries established the Board of Investment. The m"
+      },
+      {
+        "qid": "q_001",
+        "pid": "doc_016#p5",
+        "fine_role": "commentary",
+        "authority_band": "unknown",
+        "signals": [
+          "default"
+        ],
+        "text_head": "四、两国元首忆及中国和美国是二战盟友，并肩作战赢得战争胜利。 五、两国元首认可中美经贸磋商机制积极作用和双方经贸团队磋商"
+      },
+      {
+        "qid": "q_001",
+        "pid": "doc_023#p4",
+        "fine_role": "commentary",
+        "authority_band": "unknown",
+        "signals": [
+          "default"
+        ],
+        "text_head": "一个具体的案例，是建立人工智能事件的沟通渠道。 与联合国关系密切的AI安全机构AI Safety Connect的两位联"
+      },
+      {
+        "qid": "q_001",
+        "pid": "doc_047#p4",
+        "fine_role": "commentary",
+        "authority_band": "unknown",
+        "signals": [
+          "default"
+        ],
+        "text_head": "文章称，其次，双方要敲定AI风险事件通报范围、流程与要求。一旦出现模型失控、逃逸事件，中美双方都需要第一时间掌握事件情况"
+      },
+      {
+        "qid": "q_002",
+        "pid": "doc_005#p3",
+        "fine_role": "commentary",
+        "authority_band": "wire_relay",
+        "signals": [
+          "default"
+        ],
+        "text_head": "郭嘉昆：中方始终秉持建设性、负责任态度参与人工智能全球治理，持续不断贡献中国方案。中方一贯主张，应当坚持发挥联合国主渠道"
+      },
+      {
+        "qid": "q_002",
+        "pid": "doc_011#p3",
+        "fine_role": "commentary",
+        "authority_band": "unknown",
+        "signals": [
+          "default"
+        ],
+        "text_head": "人工智能对话由《全球数字契约》承诺，联合国大会设立，是联合国所有政府和利益攸关方齐聚一堂讨论国际合作、分享最佳做法和经验"
+      },
+      {
+        "qid": "q_002",
+        "pid": "doc_018#p12",
+        "fine_role": "commentary",
+        "authority_band": "wire_relay",
+        "signals": [
+          "commentary_cue"
+        ],
+        "text_head": "因此，他建议对前沿人工智能实行许可管理，要求企业在训练和部署模型前，向独立专家提交足以证明安全性的证据、接受审查。企业还"
+      },
+      {
+        "qid": "q_003",
+        "pid": "doc_017#p10",
+        "fine_role": "commentary",
+        "authority_band": "unknown",
+        "signals": [
+          "default"
+        ],
+        "text_head": "7月，超1000名前沿AI實驗室員工聯名發布公開信，警告“自動化”AI研究的風險，呼吁美國政府控制自動化AI開發的前沿速"
+      },
+      {
+        "qid": "q_003",
+        "pid": "doc_017#p12",
+        "fine_role": "media_relay",
+        "authority_band": "wire_relay",
+        "signals": [
+          "media_frame"
+        ],
+        "text_head": "但是，休賓格強調，當前模型的風險仍然較低，真正令人擔心的是“自我改進”產生的超級智能。 不過，並非所有業界人士都認同AI"
+      },
+      {
+        "qid": "q_003",
+        "pid": "doc_017#p9",
+        "fine_role": "commentary",
+        "authority_band": "unknown",
+        "signals": [
+          "default"
+        ],
+        "text_head": "第一次是在7月份，當時其失控智能體攻擊了人工智能初創公司Hugging Face。今年9月，美國另一家AI巨頭Anthr"
+      }
+    ]
+  }
+]

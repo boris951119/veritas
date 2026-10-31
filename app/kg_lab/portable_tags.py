@@ -42,16 +42,28 @@ def authority_band(
     fine_role: str,
     tier: str,
 ) -> str:
+    """角色＋可核验槽定权威带；媒体等级只作一维。"""
+    from app.kg_lab.source_role import verifiable_fact_signals
+
     blob = (title or "") + "\n" + (text or "")
     role = fine_role or ""
+    vf = verifiable_fact_signals(title, text)
     if role in {"official_primary", "party_primary", "institution_def"}:
         return "primary_source"
     if tier in {"central_official", "local_official"}:
         return "official_channel"
-    if any(c in blob for c in _PRIMARY_CUE) and role in {"media_relay", "official_reprint"}:
+    if role == "official_reprint" or (
+        any(c in blob for c in _PRIMARY_CUE) and role in {"media_relay", "official_reprint"}
+    ):
         return "official_channel"
-    if role in {"media_relay", "official_reprint"} or any(c in blob for c in _WIRE_CUE):
+    if vf.get("is_verifiable") and role in {"media_relay", "mixed_summary", "commentary", ""}:
         return "wire_relay"
+    if role == "media_relay" or any(c in blob for c in _WIRE_CUE):
+        return "wire_relay"
+    if role in {"commentary", "pure_opinion"} and not vf.get("is_verifiable"):
+        if tier in {"market_media", "foreign_media", "self_media"}:
+            return "market"
+        return "unknown"
     if tier in {"market_media", "foreign_media", "self_media"}:
         return "market"
     return "unknown"
@@ -106,11 +118,19 @@ def option_title_hit(title: str, frame: EventFrame) -> float:
 
 
 def verifiability_unit(title: str, text: str) -> float:
+    from app.kg_lab.source_role import verifiable_fact_signals
+
     blob = (title or "") + "\n" + (text or "")
     if not blob.strip():
         return 0.0
-    n = sum(1 for c in _VERIFY_CUE if c in blob)
-    return round(min(1.0, n / 3.0), 4)
+    cue_n = sum(1 for c in _VERIFY_CUE if c in blob)
+    base = min(1.0, cue_n / 3.0)
+    vf = verifiable_fact_signals(title, text)
+    if vf.get("is_strong_verifiable"):
+        return 1.0
+    if vf.get("is_verifiable"):
+        return round(max(base, 0.67), 4)
+    return round(base, 4)
 
 
 def portable_features(
@@ -123,8 +143,11 @@ def portable_features(
     frame: EventFrame,
     publish_time: str = "",
 ) -> dict[str, Any]:
+    from app.kg_lab.source_role import portable_role_from
+
     tier = channel_tier(url or "", title or "")
-    auth = authority_band(title=title, text=text, fine_role=fine_role, tier=tier)
+    role_for_auth = portable_role_from(title, text, fine_role)
+    auth = authority_band(title=title, text=text, fine_role=role_for_auth, tier=tier)
     time_nail = bool(_DATE.search(text or "") or _DATE.search(title or ""))
     amount = bool(_AMOUNT.search(text or ""))
     align = frame_align_score(text, frame, title=title)

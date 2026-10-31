@@ -84,6 +84,85 @@ def _institution(lex: CaseLexicon | None) -> tuple[str, ...]:
         return _INSTITUTION
     return tuple(dict.fromkeys(list(_INSTITUTION) + list(lex.institution)))
 
+
+# R21：可迁移可核验事实槽（禁止案专名）
+_TIME_NAIL = re.compile(
+    r"\d{4}\s*年\d{1,2}\s*月\d{1,2}\s*日|"
+    r"\d{1,2}\s*月\d{1,2}\s*日|"
+    r"\d{1,2}\s*时\d{1,2}\s*分|"
+    r"北京时间|当地时间"
+)
+_AMOUNT_NAIL = re.compile(r"\d+(?:\.\d+)?\s*万|\d{2,}\s*元|\$[\d,]+")
+_BULLETIN_ATTR = (
+    "情况通报", "新闻发布会", "发布会", "联合声明", "新闻稿",
+    "通报称", "通报显示", "据通报", "据介绍", "据了解",
+    "全文如下", "正式回应", "声明称", "官方称", "官方说",
+    "双方同意", "两国元首", "中方称", "外交部", "新闻办公室",
+    "调查显示", "监测显示", "记录显示", "数据显示", "按规定",
+)
+_FACT_ASSERT = (
+    "发生", "造成", "宣布", "启动", "建立", "签署", "确认", "证实",
+    "认定", "同意建立", "交流", "沟通渠道", "断裂", "查明",
+    "established", "agreed to", "signed", "announced", "confirmed",
+)
+_PURE_OPINION = (
+    "热评", "快评", "网友", "舆论", "笔者认为", "或许",
+    "值得玩味", "观点文章", "评论区",
+)
+
+
+def verifiable_fact_signals(title: str, text: str, lex: CaseLexicon | None = None) -> dict:
+    """可核验事实槽。复合门槛；强可核验才抬 commentary。"""
+    blob = (title or "") + "\n" + (text or "")
+    body = text or ""
+    time_hit = bool(_TIME_NAIL.search(blob))
+    amount_hit = bool(_AMOUNT_NAIL.search(blob))
+    bulletin = [s for s in _BULLETIN_ATTR if s and s in blob]
+    if lex is not None:
+        for s in list(lex.bulletin or []) + list(lex.official_voice or []):
+            if s and s in blob and s not in bulletin:
+                bulletin.append(s)
+    operative = [s for s in _operative(lex) if s and s in body]
+    fact = [s for s in _FACT_ASSERT if s in body]
+    opinion = [s for s in _PURE_OPINION if s in blob]
+    score = (
+        (0.45 if time_hit else 0.0)
+        + (1.0 if amount_hit else 0.0)
+        + min(1.6, 0.8 * len(bulletin))
+        + min(1.0, 0.5 * len(operative))
+        + min(1.0, 0.4 * len(fact))
+    )
+    compound = (
+        (time_hit and amount_hit)
+        or (time_hit and bool(bulletin))
+        or (time_hit and bool(operative))
+        or (amount_hit and bool(bulletin))
+        or (bool(bulletin) and bool(fact))
+        or (bool(operative) and (time_hit or amount_hit or bool(bulletin)))
+        or (time_hit and len(fact) >= 2)
+        or (amount_hit and bool(fact))
+        or (len(bulletin) >= 2)
+    )
+    is_verifiable = bool(compound) and score >= 0.9 and not (opinion and score < 1.4)
+    headerish = (
+        "情况通报" in blob or "新闻发布会" in blob or "联合声明" in blob
+        or "发布会介绍" in blob
+    )
+    strong = bool(operative or amount_hit or headerish or (time_hit and amount_hit))
+    return {
+        "time_nail": time_hit,
+        "amount_nail": amount_hit,
+        "bulletin_hits": bulletin,
+        "operative_hits": operative,
+        "fact_hits": fact,
+        "opinion_hits": opinion,
+        "score": round(score, 3),
+        "is_verifiable": is_verifiable,
+        "is_strong_verifiable": bool(strong) and not (opinion and score < 1.0),
+        "is_pure_opinion": bool(opinion) and not is_verifiable and score < 1.0,
+    }
+
+
 _MEDIA_FRAME = (
     "回应称",
     "据通报",
@@ -117,6 +196,25 @@ _OUTLET = re.compile(
     r"上观|大众新闻|虎嗅|财新|澎湃|新浪|搜狐|环球|观察者"
 )
 _TITLE_BUREAU = re.compile(r"体育局.{0,12}(回应|通报|发布)")
+
+
+def portable_role_from(
+    title: str,
+    text: str,
+    fine_role: str,
+    lex: CaseLexicon | None = None,
+) -> str:
+    """披露／二筛用可迁移角色：强可核验的 commentary 视为 media_relay。
+
+    不改 fine_role（一筛系数仍吃 R20 角色分布）。
+    """
+    role = fine_role or "commentary"
+    vf = verifiable_fact_signals(title, text, lex=lex)
+    if role in {"commentary", "mixed_summary"} and vf.get("is_strong_verifiable"):
+        return "media_relay"
+    if role in {"commentary", "mixed_summary"} and vf.get("is_verifiable") and not vf.get("is_pure_opinion"):
+        return "media_relay"
+    return role
 
 
 def infer_source_role(
@@ -313,6 +411,7 @@ def infer_fine_role(
             role = "mixed_summary"
             signals.append("mixed_caliber")
 
+    # R21：强可核验不得停在 commentary／mixed_summary
     if role == "official_primary":
         channel = "bureau"
     elif role == "official_reprint":
@@ -443,6 +542,7 @@ def _meta_from_row(row: dict[str, Any], lex: CaseLexicon | None = None) -> dict[
         "norm": na,
         "role": info["role"],
         "fine_role": fine["role"],
+        "portable_role": portable_role_from(title, text, str(fine["role"]), lex=lex),
         "channel": fine["channel"],
         "signals": fine["signals"],
         "credibility": info["credibility"],
