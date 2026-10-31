@@ -399,8 +399,11 @@ def authority_rerank(
         from app.kg_lab.intent_routes import core_rank_score, is_core_candidate
 
         anchors = route_info.anchors or None
+        # R26：对撞题扫描略出 pool20，让贴缘精确／声部独占仍可进密度装箱
+        from app.kg_lab.intent_routes import is_claim_conflict_route
+        scan_n = pool + 4 if is_claim_conflict_route(anchors) else pool
         pool_scored: list[tuple[float, str]] = []
-        for pid, sc in pool_ranked[:pool]:
+        for pid, sc in pool_ranked[:scan_n]:
             if float(sc) <= 0:
                 continue
             if not is_core_candidate(
