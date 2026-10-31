@@ -262,12 +262,13 @@ def _markdown(report: dict[str, Any]) -> str:
         "",
         "## vs R21（主看盒内密度）",
         "",
-        "| 案 | R21@7（固定） | R21≈盒密度@7 | R22 微平均密度 | R22@7 | 达≥2/3 题 |",
+        "| 案 | R21@7 | R21≈微密度@7×3题 | R22 微平均密度 | R22@7 | 达≥2/3 题 |",
         "|---|---:|---:|---:|---:|---:|",
     ]
     for c in report["cases"]:
         b = R21[c["slug"]]
-        r21_dens = b["at7"] / 7.0
+        n_q = max(1, len(c["density_rows"]))
+        r21_dens = b["at7"] / (7.0 * n_q)
         n_ok = sum(1 for r in c["density_rows"] if r["gold_density"] + 1e-12 >= 2 / 3)
         lines.append(
             f"| {c['slug']} | {b['at7']} | {r21_dens:.0%} | "
