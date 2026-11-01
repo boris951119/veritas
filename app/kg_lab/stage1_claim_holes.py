@@ -44,10 +44,12 @@ _AMOUNT_TOK = re.compile(
 )
 # R35：对立支主张核（还是／是否 后短句），可迁移、非案名
 _ALT_SPLIT = re.compile(r"还是|是否|抑或|或者")
+# 主张核：优先开关／缺陷／侥幸等；裸「开火／空袭」易灌冲突通稿，不进 claim_alts
 _ALT_KEEP = re.compile(
-    r"[\u4e00-\u9fff]{2,12}(?:侥幸|开关|缺陷|援助|开火|空袭|推荐信|保研|合照|证据|生还|遇难)"
+    r"[\u4e00-\u9fff]{2,12}(?:侥幸|开关|缺陷|援助|推荐信|保研|合照|证据|生还|遇难)"
     r"|纯属侥幸|关闭燃油开关|设计缺陷|燃油开关"
 )
+_ALT_WEAK_TAIL = frozenset({"开火", "空袭", "打击", "动武", "先开火"})
 _YEAR_TOK = re.compile(r"20\d{2}")
 _MONTH_ZH = re.compile(r"(?<!\d)(1[0-2]|[1-9])\s*月")
 _QUOTES = re.compile(r"[「\"“]([^」\"”]{2,40})[」\"”]")
@@ -234,14 +236,18 @@ def extract_verifiable_slots(question: str) -> dict[str, Any]:
         if 1 <= n <= 12 and n not in months:
             months.append(n)
     verbs = [v for v in _CONFLICT_VERB if v in q][:4]
-    # R35：对立支短主张（「还是纯属侥幸」「是否…燃油开关」）
+    # R35/R36：对立支短主张（长支优先；短核「燃油开关」不进 alts，以免评论通稿灌池）
     claim_alts: list[str] = []
     for part in _ALT_SPLIT.split(q):
         part = part.strip(" ，。？?、；;：:（）()\"“”「」")
         if not part:
             continue
         for m in _ALT_KEEP.findall(part):
-            if m not in claim_alts and m not in _WEAK:
+            if (
+                m not in claim_alts
+                and m not in _WEAK
+                and not any(m.endswith(t) and len(m) <= len(t) + 2 for t in _ALT_WEAK_TAIL)
+            ):
                 claim_alts.append(m)
         # 短支整段（≤12 字）也保留
         if 2 <= len(part) <= 12 and part not in _WEAK and part not in claim_alts:
@@ -533,12 +539,74 @@ def build_claim_hole_arm(
                     for e in ("澄清", "辟谣", "知情", "并非", "不实", "回应")
                 ):
                     s += 3.0
-            n_alt = sum(1 for k in (slots.get("claim_alts") or []) if k and k in text)
+            alt_list = list(slots.get("claim_alts") or [])
+            n_alt = sum(1 for k in alt_list if k and k in text)
+            # R36：从长支抽可迁移核；正文「关闭了…燃油…开关」靠共现，不把短核塞进 claim_alts
+            alt_cores: list[str] = []
+            for a in alt_list:
+                for m in re.findall(
+                    r"关闭燃油开关|燃油开关|设计缺陷|关闭[^，。]{0,8}开关|"
+                    r"纯属侥幸|[\u4e00-\u9fff]{2,6}(?:开关|缺陷|侥幸)",
+                    a or "",
+                ):
+                    if m not in alt_cores and m not in _WEAK:
+                        alt_cores.append(m)
+            switch_q = any(
+                any(k in (a or "") for k in ("开关", "缺陷", "燃油"))
+                for a in alt_list
+            )
+            if switch_q:
+                for extra in ("fuel switch", "fuel control", "cut off"):
+                    if extra not in alt_cores:
+                        alt_cores.append(extra)
+            n_alt_c = sum(
+                1 for k in alt_cores
+                if k and (k in text or (k.isascii() and k.lower() in tl))
+            )
+            # 拆开共现：关闭／切断×燃油×开关 或 fuel×switch×(cut/closed)
+            _sw_cut = (
+                "燃油" in text and "开关" in text
+                and any(c in text for c in ("关闭", "切断", "切断位置"))
+            )
+            _sw_en = (
+                "fuel" in tl and "switch" in tl
+                and any(w in tl for w in ("cut off", "cutoff", "closed", "cut-off"))
+            )
+            if switch_q and not n_alt:
+                if _sw_cut or _sw_en:
+                    n_alt_c = max(n_alt_c, 1)
             if n_alt:
                 s += 7.0 + 2.0 * min(n_alt, 3)
+            elif n_alt_c and alt_list:
+                # 仅全文未命中长支时用核分，避免与 n_alt 叠灌
+                s += 6.0 + 1.2 * min(n_alt_c, 3)
+            if (n_alt or n_alt_c) and alt_list:
                 nlen0 = len(re.sub(r"\s+", "", text))
-                if 12 <= nlen0 <= 140:
+                if 12 <= nlen0 <= 160:
                     s += 5.0
+                if switch_q:
+                    report_v = any(
+                        e in text[:360]
+                        for e in (
+                            "初步调查", "初步报告", "黑匣子", "调查报告",
+                            "录音显示", "报告披露", "报告显示", "AAIB",
+                            "事故调查",
+                        )
+                    ) or ("preliminary report" in tl) or ("flight recorder" in tl)
+                    if report_v:
+                        s += 5.5
+                        # 调查声部长段仍优先于标题党短壳
+                        if _sw_cut or _sw_en:
+                            s += 3.0
+                        if nlen0 > 160:
+                            s += 2.0
+                    elif (
+                        any(e in text[:140] for e in ("专家", "分析指出", "正在阅读"))
+                        and nlen0 > 200
+                    ):
+                        s -= 3.0
+                    if _sw_en:
+                        s += 3.0
             # R35：座位号类 codes（11A）短段额外抬，避免被航班拉丁长通稿挤掉
             if n_code:
                 nlen0 = len(re.sub(r"\s+", "", text))
@@ -660,10 +728,47 @@ def _slot_hit_tier(text: str, slots: dict[str, Any] | None) -> int:
     has_code = any(k.lower() in tl for k in (slots.get("codes") or []) + code_lat)
     has_amt = any(k in text for k in (slots.get("amounts") or []))
     has_qt = any(k in text for k in (slots.get("quotes") or []))
+    alt_list = list(slots.get("claim_alts") or [])
+    has_alt = any(k in text for k in alt_list if k and len(k) >= 4)
+    alt_cores: list[str] = []
+    for a in alt_list:
+        for m in re.findall(
+            r"关闭燃油开关|燃油开关|设计缺陷|关闭[^，。]{0,8}开关|"
+            r"纯属侥幸|[\u4e00-\u9fff]{2,6}(?:开关|缺陷|侥幸)",
+            a or "",
+        ):
+            if m not in alt_cores:
+                alt_cores.append(m)
+    tl0 = text.lower()
+    if any(any(k in (a or "") for k in ("开关", "燃油", "缺陷")) for a in alt_list):
+        for extra in ("fuel switch", "fuel control", "cut off"):
+            if extra not in alt_cores:
+                alt_cores.append(extra)
+    has_alt_c = bool(alt_list) and any(
+        k in text or (k.isascii() and k.lower() in tl0) for k in alt_cores if k
+    )
+    if (
+        not has_alt_c
+        and alt_list
+        and any("开关" in (a or "") for a in alt_list)
+        and (
+            (
+                "燃油" in text and "开关" in text
+                and any(c in text for c in ("关闭", "切断"))
+            )
+            or (
+                "fuel" in tl0 and "switch" in tl0
+                and any(w in tl0 for w in ("cut off", "cutoff", "closed"))
+            )
+        )
+    ):
+        has_alt_c = True
     if has_word_lat:
         return 3
     if has_code and (has_amt or has_qt):
         return 3
+    if has_alt or has_alt_c:
+        return 3 if (has_alt_c or has_alt) else 2
     if has_amt or has_qt:
         return 2
     years = list(slots.get("years") or [])
@@ -699,6 +804,7 @@ def inject_claim_holes(
     pinned: list[str] = []
     if use_slots:
         pin_cands: list[tuple[int, float, int, str]] = []
+        # 经典池头强槽钉住；池外高分短可核验经 inject 路径进池（见下方 cands）
         for i, pid in enumerate(base_ids[:25]):
             tier = _slot_hit_tier(texts.get(pid) or "", slots)
             if tier >= 2:
