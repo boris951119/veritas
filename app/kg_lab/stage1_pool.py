@@ -118,11 +118,40 @@ def fuse_r19(
     ).strip()
     auth_rank = index.bm25_text(authority_q) if len(authority_q) >= 4 else []
 
+    # R38：仅「主张英核／数额×拉丁代码」题开跨语臂，避免搅中文事实题池
+    en_rank: list[tuple[str, float]] = []
+    try:
+        from app.kg_lab.stage1_claim_holes import (
+            crosslingual_en_query,
+            extract_verifiable_slots,
+            need_en_crosslingual,
+            slots_actionable,
+        )
+
+        slots0 = extract_verifiable_slots(question)
+        en_q = (
+            crosslingual_en_query(slots0, question)
+            if (
+                slots_actionable(slots0, question)
+                and need_en_crosslingual(slots0, question)
+            )
+            else ""
+        )
+        if len(en_q) >= 8:
+            en_rank = index.embed_rank(en_q)
+            en_bm = index.bm25_text(en_q)
+            if en_bm:
+                en_rank = rrf_merge(en_rank, en_bm) if en_rank else en_bm
+    except Exception:
+        en_rank = []
+
     # 进池：经典 + 各视图臂 + 权威臂 + 邻块（多臂对跨案进池更稳；交卷仍用纯经典）
     pool_arms: list[list[tuple[str, float]]] = [classic]
     pool_arms.extend(view_ranks)
     if auth_rank:
         pool_arms.append(auth_rank)
+    if en_rank:
+        pool_arms.append(en_rank)
     if nb_rank:
         pool_arms.append(nb_rank)
     pool_ranked = rrf_merge(*pool_arms) if pool_arms else list(classic)

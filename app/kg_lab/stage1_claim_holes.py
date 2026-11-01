@@ -69,6 +69,15 @@ _PARTY_BAD = frozenset({
 })
 _CONFLICT_VERB = ("开火", "空袭", "动武", "先开火", "打击", "摧毁")
 # 问句含中文冲突动词时，拉丁段可迁移近义（非案名）
+_CLAIM_EN = (
+    "fuel switch", "fuel control", "locking mechanism", "design defect",
+    "preliminary report", "too early", "cut off", "cutoff", "cut-off",
+    "fuel supply", "black box", "cockpit",
+)
+_EN_VOICE = (
+    " said ", " has said", "minister", "investigat", "carrier said",
+    "according to", "preliminary", "statement",
+)
 _CONFLICT_EN = (
     "fired", "firing", "fire ", "attack", "launched", "launch",
     "strike", "airstrike", "shelling", "clashed", "clash",
@@ -273,6 +282,71 @@ def _latin_codeish(tok: str) -> bool:
     """含数字／连字符的拉丁串（航班号／型号）易灌池，需与其它槽同现。"""
     return bool(re.search(r"\d", tok or "")) or ("-" in (tok or ""))
 
+
+def _latin_ratio(text: str) -> float:
+    body = text or ""
+    if not body:
+        return 0.0
+    n_lat = sum(1 for c in body if ("A" <= c <= "Z") or ("a" <= c <= "z"))
+    return n_lat / max(len(body), 1)
+
+
+def _en_claim_hits(text: str) -> int:
+    tl = (text or "").lower()
+    return sum(1 for e in _CLAIM_EN if e in tl)
+
+
+def _en_voice_hits(text: str) -> int:
+    tl = (text or "").lower()
+    return sum(1 for e in _EN_VOICE if e in tl)
+
+
+def crosslingual_en_query(slots, question: str = "") -> str:
+    if not slots:
+        return ""
+    bits = []
+    for a in list(slots.get("amounts") or [])[:4]:
+        import re as _re
+        m = _re.match(r"^(\d+(?:\.\d+)?)", str(a or "").strip())
+        if m and len(m.group(1)) >= 2:
+            bits.extend([m.group(1), "killed", "on board"])
+    alts = list(slots.get("claim_alts") or [])
+    if any(any(k in (a or "") for k in ("开关", "燃油", "缺陷")) for a in alts):
+        bits.extend([
+            "fuel switch", "fuel control", "locking mechanism",
+            "design defect", "preliminary report", "AAIB", "cut off",
+        ])
+    if any(any(k in (a or "") for k in ("侥幸", "生还")) for a in alts):
+        bits.extend(["survivor", "seat", "emergency exit"])
+    for c in list(slots.get("codes") or [])[:3]:
+        if c:
+            bits.append(str(c))
+    for lat in list(slots.get("latin") or [])[:3]:
+        if lat:
+            bits.append(str(lat))
+    q = question or ""
+    if any(c in q for c in ("空难", "坠机", "遇难", "生还")):
+        bits.extend(["aircraft", "crash", "accident"])
+    out = []
+    for b in bits:
+        if b and b not in out:
+            out.append(b)
+    return " ".join(out[:16]).strip()
+
+
+
+def need_en_crosslingual(slots: dict | None, question: str = "") -> bool:
+    """是否启用英文长段／跨语召回偏好（可迁移槽条件，非案名）。"""
+    if not slots:
+        return False
+    alts = list(slots.get("claim_alts") or [])
+    if any(any(k in (a or "") for k in ("开关", "燃油", "缺陷", "侥幸")) for a in alts):
+        return True
+    if slots.get("amounts") and any(
+        _latin_codeish(str(x)) for x in (slots.get("latin") or [])
+    ):
+        return True
+    return False
 
 def slots_nonempty(slots: dict[str, Any] | None) -> bool:
     """披露用：问句是否抽到任何可核验槽。"""
@@ -643,6 +717,22 @@ def build_claim_hole_arm(
             if parties and verbs:
                 if any(p in text for p in parties) and any(v in text for v in verbs):
                     s += 4.0
+            # R38：仅 need_en 题抬英文声明（避免搅中文事实题）
+            if need_en_crosslingual(slots, q0) and _latin_ratio(text) >= 0.55:
+                n_en_c = _en_claim_hits(text)
+                n_en_v = _en_voice_hits(text)
+                if n_en_c:
+                    s += 9.0 + 1.5 * min(n_en_c, 3)
+                    if n_en_v:
+                        s += 2.5
+                    if len(re.sub(r"\s+", "", text)) >= 200:
+                        s += 2.0
+                elif n_en_v and (
+                    n_amt or slots.get("claim_alts") or slots.get("codes") or years
+                ):
+                    s += 6.0 + 0.8 * min(n_en_v, 3)
+                if n_amt:
+                    s += 3.0
         # R25/R26：机构口径声部＋侧锚同现（发言人谈泥石流／秘书长谈洪灾）
         voice_n = sum(1 for e in _EVID if e in text[:200])
         caliber_v = sum(1 for e in _CALIBER_VOICE if e in text[:220])
@@ -777,6 +867,16 @@ def _slot_hit_tier(text: str, slots: dict[str, Any] | None) -> int:
         return 3
     if has_alt or has_alt_c:
         return 3 if (has_alt_c or has_alt) else 2
+    # R38：need_en 题下高拉丁×主张英核／数额可注入
+    if need_en_crosslingual(slots):
+        lat_ratio = _latin_ratio(text)
+        n_en_c = _en_claim_hits(text) if lat_ratio >= 0.55 else 0
+        if lat_ratio >= 0.55 and (n_en_c or has_amt):
+            return 3 if (n_en_c >= 2 or (n_en_c and has_amt)) else 2
+        if lat_ratio >= 0.55 and _en_voice_hits(text) and (
+            slots.get("years") or slots.get("claim_alts") or slots.get("codes")
+        ):
+            return 2
     if has_amt or has_qt:
         return 2
     years = list(slots.get("years") or [])
@@ -845,43 +945,51 @@ def inject_claim_holes(
     if use_slots:
         from app.kg_lab.intent_routes import amount_token_hit
         base_pos = {pid: i for i, pid in enumerate(base_ids, 1)}
-        # R37：注入只服务池外／深段；已在前20 的通稿不必再注
-        cands = [
-            (
-                _slot_hit_tier(texts.get(pid) or "", slots),
-                claim_sc[pid],
-                pid,
-            )
-            for pid in claim_sc
-            if pid not in head_set
-            and claim_sc[pid] >= min_claim
-            and int(base_pos.get(pid) or 10**9) > 20
-        ]
+        # R37：深段；R38 need_en：高拉丁强槽名次≤20 也可注
+        want_en = need_en_crosslingual(slots)
+        cands = []
+        for pid in claim_sc:
+            if pid in head_set or claim_sc[pid] < min_claim:
+                continue
+            body = texts.get(pid) or ""
+            tier = _slot_hit_tier(body, slots)
+            pr = int(base_pos.get(pid) or 10**9)
+            if pr <= 20 and not (
+                want_en and tier >= 2 and _latin_ratio(body) >= 0.55
+            ):
+                continue
+            cands.append((tier, claim_sc[pid], pid))
         seen_cand = {pid for _t, _s, pid in cands}
         for pid, body in texts.items():
             if not pid or pid in head_set or pid in seen_cand:
                 continue
             pr = int(base_pos.get(pid) or 10**9)
-            if pr <= 20:
-                continue
             tier = _slot_hit_tier(body or "", slots)
             if tier < 2:
+                continue
+            if pr <= 20 and not (
+                want_en and _latin_ratio(body or "") >= 0.55
+            ):
                 continue
             n_amt = sum(
                 1 for a in (slots.get("amounts") or [])
                 if amount_token_hit(body or "", str(a or ""))
             )
-            # 多数额对撞优先（241／242／274）；略抬更深段
+            en_b = 1.0 if (want_en and _latin_ratio(body or "") >= 0.55) else 0.0
             cands.append((
                 tier,
-                float(min_claim) + 0.5 * tier + 0.45 * n_amt + min(0.4, pr / 400.0),
+                float(min_claim)
+                + 0.5 * tier
+                + 0.45 * n_amt
+                + en_b
+                + min(0.4, pr / 400.0),
                 pid,
             ))
             seen_cand.add(pid)
-        # R37：有数额槽时按「对撞数字数 × 承运人／拉丁锚 × 短段」重排
+        # R37：数额对撞；need_en 时英文声明优先于纯短通稿
         if slots.get("amounts"):
             lat = [str(x).lower() for x in (slots.get("latin") or []) if x]
-            ranked_amt: list[tuple[int, int, int, int, float, str]] = []
+            ranked_amt: list[tuple] = []
             for tier, sc, pid in cands:
                 body = texts.get(pid) or ""
                 tl = body.lower()
@@ -889,28 +997,58 @@ def inject_claim_holes(
                     1 for a in (slots.get("amounts") or [])
                     if amount_token_hit(body, str(a or ""))
                 )
-                # 锚只用问句拉丁槽（如航班号），不写航司／国名专名表
                 anchor = 1 if any(k in tl for k in lat) else 0
-                import re as _re
-                nlen = len(_re.sub(r"\s+", "", body))
+                nlen = len(re.sub(r"\s+", "", body))
                 short = 1 if 0 < nlen <= 220 else 0
-                ranked_amt.append((n_amt, anchor, short, int(tier), float(sc), pid))
+                en_lat = 1 if (want_en and _latin_ratio(body) >= 0.55) else 0
+                if want_en:
+                    ranked_amt.append(
+                        (n_amt, en_lat, anchor, short, int(tier), float(sc), pid)
+                    )
+                else:
+                    ranked_amt.append(
+                        (n_amt, anchor, short, int(tier), float(sc), pid)
+                    )
             ranked_amt.sort(reverse=True)
-            cands = [(tier, sc, pid) for _na, _an, _sh, tier, sc, pid in ranked_amt]
+            if want_en:
+                cands = [
+                    (tier, sc, pid)
+                    for _na, _en, _an, _sh, tier, sc, pid in ranked_amt
+                ]
+            else:
+                cands = [
+                    (tier, sc, pid)
+                    for _na, _an, _sh, tier, sc, pid in ranked_amt
+                ]
         else:
             cands.sort(reverse=True)
         inject: list[str] = []
         per_doc: dict[str, int] = {}
+        seen_fp: set[str] = set() if want_en else set()
         for pid in head:
             doc = str(pid).split("#", 1)[0]
             per_doc[doc] = per_doc.get(doc, 0) + 1
+            if want_en:
+                fp0 = _norm(texts.get(pid) or "")[:96]
+                if fp0:
+                    seen_fp.add(fp0)
         for tier, _sc, pid in cands:
             doc = str(pid).split("#", 1)[0]
-            cap = 2 if tier >= 2 else 3
+            body = texts.get(pid) or ""
+            en = want_en and _latin_ratio(body) >= 0.55
+            cap = 3 if (en and tier >= 2) else (2 if tier >= 2 else 3)
             if per_doc.get(doc, 0) >= cap:
                 continue
+            if want_en:
+                fp = _norm(body)[:96]
+                if fp and fp in seen_fp:
+                    continue
             inject.append(pid)
             per_doc[doc] = per_doc.get(doc, 0) + 1
+            if want_en:
+                fp = _norm(body)[:96]
+                if fp:
+                    seen_fp.add(fp)
             if len(inject) >= max_inject:
                 break
     else:

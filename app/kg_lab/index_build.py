@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import math
+import re
 import time
 from pathlib import Path
 from typing import Any
@@ -18,6 +19,41 @@ from app.kg_lab.summarize import load_summary, summary_blob
 
 _K1 = 1.2
 _B = 0.75
+# R38：长段嵌入窗配方版本；升级后仅重嵌超长／高拉丁段
+EMBED_PACK_VER = 2
+
+
+def _embed_pack(text: str, summary_text: str = "") -> str:
+    """长段：头窗＋数字核窗＋高拉丁窗拼装，避免只吃段首。"""
+    summary = (summary_text or "").strip()
+    body = (text or "").strip()
+    if len(body) <= EMBED_BATCH_CHARS and len(summary) < 40:
+        return (body or summary or " ")[:EMBED_BATCH_CHARS]
+    if len(body) <= EMBED_BATCH_CHARS:
+        blob = (summary + "\n" + body).strip() if len(summary) >= 40 else body
+        return (blob or " ")[:EMBED_BATCH_CHARS]
+    head = body[:420]
+    # 数字／日期核窗
+    digit_at = -1
+    for m in re.finditer(r"\d{2,}", body):
+        digit_at = m.start()
+        break
+    mid = ""
+    if digit_at >= 0:
+        lo = max(0, digit_at - 80)
+        mid = body[lo: lo + 420]
+    # 拉丁最密窗
+    best_i, best_n = 0, -1
+    step = 200
+    for i in range(0, max(1, len(body) - 200), step):
+        win = body[i: i + 420]
+        n = sum(1 for c in win if ("A" <= c <= "Z") or ("a" <= c <= "z"))
+        if n > best_n:
+            best_n, best_i = n, i
+    lat = body[best_i: best_i + 420] if best_n >= 40 else ""
+    parts = [summary[:200] if len(summary) >= 40 else "", head, mid, lat]
+    blob = "\n".join(p for p in parts if p)
+    return (blob or body[:EMBED_BATCH_CHARS] or " ")[:EMBED_BATCH_CHARS]
 
 
 def _cosine(a: list[float], b: list[float]) -> float:
@@ -168,20 +204,33 @@ class KgIndex:
         t0 = time.perf_counter()
         refresh = set(refresh_ids or ())
         cache_path = ARTIFACTS / self.case_slug / "embeddings.json"
+        pack_ver = 0
         if cache_path.is_file() and not force:
             data = json.loads(cache_path.read_text(encoding="utf-8"))
             self.embeddings = {k: list(v) for k, v in (data.get("vectors") or {}).items()}
+            pack_ver = int(data.get("pack_ver") or 0)
             # 补缺；refresh_ids 强制按新摘要重嵌
+        # R38：配方升级 → 只重嵌超长或高拉丁段（勿全库重跑）
+        if pack_ver < EMBED_PACK_VER and not force:
+            for r in self.rows:
+                pid = r["para_id"]
+                body = str(r.get("text") or "")
+                if len(body) < 900:
+                    continue
+                n_lat = sum(
+                    1 for c in body if ("A" <= c <= "Z") or ("a" <= c <= "z")
+                )
+                if len(body) >= 1200 or (n_lat / max(len(body), 1)) >= 0.45:
+                    refresh.add(pid)
         n_new = 0
         for r in self.rows:
             pid = r["para_id"]
             if pid in self.embeddings and not force and pid not in refresh:
                 continue
-            # 摘要优先，短则拼原文窗
-            blob = (r.get("summary_text") or "").strip()
-            if len(blob) < 40:
-                blob = ((r.get("summary_text") or "") + "\n" + (r.get("text") or "")).strip()
-            blob = blob[:EMBED_BATCH_CHARS] or (r.get("text") or "")[:EMBED_BATCH_CHARS] or " "
+            blob = _embed_pack(
+                str(r.get("text") or ""),
+                str(r.get("summary_text") or ""),
+            )
             self.embeddings[pid] = embed(blob)
             n_new += 1
             if n_new % 50 == 0:
@@ -190,6 +239,7 @@ class KgIndex:
                 cache_path.write_text(json.dumps({
                     "case": self.case_slug,
                     "model": EMBED_MODEL,
+                    "pack_ver": EMBED_PACK_VER,
                     "dim": len(next(iter(self.embeddings.values()), [])),
                     "n": len(self.embeddings),
                     "vectors": self.embeddings,
@@ -198,6 +248,7 @@ class KgIndex:
         cache_path.write_text(json.dumps({
             "case": self.case_slug,
             "model": EMBED_MODEL,
+            "pack_ver": EMBED_PACK_VER,
             "dim": len(next(iter(self.embeddings.values()), [])),
             "n": len(self.embeddings),
             "vectors": self.embeddings,

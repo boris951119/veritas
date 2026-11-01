@@ -144,8 +144,26 @@ def _rep_quality(
     trad = 0.35 if trad_n >= 4 else 0.0
     # R34：问句可核验槽对齐优先作簇代表（抗通稿壳）
     slot_q = min(1.5, 0.35 * float(slot_align_hits(text, slots)))
+    # R38：高拉丁声明／原文优先于同数字中文通稿壳
+    n_lat = sum(1 for c in text if ("A" <= c <= "Z") or ("a" <= c <= "z"))
+    lat_r = n_lat / max(len(text), 1)
+    en_decl = 0.0
+    if lat_r >= 0.55:
+        en_decl = 1.1
+        tl = text.lower()
+        if any(
+            e in tl
+            for e in (
+                "fuel switch", "preliminary report", "aaib", "locking",
+                "killed", "on board", "said on",
+            )
+        ):
+            en_decl += 0.6
+    wire_pen = 0.0
+    if looks_like_wire_shell(text) and lat_r < 0.4:
+        wire_pen = 0.8
     return (
-        precise + voice + brevity + resp + trad + slot_q,
+        precise + voice + brevity + resp + trad + slot_q + en_decl - wire_pen,
         ver,
         -wrap - caliber_noise,
         float(feat.get("authority_unit") or 0.0),
@@ -469,7 +487,6 @@ def pack_core_first(
         any(k in (a or "") for k in ("开关", "燃油", "缺陷"))
         for a in list((slots or {}).get("claim_alts") or [])
     )
-
     def _core_strong(pid: str) -> int:
         text = str((metas.get(pid) or {}).get("text") or "")
         strong, _ = slot_align_detail(text, slots)
