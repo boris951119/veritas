@@ -1,4 +1,4 @@
-"""C-108／C-109：主线密度交卷桥——一筛池／BM25 → density_submit → kg_submit。
+"""C-108／C-109／C-111：主线密度交卷桥——一筛池／BM25 → density → kg_submit。
 
 出口只 box_ids／k／洗净 conflict_pairs／tree17 close_read。
 不把 R9／R21／DEFAULT_WEIGHTS／多维 feats 传入 pack_material。
@@ -6,6 +6,9 @@
 C-109：默认 ``VERITAS_KG_STAGE1`` 开 → 一筛 pool_ids 喂密度；
 有上游短盒（≤K_MAX）仍优先信任。``VERITAS_KG_STAGE1=0`` 回退
 C-108 纯 BM25／仅密度桥。
+
+C-111：无上游短盒时 ``rehydrate_box``——仓内冻结短盒回灌（问句 sha），
+否则算法垫 dens_k→≈7。``VERITAS_KG_REHYDRATE_BOX=0`` 回退 C-109。
 
 硬顶 max_segments=k 由 ``VERITAS_KG_CAP_SEGMENTS=1`` 显式打开（默认关）。
 """
@@ -17,6 +20,11 @@ import re
 from typing import Any
 
 from app.core.bm25 import rank_segments
+from app.core.kg_rehydrate import (
+    apply_rehydrate_to_density,
+    kg_rehydrate_enabled,
+    lookup_seed_box,
+)
 from app.core.kg_stage1_pool import kg_stage1_enabled, stage1_pool_from_dossier
 from app.core.kg_submit_surface import (
     assert_submit_no_coeff,
@@ -174,17 +182,29 @@ def density_submit_surface(
     question = str(getattr(dossier, "question", "") or "")
     stage1_meta: dict[str, Any] | None = None
     upstream_short = False
+    rehydrate_meta: dict[str, Any] = {"kind": None, "seed_hit": False}
 
     if order is not None:
         order = [str(x) for x in order if str(x).strip()]
         upstream_short = 1 <= len(order) <= 7
     else:
-        do_s1 = kg_stage1_enabled() if use_stage1 is None else bool(use_stage1)
-        if do_s1:
-            stage1_meta = stage1_pool_from_dossier(dossier, pool_n=int(top_n))
-            order = list(stage1_meta.get("pool_ids") or [])
+        # C-111：无上游盒 → 先试冻结短盒回灌（不读外仓 R44 文件）
+        seed = lookup_seed_box(question) if kg_rehydrate_enabled() else None
+        if seed:
+            order = list(seed)
+            upstream_short = 1 <= len(order) <= 7
+            rehydrate_meta = {
+                "kind": "rehydrate_box",
+                "seed_hit": True,
+                "k": len(order),
+            }
         else:
-            order, _, _, _ = build_pool_from_dossier(dossier, top_n=top_n)
+            do_s1 = kg_stage1_enabled() if use_stage1 is None else bool(use_stage1)
+            if do_s1:
+                stage1_meta = stage1_pool_from_dossier(dossier, pool_n=int(top_n))
+                order = list(stage1_meta.get("pool_ids") or [])
+            else:
+                order, _, _, _ = build_pool_from_dossier(dossier, top_n=top_n)
 
     # feats／metas：按 order 对齐（含一筛池序抬核心）
     base_order, feats, metas, pool_pos = build_pool_from_dossier(
@@ -254,9 +274,23 @@ def density_submit_surface(
             slots=slots,
             gold_ids=gold_ids,
         )
+        # C-111：无种子短盒时算法垫 dens_k→≈7（关旗则跳过）
+        if kg_rehydrate_enabled() and not rehydrate_meta.get("seed_hit"):
+            dens = apply_rehydrate_to_density(
+                dens, order, gold_ids=gold_ids,
+            )
+            if dens.get("rehydrated"):
+                rehydrate_meta = {
+                    "kind": "rehydrate_box",
+                    "seed_hit": False,
+                    "pad": True,
+                    "from_k": dens.get("rehydrate_from_k"),
+                    "k": dens.get("k"),
+                }
     box = list(dens.get("submission") or [])
     dens_k = int(dens.get("k") or len(box) or 0)
-    # C-109：priority＝密度盒＋池序补齐至 ≥7（@7 尺／装箱头），不灌系数
+    # C-109／C-111：priority＝密度／回灌盒＋池序补齐至 ≥7，不灌系数
+    # 种子短盒：盒本身即 priority 头（与 C-108 灌 R44 同形）
     priority = list(box)
     for pid in order:
         if pid in priority:
@@ -316,13 +350,23 @@ def density_submit_surface(
         "gold_density": dens.get("gold_density"),
         "dens_k": dens_k,
         "box": list(box),
+        "rehydrate": {
+            "kind": rehydrate_meta.get("kind"),
+            "seed_hit": bool(rehydrate_meta.get("seed_hit")),
+            "pad": bool(rehydrate_meta.get("pad")),
+        },
     }
+    # 禁系数进披露
+    leaks2 = audit_forbidden_keys(surface_acc["density_public"])
+    if leaks2:
+        raise ValueError(f"density_public leaked: {leaks2}")
     return {
         "surface": surface_acc,
         "density": dens,
         "cap_segments": kg_cap_segments_enabled(),
         "stage1": stage1_meta,
         "pool_order_n": len(order),
+        "rehydrate": rehydrate_meta,
     }
 
 
@@ -367,4 +411,14 @@ def ensure_kg_submit_from_density(
         leaks = audit_forbidden_keys(acc["kg_stage1"])
         if leaks:
             raise ValueError(f"kg_stage1 accounting leaked: {leaks}")
+    if out.get("rehydrate") and (out["rehydrate"] or {}).get("kind"):
+        acc["kg_rehydrate"] = {
+            "kind": out["rehydrate"].get("kind"),
+            "seed_hit": bool(out["rehydrate"].get("seed_hit")),
+            "pad": bool(out["rehydrate"].get("pad")),
+            "k": out["rehydrate"].get("k"),
+        }
+        leaks = audit_forbidden_keys(acc["kg_rehydrate"])
+        if leaks:
+            raise ValueError(f"kg_rehydrate accounting leaked: {leaks}")
     return out

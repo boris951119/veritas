@@ -1,0 +1,673 @@
+{
+  "passed": true,
+  "gate": {
+    "leaks_zero": true,
+    "liuxiang_at7_ge_11": true,
+    "holdout_ge_c108": true
+  },
+  "liuxiang_at7": {
+    "A": 12,
+    "B": 12,
+    "C": 4
+  },
+  "holdout_l2": {
+    "A": 29,
+    "B": 29,
+    "C": 25,
+    "denom": 59
+  },
+  "c108_holdout_on": 29,
+  "leaks": 0,
+  "rows": [
+    {
+      "slug": "liuxiang",
+      "qid": "q_001",
+      "role": "regression",
+      "denom": 4,
+      "r44_micro": 0.5714,
+      "A": {
+        "l2": 4,
+        "at7": 4,
+        "n_sel": 88,
+        "dens_k": 7,
+        "box": [
+          "doc_002#p3",
+          "doc_035#p7",
+          "doc_024#p1",
+          "doc_025#p6",
+          "doc_033#p2",
+          "doc_043#p1",
+          "doc_012#p5"
+        ],
+        "leaks": [],
+        "seed_hit": false,
+        "rehydrate_kind": null,
+        "micro": 0.5714
+      },
+      "B": {
+        "l2": 4,
+        "at7": 4,
+        "n_sel": 88,
+        "dens_k": 7,
+        "box": [
+          "doc_002#p3",
+          "doc_035#p7",
+          "doc_024#p1",
+          "doc_025#p6",
+          "doc_033#p2",
+          "doc_043#p1",
+          "doc_012#p5"
+        ],
+        "leaks": [],
+        "seed_hit": true,
+        "rehydrate_kind": "rehydrate_box",
+        "micro": 0.5714
+      },
+      "C": {
+        "l2": 4,
+        "at7": 1,
+        "n_sel": 84,
+        "dens_k": 3,
+        "box": [
+          "doc_037#p2",
+          "doc_043#p2",
+          "doc_030#p12"
+        ],
+        "leaks": [],
+        "seed_hit": false,
+        "rehydrate_kind": null,
+        "micro": 0.0
+      },
+      "delta_at7_AB": 0,
+      "delta_l2_AB": 0
+    },
+    {
+      "slug": "liuxiang",
+      "qid": "q_002",
+      "role": "regression",
+      "denom": 5,
+      "r44_micro": 0.5714,
+      "A": {
+        "l2": 5,
+        "at7": 4,
+        "n_sel": 94,
+        "dens_k": 7,
+        "box": [
+          "doc_009#p5",
+          "doc_011#p7",
+          "doc_041#p1",
+          "doc_002#p3",
+          "doc_051#p3",
+          "doc_051#p5",
+          "doc_029#p7"
+        ],
+        "leaks": [],
+        "seed_hit": false,
+        "rehydrate_kind": null,
+        "micro": 0.5714
+      },
+      "B": {
+        "l2": 5,
+        "at7": 4,
+        "n_sel": 94,
+        "dens_k": 7,
+        "box": [
+          "doc_009#p5",
+          "doc_011#p7",
+          "doc_041#p1",
+          "doc_002#p3",
+          "doc_051#p3",
+          "doc_051#p5",
+          "doc_029#p7"
+        ],
+        "leaks": [],
+        "seed_hit": true,
+        "rehydrate_kind": "rehydrate_box",
+        "micro": 0.5714
+      },
+      "C": {
+        "l2": 3,
+        "at7": 1,
+        "n_sel": 89,
+        "dens_k": 3,
+        "box": [
+          "doc_026#p2",
+          "doc_030#p12",
+          "doc_026#p9"
+        ],
+        "leaks": [],
+        "seed_hit": false,
+        "rehydrate_kind": null,
+        "micro": 0.0
+      },
+      "delta_at7_AB": 0,
+      "delta_l2_AB": 0
+    },
+    {
+      "slug": "liuxiang",
+      "qid": "q_003",
+      "role": "regression",
+      "denom": 5,
+      "r44_micro": 0.5714,
+      "A": {
+        "l2": 4,
+        "at7": 4,
+        "n_sel": 95,
+        "dens_k": 7,
+        "box": [
+          "doc_012#p5",
+          "doc_046#p3",
+          "doc_006#p3",
+          "doc_002#p3",
+          "doc_033#p5",
+          "doc_027#p3",
+          "doc_050#p10"
+        ],
+        "leaks": [],
+        "seed_hit": false,
+        "rehydrate_kind": null,
+        "micro": 0.5714
+      },
+      "B": {
+        "l2": 4,
+        "at7": 4,
+        "n_sel": 95,
+        "dens_k": 7,
+        "box": [
+          "doc_012#p5",
+          "doc_046#p3",
+          "doc_006#p3",
+          "doc_002#p3",
+          "doc_033#p5",
+          "doc_027#p3",
+          "doc_050#p10"
+        ],
+        "leaks": [],
+        "seed_hit": true,
+        "rehydrate_kind": "rehydrate_box",
+        "micro": 0.5714
+      },
+      "C": {
+        "l2": 2,
+        "at7": 2,
+        "n_sel": 95,
+        "dens_k": 3,
+        "box": [
+          "doc_046#p3",
+          "doc_006#p3",
+          "doc_013#p3"
+        ],
+        "leaks": [],
+        "seed_hit": false,
+        "rehydrate_kind": null,
+        "micro": 0.3333
+      },
+      "delta_at7_AB": 0,
+      "delta_l2_AB": 0
+    },
+    {
+      "slug": "wanghong",
+      "qid": "q_001",
+      "role": "holdout",
+      "denom": 5,
+      "r44_micro": 1.0,
+      "A": {
+        "l2": 2,
+        "at7": 1,
+        "n_sel": 76,
+        "dens_k": 1,
+        "box": [
+          "doc_001#p1"
+        ],
+        "leaks": [],
+        "seed_hit": false,
+        "rehydrate_kind": null,
+        "micro": 1.0
+      },
+      "B": {
+        "l2": 2,
+        "at7": 1,
+        "n_sel": 76,
+        "dens_k": 1,
+        "box": [
+          "doc_001#p1"
+        ],
+        "leaks": [],
+        "seed_hit": true,
+        "rehydrate_kind": "rehydrate_box",
+        "micro": 1.0
+      },
+      "C": {
+        "l2": 2,
+        "at7": 1,
+        "n_sel": 76,
+        "dens_k": 1,
+        "box": [
+          "doc_001#p1"
+        ],
+        "leaks": [],
+        "seed_hit": false,
+        "rehydrate_kind": null,
+        "micro": 1.0
+      },
+      "delta_at7_AB": 0,
+      "delta_l2_AB": 0
+    },
+    {
+      "slug": "wanghong",
+      "qid": "q_002",
+      "role": "holdout",
+      "denom": 5,
+      "r44_micro": 0.6667,
+      "A": {
+        "l2": 2,
+        "at7": 2,
+        "n_sel": 92,
+        "dens_k": 3,
+        "box": [
+          "doc_010#p7",
+          "doc_011#p1",
+          "doc_011#p5"
+        ],
+        "leaks": [],
+        "seed_hit": false,
+        "rehydrate_kind": null,
+        "micro": 0.6667
+      },
+      "B": {
+        "l2": 2,
+        "at7": 2,
+        "n_sel": 92,
+        "dens_k": 3,
+        "box": [
+          "doc_010#p7",
+          "doc_011#p1",
+          "doc_011#p5"
+        ],
+        "leaks": [],
+        "seed_hit": true,
+        "rehydrate_kind": "rehydrate_box",
+        "micro": 0.6667
+      },
+      "C": {
+        "l2": 2,
+        "at7": 1,
+        "n_sel": 92,
+        "dens_k": 3,
+        "box": [
+          "doc_010#p7",
+          "doc_063#p3",
+          "doc_011#p5"
+        ],
+        "leaks": [],
+        "seed_hit": false,
+        "rehydrate_kind": null,
+        "micro": 0.3333
+      },
+      "delta_at7_AB": 0,
+      "delta_l2_AB": 0
+    },
+    {
+      "slug": "wanghong",
+      "qid": "q_003",
+      "role": "holdout",
+      "denom": 9,
+      "r44_micro": 1.0,
+      "A": {
+        "l2": 3,
+        "at7": 3,
+        "n_sel": 78,
+        "dens_k": 3,
+        "box": [
+          "doc_007#p1",
+          "doc_007#p2",
+          "doc_003#p5"
+        ],
+        "leaks": [],
+        "seed_hit": false,
+        "rehydrate_kind": null,
+        "micro": 1.0
+      },
+      "B": {
+        "l2": 3,
+        "at7": 3,
+        "n_sel": 78,
+        "dens_k": 3,
+        "box": [
+          "doc_007#p1",
+          "doc_007#p2",
+          "doc_003#p5"
+        ],
+        "leaks": [],
+        "seed_hit": true,
+        "rehydrate_kind": "rehydrate_box",
+        "micro": 1.0
+      },
+      "C": {
+        "l2": 3,
+        "at7": 1,
+        "n_sel": 74,
+        "dens_k": 3,
+        "box": [
+          "doc_063#p3",
+          "doc_017#p1",
+          "doc_007#p10"
+        ],
+        "leaks": [],
+        "seed_hit": false,
+        "rehydrate_kind": null,
+        "micro": 0.0
+      },
+      "delta_at7_AB": 0,
+      "delta_l2_AB": 0
+    },
+    {
+      "slug": "kh_th",
+      "qid": "q_001",
+      "role": "holdout",
+      "denom": 5,
+      "r44_micro": 1.0,
+      "A": {
+        "l2": 1,
+        "at7": 1,
+        "n_sel": 79,
+        "dens_k": 1,
+        "box": [
+          "doc_027#p2"
+        ],
+        "leaks": [],
+        "seed_hit": false,
+        "rehydrate_kind": null,
+        "micro": 1.0
+      },
+      "B": {
+        "l2": 1,
+        "at7": 1,
+        "n_sel": 79,
+        "dens_k": 1,
+        "box": [
+          "doc_027#p2"
+        ],
+        "leaks": [],
+        "seed_hit": true,
+        "rehydrate_kind": "rehydrate_box",
+        "micro": 1.0
+      },
+      "C": {
+        "l2": 1,
+        "at7": 0,
+        "n_sel": 79,
+        "dens_k": 3,
+        "box": [
+          "doc_053#p2",
+          "doc_103#p3",
+          "doc_038#p7"
+        ],
+        "leaks": [],
+        "seed_hit": false,
+        "rehydrate_kind": null,
+        "micro": 0.0
+      },
+      "delta_at7_AB": 0,
+      "delta_l2_AB": 0
+    },
+    {
+      "slug": "kh_th",
+      "qid": "q_002",
+      "role": "holdout",
+      "denom": 6,
+      "r44_micro": 0.6667,
+      "A": {
+        "l2": 3,
+        "at7": 2,
+        "n_sel": 64,
+        "dens_k": 3,
+        "box": [
+          "doc_009#p10",
+          "doc_103#p3",
+          "doc_006#p4"
+        ],
+        "leaks": [],
+        "seed_hit": false,
+        "rehydrate_kind": null,
+        "micro": 0.6667
+      },
+      "B": {
+        "l2": 3,
+        "at7": 2,
+        "n_sel": 64,
+        "dens_k": 3,
+        "box": [
+          "doc_009#p10",
+          "doc_103#p3",
+          "doc_006#p4"
+        ],
+        "leaks": [],
+        "seed_hit": true,
+        "rehydrate_kind": "rehydrate_box",
+        "micro": 0.6667
+      },
+      "C": {
+        "l2": 1,
+        "at7": 0,
+        "n_sel": 66,
+        "dens_k": 3,
+        "box": [
+          "doc_011#p4",
+          "doc_042#p1",
+          "doc_096#p10"
+        ],
+        "leaks": [],
+        "seed_hit": false,
+        "rehydrate_kind": null,
+        "micro": 0.0
+      },
+      "delta_at7_AB": 0,
+      "delta_l2_AB": 0
+    },
+    {
+      "slug": "kh_th",
+      "qid": "q_003",
+      "role": "holdout",
+      "denom": 5,
+      "r44_micro": 1.0,
+      "A": {
+        "l2": 5,
+        "at7": 2,
+        "n_sel": 77,
+        "dens_k": 1,
+        "box": [
+          "doc_023#p2"
+        ],
+        "leaks": [],
+        "seed_hit": false,
+        "rehydrate_kind": null,
+        "micro": 1.0
+      },
+      "B": {
+        "l2": 5,
+        "at7": 2,
+        "n_sel": 77,
+        "dens_k": 1,
+        "box": [
+          "doc_023#p2"
+        ],
+        "leaks": [],
+        "seed_hit": true,
+        "rehydrate_kind": "rehydrate_box",
+        "micro": 1.0
+      },
+      "C": {
+        "l2": 5,
+        "at7": 1,
+        "n_sel": 76,
+        "dens_k": 3,
+        "box": [
+          "doc_090#p5",
+          "doc_092#p6",
+          "doc_023#p1"
+        ],
+        "leaks": [],
+        "seed_hit": false,
+        "rehydrate_kind": null,
+        "micro": 0.0
+      },
+      "delta_at7_AB": 0,
+      "delta_l2_AB": 0
+    },
+    {
+      "slug": "ai171",
+      "qid": "q_001",
+      "role": "holdout",
+      "denom": 7,
+      "r44_micro": 0.6667,
+      "A": {
+        "l2": 4,
+        "at7": 2,
+        "n_sel": 108,
+        "dens_k": 3,
+        "box": [
+          "doc_001#p3",
+          "doc_015#p5",
+          "doc_017#p4"
+        ],
+        "leaks": [],
+        "seed_hit": false,
+        "rehydrate_kind": null,
+        "micro": 0.6667
+      },
+      "B": {
+        "l2": 4,
+        "at7": 2,
+        "n_sel": 108,
+        "dens_k": 3,
+        "box": [
+          "doc_001#p3",
+          "doc_015#p5",
+          "doc_017#p4"
+        ],
+        "leaks": [],
+        "seed_hit": true,
+        "rehydrate_kind": "rehydrate_box",
+        "micro": 0.6667
+      },
+      "C": {
+        "l2": 3,
+        "at7": 0,
+        "n_sel": 112,
+        "dens_k": 3,
+        "box": [
+          "doc_036#p18",
+          "doc_003#p1",
+          "doc_054#p4"
+        ],
+        "leaks": [],
+        "seed_hit": false,
+        "rehydrate_kind": null,
+        "micro": 0.0
+      },
+      "delta_at7_AB": 0,
+      "delta_l2_AB": 0
+    },
+    {
+      "slug": "ai171",
+      "qid": "q_002",
+      "role": "holdout",
+      "denom": 11,
+      "r44_micro": 1.0,
+      "A": {
+        "l2": 5,
+        "at7": 1,
+        "n_sel": 118,
+        "dens_k": 1,
+        "box": [
+          "doc_015#p6"
+        ],
+        "leaks": [],
+        "seed_hit": false,
+        "rehydrate_kind": null,
+        "micro": 1.0
+      },
+      "B": {
+        "l2": 5,
+        "at7": 1,
+        "n_sel": 118,
+        "dens_k": 1,
+        "box": [
+          "doc_015#p6"
+        ],
+        "leaks": [],
+        "seed_hit": true,
+        "rehydrate_kind": "rehydrate_box",
+        "micro": 1.0
+      },
+      "C": {
+        "l2": 4,
+        "at7": 1,
+        "n_sel": 108,
+        "dens_k": 1,
+        "box": [
+          "doc_036#p18"
+        ],
+        "leaks": [],
+        "seed_hit": false,
+        "rehydrate_kind": null,
+        "micro": 0.0
+      },
+      "delta_at7_AB": 0,
+      "delta_l2_AB": 0
+    },
+    {
+      "slug": "ai171",
+      "qid": "q_003",
+      "role": "holdout",
+      "denom": 6,
+      "r44_micro": 1.0,
+      "A": {
+        "l2": 4,
+        "at7": 1,
+        "n_sel": 151,
+        "dens_k": 1,
+        "box": [
+          "doc_004#p3"
+        ],
+        "leaks": [],
+        "seed_hit": false,
+        "rehydrate_kind": null,
+        "micro": 1.0
+      },
+      "B": {
+        "l2": 4,
+        "at7": 1,
+        "n_sel": 151,
+        "dens_k": 1,
+        "box": [
+          "doc_004#p3"
+        ],
+        "leaks": [],
+        "seed_hit": true,
+        "rehydrate_kind": "rehydrate_box",
+        "micro": 1.0
+      },
+      "C": {
+        "l2": 4,
+        "at7": 0,
+        "n_sel": 153,
+        "dens_k": 3,
+        "box": [
+          "doc_018#p5",
+          "doc_018#p13",
+          "doc_001#p3"
+        ],
+        "leaks": [],
+        "seed_hit": false,
+        "rehydrate_kind": null,
+        "micro": 0.0
+      },
+      "delta_at7_AB": 0,
+      "delta_l2_AB": 0
+    }
+  ],
+  "wall_s": 16.205847749952227,
+  "merge_advice": "merge_ok"
+}

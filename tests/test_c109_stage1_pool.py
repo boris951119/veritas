@@ -64,6 +64,8 @@ def test_c109_export_only_pool_ids_no_coeff():
 
 def test_c109_pack_kwargs_never_take_stage1_coeffs(monkeypatch):
     monkeypatch.delenv("VERITAS_KG_CAP_SEGMENTS", raising=False)
+    # C-111 默认回灌会按问句 sha 命中冻结盒、跳过一筛；本格专测 stage1 出口
+    monkeypatch.setenv("VERITAS_KG_REHYDRATE_BOX", "0")
     d = _dossier()
     bridge = density_submit_surface(d, top_n=20, use_stage1=True)
     assert bridge.get("stage1") is not None
@@ -83,7 +85,8 @@ def test_c109_stage1_off_falls_back_bm25_pool(monkeypatch):
     assert out["surface"]["rank_order"]
 
 
-def test_c109_short_box_still_preferred():
+def test_c109_short_box_still_preferred(monkeypatch):
+    monkeypatch.setenv("VERITAS_KG_REHYDRATE_BOX", "0")
     d = _dossier()
     short = ["SRC1#s1", "SRC2#s1", "SRC4#s1"]
     out = density_submit_surface(d, order=short, use_stage1=True)

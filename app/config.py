@@ -549,6 +549,11 @@ class Settings:
     # env VERITAS_KG_STAGE1；config.json kg_stage1。
     kg_stage1: bool = True
 
+    # C-111：保底回灌短盒（rehydrate_box）。默认 True；
+    # 关＝VERITAS_KG_REHYDRATE_BOX=0 → C-109（无冻结盒／不垫 dens_k）。
+    # 系数不进 pack。env／config.json kg_rehydrate_box。
+    kg_rehydrate_box: bool = True
+
     # 语料收窄阈值：信源数达到该值才走索引选料（默认 50=自动；
     # 0=强制关闭，小案例到不了阈值则整卷研判、不建 .corpus）。
     # 收窄后研判只看见 hydrate 出的小案卷，并披露「库内 N / 本次 M」。
@@ -814,6 +819,11 @@ class Settings:
             s.kg_stage1 = False
         elif s1 in ("1", "true", "on", "yes"):
             s.kg_stage1 = True
+        rh = (os.environ.get("VERITAS_KG_REHYDRATE_BOX") or "").strip().lower()
+        if rh in ("0", "false", "off", "no"):
+            s.kg_rehydrate_box = False
+        elif rh in ("1", "true", "on", "yes"):
+            s.kg_rehydrate_box = True
         return s.validate()
 
     @classmethod
@@ -961,6 +971,13 @@ class Settings:
                 s.kg_stage1 = raw_s1
             elif isinstance(raw_s1, (int, str)):
                 s.kg_stage1 = str(raw_s1).strip().lower() not in (
+                    "0", "false", "off", "no", "")
+        if "kg_rehydrate_box" in data:
+            raw_rh = data.get("kg_rehydrate_box")
+            if isinstance(raw_rh, bool):
+                s.kg_rehydrate_box = raw_rh
+            elif isinstance(raw_rh, (int, str)):
+                s.kg_rehydrate_box = str(raw_rh).strip().lower() not in (
                     "0", "false", "off", "no", "")
         select_min = data.get("corpus_select_min_sources")
         if isinstance(select_min, int) and not isinstance(select_min, bool) \
