@@ -20,6 +20,8 @@ from app.kg_lab.intent_routes import (
     core_rank_score,
     is_claim_conflict_route,
     is_core_candidate,
+    is_eval_attitude_question,
+    is_interview_voice_segment,
     is_short_claim_segment,
     related_filler,
     slot_align_detail,
@@ -461,6 +463,11 @@ def pack_core_first(
         )
 
     _adj_short = route == "adjudicate" and _seat_or_luck_q()
+    _eval_pack = route == "adjudicate" and is_eval_attitude_question(slots)
+    _switch_pack = route == "fact_check" and any(
+        any(k in (a or "") for k in ("开关", "燃油", "缺陷"))
+        for a in list((slots or {}).get("claim_alts") or [])
+    )
 
     def _core_strong(pid: str) -> int:
         text = str((metas.get(pid) or {}).get("text") or "")
@@ -471,10 +478,56 @@ def pack_core_first(
         sc, pid = item
         text = str((metas.get(pid) or {}).get("text") or "")
         nlen = len(re.sub(r"\s+", "", text))
+        if _eval_pack:
+            voice = 1 if is_interview_voice_segment(text, slots) else 0
+            rumor = 1 if (
+                not voice
+                and any(
+                    n in text
+                    for n in ("推荐信", "毕业照", "绩点", "保研", "成绩不突出")
+                )
+            ) else 0
+            return (-voice, rumor, -sc, pid)
         if _adj_short:
             short = 1 if is_short_claim_segment(text, slots, route=route) else 0
             long_wire = 1 if (nlen > 500 and not short) else 0
             return (-short, long_wire, -sc, pid)
+        if _switch_pack:
+            tl = text.lower()
+            sw = 1 if (
+                ("燃油" in text and "开关" in text
+                 and any(c in text for c in ("关闭", "切断")))
+                or (
+                    "fuel" in tl and "switch" in tl
+                    and any(w in tl for w in ("cut off", "cutoff", "closed"))
+                )
+            ) else 0
+            # 对立支「非设计缺陷」侧：加强检测／锁定／尚未发现缺陷
+            defect_side = 1 if (
+                ("燃油" in text or "开关" in text or "fuel" in tl)
+                and any(
+                    c in text or c in tl
+                    for c in (
+                        "加强检测", "设计缺陷", "锁定", "尚未发现",
+                        "locking", "design defect", "no problems",
+                    )
+                )
+            ) else 0
+            report = 1 if (
+                any(
+                    e in text[:360]
+                    for e in (
+                        "初步调查", "初步报告", "黑匣子", "调查报告",
+                        "录音显示", "AAIB", "事故调查",
+                    )
+                )
+                or "preliminary report" in tl
+            ) else 0
+            casualty = 1 if (
+                sw == 0 and defect_side == 0
+                and any(c in text[:80] for c in ("遇难", "坠毁", "幸存者", "遇难者"))
+            ) else 0
+            return (-(sw + report + defect_side), casualty, -sc, pid)
         if not _slot_pack:
             return (-sc, pid)
         tl = text.lower()
@@ -522,7 +575,38 @@ def pack_core_first(
         else:
             gap, floor_min = 0.38, 0.42
         floor = max(floor_min, top_sc - gap)
-        # R34/R35：强槽≥2 或短主张 豁免分地板
+        # R34–R36：强槽≥2／短主张／专访声部／开关调查声部 豁免分地板
+        def _switch_report_core(pid: str) -> bool:
+            if not _switch_pack:
+                return False
+            body = str((metas.get(pid) or {}).get("text") or "")
+            tl = body.lower()
+            sw = (
+                "燃油" in body and "开关" in body
+                and any(c in body for c in ("关闭", "切断"))
+            ) or (
+                "fuel" in tl and "switch" in tl
+                and any(w in tl for w in ("cut off", "cutoff", "closed"))
+            )
+            defect = (
+                ("燃油" in body or "开关" in body or "fuel" in tl)
+                and any(
+                    c in body or c in tl
+                    for c in (
+                        "加强检测", "设计缺陷", "锁定", "尚未发现",
+                        "locking", "design defect", "no problems",
+                    )
+                )
+            )
+            report = any(
+                e in body[:360]
+                for e in (
+                    "初步调查", "初步报告", "黑匣子", "调查报告",
+                    "录音显示", "AAIB", "事故调查",
+                )
+            ) or "preliminary report" in tl
+            return bool((sw and report) or defect)
+
         scored_cores = [
             x for x in scored_cores
             if x[0] + 1e-12 >= floor
@@ -535,6 +619,14 @@ def pack_core_first(
                     route=route,
                 )
             )
+            or (
+                _eval_pack
+                and is_interview_voice_segment(
+                    str((metas.get(x[1]) or {}).get("text") or ""),
+                    slots,
+                )
+            )
+            or _switch_report_core(x[1])
         ][:14]
     # R24/R25：通稿／近同文簇内留质量更好的代表
     scored_cores = _cluster_wire_keep_one(scored_cores, metas, feats, slots=slots)

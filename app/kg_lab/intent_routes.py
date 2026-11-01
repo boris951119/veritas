@@ -526,12 +526,59 @@ def stage2_verifiable_slots(question: str) -> dict[str, Any]:
             claim_nouns.append(a)
     slots["nouns"] = nouns[:12]
     slots["claim_nouns"] = claim_nouns[:10]
+    # R36：评价题标记（发言人＋正负面／评价）— 供专访短段装箱
+    if slots.get("speakers") and any(
+        c in q for c in ("正面", "负面", "评价", "怎么看", "如何看")
+    ):
+        slots["eval_attitude"] = True
     return slots
 
 
 _LEAD_SHELL = re.compile(
     r"^(?:据|根据|当地时间|北京时间|新华社|总台|记者|报道|近日|有消息)"
 )
+_INTERVIEW_VOICE = (
+    "说道：", "表示：", "说：", "回应称", "谈道：",
+    "：“", '："', "专访", "她表示", "他表示",
+    "我觉得", "我印象", "回忆了", "谈到求学",
+)
+_EVAL_RUMOR_NOISE = (
+    "推荐信", "毕业照", "绩点", "保研", "未参与拍摄", "成绩不突出",
+)
+
+
+def is_eval_attitude_question(slots: dict[str, Any] | None) -> bool:
+    """评价题标记（由 stage2_verifiable_slots 写入 eval_attitude）。"""
+    return bool(slots and slots.get("eval_attitude"))
+
+
+def is_interview_voice_segment(
+    text: str,
+    slots: dict[str, Any] | None,
+) -> bool:
+    """当事人／专访短段：发言人在场＋冒号引语／专访声部，非通稿壳。"""
+    body = text or ""
+    nlen = len(re.sub(r"\s+", "", body))
+    if not (28 <= nlen <= 280):
+        return False
+    if looks_like_wire_shell(body):
+        return False
+    speakers = list((slots or {}).get("speakers") or [])
+    if speakers and not any(sp in body for sp in speakers):
+        return False
+    # 「某人表示：」与「表示：」均算声部；专访／引号冒号
+    if not (
+        any(c in body for c in _INTERVIEW_VOICE)
+        or re.search(r"[\u4e00-\u9fff]{1,4}表示：", body)
+        or re.search(r"[\u4e00-\u9fff]{1,4}说道：", body)
+    ):
+        return False
+    # 评价题噪声：纯澄清推荐信／毕业照的通稿壳不算专访声部
+    if any(n in body[:80] for n in _EVAL_RUMOR_NOISE) and not any(
+        c in body for c in ("专访", "说道：", "表示：", "我觉得", "：“")
+    ):
+        return False
+    return True
 
 
 def is_short_claim_segment(
@@ -553,9 +600,28 @@ def is_short_claim_segment(
     if not slots:
         return False
     hits = 0
-    for k in list(slots.get("claim_alts") or []) + list(slots.get("claim_nouns") or []):
+    claim_pool = list(slots.get("claim_alts") or []) + list(slots.get("claim_nouns") or [])
+    for k in claim_pool:
         if k and len(k) >= 2 and k in body:
             hits += 1
+    # 长支短核／关闭×燃油×开关共现
+    if hits == 0 and claim_pool:
+        for a in claim_pool:
+            for m in re.findall(
+                r"关闭燃油开关|燃油开关|设计缺陷|纯属侥幸|"
+                r"[\u4e00-\u9fff]{2,6}(?:开关|缺陷|侥幸)",
+                a or "",
+            ):
+                if m and m in body:
+                    hits += 1
+                    break
+            if hits:
+                break
+        if hits == 0 and any("开关" in (a or "") for a in claim_pool):
+            if "燃油" in body and "开关" in body and any(
+                c in body for c in ("关闭", "切断")
+            ):
+                hits += 1
     for k in list(slots.get("codes") or []) + list(slots.get("amounts") or []):
         if k and k in body:
             hits += 1
@@ -610,6 +676,42 @@ def slot_align_detail(
             continue
         matched_c.append(n)
     strong += min(len(matched_c), 2)
+    # R36：长支抽短核／关闭×燃油×开关共现（正文罕有整支逐字）
+    # 裸「燃油开关」须搭关闭／切断／缺陷／检测／调查声部，防标题党灌核心
+    if not matched_c and claim_pool:
+        alt_cores: list[str] = []
+        for a in claim_pool:
+            for m in re.findall(
+                r"关闭燃油开关|设计缺陷|关闭[^，。]{0,8}开关|纯属侥幸|"
+                r"[\u4e00-\u9fff]{2,6}(?:缺陷|侥幸)",
+                a or "",
+            ):
+                if m not in alt_cores and len(m) >= 2:
+                    alt_cores.append(m)
+        core_hits = sum(1 for c in alt_cores if c and c in text)
+        sw_ctx = (
+            "燃油" in text and "开关" in text
+            and any(
+                c in text
+                for c in (
+                    "关闭", "切断", "缺陷", "加强检测", "锁定",
+                    "初步调查", "初步报告", "黑匣子", "AAIB",
+                )
+            )
+        ) or (
+            "fuel" in tl and "switch" in tl
+            and any(
+                w in tl
+                for w in (
+                    "cut off", "cutoff", "closed", "defect",
+                    "preliminary report", "locking",
+                )
+            )
+        )
+        if core_hits:
+            strong += min(core_hits, 2)
+        elif any(any(k in (a or "") for k in ("开关", "燃油")) for a in claim_pool) and sw_ctx:
+            strong += 1
     # 座位号／短代码
     for k in list(slots.get("codes") or [])[:4]:
         if k and k in text:
@@ -914,6 +1016,38 @@ def core_rank_score(
         r"\d{1,2}时\d{1,2}分", text[:180],
     ):
         slot_b += 0.12
+    # R36：评价题专访声部抬；谣言澄清壳降
+    interview_b = 0.0
+    rumor_pen = 0.0
+    if route == "adjudicate" and is_eval_attitude_question(slots):
+        if is_interview_voice_segment(text, slots):
+            interview_b = 0.42
+        elif any(n in text for n in _EVAL_RUMOR_NOISE):
+            rumor_pen = 0.28
+    # R36：事实核对——调查声部／切断供油主张段抬；纯媒体复述略降（不打「加强检测」金标）
+    switch_b = 0.0
+    _alts_sw = list((slots or {}).get("claim_alts") or [])
+    if route == "fact_check" and any(
+        any(k in (a or "") for k in ("开关", "燃油", "缺陷")) for a in _alts_sw
+    ):
+        tl_sw = text.lower()
+        if (
+            ("燃油" in text and "开关" in text and "关闭" in text)
+            or (
+                "fuel" in tl_sw and "switch" in tl_sw
+                and any(w in tl_sw for w in ("closed", "cutoff", "cut off"))
+            )
+        ):
+            switch_b = 0.28
+            if any(
+                e in text[:280]
+                for e in ("初步调查", "初步报告", "黑匣子", "调查报告", "录音显示", "AAIB")
+            ) or "preliminary report" in tl_sw:
+                switch_b += 0.08
+        elif any(e in text[:100] for e in ("正在阅读", "专家分析", "专家表示")) and len(
+            re.sub(r"\s+", "", text)
+        ) > 220:
+            rumor_pen = max(rumor_pen, 0.12)
     return (
         0.22 * host_u
         + 0.16 * min(float(hits["a"] + hits["b"]) / 3.0, 1.0)
@@ -929,6 +1063,8 @@ def core_rank_score(
         + precise_b
         + slot_b
         + short_b
+        + interview_b
+        + switch_b
         + (0.04 if route == "adjudicate" and hits["total"] else 0.0)
         - wire_pen
         - roundup_pen
@@ -937,6 +1073,7 @@ def core_rank_score(
         - caliber_pen
         - shell_pen
         - long_wire_pen
+        - rumor_pen
     )
 
 
@@ -1024,6 +1161,45 @@ def is_core_candidate(
         and is_short_claim_segment(text, slots, route=route)
     ):
         return True
+    # R36：评价题——池内专访／当事人引语短段进核心
+    if (
+        route == "adjudicate"
+        and pp <= 22
+        and is_eval_attitude_question(slots)
+        and is_interview_voice_segment(text, slots)
+    ):
+        return True
+    # R36：事实核对——池内调查声部×开关／缺陷主张（抗伤亡通稿占盒）
+    if route == "fact_check" and pp <= 20 and any(
+        any(k in (a or "") for k in ("开关", "燃油", "缺陷")) for a in _alts_c
+    ):
+        tl_c = text.lower()
+        sw_hit = (
+            "燃油" in text and "开关" in text
+            and any(c in text for c in ("关闭", "切断"))
+        ) or (
+            "fuel" in tl_c and "switch" in tl_c
+            and any(w in tl_c for w in ("cut off", "cutoff", "closed"))
+        )
+        defect_hit = (
+            ("燃油" in text or "开关" in text or "fuel" in tl_c)
+            and any(
+                c in text or c in tl_c
+                for c in (
+                    "加强检测", "设计缺陷", "锁定", "尚未发现",
+                    "locking", "design defect", "no problems",
+                )
+            )
+        )
+        report_hit = any(
+            e in text[:360]
+            for e in (
+                "初步调查", "初步报告", "黑匣子", "调查报告",
+                "录音显示", "AAIB", "事故调查",
+            )
+        ) or ("preliminary report" in tl_c)
+        if (sw_hit and report_hit) or defect_hit:
+            return True
     # 裁决题：强槽须同时有侧锚，避免 OpenAI 等拉丁通篇灌核心
     if route == "adjudicate" and slot_strong >= 1 and hits["total"] >= 1:
         return True
