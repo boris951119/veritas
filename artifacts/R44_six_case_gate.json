@@ -1,0 +1,2400 @@
+{
+  "ticket": "R44-six-case-gate",
+  "tip": "9743fbd",
+  "branch": "cursor/r44-six-case-gate-8338",
+  "wall_s": 185.7,
+  "verdict_bullets": [
+    "六案现场密度：王虹 **86%**（q_002 **67%**）／柬泰 80%／AI171 80%；刘翔@7=**12**；冒烟各 67%。",
+    "树17：计划层金标→细读全 1.0；可用密度复用 R41／R43（王虹 0%）。",
+    "窄面泄漏：**0**；门槛①②③＝✓✓✓。",
+    "并主线：可借鉴接入（勿整包灌系数）。"
+  ],
+  "gate": {
+    "gate1": true,
+    "gate2": true,
+    "gate3": true,
+    "n_leaks": 0,
+    "all_submit_ok": true,
+    "ready_borrow": true
+  },
+  "expect": {
+    "liuxiang": {
+      "role": "regression",
+      "micro_min": 0.5714,
+      "at7": 12
+    },
+    "jilong": {
+      "role": "smoke",
+      "micro_min": 0.6667,
+      "at7": 6
+    },
+    "us_cn_ai": {
+      "role": "smoke",
+      "micro_min": 0.6667,
+      "at7": 6
+    },
+    "wanghong": {
+      "role": "holdout",
+      "micro_min": 0.8571,
+      "at7": 6,
+      "q002_min": 0.6667
+    },
+    "kh_th": {
+      "role": "holdout",
+      "micro_min": 0.8,
+      "at7": 4
+    },
+    "ai171": {
+      "role": "holdout",
+      "micro_min": 0.8,
+      "at7": 5
+    }
+  },
+  "r41_cite_reused": {
+    "liuxiang": {
+      "n_full_ok": 3,
+      "n_q": 3,
+      "axes_ok": 9,
+      "axes_total": 9,
+      "usable": 0.2857,
+      "src": "R41"
+    },
+    "jilong": {
+      "n_full_ok": 3,
+      "n_q": 3,
+      "axes_ok": 9,
+      "axes_total": 9,
+      "usable": 0.5556,
+      "src": "R41"
+    },
+    "us_cn_ai": {
+      "n_full_ok": 3,
+      "n_q": 3,
+      "axes_ok": 9,
+      "axes_total": 9,
+      "usable": 0.3333,
+      "src": "R41"
+    },
+    "wanghong": {
+      "n_full_ok": 3,
+      "n_q": 3,
+      "axes_ok": 9,
+      "axes_total": 9,
+      "usable": 0.0,
+      "src": "R43"
+    },
+    "kh_th": {
+      "n_full_ok": 3,
+      "n_q": 3,
+      "axes_ok": 9,
+      "axes_total": 9,
+      "usable": 0.6667,
+      "src": "R41"
+    },
+    "ai171": {
+      "n_full_ok": 3,
+      "n_q": 3,
+      "axes_ok": 9,
+      "axes_total": 9,
+      "usable": 0.4444,
+      "src": "R41"
+    }
+  },
+  "borrowable": [
+    {
+      "item": "可变 k＋密度约束（TARGET≥2/3，k∈[3,7]）",
+      "layer": "stage2／density_submit",
+      "module": "app/kg_lab/density_submit.py::density_constrained_submit",
+      "mainline_hook": "交卷只带 rank_order＋k；主线可用 max_segments=k 或 priority_segment_ids=rank_order；勿把密度扫描系数塞进 pack_material"
+    },
+    {
+      "item": "conflict_pairs（support vs oppose 成对）",
+      "layer": "stage2／authority_rerank 出口",
+      "module": "app/kg_lab/stage2_authority.py::build_conflict_pairs",
+      "mainline_hook": "SubmitSurface.conflict_pairs → 报告冲突节／质证；装箱只消费 id，不消费权威权重"
+    },
+    {
+      "item": "通稿／近同文簇 keep-one（抗挤）",
+      "layer": "stage2／density_submit 簇内代表",
+      "module": "app/kg_lab/density_submit.py::_cluster_wire_keep_one",
+      "mainline_hook": "留在二筛；主线 pack_material 已有 duplicate_map，勿再灌实验簇系数；接盒结果即可"
+    },
+    {
+      "item": "繁简对照折叠（近同判定用，不改原文）",
+      "layer": "stage2／density_submit 指纹归一",
+      "module": "app/kg_lab/density_submit.py::_TRAD_TO_SIMP",
+      "mainline_hook": "属二筛簇判据；主线若复用只进近同检测，不进 pack 参数面"
+    },
+    {
+      "item": "树17 引用纪律（细读带宽／成对／采信·对立标签）",
+      "layer": "submit／L3（盒后）",
+      "module": "app/kg_lab/tree17_cite.py::apply_tree17_cite / attach_tree17_plan",
+      "mainline_hook": "accounting['tree17_cite']＋focus_segment_ids=close_read；提示词注入，零改 pack_material 签名"
+    },
+    {
+      "item": "一筛多维系数（R9／R21）",
+      "layer": "stage1_pool 内部",
+      "module": "app/kg_lab/r8_fit.py::evaluate + r21_coeff",
+      "mainline_hook": "系数只活在一筛打分；出口仅 pool_ids。若动系数须整套重拟合 ±0.08；禁止整包进 pack_material"
+    },
+    {
+      "item": "二筛权威权重（DEFAULT_WEIGHTS）",
+      "layer": "stage2 内部 portable_authority_unit",
+      "module": "app/kg_lab/stage2_authority.py::DEFAULT_WEIGHTS",
+      "mainline_hook": "权重只服务盒内裁决；交卷只留 rank／pairs。主线接盒序，不接 weights dict"
+    }
+  ],
+  "boundaries": {
+    "schema_version": "r42.v1",
+    "layers": {
+      "stage1_pool": {
+        "owns": [
+          "pool_ids",
+          "pool_ranked"
+        ],
+        "forbids_out": [
+          "coeff",
+          "coeffs",
+          "feats",
+          "feature_vector",
+          "features",
+          "multidim",
+          "names",
+          "portable_authority_weights",
+          "r8_coeff",
+          "r9_coeff",
+          "stage1_coeff",
+          "w_eff",
+          "weights"
+        ],
+        "modules": [
+          "app/kg_lab/stage1_pool.py",
+          "app/kg_lab/r8_fit.py"
+        ]
+      },
+      "stage2_box": {
+        "owns": [
+          "box_ids",
+          "k",
+          "conflict_pairs",
+          "density_public"
+        ],
+        "forbids_out": [
+          "coeff",
+          "coeffs",
+          "feats",
+          "feature_vector",
+          "features",
+          "multidim",
+          "names",
+          "portable_authority_weights",
+          "r8_coeff",
+          "r9_coeff",
+          "stage1_coeff",
+          "w_eff",
+          "weights"
+        ],
+        "modules": [
+          "app/kg_lab/stage2_authority.py",
+          "app/kg_lab/density_submit.py"
+        ]
+      },
+      "submit": {
+        "owns": [
+          "rank_order",
+          "conflict_pairs",
+          "tree17"
+        ],
+        "forbids_out": [
+          "coeff",
+          "coeffs",
+          "feats",
+          "feature_vector",
+          "features",
+          "multidim",
+          "names",
+          "portable_authority_weights",
+          "r8_coeff",
+          "r9_coeff",
+          "stage1_coeff",
+          "w_eff",
+          "weights"
+        ],
+        "modules": [
+          "app/kg_lab/layer_boundary.py",
+          "app/kg_lab/tree17_cite.py"
+        ]
+      },
+      "mainline_pack": {
+        "function": "app/core/material.py::pack_material",
+        "accepts_from_lab": [
+          "priority_segment_ids (via answer_slots / hints)",
+          "focus_segment_ids (analyst prompt)",
+          "max_segments (optional hard cap)"
+        ],
+        "must_not_accept": [
+          "coeff",
+          "coeffs",
+          "feats",
+          "feature_vector",
+          "features",
+          "multidim",
+          "names",
+          "portable_authority_weights",
+          "r8_coeff",
+          "r9_coeff",
+          "stage1_coeff",
+          "w_eff",
+          "weights"
+        ]
+      }
+    },
+    "borrowable": [
+      {
+        "item": "可变 k＋密度约束（TARGET≥2/3，k∈[3,7]）",
+        "layer": "stage2／density_submit",
+        "module": "app/kg_lab/density_submit.py::density_constrained_submit",
+        "mainline_hook": "交卷只带 rank_order＋k；主线可用 max_segments=k 或 priority_segment_ids=rank_order；勿把密度扫描系数塞进 pack_material"
+      },
+      {
+        "item": "conflict_pairs（support vs oppose 成对）",
+        "layer": "stage2／authority_rerank 出口",
+        "module": "app/kg_lab/stage2_authority.py::build_conflict_pairs",
+        "mainline_hook": "SubmitSurface.conflict_pairs → 报告冲突节／质证；装箱只消费 id，不消费权威权重"
+      },
+      {
+        "item": "通稿／近同文簇 keep-one（抗挤）",
+        "layer": "stage2／density_submit 簇内代表",
+        "module": "app/kg_lab/density_submit.py::_cluster_wire_keep_one",
+        "mainline_hook": "留在二筛；主线 pack_material 已有 duplicate_map，勿再灌实验簇系数；接盒结果即可"
+      },
+      {
+        "item": "繁简对照折叠（近同判定用，不改原文）",
+        "layer": "stage2／density_submit 指纹归一",
+        "module": "app/kg_lab/density_submit.py::_TRAD_TO_SIMP",
+        "mainline_hook": "属二筛簇判据；主线若复用只进近同检测，不进 pack 参数面"
+      },
+      {
+        "item": "树17 引用纪律（细读带宽／成对／采信·对立标签）",
+        "layer": "submit／L3（盒后）",
+        "module": "app/kg_lab/tree17_cite.py::apply_tree17_cite / attach_tree17_plan",
+        "mainline_hook": "accounting['tree17_cite']＋focus_segment_ids=close_read；提示词注入，零改 pack_material 签名"
+      },
+      {
+        "item": "一筛多维系数（R9／R21）",
+        "layer": "stage1_pool 内部",
+        "module": "app/kg_lab/r8_fit.py::evaluate + r21_coeff",
+        "mainline_hook": "系数只活在一筛打分；出口仅 pool_ids。若动系数须整套重拟合 ±0.08；禁止整包进 pack_material"
+      },
+      {
+        "item": "二筛权威权重（DEFAULT_WEIGHTS）",
+        "layer": "stage2 内部 portable_authority_unit",
+        "module": "app/kg_lab/stage2_authority.py::DEFAULT_WEIGHTS",
+        "mainline_hook": "权重只服务盒内裁决；交卷只留 rank／pairs。主线接盒序，不接 weights dict"
+      }
+    ]
+  },
+  "anomalies": [],
+  "cases": [
+    {
+      "slug": "liuxiang",
+      "gold_total": 14,
+      "pool_hits": {
+        "20": 8,
+        "50": 9
+      },
+      "cut_hits": {
+        "4": 9,
+        "5": 11,
+        "7": 12
+      },
+      "questions": [
+        {
+          "qid": "q_001",
+          "pool": {
+            "20": {
+              "hits": 4,
+              "gold_total": 4
+            },
+            "50": {
+              "hits": 4,
+              "gold_total": 4
+            }
+          },
+          "cuts": {
+            "4": {
+              "hits": 4,
+              "gold_total": 4,
+              "hit_ids": [
+                "doc_002#p3",
+                "doc_024#p1",
+                "doc_025#p6",
+                "doc_035#p7"
+              ]
+            },
+            "5": {
+              "hits": 4,
+              "gold_total": 4,
+              "hit_ids": [
+                "doc_002#p3",
+                "doc_024#p1",
+                "doc_025#p6",
+                "doc_035#p7"
+              ]
+            },
+            "7": {
+              "hits": 4,
+              "gold_total": 4,
+              "hit_ids": [
+                "doc_002#p3",
+                "doc_024#p1",
+                "doc_025#p6",
+                "doc_035#p7"
+              ]
+            }
+          },
+          "density": {
+            "qid": "q_001",
+            "route": "adjudicate",
+            "k": 7,
+            "n_gold": 4,
+            "gold_density": 0.5714,
+            "proxy_density": null,
+            "n_core": null,
+            "n_filler": null,
+            "met_proxy": null,
+            "density_cut": false,
+            "box": [
+              "doc_002#p3",
+              "doc_035#p7",
+              "doc_024#p1",
+              "doc_025#p6",
+              "doc_033#p2",
+              "doc_043#p1",
+              "doc_012#p5"
+            ]
+          },
+          "intent": {
+            "kind": "adjudicate",
+            "adjudication": true,
+            "options": [
+              "买断费",
+              "自主择业经济补偿金"
+            ],
+            "evidence_first": true,
+            "notes": [
+              "opposing_options",
+              "evidence_not_semantic"
+            ],
+            "route": "adjudicate",
+            "route_notes": [
+              "from_adjudication"
+            ],
+            "route_anchors": {
+              "side_a": [
+                "这笔49.4万元应认定为买断费",
+                "元应认定为买断费"
+              ],
+              "side_b": [
+                "自主择业经济补偿金，以哪方口径",
+                "自主择业经济补偿金",
+                "哪方口径",
+                "偿金，以哪方口径"
+              ]
+            }
+          }
+        },
+        {
+          "qid": "q_002",
+          "pool": {
+            "20": {
+              "hits": 2,
+              "gold_total": 5
+            },
+            "50": {
+              "hits": 3,
+              "gold_total": 5
+            }
+          },
+          "cuts": {
+            "4": {
+              "hits": 2,
+              "gold_total": 5,
+              "hit_ids": [
+                "doc_002#p3",
+                "doc_009#p5"
+              ]
+            },
+            "5": {
+              "hits": 3,
+              "gold_total": 5,
+              "hit_ids": [
+                "doc_002#p3",
+                "doc_009#p5",
+                "doc_051#p3"
+              ]
+            },
+            "7": {
+              "hits": 4,
+              "gold_total": 5,
+              "hit_ids": [
+                "doc_002#p3",
+                "doc_009#p5",
+                "doc_029#p7",
+                "doc_051#p3"
+              ]
+            }
+          },
+          "density": {
+            "qid": "q_002",
+            "route": "adjudicate",
+            "k": 7,
+            "n_gold": 4,
+            "gold_density": 0.5714,
+            "proxy_density": null,
+            "n_core": null,
+            "n_filler": null,
+            "met_proxy": null,
+            "density_cut": false,
+            "box": [
+              "doc_009#p5",
+              "doc_011#p7",
+              "doc_041#p1",
+              "doc_002#p3",
+              "doc_051#p3",
+              "doc_051#p5",
+              "doc_029#p7"
+            ]
+          },
+          "intent": {
+            "kind": "adjudicate",
+            "adjudication": true,
+            "options": [
+              "刘翔不愿走",
+              "体育局未放行"
+            ],
+            "evidence_first": true,
+            "notes": [
+              "opposing_options",
+              "evidence_not_semantic"
+            ],
+            "route": "adjudicate",
+            "route_notes": [
+              "from_adjudication"
+            ],
+            "route_anchors": {
+              "side_a": [
+                "是刘翔不愿走",
+                "翔不愿走"
+              ],
+              "side_b": [
+                "体育局未放行",
+                "局未放行"
+              ]
+            }
+          }
+        },
+        {
+          "qid": "q_003",
+          "pool": {
+            "20": {
+              "hits": 2,
+              "gold_total": 5
+            },
+            "50": {
+              "hits": 2,
+              "gold_total": 5
+            }
+          },
+          "cuts": {
+            "4": {
+              "hits": 3,
+              "gold_total": 5,
+              "hit_ids": [
+                "doc_002#p3",
+                "doc_006#p3",
+                "doc_012#p5"
+              ]
+            },
+            "5": {
+              "hits": 4,
+              "gold_total": 5,
+              "hit_ids": [
+                "doc_002#p3",
+                "doc_006#p3",
+                "doc_012#p5",
+                "doc_033#p5"
+              ]
+            },
+            "7": {
+              "hits": 4,
+              "gold_total": 5,
+              "hit_ids": [
+                "doc_002#p3",
+                "doc_006#p3",
+                "doc_012#p5",
+                "doc_033#p5"
+              ]
+            }
+          },
+          "density": {
+            "qid": "q_003",
+            "route": "adjudicate",
+            "k": 7,
+            "n_gold": 4,
+            "gold_density": 0.5714,
+            "proxy_density": null,
+            "n_core": null,
+            "n_filler": null,
+            "met_proxy": null,
+            "density_cut": false,
+            "box": [
+              "doc_012#p5",
+              "doc_046#p3",
+              "doc_006#p3",
+              "doc_002#p3",
+              "doc_033#p5",
+              "doc_027#p3",
+              "doc_050#p10"
+            ]
+          },
+          "intent": {
+            "kind": "adjudicate",
+            "adjudication": true,
+            "options": [
+              "在编不在岗"
+            ],
+            "evidence_first": true,
+            "notes": [
+              "opposing_options",
+              "evidence_not_semantic"
+            ],
+            "route": "adjudicate",
+            "route_notes": [
+              "from_adjudication"
+            ],
+            "route_anchors": {
+              "side_a": [],
+              "side_b": []
+            }
+          }
+        }
+      ],
+      "density_rows": [
+        {
+          "qid": "q_001",
+          "route": "adjudicate",
+          "k": 7,
+          "n_gold": 4,
+          "gold_density": 0.5714,
+          "proxy_density": null,
+          "n_core": null,
+          "n_filler": null,
+          "met_proxy": null,
+          "density_cut": false,
+          "box": [
+            "doc_002#p3",
+            "doc_035#p7",
+            "doc_024#p1",
+            "doc_025#p6",
+            "doc_033#p2",
+            "doc_043#p1",
+            "doc_012#p5"
+          ]
+        },
+        {
+          "qid": "q_002",
+          "route": "adjudicate",
+          "k": 7,
+          "n_gold": 4,
+          "gold_density": 0.5714,
+          "proxy_density": null,
+          "n_core": null,
+          "n_filler": null,
+          "met_proxy": null,
+          "density_cut": false,
+          "box": [
+            "doc_009#p5",
+            "doc_011#p7",
+            "doc_041#p1",
+            "doc_002#p3",
+            "doc_051#p3",
+            "doc_051#p5",
+            "doc_029#p7"
+          ]
+        },
+        {
+          "qid": "q_003",
+          "route": "adjudicate",
+          "k": 7,
+          "n_gold": 4,
+          "gold_density": 0.5714,
+          "proxy_density": null,
+          "n_core": null,
+          "n_filler": null,
+          "met_proxy": null,
+          "density_cut": false,
+          "box": [
+            "doc_012#p5",
+            "doc_046#p3",
+            "doc_006#p3",
+            "doc_002#p3",
+            "doc_033#p5",
+            "doc_027#p3",
+            "doc_050#p10"
+          ]
+        }
+      ],
+      "avg_gold_density": 0.5714,
+      "micro_gold_density": 0.5714,
+      "sum_gold_in_boxes": 12,
+      "sum_k": 21,
+      "wall_s": 6.5,
+      "role": "regression",
+      "plan_rows": [
+        {
+          "qid": "q_001",
+          "k": 7,
+          "n_gold": 4,
+          "gold_density": 0.5714,
+          "gold_in_box_to_close": 1.0,
+          "n_pairs": 8,
+          "submit_ok": true
+        },
+        {
+          "qid": "q_002",
+          "k": 7,
+          "n_gold": 4,
+          "gold_density": 0.5714,
+          "gold_in_box_to_close": 1.0,
+          "n_pairs": 0,
+          "submit_ok": true
+        },
+        {
+          "qid": "q_003",
+          "k": 7,
+          "n_gold": 4,
+          "gold_density": 0.5714,
+          "gold_in_box_to_close": 1.0,
+          "n_pairs": 0,
+          "submit_ok": true
+        }
+      ],
+      "mean_gold_box_to_close": 1.0,
+      "n_leaks": 0,
+      "leak_sample": [],
+      "n_submit_ok": 3,
+      "n_questions": 3,
+      "gate_ok": true
+    },
+    {
+      "slug": "jilong",
+      "gold_total": 13,
+      "pool_hits": {
+        "20": 5,
+        "50": 7
+      },
+      "cut_hits": {
+        "4": 6,
+        "5": 6,
+        "7": 6
+      },
+      "questions": [
+        {
+          "qid": "q_001",
+          "pool": {
+            "20": {
+              "hits": 2,
+              "gold_total": 3
+            },
+            "50": {
+              "hits": 2,
+              "gold_total": 3
+            }
+          },
+          "cuts": {
+            "4": {
+              "hits": 2,
+              "gold_total": 3,
+              "hit_ids": [
+                "doc_001#p21",
+                "doc_001#p237"
+              ]
+            },
+            "5": {
+              "hits": 2,
+              "gold_total": 3,
+              "hit_ids": [
+                "doc_001#p21",
+                "doc_001#p237"
+              ]
+            },
+            "7": {
+              "hits": 2,
+              "gold_total": 3,
+              "hit_ids": [
+                "doc_001#p21",
+                "doc_001#p237"
+              ]
+            }
+          },
+          "density": {
+            "qid": "q_001",
+            "route": "adjudicate",
+            "k": 3,
+            "n_gold": 2,
+            "gold_density": 0.6667,
+            "proxy_density": 1.0,
+            "n_core": 3,
+            "n_filler": 0,
+            "met_proxy": true,
+            "density_cut": true,
+            "box": [
+              "doc_001#p237",
+              "doc_061#p2",
+              "doc_001#p21"
+            ]
+          },
+          "intent": {
+            "kind": "adjudicate",
+            "adjudication": true,
+            "options": [
+              "官方通稿的8月26日10时30分许",
+              "监控记录的10时52分至59分"
+            ],
+            "evidence_first": true,
+            "notes": [
+              "opposing_options",
+              "evidence_not_semantic"
+            ],
+            "route": "adjudicate",
+            "route_notes": [
+              "from_adjudication"
+            ],
+            "route_anchors": {
+              "side_a": [
+                "8月26",
+                "10时30分",
+                "日10时30分许",
+                "通稿",
+                "新闻稿",
+                "官方通稿"
+              ],
+              "side_b": [
+                "10时52分",
+                "监控记录的10时52分至59分",
+                "时52分至59分",
+                "监控",
+                "监控记录"
+              ]
+            }
+          }
+        },
+        {
+          "qid": "q_002",
+          "pool": {
+            "20": {
+              "hits": 2,
+              "gold_total": 4
+            },
+            "50": {
+              "hits": 3,
+              "gold_total": 4
+            }
+          },
+          "cuts": {
+            "4": {
+              "hits": 2,
+              "gold_total": 4,
+              "hit_ids": [
+                "doc_001#p235",
+                "doc_001#p291"
+              ]
+            },
+            "5": {
+              "hits": 2,
+              "gold_total": 4,
+              "hit_ids": [
+                "doc_001#p235",
+                "doc_001#p291"
+              ]
+            },
+            "7": {
+              "hits": 2,
+              "gold_total": 4,
+              "hit_ids": [
+                "doc_001#p235",
+                "doc_001#p291"
+              ]
+            }
+          },
+          "density": {
+            "qid": "q_002",
+            "route": "adjudicate",
+            "k": 3,
+            "n_gold": 2,
+            "gold_density": 0.6667,
+            "proxy_density": 1.0,
+            "n_core": 3,
+            "n_filler": 0,
+            "met_proxy": true,
+            "density_cut": true,
+            "box": [
+              "doc_001#p291",
+              "doc_115#p21",
+              "doc_001#p235"
+            ]
+          },
+          "intent": {
+            "kind": "verify",
+            "adjudication": false,
+            "options": [],
+            "evidence_first": false,
+            "notes": [
+              "verify_or_evidence"
+            ],
+            "route": "adjudicate",
+            "route_notes": [
+              "route_or_surface"
+            ],
+            "route_anchors": {
+              "side_a": [
+                "泥石流"
+              ],
+              "side_b": [
+                "洪灾或山崩",
+                "灾或山崩",
+                "洪灾",
+                "洪水",
+                "山崩",
+                "冰岩崩"
+              ]
+            }
+          }
+        },
+        {
+          "qid": "q_003",
+          "pool": {
+            "20": {
+              "hits": 1,
+              "gold_total": 6
+            },
+            "50": {
+              "hits": 2,
+              "gold_total": 6
+            }
+          },
+          "cuts": {
+            "4": {
+              "hits": 2,
+              "gold_total": 6,
+              "hit_ids": [
+                "doc_001#p2",
+                "doc_001#p237"
+              ]
+            },
+            "5": {
+              "hits": 2,
+              "gold_total": 6,
+              "hit_ids": [
+                "doc_001#p2",
+                "doc_001#p237"
+              ]
+            },
+            "7": {
+              "hits": 2,
+              "gold_total": 6,
+              "hit_ids": [
+                "doc_001#p2",
+                "doc_001#p237"
+              ]
+            }
+          },
+          "density": {
+            "qid": "q_003",
+            "route": "adjudicate",
+            "k": 3,
+            "n_gold": 2,
+            "gold_density": 0.6667,
+            "proxy_density": 1.0,
+            "n_core": 3,
+            "n_filler": 0,
+            "met_proxy": true,
+            "density_cut": true,
+            "box": [
+              "doc_001#p237",
+              "doc_001#p2",
+              "doc_079#p1"
+            ]
+          },
+          "intent": {
+            "kind": "verify",
+            "adjudication": false,
+            "options": [],
+            "evidence_first": false,
+            "notes": [
+              "verify_or_evidence"
+            ],
+            "route": "adjudicate",
+            "route_notes": [
+              "route_or_surface"
+            ],
+            "route_anchors": {
+              "side_a": [
+                "5200米",
+                "海拔约5200米冰川断裂冰岩崩",
+                "冰岩崩",
+                "冰川断裂",
+                "米冰川断裂冰岩崩",
+                "冰川崩塌"
+              ],
+              "side_b": [
+                "上游冰湖溃决",
+                "冰湖溃决",
+                "溃决"
+              ]
+            }
+          }
+        }
+      ],
+      "density_rows": [
+        {
+          "qid": "q_001",
+          "route": "adjudicate",
+          "k": 3,
+          "n_gold": 2,
+          "gold_density": 0.6667,
+          "proxy_density": 1.0,
+          "n_core": 3,
+          "n_filler": 0,
+          "met_proxy": true,
+          "density_cut": true,
+          "box": [
+            "doc_001#p237",
+            "doc_061#p2",
+            "doc_001#p21"
+          ]
+        },
+        {
+          "qid": "q_002",
+          "route": "adjudicate",
+          "k": 3,
+          "n_gold": 2,
+          "gold_density": 0.6667,
+          "proxy_density": 1.0,
+          "n_core": 3,
+          "n_filler": 0,
+          "met_proxy": true,
+          "density_cut": true,
+          "box": [
+            "doc_001#p291",
+            "doc_115#p21",
+            "doc_001#p235"
+          ]
+        },
+        {
+          "qid": "q_003",
+          "route": "adjudicate",
+          "k": 3,
+          "n_gold": 2,
+          "gold_density": 0.6667,
+          "proxy_density": 1.0,
+          "n_core": 3,
+          "n_filler": 0,
+          "met_proxy": true,
+          "density_cut": true,
+          "box": [
+            "doc_001#p237",
+            "doc_001#p2",
+            "doc_079#p1"
+          ]
+        }
+      ],
+      "avg_gold_density": 0.6667,
+      "micro_gold_density": 0.6667,
+      "sum_gold_in_boxes": 6,
+      "sum_k": 9,
+      "wall_s": 23.4,
+      "role": "smoke",
+      "plan_rows": [
+        {
+          "qid": "q_001",
+          "k": 3,
+          "n_gold": 2,
+          "gold_density": 0.6667,
+          "gold_in_box_to_close": 1.0,
+          "n_pairs": 0,
+          "submit_ok": true
+        },
+        {
+          "qid": "q_002",
+          "k": 3,
+          "n_gold": 2,
+          "gold_density": 0.6667,
+          "gold_in_box_to_close": 1.0,
+          "n_pairs": 0,
+          "submit_ok": true
+        },
+        {
+          "qid": "q_003",
+          "k": 3,
+          "n_gold": 2,
+          "gold_density": 0.6667,
+          "gold_in_box_to_close": 1.0,
+          "n_pairs": 0,
+          "submit_ok": true
+        }
+      ],
+      "mean_gold_box_to_close": 1.0,
+      "n_leaks": 0,
+      "leak_sample": [],
+      "n_submit_ok": 3,
+      "n_questions": 3,
+      "gate_ok": true
+    },
+    {
+      "slug": "us_cn_ai",
+      "gold_total": 13,
+      "pool_hits": {
+        "20": 8,
+        "50": 10
+      },
+      "cut_hits": {
+        "4": 6,
+        "5": 6,
+        "7": 6
+      },
+      "questions": [
+        {
+          "qid": "q_001",
+          "pool": {
+            "20": {
+              "hits": 3,
+              "gold_total": 6
+            },
+            "50": {
+              "hits": 4,
+              "gold_total": 6
+            }
+          },
+          "cuts": {
+            "4": {
+              "hits": 2,
+              "gold_total": 6,
+              "hit_ids": [
+                "doc_007#p10",
+                "doc_047#p4"
+              ]
+            },
+            "5": {
+              "hits": 2,
+              "gold_total": 6,
+              "hit_ids": [
+                "doc_007#p10",
+                "doc_047#p4"
+              ]
+            },
+            "7": {
+              "hits": 2,
+              "gold_total": 6,
+              "hit_ids": [
+                "doc_007#p10",
+                "doc_047#p4"
+              ]
+            }
+          },
+          "density": {
+            "qid": "q_001",
+            "route": "adjudicate",
+            "k": 3,
+            "n_gold": 2,
+            "gold_density": 0.6667,
+            "proxy_density": 1.0,
+            "n_core": 3,
+            "n_filler": 0,
+            "met_proxy": true,
+            "density_cut": true,
+            "box": [
+              "doc_007#p10",
+              "doc_018#p12",
+              "doc_047#p4"
+            ]
+          },
+          "intent": {
+            "kind": "verify",
+            "adjudication": false,
+            "options": [],
+            "evidence_first": true,
+            "notes": [
+              "verify_or_evidence"
+            ],
+            "route": "adjudicate",
+            "route_notes": [
+              "route_or_surface"
+            ],
+            "route_anchors": {
+              "side_a": [
+                "2026年11",
+                "2026年11月的中美对话后就绪",
+                "中美对话",
+                "美对话后就绪",
+                "人工智能对话"
+              ],
+              "side_b": [
+                "WIRED",
+                "WIRED所称短期不会就绪",
+                "所称短期不会就绪"
+              ]
+            }
+          }
+        },
+        {
+          "qid": "q_002",
+          "pool": {
+            "20": {
+              "hits": 2,
+              "gold_total": 3
+            },
+            "50": {
+              "hits": 3,
+              "gold_total": 3
+            }
+          },
+          "cuts": {
+            "4": {
+              "hits": 2,
+              "gold_total": 3,
+              "hit_ids": [
+                "doc_005#p3",
+                "doc_011#p3"
+              ]
+            },
+            "5": {
+              "hits": 2,
+              "gold_total": 3,
+              "hit_ids": [
+                "doc_005#p3",
+                "doc_011#p3"
+              ]
+            },
+            "7": {
+              "hits": 2,
+              "gold_total": 3,
+              "hit_ids": [
+                "doc_005#p3",
+                "doc_011#p3"
+              ]
+            }
+          },
+          "density": {
+            "qid": "q_002",
+            "route": "adjudicate",
+            "k": 3,
+            "n_gold": 2,
+            "gold_density": 0.6667,
+            "proxy_density": 0.6667,
+            "n_core": 2,
+            "n_filler": 1,
+            "met_proxy": true,
+            "density_cut": true,
+            "box": [
+              "doc_005#p3",
+              "doc_004#p4",
+              "doc_011#p3"
+            ]
+          },
+          "intent": {
+            "kind": "verify",
+            "adjudication": false,
+            "options": [],
+            "evidence_first": false,
+            "notes": [
+              "verify_or_evidence"
+            ],
+            "route": "adjudicate",
+            "route_notes": [
+              "route_or_surface"
+            ],
+            "route_anchors": {
+              "side_a": [
+                "危机管理安排",
+                "危机管理",
+                "管理安排",
+                "危机沟通"
+              ],
+              "side_b": [
+                "联合国主渠道下的全球AI治理安排",
+                "主渠道",
+                "联合国主渠道",
+                "全球AI治理安排"
+              ]
+            }
+          }
+        },
+        {
+          "qid": "q_003",
+          "pool": {
+            "20": {
+              "hits": 3,
+              "gold_total": 4
+            },
+            "50": {
+              "hits": 3,
+              "gold_total": 4
+            }
+          },
+          "cuts": {
+            "4": {
+              "hits": 2,
+              "gold_total": 4,
+              "hit_ids": [
+                "doc_017#p10",
+                "doc_058#p2"
+              ]
+            },
+            "5": {
+              "hits": 2,
+              "gold_total": 4,
+              "hit_ids": [
+                "doc_017#p10",
+                "doc_058#p2"
+              ]
+            },
+            "7": {
+              "hits": 2,
+              "gold_total": 4,
+              "hit_ids": [
+                "doc_017#p10",
+                "doc_058#p2"
+              ]
+            }
+          },
+          "density": {
+            "qid": "q_003",
+            "route": "adjudicate",
+            "k": 3,
+            "n_gold": 2,
+            "gold_density": 0.6667,
+            "proxy_density": 1.0,
+            "n_core": 3,
+            "n_filler": 0,
+            "met_proxy": true,
+            "density_cut": true,
+            "box": [
+              "doc_058#p2",
+              "doc_017#p10",
+              "doc_018#p12"
+            ]
+          },
+          "intent": {
+            "kind": "verify",
+            "adjudication": false,
+            "options": [],
+            "evidence_first": false,
+            "notes": [
+              "verify_or_evidence"
+            ],
+            "route": "adjudicate",
+            "route_notes": [
+              "route_or_surface"
+            ],
+            "route_anchors": {
+              "side_a": [
+                "OpenAI",
+                "OpenAI管理层等企业",
+                "AI管理层等企业"
+              ],
+              "side_b": [
+                "政府介入",
+                "Anthropic",
+                "政府控制",
+                "美国政府",
+                "政府监管"
+              ]
+            }
+          }
+        }
+      ],
+      "density_rows": [
+        {
+          "qid": "q_001",
+          "route": "adjudicate",
+          "k": 3,
+          "n_gold": 2,
+          "gold_density": 0.6667,
+          "proxy_density": 1.0,
+          "n_core": 3,
+          "n_filler": 0,
+          "met_proxy": true,
+          "density_cut": true,
+          "box": [
+            "doc_007#p10",
+            "doc_018#p12",
+            "doc_047#p4"
+          ]
+        },
+        {
+          "qid": "q_002",
+          "route": "adjudicate",
+          "k": 3,
+          "n_gold": 2,
+          "gold_density": 0.6667,
+          "proxy_density": 0.6667,
+          "n_core": 2,
+          "n_filler": 1,
+          "met_proxy": true,
+          "density_cut": true,
+          "box": [
+            "doc_005#p3",
+            "doc_004#p4",
+            "doc_011#p3"
+          ]
+        },
+        {
+          "qid": "q_003",
+          "route": "adjudicate",
+          "k": 3,
+          "n_gold": 2,
+          "gold_density": 0.6667,
+          "proxy_density": 1.0,
+          "n_core": 3,
+          "n_filler": 0,
+          "met_proxy": true,
+          "density_cut": true,
+          "box": [
+            "doc_058#p2",
+            "doc_017#p10",
+            "doc_018#p12"
+          ]
+        }
+      ],
+      "avg_gold_density": 0.6667,
+      "micro_gold_density": 0.6667,
+      "sum_gold_in_boxes": 6,
+      "sum_k": 9,
+      "wall_s": 15.0,
+      "role": "smoke",
+      "plan_rows": [
+        {
+          "qid": "q_001",
+          "k": 3,
+          "n_gold": 2,
+          "gold_density": 0.6667,
+          "gold_in_box_to_close": 1.0,
+          "n_pairs": 0,
+          "submit_ok": true
+        },
+        {
+          "qid": "q_002",
+          "k": 3,
+          "n_gold": 2,
+          "gold_density": 0.6667,
+          "gold_in_box_to_close": 1.0,
+          "n_pairs": 0,
+          "submit_ok": true
+        },
+        {
+          "qid": "q_003",
+          "k": 3,
+          "n_gold": 2,
+          "gold_density": 0.6667,
+          "gold_in_box_to_close": 1.0,
+          "n_pairs": 0,
+          "submit_ok": true
+        }
+      ],
+      "mean_gold_box_to_close": 1.0,
+      "n_leaks": 0,
+      "leak_sample": [],
+      "n_submit_ok": 3,
+      "n_questions": 3,
+      "gate_ok": true
+    },
+    {
+      "slug": "wanghong",
+      "gold_total": 19,
+      "pool_hits": {
+        "20": 9,
+        "50": 11
+      },
+      "cut_hits": {
+        "4": 6,
+        "5": 6,
+        "7": 6
+      },
+      "questions": [
+        {
+          "qid": "q_001",
+          "pool": {
+            "20": {
+              "hits": 1,
+              "gold_total": 5
+            },
+            "50": {
+              "hits": 2,
+              "gold_total": 5
+            }
+          },
+          "cuts": {
+            "4": {
+              "hits": 1,
+              "gold_total": 5,
+              "hit_ids": [
+                "doc_001#p1"
+              ]
+            },
+            "5": {
+              "hits": 1,
+              "gold_total": 5,
+              "hit_ids": [
+                "doc_001#p1"
+              ]
+            },
+            "7": {
+              "hits": 1,
+              "gold_total": 5,
+              "hit_ids": [
+                "doc_001#p1"
+              ]
+            }
+          },
+          "density": {
+            "qid": "q_001",
+            "route": "fact_check",
+            "k": 1,
+            "n_gold": 1,
+            "gold_density": 1.0,
+            "proxy_density": 1.0,
+            "n_core": 1,
+            "n_filler": 0,
+            "met_proxy": true,
+            "density_cut": true,
+            "box": [
+              "doc_001#p1"
+            ]
+          },
+          "intent": {
+            "kind": "open",
+            "adjudication": false,
+            "options": [],
+            "evidence_first": false,
+            "notes": [],
+            "route": "fact_check",
+            "route_notes": [
+              "default_fact_check"
+            ],
+            "route_anchors": {
+              "side_a": [],
+              "side_b": []
+            }
+          }
+        },
+        {
+          "qid": "q_002",
+          "pool": {
+            "20": {
+              "hits": 2,
+              "gold_total": 5
+            },
+            "50": {
+              "hits": 3,
+              "gold_total": 5
+            }
+          },
+          "cuts": {
+            "4": {
+              "hits": 2,
+              "gold_total": 5,
+              "hit_ids": [
+                "doc_010#p7",
+                "doc_011#p1"
+              ]
+            },
+            "5": {
+              "hits": 2,
+              "gold_total": 5,
+              "hit_ids": [
+                "doc_010#p7",
+                "doc_011#p1"
+              ]
+            },
+            "7": {
+              "hits": 2,
+              "gold_total": 5,
+              "hit_ids": [
+                "doc_010#p7",
+                "doc_011#p1"
+              ]
+            }
+          },
+          "density": {
+            "qid": "q_002",
+            "route": "adjudicate",
+            "k": 3,
+            "n_gold": 2,
+            "gold_density": 0.6667,
+            "proxy_density": 1.0,
+            "n_core": 3,
+            "n_filler": 0,
+            "met_proxy": true,
+            "density_cut": true,
+            "box": [
+              "doc_010#p7",
+              "doc_011#p1",
+              "doc_011#p5"
+            ]
+          },
+          "intent": {
+            "kind": "adjudicate",
+            "adjudication": true,
+            "options": [
+              "北大无人肯写推荐信",
+              "因绩点不足未保研",
+              "缺席毕业合照"
+            ],
+            "evidence_first": true,
+            "notes": [
+              "opposing_options",
+              "evidence_not_semantic"
+            ],
+            "route": "adjudicate",
+            "route_notes": [
+              "from_adjudication"
+            ],
+            "route_anchors": {
+              "side_a": [],
+              "side_b": []
+            }
+          }
+        },
+        {
+          "qid": "q_003",
+          "pool": {
+            "20": {
+              "hits": 6,
+              "gold_total": 9
+            },
+            "50": {
+              "hits": 6,
+              "gold_total": 9
+            }
+          },
+          "cuts": {
+            "4": {
+              "hits": 3,
+              "gold_total": 9,
+              "hit_ids": [
+                "doc_003#p5",
+                "doc_007#p1",
+                "doc_007#p2"
+              ]
+            },
+            "5": {
+              "hits": 3,
+              "gold_total": 9,
+              "hit_ids": [
+                "doc_003#p5",
+                "doc_007#p1",
+                "doc_007#p2"
+              ]
+            },
+            "7": {
+              "hits": 3,
+              "gold_total": 9,
+              "hit_ids": [
+                "doc_003#p5",
+                "doc_007#p1",
+                "doc_007#p2"
+              ]
+            }
+          },
+          "density": {
+            "qid": "q_003",
+            "route": "adjudicate",
+            "k": 3,
+            "n_gold": 3,
+            "gold_density": 1.0,
+            "proxy_density": 1.0,
+            "n_core": 3,
+            "n_filler": 0,
+            "met_proxy": true,
+            "density_cut": true,
+            "box": [
+              "doc_007#p1",
+              "doc_007#p2",
+              "doc_003#p5"
+            ]
+          },
+          "intent": {
+            "kind": "adjudicate",
+            "adjudication": true,
+            "options": [
+              "正面",
+              "负面"
+            ],
+            "evidence_first": true,
+            "notes": [
+              "opposing_options",
+              "evidence_not_semantic"
+            ],
+            "route": "adjudicate",
+            "route_notes": [
+              "from_adjudication"
+            ],
+            "route_anchors": {
+              "side_a": [
+                "王虹本人对北大的评价是正面",
+                "北大的评价是正面"
+              ],
+              "side_b": []
+            }
+          }
+        }
+      ],
+      "density_rows": [
+        {
+          "qid": "q_001",
+          "route": "fact_check",
+          "k": 1,
+          "n_gold": 1,
+          "gold_density": 1.0,
+          "proxy_density": 1.0,
+          "n_core": 1,
+          "n_filler": 0,
+          "met_proxy": true,
+          "density_cut": true,
+          "box": [
+            "doc_001#p1"
+          ]
+        },
+        {
+          "qid": "q_002",
+          "route": "adjudicate",
+          "k": 3,
+          "n_gold": 2,
+          "gold_density": 0.6667,
+          "proxy_density": 1.0,
+          "n_core": 3,
+          "n_filler": 0,
+          "met_proxy": true,
+          "density_cut": true,
+          "box": [
+            "doc_010#p7",
+            "doc_011#p1",
+            "doc_011#p5"
+          ]
+        },
+        {
+          "qid": "q_003",
+          "route": "adjudicate",
+          "k": 3,
+          "n_gold": 3,
+          "gold_density": 1.0,
+          "proxy_density": 1.0,
+          "n_core": 3,
+          "n_filler": 0,
+          "met_proxy": true,
+          "density_cut": true,
+          "box": [
+            "doc_007#p1",
+            "doc_007#p2",
+            "doc_003#p5"
+          ]
+        }
+      ],
+      "avg_gold_density": 0.8889,
+      "micro_gold_density": 0.8571,
+      "sum_gold_in_boxes": 6,
+      "sum_k": 7,
+      "wall_s": 17.1,
+      "role": "holdout",
+      "plan_rows": [
+        {
+          "qid": "q_001",
+          "k": 1,
+          "n_gold": 1,
+          "gold_density": 1.0,
+          "gold_in_box_to_close": 1.0,
+          "n_pairs": 0,
+          "submit_ok": true
+        },
+        {
+          "qid": "q_002",
+          "k": 3,
+          "n_gold": 2,
+          "gold_density": 0.6667,
+          "gold_in_box_to_close": 1.0,
+          "n_pairs": 0,
+          "submit_ok": true
+        },
+        {
+          "qid": "q_003",
+          "k": 3,
+          "n_gold": 3,
+          "gold_density": 1.0,
+          "gold_in_box_to_close": 1.0,
+          "n_pairs": 0,
+          "submit_ok": true
+        }
+      ],
+      "mean_gold_box_to_close": 1.0,
+      "n_leaks": 0,
+      "leak_sample": [],
+      "n_submit_ok": 3,
+      "n_questions": 3,
+      "gate_ok": true
+    },
+    {
+      "slug": "kh_th",
+      "gold_total": 11,
+      "pool_hits": {
+        "20": 6,
+        "50": 6
+      },
+      "cut_hits": {
+        "4": 4,
+        "5": 4,
+        "7": 4
+      },
+      "questions": [
+        {
+          "qid": "q_001",
+          "pool": {
+            "20": {
+              "hits": 1,
+              "gold_total": 1
+            },
+            "50": {
+              "hits": 1,
+              "gold_total": 1
+            }
+          },
+          "cuts": {
+            "4": {
+              "hits": 1,
+              "gold_total": 1,
+              "hit_ids": [
+                "doc_027#p2"
+              ]
+            },
+            "5": {
+              "hits": 1,
+              "gold_total": 1,
+              "hit_ids": [
+                "doc_027#p2"
+              ]
+            },
+            "7": {
+              "hits": 1,
+              "gold_total": 1,
+              "hit_ids": [
+                "doc_027#p2"
+              ]
+            }
+          },
+          "density": {
+            "qid": "q_001",
+            "route": "fact_check",
+            "k": 1,
+            "n_gold": 1,
+            "gold_density": 1.0,
+            "proxy_density": 1.0,
+            "n_core": 1,
+            "n_filler": 0,
+            "met_proxy": true,
+            "density_cut": true,
+            "box": [
+              "doc_027#p2"
+            ]
+          },
+          "intent": {
+            "kind": "verify",
+            "adjudication": false,
+            "options": [],
+            "evidence_first": true,
+            "notes": [
+              "verify_or_evidence"
+            ],
+            "route": "fact_check",
+            "route_notes": [
+              "default_fact_check"
+            ],
+            "route_anchors": {
+              "side_a": [],
+              "side_b": []
+            }
+          }
+        },
+        {
+          "qid": "q_002",
+          "pool": {
+            "20": {
+              "hits": 3,
+              "gold_total": 5
+            },
+            "50": {
+              "hits": 3,
+              "gold_total": 5
+            }
+          },
+          "cuts": {
+            "4": {
+              "hits": 2,
+              "gold_total": 5,
+              "hit_ids": [
+                "doc_006#p4",
+                "doc_009#p10"
+              ]
+            },
+            "5": {
+              "hits": 2,
+              "gold_total": 5,
+              "hit_ids": [
+                "doc_006#p4",
+                "doc_009#p10"
+              ]
+            },
+            "7": {
+              "hits": 2,
+              "gold_total": 5,
+              "hit_ids": [
+                "doc_006#p4",
+                "doc_009#p10"
+              ]
+            }
+          },
+          "density": {
+            "qid": "q_002",
+            "route": "fact_check",
+            "k": 3,
+            "n_gold": 2,
+            "gold_density": 0.6667,
+            "proxy_density": 1.0,
+            "n_core": 3,
+            "n_filler": 0,
+            "met_proxy": true,
+            "density_cut": true,
+            "box": [
+              "doc_009#p10",
+              "doc_103#p3",
+              "doc_006#p4"
+            ]
+          },
+          "intent": {
+            "kind": "open",
+            "adjudication": false,
+            "options": [],
+            "evidence_first": false,
+            "notes": [],
+            "route": "fact_check",
+            "route_notes": [
+              "default_fact_check"
+            ],
+            "route_anchors": {
+              "side_a": [
+                "柬方率先开火"
+              ],
+              "side_b": [
+                "泰军率先开火"
+              ]
+            }
+          }
+        },
+        {
+          "qid": "q_003",
+          "pool": {
+            "20": {
+              "hits": 2,
+              "gold_total": 5
+            },
+            "50": {
+              "hits": 2,
+              "gold_total": 5
+            }
+          },
+          "cuts": {
+            "4": {
+              "hits": 1,
+              "gold_total": 5,
+              "hit_ids": [
+                "doc_023#p2"
+              ]
+            },
+            "5": {
+              "hits": 1,
+              "gold_total": 5,
+              "hit_ids": [
+                "doc_023#p2"
+              ]
+            },
+            "7": {
+              "hits": 1,
+              "gold_total": 5,
+              "hit_ids": [
+                "doc_023#p2"
+              ]
+            }
+          },
+          "density": {
+            "qid": "q_003",
+            "route": "fact_check",
+            "k": 1,
+            "n_gold": 1,
+            "gold_density": 1.0,
+            "proxy_density": 1.0,
+            "n_core": 1,
+            "n_filler": 0,
+            "met_proxy": true,
+            "density_cut": true,
+            "box": [
+              "doc_023#p2"
+            ]
+          },
+          "intent": {
+            "kind": "verify",
+            "adjudication": false,
+            "options": [],
+            "evidence_first": true,
+            "notes": [
+              "verify_or_evidence"
+            ],
+            "route": "fact_check",
+            "route_notes": [
+              "default_fact_check"
+            ],
+            "route_anchors": {
+              "side_a": [],
+              "side_b": []
+            }
+          }
+        }
+      ],
+      "density_rows": [
+        {
+          "qid": "q_001",
+          "route": "fact_check",
+          "k": 1,
+          "n_gold": 1,
+          "gold_density": 1.0,
+          "proxy_density": 1.0,
+          "n_core": 1,
+          "n_filler": 0,
+          "met_proxy": true,
+          "density_cut": true,
+          "box": [
+            "doc_027#p2"
+          ]
+        },
+        {
+          "qid": "q_002",
+          "route": "fact_check",
+          "k": 3,
+          "n_gold": 2,
+          "gold_density": 0.6667,
+          "proxy_density": 1.0,
+          "n_core": 3,
+          "n_filler": 0,
+          "met_proxy": true,
+          "density_cut": true,
+          "box": [
+            "doc_009#p10",
+            "doc_103#p3",
+            "doc_006#p4"
+          ]
+        },
+        {
+          "qid": "q_003",
+          "route": "fact_check",
+          "k": 1,
+          "n_gold": 1,
+          "gold_density": 1.0,
+          "proxy_density": 1.0,
+          "n_core": 1,
+          "n_filler": 0,
+          "met_proxy": true,
+          "density_cut": true,
+          "box": [
+            "doc_023#p2"
+          ]
+        }
+      ],
+      "avg_gold_density": 0.8889,
+      "micro_gold_density": 0.8,
+      "sum_gold_in_boxes": 4,
+      "sum_k": 5,
+      "wall_s": 10.5,
+      "role": "holdout",
+      "plan_rows": [
+        {
+          "qid": "q_001",
+          "k": 1,
+          "n_gold": 1,
+          "gold_density": 1.0,
+          "gold_in_box_to_close": 1.0,
+          "n_pairs": 0,
+          "submit_ok": true
+        },
+        {
+          "qid": "q_002",
+          "k": 3,
+          "n_gold": 2,
+          "gold_density": 0.6667,
+          "gold_in_box_to_close": 1.0,
+          "n_pairs": 0,
+          "submit_ok": true
+        },
+        {
+          "qid": "q_003",
+          "k": 1,
+          "n_gold": 1,
+          "gold_density": 1.0,
+          "gold_in_box_to_close": 1.0,
+          "n_pairs": 0,
+          "submit_ok": true
+        }
+      ],
+      "mean_gold_box_to_close": 1.0,
+      "n_leaks": 0,
+      "leak_sample": [],
+      "n_submit_ok": 3,
+      "n_questions": 3,
+      "gate_ok": true
+    },
+    {
+      "slug": "ai171",
+      "gold_total": 24,
+      "pool_hits": {
+        "20": 6,
+        "50": 11
+      },
+      "cut_hits": {
+        "4": 5,
+        "5": 5,
+        "7": 5
+      },
+      "questions": [
+        {
+          "qid": "q_001",
+          "pool": {
+            "20": {
+              "hits": 2,
+              "gold_total": 7
+            },
+            "50": {
+              "hits": 4,
+              "gold_total": 7
+            }
+          },
+          "cuts": {
+            "4": {
+              "hits": 2,
+              "gold_total": 7,
+              "hit_ids": [
+                "doc_001#p3",
+                "doc_015#p5"
+              ]
+            },
+            "5": {
+              "hits": 2,
+              "gold_total": 7,
+              "hit_ids": [
+                "doc_001#p3",
+                "doc_015#p5"
+              ]
+            },
+            "7": {
+              "hits": 2,
+              "gold_total": 7,
+              "hit_ids": [
+                "doc_001#p3",
+                "doc_015#p5"
+              ]
+            }
+          },
+          "density": {
+            "qid": "q_001",
+            "route": "adjudicate",
+            "k": 3,
+            "n_gold": 2,
+            "gold_density": 0.6667,
+            "proxy_density": 1.0,
+            "n_core": 3,
+            "n_filler": 0,
+            "met_proxy": true,
+            "density_cut": true,
+            "box": [
+              "doc_001#p3",
+              "doc_015#p5",
+              "doc_017#p4"
+            ]
+          },
+          "intent": {
+            "kind": "adjudicate",
+            "adjudication": true,
+            "options": [
+              "全部242人",
+              "含地面共274人为准"
+            ],
+            "evidence_first": true,
+            "notes": [
+              "opposing_options",
+              "evidence_not_semantic"
+            ],
+            "route": "adjudicate",
+            "route_notes": [
+              "from_adjudication"
+            ],
+            "route_anchors": {
+              "side_a": [
+                "AI171",
+                "241人",
+                "242人",
+                "全部242人",
+                "人、全部242人"
+              ],
+              "side_b": [
+                "274人",
+                "含地面共274人",
+                "面共274人"
+              ]
+            }
+          }
+        },
+        {
+          "qid": "q_002",
+          "pool": {
+            "20": {
+              "hits": 2,
+              "gold_total": 11
+            },
+            "50": {
+              "hits": 4,
+              "gold_total": 11
+            }
+          },
+          "cuts": {
+            "4": {
+              "hits": 2,
+              "gold_total": 11,
+              "hit_ids": [
+                "doc_012#p8",
+                "doc_015#p6"
+              ]
+            },
+            "5": {
+              "hits": 2,
+              "gold_total": 11,
+              "hit_ids": [
+                "doc_012#p8",
+                "doc_015#p6"
+              ]
+            },
+            "7": {
+              "hits": 2,
+              "gold_total": 11,
+              "hit_ids": [
+                "doc_012#p8",
+                "doc_015#p6"
+              ]
+            }
+          },
+          "density": {
+            "qid": "q_002",
+            "route": "fact_check",
+            "k": 1,
+            "n_gold": 1,
+            "gold_density": 1.0,
+            "proxy_density": 1.0,
+            "n_core": 1,
+            "n_filler": 0,
+            "met_proxy": true,
+            "density_cut": true,
+            "box": [
+              "doc_015#p6"
+            ]
+          },
+          "intent": {
+            "kind": "verify",
+            "adjudication": false,
+            "options": [],
+            "evidence_first": true,
+            "notes": [
+              "verify_or_evidence"
+            ],
+            "route": "fact_check",
+            "route_notes": [
+              "default_fact_check"
+            ],
+            "route_anchors": {
+              "side_a": [],
+              "side_b": []
+            }
+          }
+        },
+        {
+          "qid": "q_003",
+          "pool": {
+            "20": {
+              "hits": 2,
+              "gold_total": 6
+            },
+            "50": {
+              "hits": 3,
+              "gold_total": 6
+            }
+          },
+          "cuts": {
+            "4": {
+              "hits": 1,
+              "gold_total": 6,
+              "hit_ids": [
+                "doc_004#p3"
+              ]
+            },
+            "5": {
+              "hits": 1,
+              "gold_total": 6,
+              "hit_ids": [
+                "doc_004#p3"
+              ]
+            },
+            "7": {
+              "hits": 1,
+              "gold_total": 6,
+              "hit_ids": [
+                "doc_004#p3"
+              ]
+            }
+          },
+          "density": {
+            "qid": "q_003",
+            "route": "adjudicate",
+            "k": 1,
+            "n_gold": 1,
+            "gold_density": 1.0,
+            "proxy_density": 1.0,
+            "n_core": 1,
+            "n_filler": 0,
+            "met_proxy": true,
+            "density_cut": true,
+            "box": [
+              "doc_004#p3"
+            ]
+          },
+          "intent": {
+            "kind": "verify",
+            "adjudication": false,
+            "options": [],
+            "evidence_first": false,
+            "notes": [
+              "verify_or_evidence"
+            ],
+            "route": "adjudicate",
+            "route_notes": [
+              "route_or_surface"
+            ],
+            "route_anchors": {
+              "side_a": [
+                "AI171",
+                "幸存者的生还概率"
+              ],
+              "side_b": [
+                "纯属侥幸"
+              ]
+            }
+          }
+        }
+      ],
+      "density_rows": [
+        {
+          "qid": "q_001",
+          "route": "adjudicate",
+          "k": 3,
+          "n_gold": 2,
+          "gold_density": 0.6667,
+          "proxy_density": 1.0,
+          "n_core": 3,
+          "n_filler": 0,
+          "met_proxy": true,
+          "density_cut": true,
+          "box": [
+            "doc_001#p3",
+            "doc_015#p5",
+            "doc_017#p4"
+          ]
+        },
+        {
+          "qid": "q_002",
+          "route": "fact_check",
+          "k": 1,
+          "n_gold": 1,
+          "gold_density": 1.0,
+          "proxy_density": 1.0,
+          "n_core": 1,
+          "n_filler": 0,
+          "met_proxy": true,
+          "density_cut": true,
+          "box": [
+            "doc_015#p6"
+          ]
+        },
+        {
+          "qid": "q_003",
+          "route": "adjudicate",
+          "k": 1,
+          "n_gold": 1,
+          "gold_density": 1.0,
+          "proxy_density": 1.0,
+          "n_core": 1,
+          "n_filler": 0,
+          "met_proxy": true,
+          "density_cut": true,
+          "box": [
+            "doc_004#p3"
+          ]
+        }
+      ],
+      "avg_gold_density": 0.8889,
+      "micro_gold_density": 0.8,
+      "sum_gold_in_boxes": 4,
+      "sum_k": 5,
+      "wall_s": 20.0,
+      "role": "holdout",
+      "plan_rows": [
+        {
+          "qid": "q_001",
+          "k": 3,
+          "n_gold": 2,
+          "gold_density": 0.6667,
+          "gold_in_box_to_close": 1.0,
+          "n_pairs": 0,
+          "submit_ok": true
+        },
+        {
+          "qid": "q_002",
+          "k": 1,
+          "n_gold": 1,
+          "gold_density": 1.0,
+          "gold_in_box_to_close": 1.0,
+          "n_pairs": 0,
+          "submit_ok": true
+        },
+        {
+          "qid": "q_003",
+          "k": 1,
+          "n_gold": 1,
+          "gold_density": 1.0,
+          "gold_in_box_to_close": 1.0,
+          "n_pairs": 0,
+          "submit_ok": true
+        }
+      ],
+      "mean_gold_box_to_close": 1.0,
+      "n_leaks": 0,
+      "leak_sample": [],
+      "n_submit_ok": 3,
+      "n_questions": 3,
+      "gate_ok": true
+    }
+  ]
+}
