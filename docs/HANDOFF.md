@@ -1,3 +1,16 @@
+<!-- C-108-MERGED-MAIN -->
+## 〔C-108〕已合 main（C-107 窄面＋密度桥）
+
+- **状态**：`cursor/c108-density-submit-default` 已快进合入本地／远端 `main`（见本笔 tip）。
+- **含什么**：C-107 交卷窄面（`kg_submit_surface`）＋C-108 `density_submit` 薄迁与 `kg_density_bridge`。**不含** R9／R21／DEFAULT_WEIGHTS 进 `pack_material`。
+- **旗语义**：
+  - `VERITAS_KG_SUBMIT_SURFACE`：**默认开**（密度盒序优先→窄面）。`=0`／`false`／`off`＝回退旧 BM25 预算装满。
+  - `VERITAS_KG_CAP_SEGMENTS`：**默认关**。`=1` 才硬顶 `max_segments=k`。
+- **回退**：`export VERITAS_KG_SUBMIT_SURFACE=0`（或 config `"kg_submit_surface": false`）即旧装箱；禁键守卫仍在。
+- **验收复跑**：刘翔@7=12；holdout L2 25→29；泄漏0；`test_c107`＋`test_c108` 14 绿。
+
+---
+
 <!-- C-108-STEP1 -->
 ## 〔C-108〕二筛密度交卷＋窄面默认开（第1步，不合一筛系数）
 
