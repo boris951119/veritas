@@ -958,9 +958,15 @@ def core_rank_score(
     ):
         caliber_pen = 0.16
     # R34：可核验槽对齐抬（事实核对题加重；强槽计数拉开档，防通稿壳压过）
+    # R40：拉丁×数额裁决题也走槽抬（英文死亡人数声明否则分地板）
     slot_strong, _ = slot_align_detail(text, slots)
     _quote_q = bool(slots and (slots.get("quotes") or slots.get("claim_nouns")))
-    _slot_boost_route = route == "fact_check" or _quote_q
+    _amt_lat_q = bool(
+        slots and (slots.get("amounts") or []) and (slots.get("latin") or [])
+    )
+    _slot_boost_route = route == "fact_check" or _quote_q or (
+        route == "adjudicate" and _amt_lat_q
+    )
     if _slot_boost_route and slot_strong >= 1:
         slot_b = 0.22 + 0.12 * min(float(slot_strong), 4.0) + 0.04 * min(
             float(slot_hits), 4.0,
@@ -984,6 +990,16 @@ def core_rank_score(
         # 引号主张核命中多 → 澄清原文优先于标题党转载
         if _quote_q and slot_strong >= 3:
             slot_b += 0.10
+        # R40：数额钉在句首／英文 killing 声明相对长通稿埋数抬
+        if _amt_lat_q and any(
+            amount_token_hit(text[:160], str(a or ""))
+            for a in (slots.get("amounts") or [])
+        ):
+            slot_b += 0.18
+            if sum(
+                1 for c in text if ("A" <= c <= "Z") or ("a" <= c <= "z")
+            ) / max(len(text), 1) >= 0.55:
+                slot_b += 0.14
     elif slot_hits:
         slot_b = 0.08 * min(float(slot_hits), 4.0)
     else:
@@ -1039,6 +1055,32 @@ def core_rank_score(
             interview_b = 0.42
         elif any(n in text for n in _EVAL_RUMOR_NOISE):
             rumor_pen = 0.28
+    # R40：仅「引号／对立支」澄清题——澄清抬；纯「有消息称」复述降（勿用 claim_nouns 以免伤吉隆）
+    clarify_b = 0.0
+    _rumor_adj = bool(
+        slots and (slots.get("quotes") or slots.get("claim_alts"))
+    )
+    if route == "adjudicate" and _rumor_adj:
+        if any(
+            c in text
+            for c in ("澄清", "并非", "予以否认", "实际上获得", "原院长", "知情者说")
+        ):
+            clarify_b = 0.40
+            # 标题／导语含澄清也抬（抗 App 壳埋钉）
+            if "澄清" in text[:80] or "原院长" in text[:80]:
+                clarify_b += 0.12
+        elif any(
+            c in text[:60]
+            for c in ("有消息称", "有网友", "网传", "传闻还包括", "真假难辨")
+        ) and not any(c in text for c in ("澄清", "并非", "不实")):
+            rumor_pen = max(rumor_pen, 0.30)
+    # R40：事实核对一手出处／官方视频相对「汇总多方」二手壳
+    primary_b = 0.0
+    if route == "fact_check" and slot_strong >= 1:
+        if any(c in text for c in _PRIMARY_LATIN_CUE) or "IMU" in text:
+            primary_b = 0.22
+        elif any(c in text[:24] for c in ("汇总多方", "正在阅读", "以下是")):
+            rumor_pen = max(rumor_pen, 0.16)
     # R36：事实核对——调查声部／切断供油主张段抬；纯媒体复述略降（不打「加强检测」金标）
     switch_b = 0.0
     _alts_sw = list((slots or {}).get("claim_alts") or [])
@@ -1095,6 +1137,8 @@ def core_rank_score(
         + short_b
         + interview_b
         + switch_b
+        + clarify_b
+        + primary_b
         + (0.04 if route == "adjudicate" and hits["total"] else 0.0)
         - wire_pen
         - roundup_pen

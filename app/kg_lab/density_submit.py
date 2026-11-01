@@ -16,6 +16,7 @@ from app.kg_lab.intent_routes import (
     _CLOCK_KEY,
     _HASHTAG_WRAP,
     _VOICE_CUES,
+    amount_token_hit,
     anchor_hits,
     core_rank_score,
     is_claim_conflict_route,
@@ -133,7 +134,21 @@ def _rep_quality(
     feat = feats.get(pid) or {}
     ver = float(feat.get("verifiability") or 0.0)
     precise = 1.0 if _PRECISE_CLOCK.search(text) else 0.0
+    # R40：句首钟点优先作同簇代表
+    if precise and _PRECISE_CLOCK.search(text[:64]):
+        precise += 0.85
     voice = 1.0 if any(v in text[:160] for v in _VOICE_CUES) else 0.0
+    # R40：澄清／一手出处／问句数额钉轻抬作代表
+    if any(c in text for c in ("澄清", "并非", "实际上获得", "原院长", "知情者说")):
+        precise += 0.55
+    if any(c in text for c in ("官方视频", "原始出处", "亲口", "IMU")):
+        precise += 0.55
+    if slots and (slots.get("amounts") or []):
+        if any(amount_token_hit(text, str(a or "")) for a in (slots.get("amounts") or [])):
+            precise += 0.7
+            n_lat = sum(1 for c in text if ("A" <= c <= "Z") or ("a" <= c <= "z"))
+            if n_lat / max(len(text), 1) >= 0.55:
+                precise += 0.5
     wrap = 1.0 if _HASHTAG_WRAP.search(text[:80]) else 0.0
     # R26：无声部「查明」换皮靠后，避免盖过声部／精确主张段
     caliber_noise = 1.0 if ("查明" in text and voice < 0.5) else 0.0
@@ -222,8 +237,11 @@ def _side_of(
     return str((feats.get(pid) or {}).get("option_side") or "") or "other"
 
 
-def _claim_kernel(text: str) -> str | None:
-    """同主张／同数字核：燃油切断声明、否认侥幸短核等。不读案名。"""
+def _claim_kernel(
+    text: str,
+    slots: dict[str, Any] | None = None,
+) -> str | None:
+    """同主张／同数字核：燃油切断、钟点×战机。不读案名。"""
     body = text or ""
     tl = body.lower()
     fuel = (
@@ -240,7 +258,11 @@ def _claim_kernel(text: str) -> str | None:
     )
     if fuel and (cut or report):
         return "fuel_switch_cutoff"
-    # 否认／侥幸短核勿整题并一簇——同题可有多条不同表述金标近似
+    # 精确钟点 × 战机／空袭：同通报换皮并簇
+    if re.search(r"\d{1,2}时\d{1,2}分", body) and any(
+        c in body for c in ("F-16", "战机", "空袭", "空军")
+    ):
+        return "clock_strike"
     return None
 
 
@@ -258,7 +280,7 @@ def _cluster_wire_keep_one(
     for sc, pid in scored_cores:
         body = _norm_body(metas, pid)
         text = str((metas.get(pid) or {}).get("text") or "")
-        kern = _claim_kernel(text)
+        kern = _claim_kernel(text, slots=slots)
         dup_at = next(
             (
                 i
@@ -560,6 +582,25 @@ def pack_core_first(
         any(k in (a or "") for k in ("开关", "燃油", "缺陷"))
         for a in list((slots or {}).get("claim_alts") or [])
     )
+    # R40：薄包——数额／澄清／一手拉丁（互斥短路径）
+    _amt_pack = (
+        route == "adjudicate"
+        and bool((slots or {}).get("amounts"))
+        and bool((slots or {}).get("latin"))
+    )
+    _clarify_pack = (
+        route == "adjudicate"
+        and bool((slots or {}).get("quotes") or (slots or {}).get("claim_alts"))
+        and not _adj_short
+        and not _eval_pack
+        and not _amt_pack
+    )
+    _primary_pack = (
+        route == "fact_check"
+        and bool((slots or {}).get("latin"))
+        and not _switch_pack
+    )
+
     def _core_strong(pid: str) -> int:
         text = str((metas.get(pid) or {}).get("text") or "")
         strong, _ = slot_align_detail(text, slots)
@@ -579,6 +620,47 @@ def pack_core_first(
                 )
             ) else 0
             return (-voice, rumor, -sc, pid)
+        if _amt_pack:
+            amt_n = sum(
+                1 for a in (slots.get("amounts") or [])
+                if amount_token_hit(text, str(a or ""))
+            )
+            en = 1 if (
+                sum(1 for c in text if ("A" <= c <= "Z") or ("a" <= c <= "z"))
+                / max(len(text), 1) >= 0.55
+            ) else 0
+            head = 1 if any(
+                amount_token_hit(text[:140], str(a or ""))
+                for a in (slots.get("amounts") or [])
+            ) else 0
+            bury = 1 if (
+                amt_n and nlen > 420
+                and any(c in text[:80] for c in ("PTSD", "采访见诸", "心路历程"))
+            ) else 0
+            return (-amt_n, -en, -head, bury, -sc, pid)
+        if _clarify_pack:
+            clarify = 1 if any(
+                c in text
+                for c in ("澄清", "并非", "予以否认", "实际上获得", "原院长", "知情者说")
+            ) else 0
+            rumor = 1 if (
+                clarify == 0
+                and any(
+                    c in text[:60]
+                    for c in ("有消息称", "有网友", "网传", "传闻还包括", "真假难辨")
+                )
+            ) else 0
+            return (-clarify, rumor, -sc, pid)
+        if _primary_pack:
+            primary = 1 if any(
+                c in text
+                for c in ("官方视频", "原始出处", "亲口", "英文访谈", "felt ", "IMU")
+            ) else 0
+            clock = 1 if re.search(r"\d{1,2}时\d{1,2}分", text[:120]) else 0
+            secondary = 1 if any(
+                c in text[:24] for c in ("汇总多方", "正在阅读", "以下是")
+            ) else 0
+            return (-primary, -clock, secondary, -sc, pid)
         if _adj_short:
             short = 1 if is_short_claim_segment(text, slots, route=route) else 0
             long_wire = 1 if (nlen > 500 and not short) else 0
@@ -723,6 +805,28 @@ def pack_core_first(
             ) or "preliminary report" in tl
             return bool((sw and report) or defect)
 
+        def _r40_keep(pid: str) -> bool:
+            body = str((metas.get(pid) or {}).get("text") or "")
+            if _amt_pack and any(
+                amount_token_hit(body, str(a or ""))
+                for a in (slots.get("amounts") or [])
+            ):
+                return True
+            if _clarify_pack and any(
+                c in body
+                for c in ("澄清", "并非", "予以否认", "实际上获得", "原院长", "知情者说")
+            ):
+                return True
+            if _primary_pack and (
+                any(
+                    c in body
+                    for c in ("官方视频", "原始出处", "亲口", "IMU", "felt ")
+                )
+                or re.search(r"\d{1,2}时\d{1,2}分", body[:120])
+            ):
+                return True
+            return False
+
         scored_cores = [
             x for x in scored_cores
             if x[0] + 1e-12 >= floor
@@ -743,6 +847,7 @@ def pack_core_first(
                 )
             )
             or _switch_report_core(x[1])
+            or _r40_keep(x[1])
         ][:14]
     # R24/R25：通稿／近同文簇内留质量更好的代表
     scored_cores = _cluster_wire_keep_one(scored_cores, metas, feats, slots=slots)
@@ -844,6 +949,29 @@ def pack_core_first(
             else:
                 other.append(pid)
         cores = en_decl + defect + other
+    # R40：可核验钉置前（数额／澄清／一手／钟点战机），便于缩 k 时先落钉
+    if cores and (_amt_pack or _clarify_pack or _primary_pack or any(
+        _claim_kernel(str((metas.get(p) or {}).get("text") or ""), slots=slots)
+        == "clock_strike"
+        for p in cores
+    )):
+        def _nail_rank(pid: str) -> tuple:
+            text = str((metas.get(pid) or {}).get("text") or "")
+            strike = 1 if _claim_kernel(text, slots=slots) == "clock_strike" else 0
+            amt = 1 if any(
+                amount_token_hit(text, str(a or ""))
+                for a in list((slots or {}).get("amounts") or [])
+            ) else 0
+            clarify = 1 if any(
+                c in text
+                for c in ("澄清", "并非", "予以否认", "实际上获得", "原院长", "知情者说")
+            ) else 0
+            primary = 1 if any(
+                c in text for c in ("官方视频", "原始出处", "亲口", "IMU")
+            ) else 0
+            return (-(strike + amt + clarify + primary), pid)
+
+        cores = sorted(cores, key=_nail_rank)
     cores = cores[:6]
 
     # 自然补位优先；无侧降档段垫后（不抢对立补位槽）
@@ -982,8 +1110,47 @@ def density_constrained_submit(
     )
     cores = set(core_list)
     fillers = set(fill_list)
-    # R37：事实核对题若强核心≤1，勿硬凑 k=3 灌通稿（盒稀主因）
+    # R37/R40：单枚可核验钉（钟点／澄清／一手／数额）勿硬凑 k=3
     km = int(k_min)
+    def _nail_pids(pids: list[str]) -> list[str]:
+        out: list[str] = []
+        for p in pids:
+            text = str((metas.get(p) or {}).get("text") or "")
+            if re.search(r"\d{1,2}时\d{1,2}分", text[:280]):
+                out.append(p)
+                continue
+            if any(
+                amount_token_hit(text, str(a or ""))
+                for a in list((slots or {}).get("amounts") or [])
+            ):
+                out.append(p)
+                continue
+            if any(
+                c in text
+                for c in (
+                    "澄清", "并非", "予以否认", "实际上获得", "原院长", "知情者说",
+                    "官方视频", "原始出处", "亲口", "IMU",
+                )
+            ):
+                out.append(p)
+        return out
+
+    nails = _nail_pids(core_list)
+    _r40_clarify = (
+        route == "adjudicate"
+        and bool((slots or {}).get("quotes") or (slots or {}).get("claim_alts"))
+    )
+    _r40_primary = route == "fact_check" and bool((slots or {}).get("latin"))
+    _r40_amt = (
+        route == "adjudicate"
+        and bool((slots or {}).get("amounts"))
+        and bool((slots or {}).get("latin"))
+    )
+    clock_strike_cores = [
+        p for p in core_list
+        if _claim_kernel(str((metas.get(p) or {}).get("text") or ""), slots=slots)
+        == "clock_strike"
+    ]
     if route == "fact_check" and len(core_list) <= 1:
         pid0 = core_list[0] if core_list else ""
         body0 = str((metas.get(pid0) or {}).get("text") or "")
@@ -994,6 +1161,16 @@ def density_constrained_submit(
             body0, band=band0, slot_hits=slot_align_hits(body0, slots),
         ):
             km = 1
+    # R40：仅「钟点×战机」同簇剩 1 枚 → 缩 k（柬泰盒稀）；勿对任意钟点题缩
+    elif route == "fact_check" and len(clock_strike_cores) == 1:
+        km = 1
+        packed = [clock_strike_cores[0]] + [
+            p for p in packed if p != clock_strike_cores[0]
+        ]
+    # R40：澄清／一手／数额包仅 1 枚钉 → 缩 k
+    elif len(nails) == 1 and (_r40_clarify or _r40_primary or _r40_amt):
+        km = 1
+        packed = [nails[0]] + [p for p in packed if p != nails[0]]
     chosen = choose_density_k(
         packed, cores, fillers, k_min=km, k_max=k_max, target=target,
     )
