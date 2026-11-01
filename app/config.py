@@ -544,6 +544,11 @@ class Settings:
     # env VERITAS_KG_SUBMIT_SURFACE；config.json kg_submit_surface。
     kg_submit_surface: bool = True
 
+    # C-109：一筛进池（只出口 pool_ids）。默认 True；关＝VERITAS_KG_STAGE1=0
+    # 回退「无池／仅密度桥 BM25」。系数不进 pack。
+    # env VERITAS_KG_STAGE1；config.json kg_stage1。
+    kg_stage1: bool = True
+
     # 语料收窄阈值：信源数达到该值才走索引选料（默认 50=自动；
     # 0=强制关闭，小案例到不了阈值则整卷研判、不建 .corpus）。
     # 收窄后研判只看见 hydrate 出的小案卷，并披露「库内 N / 本次 M」。
@@ -804,6 +809,11 @@ class Settings:
             s.kg_submit_surface = False
         elif kgs in ("1", "true", "on", "yes"):
             s.kg_submit_surface = True
+        s1 = (os.environ.get("VERITAS_KG_STAGE1") or "").strip().lower()
+        if s1 in ("0", "false", "off", "no"):
+            s.kg_stage1 = False
+        elif s1 in ("1", "true", "on", "yes"):
+            s.kg_stage1 = True
         return s.validate()
 
     @classmethod
@@ -944,6 +954,13 @@ class Settings:
                 s.kg_submit_surface = raw_kgs
             elif isinstance(raw_kgs, (int, str)):
                 s.kg_submit_surface = str(raw_kgs).strip().lower() not in (
+                    "0", "false", "off", "no", "")
+        if "kg_stage1" in data:
+            raw_s1 = data.get("kg_stage1")
+            if isinstance(raw_s1, bool):
+                s.kg_stage1 = raw_s1
+            elif isinstance(raw_s1, (int, str)):
+                s.kg_stage1 = str(raw_s1).strip().lower() not in (
                     "0", "false", "off", "no", "")
         select_min = data.get("corpus_select_min_sources")
         if isinstance(select_min, int) and not isinstance(select_min, bool) \

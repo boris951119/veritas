@@ -1,3 +1,14 @@
+<!-- C-109-STAGE1 -->
+## 〔C-109〕一筛进池（只出口 pool_ids；系数不进 pack）
+
+- **枝**：`cursor/c109-stage1-pool`。模块 `app/core/kg_stage1_pool.py`；桥已接：无短盒→一筛池→density→kg_submit。
+- **旗**：`VERITAS_KG_STAGE1` 默认开；`=0` 回退无池／仅密度桥 BM25。`VERITAS_KG_STAGE1_EMBED=1` 可选本机 bge 重排池头（默认关）。
+- **禁**：R9／R21／DEFAULT_WEIGHTS 进 pack kwargs；禁键守卫＋`tests/test_c109_stage1_pool.py`。
+- **读数**（`artifacts/C109_stage1_measure`，无手工 R44 盒）：泄漏＝0；holdout L2＝旗关 25；刘翔@7＝4（门槛≥11 **未过**）；软对照 holdout≥C-108(R44盒路径29) **未过**。
+- **合入建议**：硬闸未齐 → **不合 main**；待一筛召回抬 @7（或可迁移特征／拟合）后再裁。
+
+---
+
 <!-- C-108-MERGED-MAIN -->
 ## 〔C-108〕已合 main（C-107 窄面＋密度桥）
 

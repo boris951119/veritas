@@ -1,11 +1,13 @@
-"""C-108：主线二筛密度交卷桥——BM25 池 → density_submit → kg_submit 窄面。
+"""C-108／C-109：主线密度交卷桥——一筛池／BM25 → density_submit → kg_submit。
 
 出口只 box_ids／k／洗净 conflict_pairs／tree17 close_read。
 不把 R9／R21／DEFAULT_WEIGHTS／多维 feats 传入 pack_material。
 
-默认：密度盒序作 priority；硬顶 max_segments=k 由
-``VERITAS_KG_CAP_SEGMENTS=1`` 显式打开（默认关＝预算尾仍可填，
-保证相对旧装满 L2 不掉）。
+C-109：默认 ``VERITAS_KG_STAGE1`` 开 → 一筛 pool_ids 喂密度；
+有上游短盒（≤K_MAX）仍优先信任。``VERITAS_KG_STAGE1=0`` 回退
+C-108 纯 BM25／仅密度桥。
+
+硬顶 max_segments=k 由 ``VERITAS_KG_CAP_SEGMENTS=1`` 显式打开（默认关）。
 """
 
 from __future__ import annotations
@@ -15,6 +17,7 @@ import re
 from typing import Any
 
 from app.core.bm25 import rank_segments
+from app.core.kg_stage1_pool import kg_stage1_enabled, stage1_pool_from_dossier
 from app.core.kg_submit_surface import (
     assert_submit_no_coeff,
     audit_forbidden_keys,
@@ -161,45 +164,65 @@ def density_submit_surface(
     top_n: int = 180,
     order: list[str] | None = None,
     gold_ids: set[str] | None = None,
+    use_stage1: bool | None = None,
 ) -> dict[str, Any]:
-    """跑 density_constrained_submit → 交卷窄面（禁键已审计）。"""
+    """跑 density_constrained_submit → 交卷窄面（禁键已审计）。
+
+    order 优先；否则 stage1 开→一筛池；再否则 BM25 池。
+    上游短盒（≤K_MAX）信任为 stage2 出口。
+    """
     question = str(getattr(dossier, "question", "") or "")
-    if order is None:
-        order, feats, metas, pool_pos = build_pool_from_dossier(
-            dossier, top_n=top_n)
-    else:
+    stage1_meta: dict[str, Any] | None = None
+    upstream_short = False
+
+    if order is not None:
         order = [str(x) for x in order if str(x).strip()]
-        _, feats, metas, pool_pos = build_pool_from_dossier(
-            dossier, top_n=max(top_n, len(order)))
-        # 保证传入 order 的 metas 齐
-        by_id = {
-            seg.id: seg
-            for src in dossier.sources
-            for seg in src.segments
-        }
-        frame = extract_event_frame(question)
-        for i, pid in enumerate(order, 1):
-            pool_pos.setdefault(pid, i)
-            if pid not in metas:
-                seg = by_id.get(pid)
-                text = str(getattr(seg, "text", "") or "")
-                side = option_side(text, frame) if frame.options else ""
-                feats[pid] = _lite_feat(text, 1.0, side=side)
-                metas[pid] = {
-                    "text": text,
-                    "doc_id": str(
-                        getattr(seg, "source_id", "") or pid.split("#", 1)[0]
-                    ),
-                    "portable_role": "",
-                    "fine_role": "",
-                }
+        upstream_short = 1 <= len(order) <= 7
+    else:
+        do_s1 = kg_stage1_enabled() if use_stage1 is None else bool(use_stage1)
+        if do_s1:
+            stage1_meta = stage1_pool_from_dossier(dossier, pool_n=int(top_n))
+            order = list(stage1_meta.get("pool_ids") or [])
+        else:
+            order, _, _, _ = build_pool_from_dossier(dossier, top_n=top_n)
+
+    # feats／metas：按 order 对齐（含一筛池序抬核心）
+    base_order, feats, metas, pool_pos = build_pool_from_dossier(
+        dossier, top_n=max(int(top_n), len(order) or 1),
+    )
+    by_id = {
+        seg.id: seg
+        for src in dossier.sources
+        for seg in src.segments
+    }
+    frame = extract_event_frame(question)
+    for i, pid in enumerate(order, 1):
+        pool_pos[pid] = i  # 一筛／上游序覆盖 BM25 位次
+        if pid not in metas:
+            seg = by_id.get(pid)
+            text = str(getattr(seg, "text", "") or "")
+            side = option_side(text, frame) if frame.options else ""
+            feats[pid] = _lite_feat(text, 1.0, side=side)
+            metas[pid] = {
+                "text": text,
+                "doc_id": str(
+                    getattr(seg, "source_id", "") or pid.split("#", 1)[0]
+                ),
+                "portable_role": "",
+                "fine_role": "",
+            }
+        # 池头抬核（无多维系数）
+        if i <= 15 and pid in feats:
+            feats[pid]["verifiability"] = max(
+                float(feats[pid].get("verifiability") or 0), 0.85)
+            feats[pid]["authority_unit"] = max(
+                float(feats[pid].get("authority_unit") or 0), 0.75)
 
     route = _route_of(question)
     slots = _slots_from_question(question)
-    # 上游已是短盒（≤K_MAX，如 R44 交卷盒）→ 信任为 stage2 出口，不再二次缩 k
     from app.kg_lab.density_submit import K_MAX
 
-    if order is not None and 1 <= len(order) <= int(K_MAX):
+    if upstream_short:
         dens = {
             "k": len(order),
             "submission": list(order),
@@ -232,18 +255,29 @@ def density_submit_surface(
             gold_ids=gold_ids,
         )
     box = list(dens.get("submission") or [])
-    k = int(dens.get("k") or len(box) or 0)
-    pairs = _clean_pairs(box, feats, metas, question)
+    dens_k = int(dens.get("k") or len(box) or 0)
+    # C-109：priority＝密度盒＋池序补齐至 ≥7（@7 尺／装箱头），不灌系数
+    priority = list(box)
+    for pid in order:
+        if pid in priority:
+            continue
+        priority.append(pid)
+        if len(priority) >= max(7, dens_k):
+            break
+    if not priority:
+        priority = list(base_order[:7])
+    k_pack = len(priority)
+    pairs = _clean_pairs(box or priority, feats, metas, question)
     leaks = audit_forbidden_keys(pairs)
     if leaks:
         raise ValueError(f"conflict_pairs leaked: {leaks}")
 
     auth_like = {
-        "top_ids": box,
-        "k": k,
+        "top_ids": priority,
+        "k": k_pack,
         "conflict_pairs": pairs,
         "density": {
-            "k": k,
+            "k": dens_k,
             "n_core": dens.get("n_core"),
             "n_filler": dens.get("n_filler"),
             "proxy_density": dens.get("density"),
@@ -254,8 +288,11 @@ def density_submit_surface(
         "intent": {"route": route},
     }
     box_ex = stage2_box_export(auth_like)
+    # rank_order 用 priority；density_public 保留 dens_k
+    box_ex["box_ids"] = priority
+    box_ex["k"] = k_pack
     cores = list(dens.get("core_ids") or [])
-    close = cores or box[: min(3, len(box))]
+    close = cores or box[: min(3, len(box))] or priority[: min(3, len(priority))]
     surface = build_submit_surface(box_ex, tree17_plan={
         "close_read": close,
         "pair_required": bool(pairs.get("conflicts")),
@@ -269,7 +306,6 @@ def density_submit_surface(
         ],
     })
     assert_submit_no_coeff(surface)
-    # 主线会计：是否硬顶段数
     surface_acc = dict(surface)
     surface_acc["density_public"] = {
         **dict(surface.get("density_public") or {}),
@@ -278,11 +314,15 @@ def density_submit_surface(
         "n_core": dens.get("n_core"),
         "n_filler": dens.get("n_filler"),
         "gold_density": dens.get("gold_density"),
+        "dens_k": dens_k,
+        "box": list(box),
     }
     return {
         "surface": surface_acc,
         "density": dens,
         "cap_segments": kg_cap_segments_enabled(),
+        "stage1": stage1_meta,
+        "pool_order_n": len(order),
     }
 
 
@@ -313,6 +353,18 @@ def ensure_kg_submit_from_density(
         "met_target": out["density"].get("met_target"),
         "route": out["density"].get("route"),
         "cap_segments": out["cap_segments"],
+        "pool_order_n": out.get("pool_order_n"),
     }
     acc["kg_cap_segments"] = bool(out["cap_segments"])
+    if out.get("stage1"):
+        exp = (out["stage1"] or {}).get("export") or {}
+        acc["kg_stage1"] = {
+            "pool_n": len(exp.get("pool_ids") or []),
+            "schema_version": exp.get("schema_version"),
+            "layer": exp.get("layer"),
+        }
+        # 只留 ids，禁系数
+        leaks = audit_forbidden_keys(acc["kg_stage1"])
+        if leaks:
+            raise ValueError(f"kg_stage1 accounting leaked: {leaks}")
     return out
