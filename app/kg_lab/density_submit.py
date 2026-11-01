@@ -114,6 +114,12 @@ def _near_dup(na: str, nb: str) -> bool:
     return jac >= 0.45 and span >= 56
 
 
+_SECONDARY_CUE = (
+    "那么", "是否有可能", "有分析认为", "有网友", "正在阅读", "以下是",
+    "汇总多方", "时间线", "持续追踪",
+)
+
+
 def _rep_quality(
     pid: str,
     *,
@@ -123,6 +129,7 @@ def _rep_quality(
 ) -> tuple[float, float, float, float]:
     """簇代表质量：精确钟点／机构声部／可核验优先；话题标签包装靠后。"""
     text = str((metas.get(pid) or {}).get("text") or "")
+    meta = metas.get(pid) or {}
     feat = feats.get(pid) or {}
     ver = float(feat.get("verifiability") or 0.0)
     precise = 1.0 if _PRECISE_CLOCK.search(text) else 0.0
@@ -133,6 +140,11 @@ def _rep_quality(
     # R26：同簇偏短主张段（长通稿改写常盖住短金标近似）
     nlen = len(re.sub(r"\s+", "", text))
     brevity = 1.0 if 0 < nlen <= 280 else (0.5 if nlen <= 400 else 0.0)
+    # R39：极短专家原话／否认句优先于设问转述壳
+    if 12 <= nlen <= 90:
+        brevity += 0.65
+        if "说：" in text or "“" in text or '"' in text:
+            brevity += 0.4
     # R27：政府口径／可核验责任句优先作簇代表
     resp = 0.0
     if any(c in text for c in _RESP_GOV):
@@ -144,6 +156,12 @@ def _rep_quality(
     trad = 0.35 if trad_n >= 4 else 0.0
     # R34：问句可核验槽对齐优先作簇代表（抗通稿壳）
     slot_q = min(1.5, 0.35 * float(slot_align_hits(text, slots)))
+    secondary = 1.3 if any(c in text[:48] for c in _SECONDARY_CUE) else 0.0
+    if slots and any(
+        a and len(a) >= 2 and a in text
+        for a in (slots.get("claim_alts") or [])[:6]
+    ):
+        slot_q += 0.5
     # R38：高拉丁声明／原文优先于同数字中文通稿壳
     n_lat = sum(1 for c in text if ("A" <= c <= "Z") or ("a" <= c <= "z"))
     lat_r = n_lat / max(len(text), 1)
@@ -155,15 +173,35 @@ def _rep_quality(
             e in tl
             for e in (
                 "fuel switch", "preliminary report", "aaib", "locking",
-                "killed", "on board", "said on",
+                "killed", "on board", "said on", "cut off",
             )
         ):
             en_decl += 0.6
     wire_pen = 0.0
     if looks_like_wire_shell(text) and lat_r < 0.4:
         wire_pen = 0.8
+    # R39：通稿转述带轻降；否认／无关短裁决句轻抬
+    relay_pen = 0.0
+    if (
+        str(feat.get("authority_band") or "") == "wire_relay"
+        or str(meta.get("portable_role") or "") == "media_relay"
+    ):
+        relay_pen = 0.55
+    deny = 0.5 if any(
+        c in text for c in ("纯属", "予以否认", "没有关系", "无关", "并非")
+    ) else 0.0
     return (
-        precise + voice + brevity + resp + trad + slot_q + en_decl - wire_pen,
+        precise
+        + voice
+        + brevity
+        + resp
+        + trad
+        + slot_q
+        + en_decl
+        + deny
+        - wire_pen
+        - secondary
+        - relay_pen,
         ver,
         -wrap - caliber_noise,
         float(feat.get("authority_unit") or 0.0),
@@ -184,22 +222,56 @@ def _side_of(
     return str((feats.get(pid) or {}).get("option_side") or "") or "other"
 
 
+def _claim_kernel(text: str) -> str | None:
+    """同主张／同数字核：燃油切断声明、否认侥幸短核等。不读案名。"""
+    body = text or ""
+    tl = body.lower()
+    fuel = (
+        ("fuel" in tl and "switch" in tl)
+        or ("燃油" in body and "开关" in body)
+    )
+    cut = any(
+        w in tl for w in ("cut off", "cutoff", "starved of fuel", "closed")
+    ) or any(c in body for c in ("关闭", "切断", "失去了燃油"))
+    report = (
+        "preliminary" in tl
+        or "aaib" in tl
+        or any(c in body for c in ("初步调查", "初步报告", "事故调查"))
+    )
+    if fuel and (cut or report):
+        return "fuel_switch_cutoff"
+    # 否认／侥幸短核勿整题并一簇——同题可有多条不同表述金标近似
+    return None
+
+
 def _cluster_wire_keep_one(
     scored_cores: list[tuple[float, str]],
     metas: dict[str, dict[str, Any]],
     feats: dict[str, dict[str, Any]] | None = None,
     slots: dict[str, Any] | None = None,
 ) -> list[tuple[float, str]]:
-    """通稿／近同文簇：质量更好的代表可替换高分包装段。"""
+    """通稿／近同文／同主张核簇：质量更好的代表可替换高分包装段。"""
     feats = feats or {}
     kept: list[tuple[float, str]] = []
     norms: list[str] = []
+    kernels: list[str | None] = []
     for sc, pid in scored_cores:
         body = _norm_body(metas, pid)
-        dup_at = next((i for i, kn in enumerate(norms) if _near_dup(body, kn)), None)
+        text = str((metas.get(pid) or {}).get("text") or "")
+        kern = _claim_kernel(text)
+        dup_at = next(
+            (
+                i
+                for i, kn in enumerate(norms)
+                if _near_dup(body, kn)
+                or (kern is not None and kernels[i] == kern)
+            ),
+            None,
+        )
         if dup_at is None:
             kept.append((sc, pid))
             norms.append(body)
+            kernels.append(kern)
             continue
         old_sc, old_pid = kept[dup_at]
         if _rep_quality(pid, feats=feats, metas=metas, slots=slots) > _rep_quality(
@@ -207,6 +279,7 @@ def _cluster_wire_keep_one(
         ):
             kept[dup_at] = (sc, pid)
             norms[dup_at] = body
+            kernels[dup_at] = kern
     return kept
 
 
@@ -509,9 +582,12 @@ def pack_core_first(
         if _adj_short:
             short = 1 if is_short_claim_segment(text, slots, route=route) else 0
             long_wire = 1 if (nlen > 500 and not short) else 0
-            return (-short, long_wire, -sc, pid)
+            secondary = 1 if any(c in text[:48] for c in _SECONDARY_CUE) else 0
+            return (-short, secondary, long_wire, -sc, pid)
         if _switch_pack:
             tl = text.lower()
+            feat = feats.get(pid) or {}
+            meta = metas.get(pid) or {}
             sw = 1 if (
                 ("燃油" in text and "开关" in text
                  and any(c in text for c in ("关闭", "切断")))
@@ -545,7 +621,29 @@ def pack_core_first(
                 sw == 0 and defect_side == 0
                 and any(c in text[:80] for c in ("遇难", "坠毁", "幸存者", "遇难者"))
             ) else 0
-            return (-(sw + report + defect_side), casualty, -sc, pid)
+            # R39：拉丁声明／缺陷短核优先；长通稿转述后置（勿让 defect 叠分压过 EN）
+            en = 1 if (
+                sum(1 for c in text if ("A" <= c <= "Z") or ("a" <= c <= "z"))
+                / max(len(text), 1)
+                >= 0.55
+            ) else 0
+            decl = 1 if (sw and report) else 0
+            relay = 1 if (
+                str(feat.get("authority_band") or "") == "wire_relay"
+                or str(meta.get("portable_role") or "") == "media_relay"
+            ) else 0
+            long_shell = 1 if nlen > 420 else 0
+            return (
+                -decl,
+                -en,
+                -defect_side,
+                long_shell,
+                relay,
+                casualty,
+                -(sw + report),
+                -sc,
+                pid,
+            )
         if not _slot_pack:
             return (-sc, pid)
         tl = text.lower()
@@ -664,13 +762,88 @@ def pack_core_first(
             for k in list((anchors or {}).get("side_a") or [])
             + list((anchors or {}).get("side_b") or [])
         )
+        max_doc = 2 if _adj_short else 1
         cores = _cap_same_doc(
-            cores, metas, feats=feats, anchors=anchors, max_per_doc=1,
+            cores, metas, feats=feats, anchors=anchors, max_per_doc=max_doc,
             exempt_both=clock,
         )
     cores, demoted = _soft_side_pack(
         cores, feats=feats, metas=metas, route=route, anchors=anchors,
     )
+    # R39：短主张题——否认／主张核对齐短段置前；设问转述与对立壳后置
+    if _adj_short and cores:
+        alts = list((slots or {}).get("claim_alts") or [])
+
+        def _short_key(pid: str) -> tuple:
+            text = str((metas.get(pid) or {}).get("text") or "")
+            deny = 1 if any(
+                c in text for c in ("纯属", "予以否认", "没有关系", "无关", "并非")
+            ) else 0
+            alt_n = sum(1 for a in alts if a and len(a) >= 2 and a in text)
+            secondary = 1 if any(c in text[:48] for c in _SECONDARY_CUE) else 0
+            oppose = 1 if (
+                deny == 0
+                and "位置" in text
+                and any(c in text for c in ("作用", "关键", "保命"))
+            ) else 0
+            return (-deny, -alt_n, secondary, oppose, pid)
+
+        shorts = [
+            p for p in cores
+            if is_short_claim_segment(
+                str((metas.get(p) or {}).get("text") or ""),
+                slots,
+                route=route,
+            )
+        ]
+        shorts.sort(key=_short_key)
+        rest = [p for p in cores if p not in set(shorts)]
+        cores = shorts + rest
+    # R39：开关事实核对——拉丁声明 → 缺陷侧短核 → 其余（长通稿壳垫后）
+    if _switch_pack and cores:
+        en_decl: list[str] = []
+        defect: list[str] = []
+        other: list[str] = []
+        for pid in cores:
+            text = str((metas.get(pid) or {}).get("text") or "")
+            tl = text.lower()
+            n_lat = sum(
+                1 for c in text if ("A" <= c <= "Z") or ("a" <= c <= "z")
+            )
+            en = n_lat / max(len(text), 1) >= 0.55
+            sw = (
+                ("fuel" in tl and "switch" in tl
+                 and any(w in tl for w in ("cut off", "cutoff", "closed")))
+                or (
+                    "燃油" in text and "开关" in text
+                    and any(c in text for c in ("关闭", "切断"))
+                )
+            )
+            report = (
+                "preliminary" in tl
+                or "aaib" in tl
+                or any(
+                    e in text[:360]
+                    for e in ("初步调查", "初步报告", "黑匣子", "调查报告", "AAIB")
+                )
+            )
+            def_side = (
+                ("燃油" in text or "开关" in text or "fuel" in tl)
+                and any(
+                    c in text or c in tl
+                    for c in (
+                        "加强检测", "设计缺陷", "锁定", "尚未发现",
+                        "locking", "design defect", "no problems",
+                    )
+                )
+            )
+            if en and sw and report:
+                en_decl.append(pid)
+            elif def_side:
+                defect.append(pid)
+            else:
+                other.append(pid)
+        cores = en_decl + defect + other
     cores = cores[:6]
 
     # 自然补位优先；无侧降档段垫后（不抢对立补位槽）

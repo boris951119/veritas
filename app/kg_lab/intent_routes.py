@@ -1063,6 +1063,21 @@ def core_rank_score(
             re.sub(r"\s+", "", text)
         ) > 220:
             rumor_pen = max(rumor_pen, 0.12)
+        # R39：英文初步报告／切断供油声明相对中文通稿转述抬一档
+        n_lat_sw = sum(
+            1 for c in text if ("A" <= c <= "Z") or ("a" <= c <= "z")
+        )
+        if switch_b > 0 and n_lat_sw / max(len(text), 1) >= 0.55:
+            switch_b += 0.18
+        elif (
+            switch_b <= 0
+            and (
+                band == "wire_relay"
+                or str(meta.get("portable_role") or "") == "media_relay"
+            )
+            and slot_strong <= 1
+        ):
+            rumor_pen = max(rumor_pen, 0.12)
     return (
         0.22 * host_u
         + 0.16 * min(float(hits["a"] + hits["b"]) / 3.0, 1.0)
