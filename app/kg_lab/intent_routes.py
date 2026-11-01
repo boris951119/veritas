@@ -488,6 +488,46 @@ _CLAIM_NOUN_TAIL = (
 _PRIMARY_LATIN_CUE = (
     "felt ", "原话", "访谈", "官方视频", "原始出处", "亲口", "英文访谈",
 )
+# R43：造谣核对——具体澄清／否认 vs 谣言复述壳（可迁移，无案名）
+_RUMOR_LEAD_CUE = (
+    "有消息称", "有网友", "网传", "传闻还包括", "真假难辨", "也有网友",
+)
+_CLARIFY_SUBSTANCE_RE = re.compile(
+    r"(?:"
+    r"实际上获得"
+    r"|予以否认"
+    r"|知情者说"
+    r"|得到了[^。]{0,40}推荐信"
+    r"|具备保研资格"
+    r"|并非[^。]{0,24}(?:无人|推荐信|保研|合照|不实)"
+    r"|原院长[^。]{0,24}(?:回应|介绍|澄清)"
+    r"|不实传言"
+    r")"
+)
+
+
+def is_clarify_substance(text: str) -> bool:
+    """具体澄清／一手否认句（相对「澄清了事实」空壳）。"""
+    return bool(_CLARIFY_SUBSTANCE_RE.search(text or ""))
+
+
+def is_clarify_rumor_shell(text: str, slots: dict[str, Any] | None = None) -> bool:
+    """谣言复述壳：句首传谣或堆叠主张后只贴「澄清了事实」，无具体否认。"""
+    body = text or ""
+    if is_clarify_substance(body):
+        return False
+    if any(c in body[:72] for c in _RUMOR_LEAD_CUE):
+        return True
+    head = body[:120]
+    qhits = sum(
+        1 for q in list((slots or {}).get("quotes") or [])
+        if q and len(q) >= 3 and q in head
+    )
+    if qhits >= 2 and any(
+        c in body for c in ("澄清了事实", "回应澄清了", "的回应澄清")
+    ):
+        return True
+    return False
 
 
 def stage2_verifiable_slots(question: str) -> dict[str, Any]:
@@ -670,10 +710,10 @@ def slot_align_detail(
     for k in slots.get("amounts") or []:
         if amount_token_hit(text, str(k or "")):
             strong += 1
-    # 引号：只计≥4字且去子串重复（防「荐信／保研」碎片把通稿抬到 strong=10）
+    # 引号：只计≥3字且去子串重复（R43：放行「推荐信」等 3 字主张核；仍挡「荐信／保研」2 字碎片）
     matched_q: list[str] = []
     for k in sorted((slots.get("quotes") or []), key=lambda x: len(x or ""), reverse=True):
-        if not k or len(k) < 4 or k not in text:
+        if not k or len(k) < 3 or k not in text:
             continue
         if any(k in m for m in matched_q):
             continue
@@ -1055,20 +1095,25 @@ def core_rank_score(
             interview_b = 0.42
         elif any(n in text for n in _EVAL_RUMOR_NOISE):
             rumor_pen = 0.28
-    # R40：仅「引号／对立支」澄清题——澄清抬；纯「有消息称」复述降（勿用 claim_nouns 以免伤吉隆）
+    # R40／R43：引号澄清题——具体否认抬；谣言复述壳降（勿用 claim_nouns 以免伤吉隆）
     clarify_b = 0.0
     _rumor_adj = bool(
         slots and (slots.get("quotes") or slots.get("claim_alts"))
     )
     if route == "adjudicate" and _rumor_adj:
-        if any(
+        if is_clarify_substance(text):
+            clarify_b = 0.48
+            if "澄清" in text[:80] or "原院长" in text[:80] or "知情者说" in text[:100]:
+                clarify_b += 0.12
+        elif any(
             c in text
             for c in ("澄清", "并非", "予以否认", "实际上获得", "原院长", "知情者说")
-        ):
+        ) and not is_clarify_rumor_shell(text, slots):
             clarify_b = 0.40
-            # 标题／导语含澄清也抬（抗 App 壳埋钉）
             if "澄清" in text[:80] or "原院长" in text[:80]:
                 clarify_b += 0.12
+        elif is_clarify_rumor_shell(text, slots):
+            rumor_pen = max(rumor_pen, 0.36)
         elif any(
             c in text[:60]
             for c in ("有消息称", "有网友", "网传", "传闻还包括", "真假难辨")
@@ -1198,6 +1243,16 @@ def is_core_candidate(
         and (slots.get("amounts") or [])
         and (slots.get("latin") or [])
     )
+    _quote_adj = bool(
+        slots and (slots.get("quotes") or slots.get("claim_alts"))
+    )
+    _clarify_edge = (
+        route == "adjudicate"
+        and _quote_adj
+        and slot_strong >= 1
+        and is_clarify_substance(text)
+        and pp <= 55
+    )
     slot_edge = (
         (route == "fact_check" and slot_strong >= 1 and pp <= 22)
         or (
@@ -1210,6 +1265,7 @@ def is_core_candidate(
             )
             and pp <= 28
         )
+        or _clarify_edge
     )
     in_pool = pp <= 20 or edge_ok or slot_edge
     if not in_pool:
@@ -1236,11 +1292,20 @@ def is_core_candidate(
         )
     ):
         return True
+    # R43：造谣核对——具体澄清／否认进核心（可贴池缘≤40）；谣言复述壳不进核心
+    if route == "adjudicate" and _quote_adj:
+        if is_clarify_rumor_shell(text, slots):
+            return False
+        if is_clarify_substance(text) and slot_strong >= 1:
+            return True
     # 引号／主张核多击（造谣核对类）——不限路由，避免裁决误分时通稿独占
     if slot_strong >= 2 and (
         (slots.get("quotes") or slots.get("claim_nouns") or slots.get("claim_alts"))
         and pp <= 20
     ):
+        # R43：同门谣言复述即使强槽多击也不进核心
+        if route == "adjudicate" and _quote_adj and is_clarify_rumor_shell(text, slots):
+            return False
         return True
     # R35：座位码／侥幸类短主张段进核心
     nlen = len(re.sub(r"\s+", "", text))

@@ -20,6 +20,8 @@ from app.kg_lab.intent_routes import (
     anchor_hits,
     core_rank_score,
     is_claim_conflict_route,
+    is_clarify_rumor_shell,
+    is_clarify_substance,
     is_core_candidate,
     is_eval_attitude_question,
     is_interview_voice_segment,
@@ -639,18 +641,25 @@ def pack_core_first(
             ) else 0
             return (-amt_n, -en, -head, bury, -sc, pid)
         if _clarify_pack:
-            clarify = 1 if any(
-                c in text
-                for c in ("澄清", "并非", "予以否认", "实际上获得", "原院长", "知情者说")
-            ) else 0
-            rumor = 1 if (
-                clarify == 0
-                and any(
-                    c in text[:60]
-                    for c in ("有消息称", "有网友", "网传", "传闻还包括", "真假难辨")
+            substance = 1 if is_clarify_substance(text) else 0
+            clarify = 1 if (
+                substance
+                or any(
+                    c in text
+                    for c in ("澄清", "并非", "予以否认", "实际上获得", "原院长", "知情者说")
                 )
             ) else 0
-            return (-clarify, rumor, -sc, pid)
+            rumor = 1 if (
+                is_clarify_rumor_shell(text, slots)
+                or (
+                    clarify == 0
+                    and any(
+                        c in text[:60]
+                        for c in ("有消息称", "有网友", "网传", "传闻还包括", "真假难辨")
+                    )
+                )
+            ) else 0
+            return (-substance, -clarify, rumor, -sc, pid)
         if _primary_pack:
             primary = 1 if any(
                 c in text
@@ -812,9 +821,15 @@ def pack_core_first(
                 for a in (slots.get("amounts") or [])
             ):
                 return True
-            if _clarify_pack and any(
-                c in body
-                for c in ("澄清", "并非", "予以否认", "实际上获得", "原院长", "知情者说")
+            if _clarify_pack and (
+                is_clarify_substance(body)
+                or (
+                    any(
+                        c in body
+                        for c in ("澄清", "并非", "予以否认", "实际上获得", "原院长", "知情者说")
+                    )
+                    and not is_clarify_rumor_shell(body, slots)
+                )
             ):
                 return True
             if _primary_pack and (
@@ -962,10 +977,12 @@ def pack_core_first(
                 amount_token_hit(text, str(a or ""))
                 for a in list((slots or {}).get("amounts") or [])
             ) else 0
-            clarify = 1 if any(
-                c in text
-                for c in ("澄清", "并非", "予以否认", "实际上获得", "原院长", "知情者说")
-            ) else 0
+            clarify = 2 if is_clarify_substance(text) else (
+                1 if any(
+                    c in text
+                    for c in ("澄清", "并非", "予以否认", "实际上获得", "原院长", "知情者说")
+                ) and not is_clarify_rumor_shell(text, slots) else 0
+            )
             primary = 1 if any(
                 c in text for c in ("官方视频", "原始出处", "亲口", "IMU")
             ) else 0
@@ -1125,12 +1142,15 @@ def density_constrained_submit(
             ):
                 out.append(p)
                 continue
-            if any(
-                c in text
-                for c in (
-                    "澄清", "并非", "予以否认", "实际上获得", "原院长", "知情者说",
-                    "官方视频", "原始出处", "亲口", "IMU",
+            if is_clarify_substance(text) or (
+                any(
+                    c in text
+                    for c in (
+                        "澄清", "并非", "予以否认", "实际上获得", "原院长", "知情者说",
+                        "官方视频", "原始出处", "亲口", "IMU",
+                    )
                 )
+                and not is_clarify_rumor_shell(text, slots)
             ):
                 out.append(p)
         return out
