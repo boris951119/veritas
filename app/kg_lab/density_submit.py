@@ -23,6 +23,7 @@ from app.kg_lab.intent_routes import (
     is_eval_attitude_question,
     is_interview_voice_segment,
     is_short_claim_segment,
+    looks_like_wire_shell,
     related_filler,
     slot_align_detail,
     slot_align_hits,
@@ -791,8 +792,20 @@ def density_constrained_submit(
     )
     cores = set(core_list)
     fillers = set(fill_list)
+    # R37：事实核对题若强核心≤1，勿硬凑 k=3 灌通稿（盒稀主因）
+    km = int(k_min)
+    if route == "fact_check" and len(core_list) <= 1:
+        pid0 = core_list[0] if core_list else ""
+        body0 = str((metas.get(pid0) or {}).get("text") or "")
+        feat0 = feats.get(pid0) or {}
+        strong0, _ = slot_align_detail(body0, slots)
+        band0 = str(feat0.get("authority_band") or "")
+        if strong0 >= 1 and not looks_like_wire_shell(
+            body0, band=band0, slot_hits=slot_align_hits(body0, slots),
+        ):
+            km = 1
     chosen = choose_density_k(
-        packed, cores, fillers, k_min=k_min, k_max=k_max, target=target,
+        packed, cores, fillers, k_min=km, k_max=k_max, target=target,
     )
     sub = chosen["submission"]
     out = {

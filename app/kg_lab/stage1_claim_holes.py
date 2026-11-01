@@ -724,10 +724,18 @@ def _slot_hit_tier(text: str, slots: dict[str, Any] | None) -> int:
     lat = list(slots.get("latin") or [])
     word_lat = [k for k in lat if not _latin_codeish(k)]
     code_lat = [k for k in lat if _latin_codeish(k)]
+    from app.kg_lab.intent_routes import amount_token_hit
+
     has_word_lat = any(k.lower() in tl for k in word_lat)
     has_code = any(k.lower() in tl for k in (slots.get("codes") or []) + code_lat)
-    has_amt = any(k in text for k in (slots.get("amounts") or []))
+    # R37：数额剥单位数字核，抬英文通稿／声明里的 241／274 等
+    has_amt = any(
+        amount_token_hit(text, str(k or "")) for k in (slots.get("amounts") or [])
+    )
     has_qt = any(k in text for k in (slots.get("quotes") or []))
+    # 拉丁专名（航班号等）× 数额数字核 → 最高档，专治中英问句对英文段
+    if has_word_lat and has_amt:
+        return 3
     alt_list = list(slots.get("claim_alts") or [])
     has_alt = any(k in text for k in alt_list if k and len(k) >= 4)
     alt_cores: list[str] = []
@@ -835,6 +843,9 @@ def inject_claim_holes(
     head_set = set(head)
 
     if use_slots:
+        from app.kg_lab.intent_routes import amount_token_hit
+        base_pos = {pid: i for i, pid in enumerate(base_ids, 1)}
+        # R37：注入只服务池外／深段；已在前20 的通稿不必再注
         cands = [
             (
                 _slot_hit_tier(texts.get(pid) or "", slots),
@@ -842,9 +853,52 @@ def inject_claim_holes(
                 pid,
             )
             for pid in claim_sc
-            if pid not in head_set and claim_sc[pid] >= min_claim
+            if pid not in head_set
+            and claim_sc[pid] >= min_claim
+            and int(base_pos.get(pid) or 10**9) > 20
         ]
-        cands.sort(reverse=True)
+        seen_cand = {pid for _t, _s, pid in cands}
+        for pid, body in texts.items():
+            if not pid or pid in head_set or pid in seen_cand:
+                continue
+            pr = int(base_pos.get(pid) or 10**9)
+            if pr <= 20:
+                continue
+            tier = _slot_hit_tier(body or "", slots)
+            if tier < 2:
+                continue
+            n_amt = sum(
+                1 for a in (slots.get("amounts") or [])
+                if amount_token_hit(body or "", str(a or ""))
+            )
+            # 多数额对撞优先（241／242／274）；略抬更深段
+            cands.append((
+                tier,
+                float(min_claim) + 0.5 * tier + 0.45 * n_amt + min(0.4, pr / 400.0),
+                pid,
+            ))
+            seen_cand.add(pid)
+        # R37：有数额槽时按「对撞数字数 × 承运人／拉丁锚 × 短段」重排
+        if slots.get("amounts"):
+            lat = [str(x).lower() for x in (slots.get("latin") or []) if x]
+            ranked_amt: list[tuple[int, int, int, int, float, str]] = []
+            for tier, sc, pid in cands:
+                body = texts.get(pid) or ""
+                tl = body.lower()
+                n_amt = sum(
+                    1 for a in (slots.get("amounts") or [])
+                    if amount_token_hit(body, str(a or ""))
+                )
+                # 锚只用问句拉丁槽（如航班号），不写航司／国名专名表
+                anchor = 1 if any(k in tl for k in lat) else 0
+                import re as _re
+                nlen = len(_re.sub(r"\s+", "", body))
+                short = 1 if 0 < nlen <= 220 else 0
+                ranked_amt.append((n_amt, anchor, short, int(tier), float(sc), pid))
+            ranked_amt.sort(reverse=True)
+            cands = [(tier, sc, pid) for _na, _an, _sh, tier, sc, pid in ranked_amt]
+        else:
+            cands.sort(reverse=True)
         inject: list[str] = []
         per_doc: dict[str, int] = {}
         for pid in head:
@@ -974,6 +1028,12 @@ def fill_stage1_claim_holes(
             mi = max(mi, 14)
         elif slots.get("amounts") or slots.get("claim_alts"):
             mi = max(mi, 12)
+            # R37：数额×拉丁对撞题——缩池头＋加注入，给深段数字核让路
+            if slots.get("amounts") and (
+                slots.get("latin") or slots.get("codes")
+            ):
+                hk = min(hk, 6)
+                mi = max(mi, 14)
         elif slots.get("codes"):
             mi = max(mi, 12)
         else:

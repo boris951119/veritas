@@ -634,6 +634,21 @@ def is_short_claim_segment(
     return hits >= 1
 
 
+def amount_token_hit(text: str, amount: str) -> bool:
+    """数额槽命中：整串或剥单位后的数字核（241人↔241；禁单数字误伤）。"""
+    if not text or not amount:
+        return False
+    if amount in text:
+        return True
+    m = re.match(r"^(\d+(?:\.\d+)?)", amount.strip())
+    if not m:
+        return False
+    num = m.group(1)
+    if len(num) < 2:
+        return False
+    return bool(re.search(rf"(?<!\d){re.escape(num)}(?!\d)", text))
+
+
 def slot_align_detail(
     text: str, slots: dict[str, Any] | None,
 ) -> tuple[int, int]:
@@ -653,7 +668,7 @@ def slot_align_detail(
         if k and k.lower() in tl:
             strong += 1
     for k in slots.get("amounts") or []:
-        if k and k in text:
+        if amount_token_hit(text, str(k or "")):
             strong += 1
     # 引号：只计≥4字且去子串重复（防「荐信／保研」碎片把通稿抬到 strong=10）
     matched_q: list[str] = []
@@ -1118,7 +1133,25 @@ def is_core_candidate(
         and pp <= 24
     )
     # R34：事实核对题强槽对齐可贴池缘；裁决题不靠拉丁灌核心
-    slot_edge = route == "fact_check" and slot_strong >= 1 and pp <= 22
+    # R37：裁决题若问句含拉丁×数额（死亡人数对撞），数额命中段可贴池缘
+    _amt_lat_q = bool(
+        slots
+        and (slots.get("amounts") or [])
+        and (slots.get("latin") or [])
+    )
+    slot_edge = (
+        (route == "fact_check" and slot_strong >= 1 and pp <= 22)
+        or (
+            route == "adjudicate"
+            and _amt_lat_q
+            and slot_strong >= 1
+            and any(
+                amount_token_hit(text, str(a or ""))
+                for a in (slots.get("amounts") or [])
+            )
+            and pp <= 28
+        )
+    )
     in_pool = pp <= 20 or edge_ok or slot_edge
     if not in_pool:
         return False
@@ -1132,6 +1165,17 @@ def is_core_candidate(
 
     # R34：事实核对题——池内强槽对齐进核心（抗 wire_relay 误伤）
     if route == "fact_check" and slot_strong >= 1:
+        return True
+    # R37：裁决题拉丁×数额对撞——数额命中进核心（中英数字核）
+    if (
+        route == "adjudicate"
+        and _amt_lat_q
+        and slot_strong >= 1
+        and any(
+            amount_token_hit(text, str(a or ""))
+            for a in (slots.get("amounts") or [])
+        )
+    ):
         return True
     # 引号／主张核多击（造谣核对类）——不限路由，避免裁决误分时通稿独占
     if slot_strong >= 2 and (
