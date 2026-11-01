@@ -1,0 +1,1836 @@
+{
+  "verdict": "下一刀＝先回灌短盒（对齐 C-108 @7）；坚持无手工盒则先抬一筛池头。主因 dens_k 短挤出+池头不够金；不修系数。",
+  "next_cut": "保底回灌短盒（推荐）／或抬一筛池头金标@7；禁 R9／权重进 pack；不合 main。",
+  "next_kind": "rehydrate_box",
+  "liuxiang_at7": {
+    "A": 12,
+    "B": 4,
+    "C": 1
+  },
+  "holdout_l2": {
+    "A": 29,
+    "B": 25,
+    "C": 25,
+    "denom": 59
+  },
+  "buckets": {
+    "miss_gold_pool": 4,
+    "pool_dilute": 10,
+    "density_squeeze": 16,
+    "submit_narrow_drop": 0,
+    "role_cluster_kill": 13
+  },
+  "leaks": 0,
+  "rows": [
+    {
+      "slug": "liuxiang",
+      "qid": "q_001",
+      "role": "regression",
+      "denom": 4,
+      "r44_box": [
+        "doc_002#p3",
+        "doc_035#p7",
+        "doc_024#p1",
+        "doc_025#p6",
+        "doc_033#p2",
+        "doc_043#p1",
+        "doc_012#p5"
+      ],
+      "r44_micro": 0.5714,
+      "gold_seg": [
+        "doc_002#p3",
+        "doc_024#p1",
+        "doc_025#p6",
+        "doc_035#p7"
+      ],
+      "A": {
+        "l2": 4,
+        "at7": 4,
+        "n_sel": 88,
+        "dens_k": 7,
+        "box": [
+          "doc_002#p3",
+          "doc_035#p7",
+          "doc_024#p1",
+          "doc_025#p6",
+          "doc_033#p2",
+          "doc_043#p1",
+          "doc_012#p5"
+        ],
+        "box_gold": [
+          "doc_002#p3",
+          "doc_024#p1",
+          "doc_025#p6",
+          "doc_035#p7"
+        ],
+        "micro": 0.5714,
+        "at7_ids": [
+          "doc_002#p3",
+          "doc_035#p7",
+          "doc_024#p1",
+          "doc_025#p6",
+          "doc_033#p2",
+          "doc_043#p1",
+          "doc_012#p5"
+        ],
+        "at7_gold": [
+          "doc_002#p3",
+          "doc_024#p1",
+          "doc_025#p6",
+          "doc_035#p7"
+        ],
+        "leaks": []
+      },
+      "B": {
+        "l2": 4,
+        "at7": 1,
+        "n_sel": 84,
+        "pool_n": 180,
+        "gold_in_pool": [
+          "doc_002#p3",
+          "doc_024#p1",
+          "doc_025#p6",
+          "doc_035#p7"
+        ],
+        "gold_in_pool_n": 4,
+        "gold_in_pool_at50_n": 4,
+        "gold_in_pool_at7_n": 1,
+        "gold_ranks": {
+          "doc_002#p3": 18,
+          "doc_024#p1": 5,
+          "doc_025#p6": 25,
+          "doc_035#p7": 22
+        },
+        "dens_k": 3,
+        "box": [
+          "doc_037#p2",
+          "doc_043#p2",
+          "doc_030#p12"
+        ],
+        "box_gold": [],
+        "micro": 0.0,
+        "at7_ids": [
+          "doc_037#p2",
+          "doc_043#p2",
+          "doc_030#p12",
+          "doc_038#p1",
+          "doc_007#p4",
+          "doc_043#p1",
+          "doc_024#p1"
+        ],
+        "at7_gold": [
+          "doc_024#p1"
+        ],
+        "miss_pool": [],
+        "in_pool_not_box": [
+          "doc_002#p3",
+          "doc_024#p1",
+          "doc_025#p6",
+          "doc_035#p7"
+        ],
+        "leaks": []
+      },
+      "C": {
+        "l2": 4,
+        "at7": 1,
+        "n_sel": 87
+      },
+      "delta_l2_AB": 0,
+      "delta_l2_BC": 0,
+      "delta_at7_AB": 3,
+      "gold_in_r44_box": [
+        "doc_002#p3",
+        "doc_024#p1",
+        "doc_025#p6",
+        "doc_035#p7"
+      ],
+      "attr": {
+        "lost_from_a7": [
+          "doc_002#p3",
+          "doc_025#p6",
+          "doc_035#p7"
+        ],
+        "gained_vs_a7": [],
+        "lost_detail": [
+          {
+            "seg": "doc_002#p3",
+            "in_stage1_pool": true,
+            "pool_rank": 18,
+            "in_density_box": false,
+            "in_r44_box": true,
+            "tags": [
+              "density_squeeze"
+            ]
+          },
+          {
+            "seg": "doc_025#p6",
+            "in_stage1_pool": true,
+            "pool_rank": 25,
+            "in_density_box": false,
+            "in_r44_box": true,
+            "tags": [
+              "density_squeeze"
+            ]
+          },
+          {
+            "seg": "doc_035#p7",
+            "in_stage1_pool": true,
+            "pool_rank": 22,
+            "in_density_box": false,
+            "in_r44_box": true,
+            "tags": [
+              "density_squeeze"
+            ]
+          }
+        ],
+        "buckets": {
+          "miss_gold_pool": 0,
+          "pool_dilute": 0,
+          "density_squeeze": 3,
+          "submit_narrow_drop": 0,
+          "role_cluster_kill": 0
+        }
+      }
+    },
+    {
+      "slug": "liuxiang",
+      "qid": "q_002",
+      "role": "regression",
+      "denom": 5,
+      "r44_box": [
+        "doc_009#p5",
+        "doc_011#p7",
+        "doc_041#p1",
+        "doc_002#p3",
+        "doc_051#p3",
+        "doc_051#p5",
+        "doc_029#p7"
+      ],
+      "r44_micro": 0.5714,
+      "gold_seg": [
+        "doc_002#p3",
+        "doc_009#p5",
+        "doc_028#p1",
+        "doc_029#p7",
+        "doc_051#p3"
+      ],
+      "A": {
+        "l2": 5,
+        "at7": 4,
+        "n_sel": 94,
+        "dens_k": 7,
+        "box": [
+          "doc_009#p5",
+          "doc_011#p7",
+          "doc_041#p1",
+          "doc_002#p3",
+          "doc_051#p3",
+          "doc_051#p5",
+          "doc_029#p7"
+        ],
+        "box_gold": [
+          "doc_002#p3",
+          "doc_009#p5",
+          "doc_029#p7",
+          "doc_051#p3"
+        ],
+        "micro": 0.5714,
+        "at7_ids": [
+          "doc_009#p5",
+          "doc_011#p7",
+          "doc_041#p1",
+          "doc_002#p3",
+          "doc_051#p3",
+          "doc_051#p5",
+          "doc_029#p7"
+        ],
+        "at7_gold": [
+          "doc_002#p3",
+          "doc_009#p5",
+          "doc_029#p7",
+          "doc_051#p3"
+        ],
+        "leaks": []
+      },
+      "B": {
+        "l2": 3,
+        "at7": 1,
+        "n_sel": 89,
+        "pool_n": 180,
+        "gold_in_pool": [
+          "doc_009#p5",
+          "doc_028#p1",
+          "doc_029#p7",
+          "doc_051#p3"
+        ],
+        "gold_in_pool_n": 4,
+        "gold_in_pool_at50_n": 2,
+        "gold_in_pool_at7_n": 1,
+        "gold_ranks": {
+          "doc_002#p3": null,
+          "doc_009#p5": 30,
+          "doc_028#p1": 4,
+          "doc_029#p7": 138,
+          "doc_051#p3": 55
+        },
+        "dens_k": 3,
+        "box": [
+          "doc_026#p2",
+          "doc_030#p12",
+          "doc_026#p9"
+        ],
+        "box_gold": [],
+        "micro": 0.0,
+        "at7_ids": [
+          "doc_026#p2",
+          "doc_030#p12",
+          "doc_026#p9",
+          "doc_011#p7",
+          "doc_029#p5",
+          "doc_028#p1",
+          "doc_052#p2"
+        ],
+        "at7_gold": [
+          "doc_028#p1"
+        ],
+        "miss_pool": [
+          "doc_002#p3"
+        ],
+        "in_pool_not_box": [
+          "doc_009#p5",
+          "doc_028#p1",
+          "doc_029#p7",
+          "doc_051#p3"
+        ],
+        "leaks": []
+      },
+      "C": {
+        "l2": 3,
+        "at7": 0,
+        "n_sel": 93
+      },
+      "delta_l2_AB": 2,
+      "delta_l2_BC": 0,
+      "delta_at7_AB": 3,
+      "gold_in_r44_box": [
+        "doc_002#p3",
+        "doc_009#p5",
+        "doc_029#p7",
+        "doc_051#p3"
+      ],
+      "attr": {
+        "lost_from_a7": [
+          "doc_002#p3",
+          "doc_009#p5",
+          "doc_029#p7",
+          "doc_051#p3"
+        ],
+        "gained_vs_a7": [
+          "doc_028#p1"
+        ],
+        "lost_detail": [
+          {
+            "seg": "doc_002#p3",
+            "in_stage1_pool": false,
+            "pool_rank": null,
+            "in_density_box": false,
+            "in_r44_box": true,
+            "tags": [
+              "miss_gold_pool",
+              "role_cluster_kill"
+            ]
+          },
+          {
+            "seg": "doc_009#p5",
+            "in_stage1_pool": true,
+            "pool_rank": 30,
+            "in_density_box": false,
+            "in_r44_box": true,
+            "tags": [
+              "density_squeeze"
+            ]
+          },
+          {
+            "seg": "doc_029#p7",
+            "in_stage1_pool": true,
+            "pool_rank": 138,
+            "in_density_box": false,
+            "in_r44_box": true,
+            "tags": [
+              "pool_dilute",
+              "density_squeeze",
+              "role_cluster_kill"
+            ]
+          },
+          {
+            "seg": "doc_051#p3",
+            "in_stage1_pool": true,
+            "pool_rank": 55,
+            "in_density_box": false,
+            "in_r44_box": true,
+            "tags": [
+              "pool_dilute",
+              "density_squeeze",
+              "role_cluster_kill"
+            ]
+          }
+        ],
+        "buckets": {
+          "miss_gold_pool": 1,
+          "pool_dilute": 2,
+          "density_squeeze": 3,
+          "submit_narrow_drop": 0,
+          "role_cluster_kill": 3
+        }
+      }
+    },
+    {
+      "slug": "liuxiang",
+      "qid": "q_003",
+      "role": "regression",
+      "denom": 5,
+      "r44_box": [
+        "doc_012#p5",
+        "doc_046#p3",
+        "doc_006#p3",
+        "doc_002#p3",
+        "doc_033#p5",
+        "doc_027#p3",
+        "doc_050#p10"
+      ],
+      "r44_micro": 0.5714,
+      "gold_seg": [
+        "doc_002#p3",
+        "doc_006#p3",
+        "doc_012#p5",
+        "doc_033#p5",
+        "doc_033#p6"
+      ],
+      "A": {
+        "l2": 4,
+        "at7": 4,
+        "n_sel": 95,
+        "dens_k": 7,
+        "box": [
+          "doc_012#p5",
+          "doc_046#p3",
+          "doc_006#p3",
+          "doc_002#p3",
+          "doc_033#p5",
+          "doc_027#p3",
+          "doc_050#p10"
+        ],
+        "box_gold": [
+          "doc_002#p3",
+          "doc_006#p3",
+          "doc_012#p5",
+          "doc_033#p5"
+        ],
+        "micro": 0.5714,
+        "at7_ids": [
+          "doc_012#p5",
+          "doc_046#p3",
+          "doc_006#p3",
+          "doc_002#p3",
+          "doc_033#p5",
+          "doc_027#p3",
+          "doc_050#p10"
+        ],
+        "at7_gold": [
+          "doc_002#p3",
+          "doc_006#p3",
+          "doc_012#p5",
+          "doc_033#p5"
+        ],
+        "leaks": []
+      },
+      "B": {
+        "l2": 2,
+        "at7": 2,
+        "n_sel": 95,
+        "pool_n": 180,
+        "gold_in_pool": [
+          "doc_002#p3",
+          "doc_006#p3",
+          "doc_012#p5",
+          "doc_033#p5",
+          "doc_033#p6"
+        ],
+        "gold_in_pool_n": 5,
+        "gold_in_pool_at50_n": 2,
+        "gold_in_pool_at7_n": 2,
+        "gold_ranks": {
+          "doc_002#p3": 139,
+          "doc_006#p3": 1,
+          "doc_012#p5": 7,
+          "doc_033#p5": 141,
+          "doc_033#p6": 145
+        },
+        "dens_k": 3,
+        "box": [
+          "doc_046#p3",
+          "doc_006#p3",
+          "doc_013#p3"
+        ],
+        "box_gold": [
+          "doc_006#p3"
+        ],
+        "micro": 0.3333,
+        "at7_ids": [
+          "doc_046#p3",
+          "doc_006#p3",
+          "doc_013#p3",
+          "doc_046#p9",
+          "doc_050#p10",
+          "doc_007#p2",
+          "doc_012#p5"
+        ],
+        "at7_gold": [
+          "doc_006#p3",
+          "doc_012#p5"
+        ],
+        "miss_pool": [],
+        "in_pool_not_box": [
+          "doc_002#p3",
+          "doc_012#p5",
+          "doc_033#p5",
+          "doc_033#p6"
+        ],
+        "leaks": []
+      },
+      "C": {
+        "l2": 2,
+        "at7": 0,
+        "n_sel": 95
+      },
+      "delta_l2_AB": 2,
+      "delta_l2_BC": 0,
+      "delta_at7_AB": 2,
+      "gold_in_r44_box": [
+        "doc_002#p3",
+        "doc_006#p3",
+        "doc_012#p5",
+        "doc_033#p5"
+      ],
+      "attr": {
+        "lost_from_a7": [
+          "doc_002#p3",
+          "doc_033#p5"
+        ],
+        "gained_vs_a7": [],
+        "lost_detail": [
+          {
+            "seg": "doc_002#p3",
+            "in_stage1_pool": true,
+            "pool_rank": 139,
+            "in_density_box": false,
+            "in_r44_box": true,
+            "tags": [
+              "pool_dilute",
+              "density_squeeze",
+              "role_cluster_kill"
+            ]
+          },
+          {
+            "seg": "doc_033#p5",
+            "in_stage1_pool": true,
+            "pool_rank": 141,
+            "in_density_box": false,
+            "in_r44_box": true,
+            "tags": [
+              "pool_dilute",
+              "density_squeeze",
+              "role_cluster_kill"
+            ]
+          }
+        ],
+        "buckets": {
+          "miss_gold_pool": 0,
+          "pool_dilute": 2,
+          "density_squeeze": 2,
+          "submit_narrow_drop": 0,
+          "role_cluster_kill": 2
+        }
+      }
+    },
+    {
+      "slug": "wanghong",
+      "qid": "q_001",
+      "role": "holdout",
+      "denom": 5,
+      "r44_box": [
+        "doc_001#p1"
+      ],
+      "r44_micro": 1.0,
+      "gold_seg": [
+        "doc_001#p1",
+        "doc_004#p4",
+        "doc_004#p5",
+        "doc_008#p12",
+        "doc_010#p4"
+      ],
+      "A": {
+        "l2": 2,
+        "at7": 1,
+        "n_sel": 76,
+        "dens_k": 1,
+        "box": [
+          "doc_001#p1"
+        ],
+        "box_gold": [
+          "doc_001#p1"
+        ],
+        "micro": 1.0,
+        "at7_ids": [
+          "doc_001#p1",
+          "doc_003#p5",
+          "doc_004#p1",
+          "doc_004#p10",
+          "doc_004#p2",
+          "doc_004#p3",
+          "doc_004#p7"
+        ],
+        "at7_gold": [
+          "doc_001#p1"
+        ],
+        "leaks": []
+      },
+      "B": {
+        "l2": 2,
+        "at7": 1,
+        "n_sel": 76,
+        "pool_n": 180,
+        "gold_in_pool": [
+          "doc_001#p1",
+          "doc_004#p4",
+          "doc_004#p5",
+          "doc_010#p4"
+        ],
+        "gold_in_pool_n": 4,
+        "gold_in_pool_at50_n": 3,
+        "gold_in_pool_at7_n": 0,
+        "gold_ranks": {
+          "doc_001#p1": 15,
+          "doc_004#p4": 95,
+          "doc_004#p5": 35,
+          "doc_008#p12": null,
+          "doc_010#p4": 33
+        },
+        "dens_k": 1,
+        "box": [
+          "doc_001#p1"
+        ],
+        "box_gold": [
+          "doc_001#p1"
+        ],
+        "micro": 1.0,
+        "at7_ids": [
+          "doc_001#p1",
+          "doc_038#p1",
+          "doc_004#p2",
+          "doc_004#p9",
+          "doc_015#p2",
+          "doc_015#p9",
+          "doc_037#p2"
+        ],
+        "at7_gold": [
+          "doc_001#p1"
+        ],
+        "miss_pool": [
+          "doc_008#p12"
+        ],
+        "in_pool_not_box": [
+          "doc_004#p4",
+          "doc_004#p5",
+          "doc_010#p4"
+        ],
+        "leaks": []
+      },
+      "C": {
+        "l2": 2,
+        "at7": 1,
+        "n_sel": 76
+      },
+      "delta_l2_AB": 0,
+      "delta_l2_BC": 0,
+      "delta_at7_AB": 0,
+      "gold_in_r44_box": [
+        "doc_001#p1"
+      ],
+      "attr": {
+        "lost_from_a7": [],
+        "gained_vs_a7": [],
+        "lost_detail": [],
+        "buckets": {
+          "miss_gold_pool": 0,
+          "pool_dilute": 0,
+          "density_squeeze": 0,
+          "submit_narrow_drop": 0,
+          "role_cluster_kill": 0
+        }
+      }
+    },
+    {
+      "slug": "wanghong",
+      "qid": "q_002",
+      "role": "holdout",
+      "denom": 5,
+      "r44_box": [
+        "doc_010#p7",
+        "doc_011#p1",
+        "doc_011#p5"
+      ],
+      "r44_micro": 0.6667,
+      "gold_seg": [
+        "doc_010#p7",
+        "doc_011#p1",
+        "doc_011#p2",
+        "doc_011#p3",
+        "doc_011#p6"
+      ],
+      "A": {
+        "l2": 2,
+        "at7": 2,
+        "n_sel": 92,
+        "dens_k": 3,
+        "box": [
+          "doc_010#p7",
+          "doc_011#p1",
+          "doc_011#p5"
+        ],
+        "box_gold": [
+          "doc_010#p7",
+          "doc_011#p1"
+        ],
+        "micro": 0.6667,
+        "at7_ids": [
+          "doc_010#p7",
+          "doc_011#p1",
+          "doc_011#p5",
+          "doc_003#p1",
+          "doc_003#p4",
+          "doc_003#p5",
+          "doc_004#p8"
+        ],
+        "at7_gold": [
+          "doc_010#p7",
+          "doc_011#p1"
+        ],
+        "leaks": []
+      },
+      "B": {
+        "l2": 2,
+        "at7": 1,
+        "n_sel": 92,
+        "pool_n": 180,
+        "gold_in_pool": [
+          "doc_010#p7",
+          "doc_011#p1",
+          "doc_011#p2",
+          "doc_011#p3",
+          "doc_011#p6"
+        ],
+        "gold_in_pool_n": 5,
+        "gold_in_pool_at50_n": 3,
+        "gold_in_pool_at7_n": 1,
+        "gold_ranks": {
+          "doc_010#p7": 4,
+          "doc_011#p1": 20,
+          "doc_011#p2": 51,
+          "doc_011#p3": 113,
+          "doc_011#p6": 37
+        },
+        "dens_k": 3,
+        "box": [
+          "doc_010#p7",
+          "doc_063#p3",
+          "doc_011#p5"
+        ],
+        "box_gold": [
+          "doc_010#p7"
+        ],
+        "micro": 0.3333,
+        "at7_ids": [
+          "doc_010#p7",
+          "doc_063#p3",
+          "doc_011#p5",
+          "doc_010#p5",
+          "doc_048#p3",
+          "doc_030#p1",
+          "doc_030#p2"
+        ],
+        "at7_gold": [
+          "doc_010#p7"
+        ],
+        "miss_pool": [],
+        "in_pool_not_box": [
+          "doc_011#p1",
+          "doc_011#p2",
+          "doc_011#p3",
+          "doc_011#p6"
+        ],
+        "leaks": []
+      },
+      "C": {
+        "l2": 2,
+        "at7": 0,
+        "n_sel": 92
+      },
+      "delta_l2_AB": 0,
+      "delta_l2_BC": 0,
+      "delta_at7_AB": 1,
+      "gold_in_r44_box": [
+        "doc_010#p7",
+        "doc_011#p1"
+      ],
+      "attr": {
+        "lost_from_a7": [
+          "doc_011#p1"
+        ],
+        "gained_vs_a7": [],
+        "lost_detail": [
+          {
+            "seg": "doc_011#p1",
+            "in_stage1_pool": true,
+            "pool_rank": 20,
+            "in_density_box": false,
+            "in_r44_box": true,
+            "tags": [
+              "density_squeeze"
+            ]
+          }
+        ],
+        "buckets": {
+          "miss_gold_pool": 0,
+          "pool_dilute": 0,
+          "density_squeeze": 1,
+          "submit_narrow_drop": 0,
+          "role_cluster_kill": 0
+        }
+      }
+    },
+    {
+      "slug": "wanghong",
+      "qid": "q_003",
+      "role": "holdout",
+      "denom": 9,
+      "r44_box": [
+        "doc_007#p1",
+        "doc_007#p2",
+        "doc_003#p5"
+      ],
+      "r44_micro": 1.0,
+      "gold_seg": [
+        "doc_003#p3",
+        "doc_003#p4",
+        "doc_003#p5",
+        "doc_003#p7",
+        "doc_007#p1",
+        "doc_007#p2",
+        "doc_007#p3",
+        "doc_012#p7",
+        "doc_023#p2"
+      ],
+      "A": {
+        "l2": 3,
+        "at7": 3,
+        "n_sel": 78,
+        "dens_k": 3,
+        "box": [
+          "doc_007#p1",
+          "doc_007#p2",
+          "doc_003#p5"
+        ],
+        "box_gold": [
+          "doc_003#p5",
+          "doc_007#p1",
+          "doc_007#p2"
+        ],
+        "micro": 1.0,
+        "at7_ids": [
+          "doc_007#p1",
+          "doc_007#p2",
+          "doc_003#p5",
+          "doc_003#p1",
+          "doc_004#p2",
+          "doc_004#p8",
+          "doc_004#p9"
+        ],
+        "at7_gold": [
+          "doc_003#p5",
+          "doc_007#p1",
+          "doc_007#p2"
+        ],
+        "leaks": []
+      },
+      "B": {
+        "l2": 3,
+        "at7": 1,
+        "n_sel": 74,
+        "pool_n": 180,
+        "gold_in_pool": [
+          "doc_003#p3",
+          "doc_003#p4",
+          "doc_003#p5",
+          "doc_007#p1",
+          "doc_007#p2"
+        ],
+        "gold_in_pool_n": 5,
+        "gold_in_pool_at50_n": 1,
+        "gold_in_pool_at7_n": 1,
+        "gold_ranks": {
+          "doc_003#p3": 146,
+          "doc_003#p4": 82,
+          "doc_003#p5": 64,
+          "doc_003#p7": null,
+          "doc_007#p1": 3,
+          "doc_007#p2": 61,
+          "doc_007#p3": null,
+          "doc_012#p7": null,
+          "doc_023#p2": null
+        },
+        "dens_k": 3,
+        "box": [
+          "doc_063#p3",
+          "doc_017#p1",
+          "doc_007#p10"
+        ],
+        "box_gold": [],
+        "micro": 0.0,
+        "at7_ids": [
+          "doc_063#p3",
+          "doc_017#p1",
+          "doc_007#p10",
+          "doc_026#p1",
+          "doc_029#p12",
+          "doc_007#p1",
+          "doc_073#p5"
+        ],
+        "at7_gold": [
+          "doc_007#p1"
+        ],
+        "miss_pool": [
+          "doc_003#p7",
+          "doc_007#p3",
+          "doc_012#p7",
+          "doc_023#p2"
+        ],
+        "in_pool_not_box": [
+          "doc_003#p3",
+          "doc_003#p4",
+          "doc_003#p5",
+          "doc_007#p1",
+          "doc_007#p2"
+        ],
+        "leaks": []
+      },
+      "C": {
+        "l2": 3,
+        "at7": 1,
+        "n_sel": 78
+      },
+      "delta_l2_AB": 0,
+      "delta_l2_BC": 0,
+      "delta_at7_AB": 2,
+      "gold_in_r44_box": [
+        "doc_003#p5",
+        "doc_007#p1",
+        "doc_007#p2"
+      ],
+      "attr": {
+        "lost_from_a7": [
+          "doc_003#p5",
+          "doc_007#p2"
+        ],
+        "gained_vs_a7": [],
+        "lost_detail": [
+          {
+            "seg": "doc_003#p5",
+            "in_stage1_pool": true,
+            "pool_rank": 64,
+            "in_density_box": false,
+            "in_r44_box": true,
+            "tags": [
+              "pool_dilute",
+              "density_squeeze",
+              "role_cluster_kill"
+            ]
+          },
+          {
+            "seg": "doc_007#p2",
+            "in_stage1_pool": true,
+            "pool_rank": 61,
+            "in_density_box": false,
+            "in_r44_box": true,
+            "tags": [
+              "pool_dilute",
+              "density_squeeze",
+              "role_cluster_kill"
+            ]
+          }
+        ],
+        "buckets": {
+          "miss_gold_pool": 0,
+          "pool_dilute": 2,
+          "density_squeeze": 2,
+          "submit_narrow_drop": 0,
+          "role_cluster_kill": 2
+        }
+      }
+    },
+    {
+      "slug": "kh_th",
+      "qid": "q_001",
+      "role": "holdout",
+      "denom": 5,
+      "r44_box": [
+        "doc_027#p2"
+      ],
+      "r44_micro": 1.0,
+      "gold_seg": [
+        "doc_008#p11",
+        "doc_009#p10",
+        "doc_009#p11",
+        "doc_009#p12",
+        "doc_027#p2"
+      ],
+      "A": {
+        "l2": 1,
+        "at7": 1,
+        "n_sel": 79,
+        "dens_k": 1,
+        "box": [
+          "doc_027#p2"
+        ],
+        "box_gold": [
+          "doc_027#p2"
+        ],
+        "micro": 1.0,
+        "at7_ids": [
+          "doc_027#p2",
+          "doc_007#p6",
+          "doc_007#p7",
+          "doc_007#p8",
+          "doc_010#p1",
+          "doc_012#p1",
+          "doc_019#p1"
+        ],
+        "at7_gold": [
+          "doc_027#p2"
+        ],
+        "leaks": []
+      },
+      "B": {
+        "l2": 1,
+        "at7": 0,
+        "n_sel": 79,
+        "pool_n": 180,
+        "gold_in_pool": [
+          "doc_027#p2"
+        ],
+        "gold_in_pool_n": 1,
+        "gold_in_pool_at50_n": 0,
+        "gold_in_pool_at7_n": 0,
+        "gold_ranks": {
+          "doc_008#p11": null,
+          "doc_009#p10": null,
+          "doc_009#p11": null,
+          "doc_009#p12": null,
+          "doc_027#p2": 71
+        },
+        "dens_k": 3,
+        "box": [
+          "doc_053#p2",
+          "doc_103#p3",
+          "doc_038#p7"
+        ],
+        "box_gold": [],
+        "micro": 0.0,
+        "at7_ids": [
+          "doc_053#p2",
+          "doc_103#p3",
+          "doc_038#p7",
+          "doc_043#p2",
+          "doc_053#p1",
+          "doc_043#p1",
+          "doc_087#p4"
+        ],
+        "at7_gold": [],
+        "miss_pool": [
+          "doc_008#p11",
+          "doc_009#p10",
+          "doc_009#p11",
+          "doc_009#p12"
+        ],
+        "in_pool_not_box": [
+          "doc_027#p2"
+        ],
+        "leaks": []
+      },
+      "C": {
+        "l2": 1,
+        "at7": 0,
+        "n_sel": 79
+      },
+      "delta_l2_AB": 0,
+      "delta_l2_BC": 0,
+      "delta_at7_AB": 1,
+      "gold_in_r44_box": [
+        "doc_027#p2"
+      ],
+      "attr": {
+        "lost_from_a7": [
+          "doc_027#p2"
+        ],
+        "gained_vs_a7": [],
+        "lost_detail": [
+          {
+            "seg": "doc_027#p2",
+            "in_stage1_pool": true,
+            "pool_rank": 71,
+            "in_density_box": false,
+            "in_r44_box": true,
+            "tags": [
+              "pool_dilute",
+              "density_squeeze",
+              "role_cluster_kill"
+            ]
+          }
+        ],
+        "buckets": {
+          "miss_gold_pool": 0,
+          "pool_dilute": 1,
+          "density_squeeze": 1,
+          "submit_narrow_drop": 0,
+          "role_cluster_kill": 1
+        }
+      }
+    },
+    {
+      "slug": "kh_th",
+      "qid": "q_002",
+      "role": "holdout",
+      "denom": 6,
+      "r44_box": [
+        "doc_009#p10",
+        "doc_103#p3",
+        "doc_006#p4"
+      ],
+      "r44_micro": 0.6667,
+      "gold_seg": [
+        "doc_006#p4",
+        "doc_009#p10",
+        "doc_009#p12",
+        "doc_014#p3",
+        "doc_017#p4",
+        "doc_021#p2"
+      ],
+      "A": {
+        "l2": 3,
+        "at7": 2,
+        "n_sel": 64,
+        "dens_k": 3,
+        "box": [
+          "doc_009#p10",
+          "doc_103#p3",
+          "doc_006#p4"
+        ],
+        "box_gold": [
+          "doc_006#p4",
+          "doc_009#p10"
+        ],
+        "micro": 0.6667,
+        "at7_ids": [
+          "doc_009#p10",
+          "doc_103#p3",
+          "doc_006#p4",
+          "doc_001#p1",
+          "doc_006#p6",
+          "doc_007#p7",
+          "doc_010#p1"
+        ],
+        "at7_gold": [
+          "doc_006#p4",
+          "doc_009#p10"
+        ],
+        "leaks": []
+      },
+      "B": {
+        "l2": 1,
+        "at7": 0,
+        "n_sel": 66,
+        "pool_n": 180,
+        "gold_in_pool": [
+          "doc_021#p2"
+        ],
+        "gold_in_pool_n": 1,
+        "gold_in_pool_at50_n": 1,
+        "gold_in_pool_at7_n": 0,
+        "gold_ranks": {
+          "doc_006#p4": null,
+          "doc_009#p10": null,
+          "doc_009#p12": null,
+          "doc_014#p3": null,
+          "doc_017#p4": null,
+          "doc_021#p2": 23
+        },
+        "dens_k": 3,
+        "box": [
+          "doc_011#p4",
+          "doc_042#p1",
+          "doc_096#p10"
+        ],
+        "box_gold": [],
+        "micro": 0.0,
+        "at7_ids": [
+          "doc_011#p4",
+          "doc_042#p1",
+          "doc_096#p10",
+          "doc_041#p4",
+          "doc_054#p2",
+          "doc_020#p1",
+          "doc_026#p4"
+        ],
+        "at7_gold": [],
+        "miss_pool": [
+          "doc_006#p4",
+          "doc_009#p10",
+          "doc_009#p12",
+          "doc_014#p3",
+          "doc_017#p4"
+        ],
+        "in_pool_not_box": [
+          "doc_021#p2"
+        ],
+        "leaks": []
+      },
+      "C": {
+        "l2": 1,
+        "at7": 0,
+        "n_sel": 67
+      },
+      "delta_l2_AB": 2,
+      "delta_l2_BC": 0,
+      "delta_at7_AB": 2,
+      "gold_in_r44_box": [
+        "doc_006#p4",
+        "doc_009#p10"
+      ],
+      "attr": {
+        "lost_from_a7": [
+          "doc_006#p4",
+          "doc_009#p10"
+        ],
+        "gained_vs_a7": [],
+        "lost_detail": [
+          {
+            "seg": "doc_006#p4",
+            "in_stage1_pool": false,
+            "pool_rank": null,
+            "in_density_box": false,
+            "in_r44_box": true,
+            "tags": [
+              "miss_gold_pool",
+              "role_cluster_kill"
+            ]
+          },
+          {
+            "seg": "doc_009#p10",
+            "in_stage1_pool": false,
+            "pool_rank": null,
+            "in_density_box": false,
+            "in_r44_box": true,
+            "tags": [
+              "miss_gold_pool",
+              "role_cluster_kill"
+            ]
+          }
+        ],
+        "buckets": {
+          "miss_gold_pool": 2,
+          "pool_dilute": 0,
+          "density_squeeze": 0,
+          "submit_narrow_drop": 0,
+          "role_cluster_kill": 2
+        }
+      }
+    },
+    {
+      "slug": "kh_th",
+      "qid": "q_003",
+      "role": "holdout",
+      "denom": 5,
+      "r44_box": [
+        "doc_023#p2"
+      ],
+      "r44_micro": 1.0,
+      "gold_seg": [
+        "doc_007#p7",
+        "doc_023#p2",
+        "doc_023#p4",
+        "doc_024#p1",
+        "doc_024#p2"
+      ],
+      "A": {
+        "l2": 5,
+        "at7": 2,
+        "n_sel": 77,
+        "dens_k": 1,
+        "box": [
+          "doc_023#p2"
+        ],
+        "box_gold": [
+          "doc_023#p2"
+        ],
+        "micro": 1.0,
+        "at7_ids": [
+          "doc_023#p2",
+          "doc_001#p1",
+          "doc_007#p6",
+          "doc_007#p7",
+          "doc_007#p8",
+          "doc_010#p1",
+          "doc_010#p2"
+        ],
+        "at7_gold": [
+          "doc_007#p7",
+          "doc_023#p2"
+        ],
+        "leaks": []
+      },
+      "B": {
+        "l2": 5,
+        "at7": 1,
+        "n_sel": 76,
+        "pool_n": 180,
+        "gold_in_pool": [
+          "doc_007#p7",
+          "doc_023#p2",
+          "doc_023#p4",
+          "doc_024#p1",
+          "doc_024#p2"
+        ],
+        "gold_in_pool_n": 5,
+        "gold_in_pool_at50_n": 2,
+        "gold_in_pool_at7_n": 1,
+        "gold_ranks": {
+          "doc_007#p7": 171,
+          "doc_023#p2": 5,
+          "doc_023#p4": 76,
+          "doc_024#p1": 29,
+          "doc_024#p2": 68
+        },
+        "dens_k": 3,
+        "box": [
+          "doc_090#p5",
+          "doc_092#p6",
+          "doc_023#p1"
+        ],
+        "box_gold": [],
+        "micro": 0.0,
+        "at7_ids": [
+          "doc_090#p5",
+          "doc_092#p6",
+          "doc_023#p1",
+          "doc_026#p7",
+          "doc_023#p2",
+          "doc_026#p12",
+          "doc_026#p8"
+        ],
+        "at7_gold": [
+          "doc_023#p2"
+        ],
+        "miss_pool": [],
+        "in_pool_not_box": [
+          "doc_007#p7",
+          "doc_023#p2",
+          "doc_023#p4",
+          "doc_024#p1",
+          "doc_024#p2"
+        ],
+        "leaks": []
+      },
+      "C": {
+        "l2": 5,
+        "at7": 1,
+        "n_sel": 77
+      },
+      "delta_l2_AB": 0,
+      "delta_l2_BC": 0,
+      "delta_at7_AB": 1,
+      "gold_in_r44_box": [
+        "doc_023#p2"
+      ],
+      "attr": {
+        "lost_from_a7": [
+          "doc_007#p7"
+        ],
+        "gained_vs_a7": [],
+        "lost_detail": [
+          {
+            "seg": "doc_007#p7",
+            "in_stage1_pool": true,
+            "pool_rank": 171,
+            "in_density_box": false,
+            "in_r44_box": false,
+            "tags": [
+              "pool_dilute",
+              "density_squeeze"
+            ]
+          }
+        ],
+        "buckets": {
+          "miss_gold_pool": 0,
+          "pool_dilute": 1,
+          "density_squeeze": 1,
+          "submit_narrow_drop": 0,
+          "role_cluster_kill": 0
+        }
+      }
+    },
+    {
+      "slug": "ai171",
+      "qid": "q_001",
+      "role": "holdout",
+      "denom": 7,
+      "r44_box": [
+        "doc_001#p3",
+        "doc_015#p5",
+        "doc_017#p4"
+      ],
+      "r44_micro": 0.6667,
+      "gold_seg": [
+        "doc_001#p3",
+        "doc_002#p8",
+        "doc_005#p3",
+        "doc_007#p3",
+        "doc_009#p14",
+        "doc_012#p8",
+        "doc_015#p5"
+      ],
+      "A": {
+        "l2": 4,
+        "at7": 2,
+        "n_sel": 108,
+        "dens_k": 3,
+        "box": [
+          "doc_001#p3",
+          "doc_015#p5",
+          "doc_017#p4"
+        ],
+        "box_gold": [
+          "doc_001#p3",
+          "doc_015#p5"
+        ],
+        "micro": 0.6667,
+        "at7_ids": [
+          "doc_001#p3",
+          "doc_015#p5",
+          "doc_017#p4",
+          "doc_001#p1",
+          "doc_002#p2",
+          "doc_002#p35",
+          "doc_002#p37"
+        ],
+        "at7_gold": [
+          "doc_001#p3",
+          "doc_015#p5"
+        ],
+        "leaks": []
+      },
+      "B": {
+        "l2": 3,
+        "at7": 0,
+        "n_sel": 112,
+        "pool_n": 180,
+        "gold_in_pool": [
+          "doc_001#p3",
+          "doc_002#p8",
+          "doc_005#p3",
+          "doc_007#p3",
+          "doc_009#p14",
+          "doc_012#p8",
+          "doc_015#p5"
+        ],
+        "gold_in_pool_n": 7,
+        "gold_in_pool_at50_n": 0,
+        "gold_in_pool_at7_n": 0,
+        "gold_ranks": {
+          "doc_001#p3": 59,
+          "doc_002#p8": 54,
+          "doc_005#p3": 55,
+          "doc_007#p3": 76,
+          "doc_009#p14": 142,
+          "doc_012#p8": 93,
+          "doc_015#p5": 137
+        },
+        "dens_k": 3,
+        "box": [
+          "doc_036#p18",
+          "doc_003#p1",
+          "doc_054#p4"
+        ],
+        "box_gold": [],
+        "micro": 0.0,
+        "at7_ids": [
+          "doc_036#p18",
+          "doc_003#p1",
+          "doc_054#p4",
+          "doc_020#p17",
+          "doc_035#p4",
+          "doc_025#p2",
+          "doc_046#p4"
+        ],
+        "at7_gold": [],
+        "miss_pool": [],
+        "in_pool_not_box": [
+          "doc_001#p3",
+          "doc_002#p8",
+          "doc_005#p3",
+          "doc_007#p3",
+          "doc_009#p14",
+          "doc_012#p8",
+          "doc_015#p5"
+        ],
+        "leaks": []
+      },
+      "C": {
+        "l2": 3,
+        "at7": 1,
+        "n_sel": 112
+      },
+      "delta_l2_AB": 1,
+      "delta_l2_BC": 0,
+      "delta_at7_AB": 2,
+      "gold_in_r44_box": [
+        "doc_001#p3",
+        "doc_015#p5"
+      ],
+      "attr": {
+        "lost_from_a7": [
+          "doc_001#p3",
+          "doc_015#p5"
+        ],
+        "gained_vs_a7": [],
+        "lost_detail": [
+          {
+            "seg": "doc_001#p3",
+            "in_stage1_pool": true,
+            "pool_rank": 59,
+            "in_density_box": false,
+            "in_r44_box": true,
+            "tags": [
+              "pool_dilute",
+              "density_squeeze",
+              "role_cluster_kill"
+            ]
+          },
+          {
+            "seg": "doc_015#p5",
+            "in_stage1_pool": true,
+            "pool_rank": 137,
+            "in_density_box": false,
+            "in_r44_box": true,
+            "tags": [
+              "pool_dilute",
+              "density_squeeze",
+              "role_cluster_kill"
+            ]
+          }
+        ],
+        "buckets": {
+          "miss_gold_pool": 0,
+          "pool_dilute": 2,
+          "density_squeeze": 2,
+          "submit_narrow_drop": 0,
+          "role_cluster_kill": 2
+        }
+      }
+    },
+    {
+      "slug": "ai171",
+      "qid": "q_002",
+      "role": "holdout",
+      "denom": 11,
+      "r44_box": [
+        "doc_015#p6"
+      ],
+      "r44_micro": 1.0,
+      "gold_seg": [
+        "doc_006#p3",
+        "doc_007#p3",
+        "doc_010#p9",
+        "doc_011#p2",
+        "doc_012#p8",
+        "doc_013#p3",
+        "doc_013#p8",
+        "doc_015#p1",
+        "doc_015#p6",
+        "doc_016#p19",
+        "doc_020#p30"
+      ],
+      "A": {
+        "l2": 5,
+        "at7": 1,
+        "n_sel": 118,
+        "dens_k": 1,
+        "box": [
+          "doc_015#p6"
+        ],
+        "box_gold": [
+          "doc_015#p6"
+        ],
+        "micro": 1.0,
+        "at7_ids": [
+          "doc_015#p6",
+          "doc_002#p10",
+          "doc_002#p14",
+          "doc_002#p15",
+          "doc_002#p21",
+          "doc_002#p30",
+          "doc_002#p35"
+        ],
+        "at7_gold": [
+          "doc_015#p6"
+        ],
+        "leaks": []
+      },
+      "B": {
+        "l2": 4,
+        "at7": 1,
+        "n_sel": 108,
+        "pool_n": 180,
+        "gold_in_pool": [
+          "doc_006#p3",
+          "doc_007#p3",
+          "doc_011#p2",
+          "doc_012#p8",
+          "doc_020#p30"
+        ],
+        "gold_in_pool_n": 5,
+        "gold_in_pool_at50_n": 3,
+        "gold_in_pool_at7_n": 1,
+        "gold_ranks": {
+          "doc_006#p3": 47,
+          "doc_007#p3": 1,
+          "doc_010#p9": null,
+          "doc_011#p2": 90,
+          "doc_012#p8": 28,
+          "doc_013#p3": null,
+          "doc_013#p8": null,
+          "doc_015#p1": null,
+          "doc_015#p6": null,
+          "doc_016#p19": null,
+          "doc_020#p30": 179
+        },
+        "dens_k": 1,
+        "box": [
+          "doc_036#p18"
+        ],
+        "box_gold": [],
+        "micro": 0.0,
+        "at7_ids": [
+          "doc_036#p18",
+          "doc_007#p3",
+          "doc_010#p2",
+          "doc_020#p34",
+          "doc_035#p21",
+          "doc_046#p21",
+          "doc_018#p6"
+        ],
+        "at7_gold": [
+          "doc_007#p3"
+        ],
+        "miss_pool": [
+          "doc_010#p9",
+          "doc_013#p3",
+          "doc_013#p8",
+          "doc_015#p1",
+          "doc_015#p6",
+          "doc_016#p19"
+        ],
+        "in_pool_not_box": [
+          "doc_006#p3",
+          "doc_007#p3",
+          "doc_011#p2",
+          "doc_012#p8",
+          "doc_020#p30"
+        ],
+        "leaks": []
+      },
+      "C": {
+        "l2": 4,
+        "at7": 0,
+        "n_sel": 120
+      },
+      "delta_l2_AB": 1,
+      "delta_l2_BC": 0,
+      "delta_at7_AB": 0,
+      "gold_in_r44_box": [
+        "doc_015#p6"
+      ],
+      "attr": {
+        "lost_from_a7": [
+          "doc_015#p6"
+        ],
+        "gained_vs_a7": [
+          "doc_007#p3"
+        ],
+        "lost_detail": [
+          {
+            "seg": "doc_015#p6",
+            "in_stage1_pool": false,
+            "pool_rank": null,
+            "in_density_box": false,
+            "in_r44_box": true,
+            "tags": [
+              "miss_gold_pool",
+              "role_cluster_kill"
+            ]
+          }
+        ],
+        "buckets": {
+          "miss_gold_pool": 1,
+          "pool_dilute": 0,
+          "density_squeeze": 0,
+          "submit_narrow_drop": 0,
+          "role_cluster_kill": 1
+        }
+      }
+    },
+    {
+      "slug": "ai171",
+      "qid": "q_003",
+      "role": "holdout",
+      "denom": 6,
+      "r44_box": [
+        "doc_004#p3"
+      ],
+      "r44_micro": 1.0,
+      "gold_seg": [
+        "doc_004#p3",
+        "doc_004#p6",
+        "doc_004#p8",
+        "doc_004#p9",
+        "doc_005#p4",
+        "doc_005#p7"
+      ],
+      "A": {
+        "l2": 4,
+        "at7": 1,
+        "n_sel": 151,
+        "dens_k": 1,
+        "box": [
+          "doc_004#p3"
+        ],
+        "box_gold": [
+          "doc_004#p3"
+        ],
+        "micro": 1.0,
+        "at7_ids": [
+          "doc_004#p3",
+          "doc_001#p1",
+          "doc_001#p3",
+          "doc_002#p15",
+          "doc_002#p18",
+          "doc_002#p2",
+          "doc_002#p24"
+        ],
+        "at7_gold": [
+          "doc_004#p3"
+        ],
+        "leaks": []
+      },
+      "B": {
+        "l2": 4,
+        "at7": 0,
+        "n_sel": 153,
+        "pool_n": 180,
+        "gold_in_pool": [
+          "doc_004#p3",
+          "doc_004#p6",
+          "doc_004#p8",
+          "doc_004#p9",
+          "doc_005#p4",
+          "doc_005#p7"
+        ],
+        "gold_in_pool_n": 6,
+        "gold_in_pool_at50_n": 3,
+        "gold_in_pool_at7_n": 1,
+        "gold_ranks": {
+          "doc_004#p3": 6,
+          "doc_004#p6": 26,
+          "doc_004#p8": 70,
+          "doc_004#p9": 59,
+          "doc_005#p4": 19,
+          "doc_005#p7": 156
+        },
+        "dens_k": 3,
+        "box": [
+          "doc_018#p5",
+          "doc_018#p13",
+          "doc_001#p3"
+        ],
+        "box_gold": [],
+        "micro": 0.0,
+        "at7_ids": [
+          "doc_018#p5",
+          "doc_018#p13",
+          "doc_001#p3",
+          "doc_005#p3",
+          "doc_004#p4",
+          "doc_055#p14",
+          "doc_044#p16"
+        ],
+        "at7_gold": [],
+        "miss_pool": [],
+        "in_pool_not_box": [
+          "doc_004#p3",
+          "doc_004#p6",
+          "doc_004#p8",
+          "doc_004#p9",
+          "doc_005#p4",
+          "doc_005#p7"
+        ],
+        "leaks": []
+      },
+      "C": {
+        "l2": 4,
+        "at7": 0,
+        "n_sel": 151
+      },
+      "delta_l2_AB": 0,
+      "delta_l2_BC": 0,
+      "delta_at7_AB": 1,
+      "gold_in_r44_box": [
+        "doc_004#p3"
+      ],
+      "attr": {
+        "lost_from_a7": [
+          "doc_004#p3"
+        ],
+        "gained_vs_a7": [],
+        "lost_detail": [
+          {
+            "seg": "doc_004#p3",
+            "in_stage1_pool": true,
+            "pool_rank": 6,
+            "in_density_box": false,
+            "in_r44_box": true,
+            "tags": [
+              "density_squeeze"
+            ]
+          }
+        ],
+        "buckets": {
+          "miss_gold_pool": 0,
+          "pool_dilute": 0,
+          "density_squeeze": 1,
+          "submit_narrow_drop": 0,
+          "role_cluster_kill": 0
+        }
+      }
+    }
+  ],
+  "wall_s": 15.614567833021283
+}
