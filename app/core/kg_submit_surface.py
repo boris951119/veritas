@@ -55,13 +55,15 @@ FORBIDDEN_PACK_PARAM_NAMES = frozenset(FORBIDDEN_PACK_KEYS) | frozenset({
 
 
 def kg_submit_surface_enabled(settings: Any | None = None) -> bool:
-    """默认关。settings.kg_submit_surface 优先；否则读 env。"""
+    """C-108 默认开。settings 优先；env＝0 回退关。"""
     if settings is not None and hasattr(settings, "kg_submit_surface"):
         return bool(getattr(settings, "kg_submit_surface"))
     v = (os.environ.get("VERITAS_KG_SUBMIT_SURFACE") or "").strip().lower()
+    if v in ("0", "false", "off", "no"):
+        return False
     if v in ("1", "true", "on", "yes"):
         return True
-    return False
+    return True
 
 
 def audit_forbidden_keys(obj: Any, *, path: str = "$") -> list[str]:
@@ -377,14 +379,20 @@ def kg_focus_segment_ids(dossier: Any) -> list[str] | None:
 
 
 def pack_kwargs_for_kg(dossier: Any) -> dict[str, Any]:
-    """仅 max_segments；禁系数键。旗关／未 apply → {}。"""
+    """仅 max_segments；禁系数键。旗关／未 apply → {}。
+
+    C-108：默认不硬顶（``kg_cap_segments`` 假）——密度盒序只走
+    priority；预算尾仍可填。``VERITAS_KG_CAP_SEGMENTS=1`` 才写入
+    max_segments=k。
+    """
     acc = getattr(dossier, "accounting", None) or {}
     if not acc.get("kg_submit_active"):
         return {}
     hints = acc.get("kg_pack_hints") or {}
     out: dict[str, Any] = {}
     ms = hints.get("max_segments")
-    if ms is not None and int(ms) > 0:
+    cap = bool(acc.get("kg_cap_segments"))
+    if cap and ms is not None and int(ms) > 0:
         out["max_segments"] = int(ms)
     assert_clean_pack_kwargs(out)
     return out

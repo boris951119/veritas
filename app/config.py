@@ -537,11 +537,12 @@ class Settings:
     review_boost_k: int = 180
     review_boost_refill: int = 40
 
-    # C-107：分析师 R44 交卷窄面（conflict_pairs／树17 focus／k＋rank）。
-    # 默认 False＝现主线行为；开＝VERITAS_KG_SUBMIT_SURFACE=1 才消费窄面。
+    # C-108：交卷窄面＋二筛密度（conflict_pairs／树17 focus／k＋rank）。
+    # 默认 True＝密度盒序优先装箱；关＝VERITAS_KG_SUBMIT_SURFACE=0 回退旧装满。
+    # 硬顶段数另旗 VERITAS_KG_CAP_SEGMENTS（默认关）。
     # 禁 r9／r21／DEFAULT_WEIGHTS／多维 feats 进 pack_material。
     # env VERITAS_KG_SUBMIT_SURFACE；config.json kg_submit_surface。
-    kg_submit_surface: bool = False
+    kg_submit_surface: bool = True
 
     # 语料收窄阈值：信源数达到该值才走索引选料（默认 50=自动；
     # 0=强制关闭，小案例到不了阈值则整卷研判、不建 .corpus）。

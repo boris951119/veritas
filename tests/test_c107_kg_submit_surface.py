@@ -147,6 +147,8 @@ def test_c107_flag_on_fixture_priority_max_segments_focus_pairs():
     assert kg_priority_override(d) == ["SRC1#s1", "SRC2#s1"]
     assert kg_focus_segment_ids(d) == ["SRC1#s1"]
 
+    # C-108：硬顶需显式 kg_cap_segments；本测验 cap 开时 max_segments=k
+    d.accounting["kg_cap_segments"] = True
     kw = pack_kwargs_for_kg(d)
     assert kw == {"max_segments": 2}
     assert_clean_pack_kwargs(kw)

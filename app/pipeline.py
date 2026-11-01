@@ -584,13 +584,16 @@ def run_case(spec: RunSpec | None = None,
                 })
         # 钉死后全员同料：不许再传 settings.material_char_budget 实参
 
-        # C-107：旗开才消费交卷窄面（priority／max_segments／focus／pairs）
+        # C-108：默认开——密度交卷 → kg_submit 窄面 → priority／可选 max_segments
+        # 关旗 VERITAS_KG_SUBMIT_SURFACE=0 回退旧装满。
         _kg_pack_kw: dict = {}
-        if bool(getattr(settings, "kg_submit_surface", False)):
+        if bool(getattr(settings, "kg_submit_surface", True)):
+            from app.core.kg_density_bridge import ensure_kg_submit_from_density
             from app.core.kg_submit_surface import (
                 apply_kg_submit_surface, assert_clean_pack_kwargs,
                 pack_kwargs_for_kg,
             )
+            ensure_kg_submit_from_density(dossier)
             apply_kg_submit_surface(dossier, enabled=True)
             _kg_pack_kw = pack_kwargs_for_kg(dossier)
             assert_clean_pack_kwargs(_kg_pack_kw)
@@ -948,10 +951,11 @@ def run_case(spec: RunSpec | None = None,
                      "claim_slots", "ledger_outlier_tag",
                      "multi_box", "material_pack_union", "review_boost",
                      "window_ledger",
-                     # C-107 交卷窄面（旗关时不会写入这些键）
+                     # C-107／C-108 交卷窄面（旗关时不会写入这些键）
                      "kg_submit_active", "kg_submit", "kg_pack_hints",
                      "kg_conflict_pairs", "kg_focus_segment_ids",
-                     "kg_priority_segment_ids", "tree17_cite")}
+                     "kg_priority_segment_ids", "tree17_cite",
+                     "kg_density", "kg_cap_segments")}
     dossier.accounting = {
         **kept,
         "elapsed_s": round(time.monotonic() - t0, 1),

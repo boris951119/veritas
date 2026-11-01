@@ -1,3 +1,13 @@
+<!-- C-108-STEP1 -->
+## 〔C-108〕二筛密度交卷＋窄面默认开（第1步，不合一筛系数）
+
+- **迁了什么**：`app/kg_lab/density_submit.py` 及 intent_routes／event_frame／question_intent／source_role／case_lexicon（桩 config／tag_schema）；桥 `app/core/kg_density_bridge.py`（BM25 池或上游短盒 → 洗净 kg_submit）。
+- **没迁**：R9／R21 多维系数、DEFAULT_WEIGHTS、portable 权威拟合；一筛仍 BM25 池或 R44 盒输入。
+- **旗**：`VERITAS_KG_SUBMIT_SURFACE` **默认开**；`=0` 回退旧装满。硬顶段数另旗 `VERITAS_KG_CAP_SEGMENTS`（默认关＝盒序优先＋预算尾可填）。
+- **验收读数**（artifacts/C108_density_default_measure）：刘翔@7=12；holdout L2 25→29；微密度贴 R44；泄漏0。过线→可开 PR；是否合 main 另裁。
+
+---
+
 <!-- C-107-STEP1 -->
 ## 〔C-107〕交卷窄面第 1 步（未合入／默认关）
 
