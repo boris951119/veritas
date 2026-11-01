@@ -20,6 +20,19 @@ def test_verifiability_bulletin_beats_comment():
     assert verifiability_score(bulletin)["score"] > verifiability_score(comment)["score"]
 
 
+def test_verifiability_en_report_beats_en_comment():
+    """R41：英文初步报告／数额声明应高于英文综述评论。"""
+    report = (
+        "AAIB, in its preliminary report on June 12, said the crash killed "
+        "241 of the 242 people on board after fuel was cut off."
+    )
+    comment = (
+        "Experts say analysts believe the episode may reshape aviation safety "
+        "debates; it is believed more talks will follow."
+    )
+    assert verifiability_score(report)["score"] > verifiability_score(comment)["score"]
+
+
 def test_conflict_pair_must_cite_both_sides():
     """盒内两侧皆有 → 细读须成对；禁止只引一边。"""
     q = (

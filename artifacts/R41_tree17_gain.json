@@ -1,0 +1,1179 @@
+{
+  "ticket": "R41-tree17-gain",
+  "model": "veritas-qwen3-14b",
+  "wall_s": 605.0,
+  "verdict_bullets": [
+    "门槛②：**过**（R30 重叠合规守；holdout 全合规 9/9；轴 27/27；可用密度均值 37%）。",
+    "密度：王虹 71%／柬泰 80%／AI171 80%；刘翔@7=12；吉隆 67%／中美AI 67%。",
+    "liuxiang：全合规 3→**3**／3；轴 9→**9**／9；可用密度 **29%**。",
+    "jilong：全合规 3→**3**／3；轴 9→**9**／9；可用密度 **56%**。",
+    "us_cn_ai：全合规 3→**3**／3；轴 9→**9**／9；可用密度 **33%**。",
+    "wanghong：全合规 **3**／3；轴 **9**／9；可用密度 **0%**。",
+    "kh_th：全合规 **3**／3；轴 **9**／9；可用密度 **67%**。",
+    "ai171：全合规 **3**／3；轴 **9**／9；可用密度 **44%**。"
+  ],
+  "gate": {
+    "dens_holdout_ok": true,
+    "n_holdout_ge23": 3,
+    "dens_smoke_ok": true,
+    "liuxiang_ok": true,
+    "liuxiang_at7": 12,
+    "r30_cite_hold": true,
+    "holdout_cite_gain": true,
+    "holdout_cite_note": "全合规 9/9；轴 27/27；可用密度均值 37%",
+    "holdout_mean_usable": 0.3704,
+    "gate2_pass": true
+  },
+  "cases": [
+    {
+      "slug": "liuxiang",
+      "role": "regression",
+      "micro_gold_density": 0.5714,
+      "sum_gold_in_boxes": 12,
+      "sum_k": 21,
+      "cut_hits": {
+        "7": 12
+      },
+      "density_rows": [
+        {
+          "qid": "q_001",
+          "k": 7,
+          "n_gold": 4,
+          "gold_density": 0.5714
+        },
+        {
+          "qid": "q_002",
+          "k": 7,
+          "n_gold": 4,
+          "gold_density": 0.5714
+        },
+        {
+          "qid": "q_003",
+          "k": 7,
+          "n_gold": 4,
+          "gold_density": 0.5714
+        }
+      ],
+      "cite_rows": [
+        {
+          "qid": "q_001",
+          "conflict": false,
+          "pair_required": false,
+          "close_k_effective": 7,
+          "box_k": 7,
+          "gold_in_box_to_close": 1.0,
+          "compliance": {
+            "n_cited": 2,
+            "cited_ids": [
+              "doc_002#p3",
+              "doc_035#p7"
+            ],
+            "pair_required": false,
+            "pair_ok": true,
+            "cited_sides": [
+              "option_b"
+            ],
+            "band_ok": true,
+            "in_band_rate": 1.0,
+            "in_close": [
+              "doc_035#p7",
+              "doc_002#p3"
+            ],
+            "out_of_band": [],
+            "outside_box": [],
+            "ver_ok": true,
+            "mean_ver_close": 0.79,
+            "mean_ver_oob": null,
+            "axes_ok": 3,
+            "axes_total": 3,
+            "compliance_rate": 1.0,
+            "ok": true,
+            "n_usable_cited": 2,
+            "usable_cite_density": 0.2857
+          },
+          "usable_cite_density": 0.2857,
+          "analyst": {
+            "cited_ids": [
+              "doc_035#p7",
+              "doc_002#p3"
+            ],
+            "oob_before": [],
+            "repaired_by_regen": false,
+            "elapsed_s": 27.01,
+            "has_tree17_block": true
+          }
+        },
+        {
+          "qid": "q_002",
+          "conflict": false,
+          "pair_required": false,
+          "close_k_effective": 7,
+          "box_k": 7,
+          "gold_in_box_to_close": 1.0,
+          "compliance": {
+            "n_cited": 4,
+            "cited_ids": [
+              "doc_002#p3",
+              "doc_009#p5",
+              "doc_041#p1",
+              "doc_051#p3"
+            ],
+            "pair_required": false,
+            "pair_ok": true,
+            "cited_sides": [],
+            "band_ok": true,
+            "in_band_rate": 1.0,
+            "in_close": [
+              "doc_009#p5",
+              "doc_041#p1",
+              "doc_051#p3",
+              "doc_002#p3"
+            ],
+            "out_of_band": [],
+            "outside_box": [],
+            "ver_ok": true,
+            "mean_ver_close": 0.33,
+            "mean_ver_oob": null,
+            "axes_ok": 3,
+            "axes_total": 3,
+            "compliance_rate": 1.0,
+            "ok": true,
+            "n_usable_cited": 1,
+            "usable_cite_density": 0.1429
+          },
+          "usable_cite_density": 0.1429,
+          "analyst": {
+            "cited_ids": [
+              "doc_009#p5",
+              "doc_041#p1",
+              "doc_051#p3",
+              "doc_002#p3"
+            ],
+            "oob_before": [],
+            "repaired_by_regen": false,
+            "elapsed_s": 36.8,
+            "has_tree17_block": true
+          }
+        },
+        {
+          "qid": "q_003",
+          "conflict": false,
+          "pair_required": false,
+          "close_k_effective": 7,
+          "box_k": 7,
+          "gold_in_box_to_close": 1.0,
+          "compliance": {
+            "n_cited": 4,
+            "cited_ids": [
+              "doc_002#p3",
+              "doc_006#p3",
+              "doc_027#p3",
+              "doc_046#p3"
+            ],
+            "pair_required": false,
+            "pair_ok": true,
+            "cited_sides": [],
+            "band_ok": true,
+            "in_band_rate": 1.0,
+            "in_close": [
+              "doc_046#p3",
+              "doc_027#p3",
+              "doc_002#p3",
+              "doc_006#p3"
+            ],
+            "out_of_band": [],
+            "outside_box": [],
+            "ver_ok": true,
+            "mean_ver_close": 0.585,
+            "mean_ver_oob": null,
+            "axes_ok": 3,
+            "axes_total": 3,
+            "compliance_rate": 1.0,
+            "ok": true,
+            "n_usable_cited": 3,
+            "usable_cite_density": 0.4286
+          },
+          "usable_cite_density": 0.4286,
+          "analyst": {
+            "cited_ids": [
+              "doc_046#p3",
+              "doc_027#p3",
+              "doc_002#p3",
+              "doc_006#p3"
+            ],
+            "oob_before": [],
+            "repaired_by_regen": false,
+            "elapsed_s": 54.92,
+            "has_tree17_block": true
+          }
+        }
+      ],
+      "compliance_summary": {
+        "axes_ok": 9,
+        "axes_total": 9,
+        "rate": 1.0,
+        "n_full_ok": 3,
+        "n_questions": 3,
+        "n_band_ok": 3,
+        "n_pair_ok": 3,
+        "mean_usable_cite_density": 0.2857,
+        "gold_box_to_close": 1.0
+      }
+    },
+    {
+      "slug": "jilong",
+      "role": "smoke",
+      "micro_gold_density": 0.6667,
+      "sum_gold_in_boxes": 6,
+      "sum_k": 9,
+      "cut_hits": {
+        "7": 6
+      },
+      "density_rows": [
+        {
+          "qid": "q_001",
+          "k": 3,
+          "n_gold": 2,
+          "gold_density": 0.6667
+        },
+        {
+          "qid": "q_002",
+          "k": 3,
+          "n_gold": 2,
+          "gold_density": 0.6667
+        },
+        {
+          "qid": "q_003",
+          "k": 3,
+          "n_gold": 2,
+          "gold_density": 0.6667
+        }
+      ],
+      "cite_rows": [
+        {
+          "qid": "q_001",
+          "conflict": true,
+          "pair_required": false,
+          "close_k_effective": 3,
+          "box_k": 3,
+          "gold_in_box_to_close": 1.0,
+          "compliance": {
+            "n_cited": 3,
+            "cited_ids": [
+              "doc_001#p21",
+              "doc_001#p237",
+              "doc_061#p2"
+            ],
+            "pair_required": false,
+            "pair_ok": true,
+            "cited_sides": [
+              "both"
+            ],
+            "band_ok": true,
+            "in_band_rate": 1.0,
+            "in_close": [
+              "doc_001#p21",
+              "doc_001#p237",
+              "doc_061#p2"
+            ],
+            "out_of_band": [],
+            "outside_box": [],
+            "ver_ok": true,
+            "mean_ver_close": 1.0,
+            "mean_ver_oob": null,
+            "axes_ok": 3,
+            "axes_total": 3,
+            "compliance_rate": 1.0,
+            "ok": true,
+            "n_usable_cited": 3,
+            "usable_cite_density": 1.0
+          },
+          "usable_cite_density": 1.0,
+          "analyst": {
+            "cited_ids": [
+              "doc_001#p21",
+              "doc_001#p237",
+              "doc_061#p2"
+            ],
+            "oob_before": [],
+            "repaired_by_regen": false,
+            "elapsed_s": 48.06,
+            "has_tree17_block": true
+          }
+        },
+        {
+          "qid": "q_002",
+          "conflict": true,
+          "pair_required": true,
+          "close_k_effective": 3,
+          "box_k": 3,
+          "gold_in_box_to_close": 1.0,
+          "compliance": {
+            "n_cited": 2,
+            "cited_ids": [
+              "doc_001#p291",
+              "doc_115#p21"
+            ],
+            "pair_required": true,
+            "pair_ok": true,
+            "cited_sides": [
+              "option_a",
+              "option_b"
+            ],
+            "band_ok": true,
+            "in_band_rate": 1.0,
+            "in_close": [
+              "doc_001#p291",
+              "doc_115#p21"
+            ],
+            "out_of_band": [],
+            "outside_box": [],
+            "ver_ok": true,
+            "mean_ver_close": 0.71,
+            "mean_ver_oob": null,
+            "axes_ok": 3,
+            "axes_total": 3,
+            "compliance_rate": 1.0,
+            "ok": true,
+            "n_usable_cited": 2,
+            "usable_cite_density": 0.6667
+          },
+          "usable_cite_density": 0.6667,
+          "analyst": {
+            "cited_ids": [
+              "doc_001#p291",
+              "doc_115#p21"
+            ],
+            "oob_before": [],
+            "repaired_by_regen": false,
+            "elapsed_s": 18.74,
+            "has_tree17_block": true
+          }
+        },
+        {
+          "qid": "q_003",
+          "conflict": true,
+          "pair_required": false,
+          "close_k_effective": 3,
+          "box_k": 3,
+          "gold_in_box_to_close": 1.0,
+          "compliance": {
+            "n_cited": 0,
+            "cited_ids": [],
+            "pair_required": false,
+            "pair_ok": true,
+            "cited_sides": [],
+            "band_ok": true,
+            "in_band_rate": null,
+            "in_close": [],
+            "out_of_band": [],
+            "outside_box": [],
+            "ver_ok": true,
+            "mean_ver_close": null,
+            "mean_ver_oob": null,
+            "axes_ok": 3,
+            "axes_total": 3,
+            "compliance_rate": 1.0,
+            "ok": true,
+            "n_usable_cited": 0,
+            "usable_cite_density": 0.0
+          },
+          "usable_cite_density": 0.0,
+          "analyst": {
+            "cited_ids": [],
+            "oob_before": [],
+            "repaired_by_regen": false,
+            "elapsed_s": 68.14,
+            "has_tree17_block": true
+          }
+        }
+      ],
+      "compliance_summary": {
+        "axes_ok": 9,
+        "axes_total": 9,
+        "rate": 1.0,
+        "n_full_ok": 3,
+        "n_questions": 3,
+        "n_band_ok": 3,
+        "n_pair_ok": 3,
+        "mean_usable_cite_density": 0.5556,
+        "gold_box_to_close": 1.0
+      }
+    },
+    {
+      "slug": "us_cn_ai",
+      "role": "smoke",
+      "micro_gold_density": 0.6667,
+      "sum_gold_in_boxes": 6,
+      "sum_k": 9,
+      "cut_hits": {
+        "7": 6
+      },
+      "density_rows": [
+        {
+          "qid": "q_001",
+          "k": 3,
+          "n_gold": 2,
+          "gold_density": 0.6667
+        },
+        {
+          "qid": "q_002",
+          "k": 3,
+          "n_gold": 2,
+          "gold_density": 0.6667
+        },
+        {
+          "qid": "q_003",
+          "k": 3,
+          "n_gold": 2,
+          "gold_density": 0.6667
+        }
+      ],
+      "cite_rows": [
+        {
+          "qid": "q_001",
+          "conflict": false,
+          "pair_required": false,
+          "close_k_effective": 3,
+          "box_k": 3,
+          "gold_in_box_to_close": 1.0,
+          "compliance": {
+            "n_cited": 2,
+            "cited_ids": [
+              "doc_007#p10",
+              "doc_047#p4"
+            ],
+            "pair_required": false,
+            "pair_ok": true,
+            "cited_sides": [
+              "option_a"
+            ],
+            "band_ok": true,
+            "in_band_rate": 1.0,
+            "in_close": [
+              "doc_047#p4",
+              "doc_007#p10"
+            ],
+            "out_of_band": [],
+            "outside_box": [],
+            "ver_ok": true,
+            "mean_ver_close": 0.27,
+            "mean_ver_oob": null,
+            "axes_ok": 3,
+            "axes_total": 3,
+            "compliance_rate": 1.0,
+            "ok": true,
+            "n_usable_cited": 0,
+            "usable_cite_density": 0.0
+          },
+          "usable_cite_density": 0.0,
+          "analyst": {
+            "cited_ids": [
+              "doc_047#p4",
+              "doc_007#p10"
+            ],
+            "oob_before": [],
+            "repaired_by_regen": false,
+            "elapsed_s": 24.66,
+            "has_tree17_block": true
+          }
+        },
+        {
+          "qid": "q_002",
+          "conflict": false,
+          "pair_required": false,
+          "close_k_effective": 3,
+          "box_k": 3,
+          "gold_in_box_to_close": 1.0,
+          "compliance": {
+            "n_cited": 3,
+            "cited_ids": [
+              "doc_004#p4",
+              "doc_005#p3",
+              "doc_011#p3"
+            ],
+            "pair_required": false,
+            "pair_ok": true,
+            "cited_sides": [
+              "option_a",
+              "option_b"
+            ],
+            "band_ok": true,
+            "in_band_rate": 1.0,
+            "in_close": [
+              "doc_004#p4",
+              "doc_005#p3",
+              "doc_011#p3"
+            ],
+            "out_of_band": [],
+            "outside_box": [],
+            "ver_ok": true,
+            "mean_ver_close": 0.32,
+            "mean_ver_oob": null,
+            "axes_ok": 3,
+            "axes_total": 3,
+            "compliance_rate": 1.0,
+            "ok": true,
+            "n_usable_cited": 1,
+            "usable_cite_density": 0.3333
+          },
+          "usable_cite_density": 0.3333,
+          "analyst": {
+            "cited_ids": [
+              "doc_004#p4",
+              "doc_005#p3",
+              "doc_011#p3"
+            ],
+            "oob_before": [],
+            "repaired_by_regen": false,
+            "elapsed_s": 34.06,
+            "has_tree17_block": true
+          }
+        },
+        {
+          "qid": "q_003",
+          "conflict": true,
+          "pair_required": true,
+          "close_k_effective": 3,
+          "box_k": 3,
+          "gold_in_box_to_close": 1.0,
+          "compliance": {
+            "n_cited": 3,
+            "cited_ids": [
+              "doc_017#p10",
+              "doc_018#p12",
+              "doc_058#p2"
+            ],
+            "pair_required": true,
+            "pair_ok": true,
+            "cited_sides": [
+              "both",
+              "option_a",
+              "option_b"
+            ],
+            "band_ok": true,
+            "in_band_rate": 1.0,
+            "in_close": [
+              "doc_018#p12",
+              "doc_017#p10",
+              "doc_058#p2"
+            ],
+            "out_of_band": [],
+            "outside_box": [],
+            "ver_ok": true,
+            "mean_ver_close": 0.38,
+            "mean_ver_oob": null,
+            "axes_ok": 3,
+            "axes_total": 3,
+            "compliance_rate": 1.0,
+            "ok": true,
+            "n_usable_cited": 2,
+            "usable_cite_density": 0.6667
+          },
+          "usable_cite_density": 0.6667,
+          "analyst": {
+            "cited_ids": [
+              "doc_018#p12",
+              "doc_017#p10",
+              "doc_058#p2"
+            ],
+            "oob_before": [],
+            "repaired_by_regen": false,
+            "elapsed_s": 36.07,
+            "has_tree17_block": true
+          }
+        }
+      ],
+      "compliance_summary": {
+        "axes_ok": 9,
+        "axes_total": 9,
+        "rate": 1.0,
+        "n_full_ok": 3,
+        "n_questions": 3,
+        "n_band_ok": 3,
+        "n_pair_ok": 3,
+        "mean_usable_cite_density": 0.3333,
+        "gold_box_to_close": 1.0
+      }
+    },
+    {
+      "slug": "wanghong",
+      "role": "holdout",
+      "micro_gold_density": 0.7143,
+      "sum_gold_in_boxes": 5,
+      "sum_k": 7,
+      "cut_hits": {
+        "7": 5
+      },
+      "density_rows": [
+        {
+          "qid": "q_001",
+          "k": 1,
+          "n_gold": 1,
+          "gold_density": 1.0
+        },
+        {
+          "qid": "q_002",
+          "k": 3,
+          "n_gold": 1,
+          "gold_density": 0.3333
+        },
+        {
+          "qid": "q_003",
+          "k": 3,
+          "n_gold": 3,
+          "gold_density": 1.0
+        }
+      ],
+      "cite_rows": [
+        {
+          "qid": "q_001",
+          "conflict": false,
+          "pair_required": false,
+          "close_k_effective": 1,
+          "box_k": 1,
+          "gold_in_box_to_close": 1.0,
+          "compliance": {
+            "n_cited": 1,
+            "cited_ids": [
+              "doc_001#p1"
+            ],
+            "pair_required": false,
+            "pair_ok": true,
+            "cited_sides": [],
+            "band_ok": true,
+            "in_band_rate": 1.0,
+            "in_close": [
+              "doc_001#p1"
+            ],
+            "out_of_band": [],
+            "outside_box": [],
+            "ver_ok": true,
+            "mean_ver_close": 0.42,
+            "mean_ver_oob": null,
+            "axes_ok": 3,
+            "axes_total": 3,
+            "compliance_rate": 1.0,
+            "ok": true,
+            "n_usable_cited": 0,
+            "usable_cite_density": 0.0
+          },
+          "usable_cite_density": 0.0,
+          "analyst": {
+            "cited_ids": [
+              "doc_001#p1"
+            ],
+            "oob_before": [],
+            "repaired_by_regen": false,
+            "elapsed_s": 14.63,
+            "has_tree17_block": true
+          }
+        },
+        {
+          "qid": "q_002",
+          "conflict": false,
+          "pair_required": false,
+          "close_k_effective": 3,
+          "box_k": 3,
+          "gold_in_box_to_close": 1.0,
+          "compliance": {
+            "n_cited": 2,
+            "cited_ids": [
+              "doc_010#p5",
+              "doc_010#p7"
+            ],
+            "pair_required": false,
+            "pair_ok": true,
+            "cited_sides": [],
+            "band_ok": true,
+            "in_band_rate": 1.0,
+            "in_close": [
+              "doc_010#p7",
+              "doc_010#p5"
+            ],
+            "out_of_band": [],
+            "outside_box": [],
+            "ver_ok": true,
+            "mean_ver_close": 0.12,
+            "mean_ver_oob": null,
+            "axes_ok": 3,
+            "axes_total": 3,
+            "compliance_rate": 1.0,
+            "ok": true,
+            "n_usable_cited": 0,
+            "usable_cite_density": 0.0
+          },
+          "usable_cite_density": 0.0,
+          "analyst": {
+            "cited_ids": [
+              "doc_010#p7",
+              "doc_010#p5"
+            ],
+            "oob_before": [],
+            "repaired_by_regen": false,
+            "elapsed_s": 34.52,
+            "has_tree17_block": true
+          }
+        },
+        {
+          "qid": "q_003",
+          "conflict": false,
+          "pair_required": false,
+          "close_k_effective": 3,
+          "box_k": 3,
+          "gold_in_box_to_close": 1.0,
+          "compliance": {
+            "n_cited": 1,
+            "cited_ids": [
+              "doc_007#p1"
+            ],
+            "pair_required": false,
+            "pair_ok": true,
+            "cited_sides": [],
+            "band_ok": true,
+            "in_band_rate": 1.0,
+            "in_close": [
+              "doc_007#p1"
+            ],
+            "out_of_band": [],
+            "outside_box": [],
+            "ver_ok": true,
+            "mean_ver_close": 0.4,
+            "mean_ver_oob": null,
+            "axes_ok": 3,
+            "axes_total": 3,
+            "compliance_rate": 1.0,
+            "ok": true,
+            "n_usable_cited": 0,
+            "usable_cite_density": 0.0
+          },
+          "usable_cite_density": 0.0,
+          "analyst": {
+            "cited_ids": [
+              "doc_007#p1"
+            ],
+            "oob_before": [],
+            "repaired_by_regen": false,
+            "elapsed_s": 11.74,
+            "has_tree17_block": true
+          }
+        }
+      ],
+      "compliance_summary": {
+        "axes_ok": 9,
+        "axes_total": 9,
+        "rate": 1.0,
+        "n_full_ok": 3,
+        "n_questions": 3,
+        "n_band_ok": 3,
+        "n_pair_ok": 3,
+        "mean_usable_cite_density": 0.0,
+        "gold_box_to_close": 1.0
+      }
+    },
+    {
+      "slug": "kh_th",
+      "role": "holdout",
+      "micro_gold_density": 0.8,
+      "sum_gold_in_boxes": 4,
+      "sum_k": 5,
+      "cut_hits": {
+        "7": 4
+      },
+      "density_rows": [
+        {
+          "qid": "q_001",
+          "k": 1,
+          "n_gold": 1,
+          "gold_density": 1.0
+        },
+        {
+          "qid": "q_002",
+          "k": 3,
+          "n_gold": 2,
+          "gold_density": 0.6667
+        },
+        {
+          "qid": "q_003",
+          "k": 1,
+          "n_gold": 1,
+          "gold_density": 1.0
+        }
+      ],
+      "cite_rows": [
+        {
+          "qid": "q_001",
+          "conflict": false,
+          "pair_required": false,
+          "close_k_effective": 1,
+          "box_k": 1,
+          "gold_in_box_to_close": 1.0,
+          "compliance": {
+            "n_cited": 1,
+            "cited_ids": [
+              "doc_027#p2"
+            ],
+            "pair_required": false,
+            "pair_ok": true,
+            "cited_sides": [],
+            "band_ok": true,
+            "in_band_rate": 1.0,
+            "in_close": [
+              "doc_027#p2"
+            ],
+            "out_of_band": [],
+            "outside_box": [],
+            "ver_ok": true,
+            "mean_ver_close": 0.7,
+            "mean_ver_oob": null,
+            "axes_ok": 3,
+            "axes_total": 3,
+            "compliance_rate": 1.0,
+            "ok": true,
+            "n_usable_cited": 1,
+            "usable_cite_density": 1.0
+          },
+          "usable_cite_density": 1.0,
+          "analyst": {
+            "cited_ids": [
+              "doc_027#p2"
+            ],
+            "oob_before": [],
+            "repaired_by_regen": false,
+            "elapsed_s": 12.68,
+            "has_tree17_block": true
+          }
+        },
+        {
+          "qid": "q_002",
+          "conflict": false,
+          "pair_required": false,
+          "close_k_effective": 3,
+          "box_k": 3,
+          "gold_in_box_to_close": 1.0,
+          "compliance": {
+            "n_cited": 3,
+            "cited_ids": [
+              "doc_006#p4",
+              "doc_009#p10",
+              "doc_103#p3"
+            ],
+            "pair_required": false,
+            "pair_ok": true,
+            "cited_sides": [],
+            "band_ok": true,
+            "in_band_rate": 1.0,
+            "in_close": [
+              "doc_103#p3",
+              "doc_009#p10",
+              "doc_006#p4"
+            ],
+            "out_of_band": [],
+            "outside_box": [],
+            "ver_ok": true,
+            "mean_ver_close": 0.8467,
+            "mean_ver_oob": null,
+            "axes_ok": 3,
+            "axes_total": 3,
+            "compliance_rate": 1.0,
+            "ok": true,
+            "n_usable_cited": 3,
+            "usable_cite_density": 1.0
+          },
+          "usable_cite_density": 1.0,
+          "analyst": {
+            "cited_ids": [
+              "doc_103#p3",
+              "doc_009#p10",
+              "doc_006#p4"
+            ],
+            "oob_before": [],
+            "repaired_by_regen": false,
+            "elapsed_s": 28.74,
+            "has_tree17_block": true
+          }
+        },
+        {
+          "qid": "q_003",
+          "conflict": false,
+          "pair_required": false,
+          "close_k_effective": 1,
+          "box_k": 1,
+          "gold_in_box_to_close": 1.0,
+          "compliance": {
+            "n_cited": 1,
+            "cited_ids": [
+              "doc_023#p2"
+            ],
+            "pair_required": false,
+            "pair_ok": true,
+            "cited_sides": [],
+            "band_ok": true,
+            "in_band_rate": 1.0,
+            "in_close": [
+              "doc_023#p2"
+            ],
+            "out_of_band": [],
+            "outside_box": [],
+            "ver_ok": true,
+            "mean_ver_close": 0.12,
+            "mean_ver_oob": null,
+            "axes_ok": 3,
+            "axes_total": 3,
+            "compliance_rate": 1.0,
+            "ok": true,
+            "n_usable_cited": 0,
+            "usable_cite_density": 0.0
+          },
+          "usable_cite_density": 0.0,
+          "analyst": {
+            "cited_ids": [
+              "doc_023#p2"
+            ],
+            "oob_before": [],
+            "repaired_by_regen": false,
+            "elapsed_s": 13.48,
+            "has_tree17_block": true
+          }
+        }
+      ],
+      "compliance_summary": {
+        "axes_ok": 9,
+        "axes_total": 9,
+        "rate": 1.0,
+        "n_full_ok": 3,
+        "n_questions": 3,
+        "n_band_ok": 3,
+        "n_pair_ok": 3,
+        "mean_usable_cite_density": 0.6667,
+        "gold_box_to_close": 1.0
+      }
+    },
+    {
+      "slug": "ai171",
+      "role": "holdout",
+      "micro_gold_density": 0.8,
+      "sum_gold_in_boxes": 4,
+      "sum_k": 5,
+      "cut_hits": {
+        "7": 5
+      },
+      "density_rows": [
+        {
+          "qid": "q_001",
+          "k": 3,
+          "n_gold": 2,
+          "gold_density": 0.6667
+        },
+        {
+          "qid": "q_002",
+          "k": 1,
+          "n_gold": 1,
+          "gold_density": 1.0
+        },
+        {
+          "qid": "q_003",
+          "k": 1,
+          "n_gold": 1,
+          "gold_density": 1.0
+        }
+      ],
+      "cite_rows": [
+        {
+          "qid": "q_001",
+          "conflict": false,
+          "pair_required": false,
+          "close_k_effective": 3,
+          "box_k": 3,
+          "gold_in_box_to_close": 1.0,
+          "compliance": {
+            "n_cited": 1,
+            "cited_ids": [
+              "doc_015#p5"
+            ],
+            "pair_required": false,
+            "pair_ok": true,
+            "cited_sides": [],
+            "band_ok": true,
+            "in_band_rate": 1.0,
+            "in_close": [
+              "doc_015#p5"
+            ],
+            "out_of_band": [],
+            "outside_box": [],
+            "ver_ok": true,
+            "mean_ver_close": 0.56,
+            "mean_ver_oob": null,
+            "axes_ok": 3,
+            "axes_total": 3,
+            "compliance_rate": 1.0,
+            "ok": true,
+            "n_usable_cited": 1,
+            "usable_cite_density": 0.3333
+          },
+          "usable_cite_density": 0.3333,
+          "analyst": {
+            "cited_ids": [
+              "doc_015#p5"
+            ],
+            "oob_before": [],
+            "repaired_by_regen": false,
+            "elapsed_s": 18.64,
+            "has_tree17_block": true
+          }
+        },
+        {
+          "qid": "q_002",
+          "conflict": false,
+          "pair_required": false,
+          "close_k_effective": 1,
+          "box_k": 1,
+          "gold_in_box_to_close": 1.0,
+          "compliance": {
+            "n_cited": 1,
+            "cited_ids": [
+              "doc_015#p6"
+            ],
+            "pair_required": false,
+            "pair_ok": true,
+            "cited_sides": [],
+            "band_ok": true,
+            "in_band_rate": 1.0,
+            "in_close": [
+              "doc_015#p6"
+            ],
+            "out_of_band": [],
+            "outside_box": [],
+            "ver_ok": true,
+            "mean_ver_close": 0.72,
+            "mean_ver_oob": null,
+            "axes_ok": 3,
+            "axes_total": 3,
+            "compliance_rate": 1.0,
+            "ok": true,
+            "n_usable_cited": 1,
+            "usable_cite_density": 1.0
+          },
+          "usable_cite_density": 1.0,
+          "analyst": {
+            "cited_ids": [
+              "doc_015#p6"
+            ],
+            "oob_before": [],
+            "repaired_by_regen": false,
+            "elapsed_s": 14.62,
+            "has_tree17_block": true
+          }
+        },
+        {
+          "qid": "q_003",
+          "conflict": false,
+          "pair_required": false,
+          "close_k_effective": 1,
+          "box_k": 1,
+          "gold_in_box_to_close": 1.0,
+          "compliance": {
+            "n_cited": 1,
+            "cited_ids": [
+              "doc_004#p3"
+            ],
+            "pair_required": false,
+            "pair_ok": true,
+            "cited_sides": [
+              "option_b"
+            ],
+            "band_ok": true,
+            "in_band_rate": 1.0,
+            "in_close": [
+              "doc_004#p3"
+            ],
+            "out_of_band": [],
+            "outside_box": [],
+            "ver_ok": true,
+            "mean_ver_close": 0.12,
+            "mean_ver_oob": null,
+            "axes_ok": 3,
+            "axes_total": 3,
+            "compliance_rate": 1.0,
+            "ok": true,
+            "n_usable_cited": 0,
+            "usable_cite_density": 0.0
+          },
+          "usable_cite_density": 0.0,
+          "analyst": {
+            "cited_ids": [
+              "doc_004#p3"
+            ],
+            "oob_before": [],
+            "repaired_by_regen": false,
+            "elapsed_s": 10.88,
+            "has_tree17_block": true
+          }
+        }
+      ],
+      "compliance_summary": {
+        "axes_ok": 9,
+        "axes_total": 9,
+        "rate": 1.0,
+        "n_full_ok": 3,
+        "n_questions": 3,
+        "n_band_ok": 3,
+        "n_pair_ok": 3,
+        "mean_usable_cite_density": 0.4444,
+        "gold_box_to_close": 1.0
+      }
+    }
+  ],
+  "r30_comp": {
+    "liuxiang": {
+      "axes_ok": 9,
+      "axes_total": 9,
+      "n_full_ok": 3,
+      "n_q": 3
+    },
+    "jilong": {
+      "axes_ok": 9,
+      "axes_total": 9,
+      "n_full_ok": 3,
+      "n_q": 3
+    },
+    "us_cn_ai": {
+      "axes_ok": 9,
+      "axes_total": 9,
+      "n_full_ok": 3,
+      "n_q": 3
+    }
+  },
+  "r40_l2": {
+    "liuxiang": {
+      "micro": 0.5714,
+      "at7": 12
+    },
+    "wanghong": {
+      "micro": 0.7143,
+      "at7": 5
+    },
+    "kh_th": {
+      "micro": 0.8,
+      "at7": 4
+    },
+    "ai171": {
+      "micro": 0.8,
+      "at7": 5
+    },
+    "jilong": {
+      "micro": 0.6667,
+      "at7": 6
+    },
+    "us_cn_ai": {
+      "micro": 0.6667,
+      "at7": 6
+    }
+  },
+  "changes": [
+    "EN verifiability cues for time/amount/bulletin",
+    "close_read ordered by ver+rank; prompt prefers front accept/oppose",
+    "usable_cite_density metric",
+    "L2 density path untouched"
+  ]
+}

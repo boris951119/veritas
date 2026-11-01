@@ -28,7 +28,7 @@ LABEL_OPPOSE = "对立"
 
 DEFAULT_CLOSE_K = 4  # 细读带宽默认；盒短于此时取全盒
 
-# 可核验线索（通用，非案名）
+# 可核验线索（通用，非案名；R41 补英文时点／数额／声明）
 _TIME_CUES = re.compile(
     r"(?:"
     r"\d{4}年\d{1,2}月\d{1,2}日"
@@ -36,31 +36,46 @@ _TIME_CUES = re.compile(
     r"|\d{1,2}月\d{1,2}日"
     r"|\d{1,2}时\d{1,2}分"
     r"|\d{4}-\d{1,2}-\d{1,2}"
+    r"|(?:January|February|March|April|May|June|July|August|September|"
+    r"October|November|December)\s+\d{1,2},\s*\d{4}"
+    r"|\d{1,2}:\d{2}\s*(?:AM|PM|am|pm)?"
     r")"
 )
 _AMOUNT_CUES = re.compile(
     r"(?:"
     r"\d+(?:\.\d+)?\s*(?:万|亿)?(?:元|人|名|例|次|米|公里|%)"
     r"|\d{3,}"
+    r"|(?:killed|killing|deaths?|casualties|on board)\s+\d+"
+    r"|\d+\s+(?:people|passengers|killed|dead)"
     r")"
 )
 _BULLETIN_CUES = (
     "发言人", "新闻发布会", "发布会", "声明", "例行记者会", "通报",
     "秘书长", "外交部", "官方", "确认", "宣布",
+    # R41 英文声明／调查声部（可迁移）
+    "preliminary report", "said on", "announced", "confirmed",
+    "official", "ministry", "AAIB", "according to",
 )
 _COMMENT_CUES = (
     "专家认为", "有分析", "评论称", "网友", "业内人士", "综合认为",
     "据悉或", "或将", "可能意味着", "值得注意",
+    "experts say", "analysts believe", "it is believed",
 )
 
 
 def verifiability_score(text: str) -> dict[str, Any]:
     """段级可核验分（0～1）＋分项；综述评论降权。"""
     body = text or ""
+    tl = body.lower()
     time_n = len(_TIME_CUES.findall(body))
     amount_n = len(_AMOUNT_CUES.findall(body[:400]))
-    bulletin_n = sum(1 for c in _BULLETIN_CUES if c in body[:220])
-    comment_n = sum(1 for c in _COMMENT_CUES if c in body[:220])
+    def _cue_hit(c: str) -> bool:
+        if c.isascii():
+            return c.lower() in tl[:280]
+        return c in body[:220]
+
+    bulletin_n = sum(1 for c in _BULLETIN_CUES if _cue_hit(c))
+    comment_n = sum(1 for c in _COMMENT_CUES if _cue_hit(c))
     raw = (
         0.28 * min(time_n, 2)
         + 0.22 * min(amount_n, 3)
@@ -196,6 +211,12 @@ def plan_close_read(
                 if cands:
                     _add(cands[0])
                     bandwidth_expanded = True
+
+    # R41：细读对外顺序按可核验＋盒序优先（成对成员已在集内；利于「优先引靠前」）
+    pri_of = {pid: float(pri) for pri, _i, pid, _ver, _side in scored}
+    close.sort(
+        key=lambda p: (-pri_of.get(p, 0.0), box.index(p) if p in box else 10**9),
+    )
 
     items: list[dict[str, Any]] = []
     for rank, pid in enumerate(box, 1):
@@ -373,10 +394,12 @@ def render_cite_prompt_block(plan: dict[str, Any] | None) -> str:
         "1. 细读带宽：结论证据的 segment_id【只许】使用下列细读集；不得引用细读集以外的编号；",
         "2. 冲突成对：若标注「成对必读」，support 与 oppose 两侧都须至少引用 1 条；",
         "3. 标签：采信＝可支撑主张；对立＝须正面回应的对侧；存疑＝勿单独当铁证；",
-        "4. 禁止编造资料清单／细读集以外的 segment_id。",
+        "4. 优先序：细读集已按可核验（时间／数额／声明）与盒内排名排好——"
+        "请优先引用列表靠前且标签为采信／对立的段落；存疑勿单独当铁证；",
+        "5. 禁止编造资料清单／细读集以外的 segment_id。",
     ]
     if aligned:
-        lines.append("★ 本盒已与细读带宽对齐：盒内段落均属可引用细读集。")
+        lines.append("★ 本盒已与细读带宽对齐：盒内段落均属可引用细读集；仍须按优先序引用。")
     if plan.get("pair_required"):
         lines.append(
             "★ 本题为冲突成对必读：证据中须同时出现 option_a（support）与 "
@@ -391,8 +414,13 @@ def render_cite_prompt_block(plan: dict[str, Any] | None) -> str:
             side = it.get("side") or "none"
             ver = ((it.get("verifiability") or {}).get("score"))
             ver_s = f"{float(ver):.2f}" if ver is not None else "?"
+            nail = ""
+            vv = it.get("verifiability") or {}
+            if int(vv.get("time_n") or 0) or int(vv.get("amount_n") or 0):
+                nail = "｜钉=时点/数额"
             lines.append(
-                f"- {pid}｜标签={label}｜stance={stance}｜side={side}｜可核验={ver_s}"
+                f"- {pid}｜标签={label}｜stance={stance}｜side={side}"
+                f"｜可核验={ver_s}{nail}"
             )
     # 盒内其余：对齐模式下不应出现；未对齐时仅披露、禁止引用
     rest = [str(it.get("para_id")) for it in items if not it.get("in_close_read")]
@@ -492,6 +520,16 @@ def measure_cite_compliance(
         ver_ok = mean_close + 1e-9 >= (mean_oob or 0.0)
 
     axes_ok = int(pair_ok) + int(band_ok) + int(ver_ok)
+    # R41：可用引用密度——带宽内且（采信／对立 或 可核验≥0.45）的引用数 ÷ 盒长
+    usable_ids: list[str] = []
+    for p in in_close:
+        it = items.get(p) or {}
+        lab = str(it.get("label") or "")
+        if lab in {LABEL_ACCEPT, LABEL_OPPOSE} or _ver(p) + 1e-12 >= 0.45:
+            usable_ids.append(p)
+    usable_cite_density = (
+        round(len(set(usable_ids)) / len(box), 4) if box else 0.0
+    )
     return {
         "n_cited": n_cited,
         "cited_ids": sorted(cited_set),
@@ -510,6 +548,8 @@ def measure_cite_compliance(
         "axes_total": 3,
         "compliance_rate": round(axes_ok / 3.0, 4),
         "ok": axes_ok == 3,
+        "n_usable_cited": len(set(usable_ids)),
+        "usable_cite_density": usable_cite_density,
     }
 
 
