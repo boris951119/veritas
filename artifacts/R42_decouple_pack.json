@@ -1,0 +1,1081 @@
+{
+  "ticket": "R42-decouple-pack",
+  "wall_s": 90.5,
+  "verdict_bullets": [
+    "门槛③：**过**（零系数泄漏；交卷只带 rank／pairs／树17；密度＋引用计划不回退）。",
+    "密度：王虹 71%／柬泰 80%／AI171 80%；刘翔@7=12。",
+    "引用：计划层金标→细读全 1.0；R41 holdout 可用密度均值冻结 37%（盒不变不重跑 14B）。",
+    "泄漏审计：0 次；submit 题级全过=True。"
+  ],
+  "forbidden_keys": [
+    "coeff",
+    "coeffs",
+    "feats",
+    "feature_vector",
+    "features",
+    "multidim",
+    "names",
+    "portable_authority_weights",
+    "r8_coeff",
+    "r9_coeff",
+    "stage1_coeff",
+    "w_eff",
+    "weights"
+  ],
+  "boundaries": {
+    "schema_version": "r42.v1",
+    "layers": {
+      "stage1_pool": {
+        "owns": [
+          "pool_ids",
+          "pool_ranked"
+        ],
+        "forbids_out": [
+          "coeff",
+          "coeffs",
+          "feats",
+          "feature_vector",
+          "features",
+          "multidim",
+          "names",
+          "portable_authority_weights",
+          "r8_coeff",
+          "r9_coeff",
+          "stage1_coeff",
+          "w_eff",
+          "weights"
+        ],
+        "modules": [
+          "app/kg_lab/stage1_pool.py",
+          "app/kg_lab/r8_fit.py"
+        ]
+      },
+      "stage2_box": {
+        "owns": [
+          "box_ids",
+          "k",
+          "conflict_pairs",
+          "density_public"
+        ],
+        "forbids_out": [
+          "coeff",
+          "coeffs",
+          "feats",
+          "feature_vector",
+          "features",
+          "multidim",
+          "names",
+          "portable_authority_weights",
+          "r8_coeff",
+          "r9_coeff",
+          "stage1_coeff",
+          "w_eff",
+          "weights"
+        ],
+        "modules": [
+          "app/kg_lab/stage2_authority.py",
+          "app/kg_lab/density_submit.py"
+        ]
+      },
+      "submit": {
+        "owns": [
+          "rank_order",
+          "conflict_pairs",
+          "tree17"
+        ],
+        "forbids_out": [
+          "coeff",
+          "coeffs",
+          "feats",
+          "feature_vector",
+          "features",
+          "multidim",
+          "names",
+          "portable_authority_weights",
+          "r8_coeff",
+          "r9_coeff",
+          "stage1_coeff",
+          "w_eff",
+          "weights"
+        ],
+        "modules": [
+          "app/kg_lab/layer_boundary.py",
+          "app/kg_lab/tree17_cite.py"
+        ]
+      },
+      "mainline_pack": {
+        "function": "app/core/material.py::pack_material",
+        "accepts_from_lab": [
+          "priority_segment_ids (via answer_slots / hints)",
+          "focus_segment_ids (analyst prompt)",
+          "max_segments (optional hard cap)"
+        ],
+        "must_not_accept": [
+          "coeff",
+          "coeffs",
+          "feats",
+          "feature_vector",
+          "features",
+          "multidim",
+          "names",
+          "portable_authority_weights",
+          "r8_coeff",
+          "r9_coeff",
+          "stage1_coeff",
+          "w_eff",
+          "weights"
+        ]
+      }
+    },
+    "borrowable": [
+      {
+        "item": "可变 k＋密度约束（TARGET≥2/3，k∈[3,7]）",
+        "layer": "stage2／density_submit",
+        "module": "app/kg_lab/density_submit.py::density_constrained_submit",
+        "mainline_hook": "交卷只带 rank_order＋k；主线可用 max_segments=k 或 priority_segment_ids=rank_order；勿把密度扫描系数塞进 pack_material"
+      },
+      {
+        "item": "conflict_pairs（support vs oppose 成对）",
+        "layer": "stage2／authority_rerank 出口",
+        "module": "app/kg_lab/stage2_authority.py::build_conflict_pairs",
+        "mainline_hook": "SubmitSurface.conflict_pairs → 报告冲突节／质证；装箱只消费 id，不消费权威权重"
+      },
+      {
+        "item": "通稿／近同文簇 keep-one（抗挤）",
+        "layer": "stage2／density_submit 簇内代表",
+        "module": "app/kg_lab/density_submit.py::_cluster_wire_keep_one",
+        "mainline_hook": "留在二筛；主线 pack_material 已有 duplicate_map，勿再灌实验簇系数；接盒结果即可"
+      },
+      {
+        "item": "繁简对照折叠（近同判定用，不改原文）",
+        "layer": "stage2／density_submit 指纹归一",
+        "module": "app/kg_lab/density_submit.py::_TRAD_TO_SIMP",
+        "mainline_hook": "属二筛簇判据；主线若复用只进近同检测，不进 pack 参数面"
+      },
+      {
+        "item": "树17 引用纪律（细读带宽／成对／采信·对立标签）",
+        "layer": "submit／L3（盒后）",
+        "module": "app/kg_lab/tree17_cite.py::apply_tree17_cite / attach_tree17_plan",
+        "mainline_hook": "accounting['tree17_cite']＋focus_segment_ids=close_read；提示词注入，零改 pack_material 签名"
+      },
+      {
+        "item": "一筛多维系数（R9／R21）",
+        "layer": "stage1_pool 内部",
+        "module": "app/kg_lab/r8_fit.py::evaluate + r21_coeff",
+        "mainline_hook": "系数只活在一筛打分；出口仅 pool_ids。若动系数须整套重拟合 ±0.08；禁止整包进 pack_material"
+      },
+      {
+        "item": "二筛权威权重（DEFAULT_WEIGHTS）",
+        "layer": "stage2 内部 portable_authority_unit",
+        "module": "app/kg_lab/stage2_authority.py::DEFAULT_WEIGHTS",
+        "mainline_hook": "权重只服务盒内裁决；交卷只留 rank／pairs。主线接盒序，不接 weights dict"
+      }
+    ]
+  },
+  "borrowable": [
+    {
+      "item": "可变 k＋密度约束（TARGET≥2/3，k∈[3,7]）",
+      "layer": "stage2／density_submit",
+      "module": "app/kg_lab/density_submit.py::density_constrained_submit",
+      "mainline_hook": "交卷只带 rank_order＋k；主线可用 max_segments=k 或 priority_segment_ids=rank_order；勿把密度扫描系数塞进 pack_material"
+    },
+    {
+      "item": "conflict_pairs（support vs oppose 成对）",
+      "layer": "stage2／authority_rerank 出口",
+      "module": "app/kg_lab/stage2_authority.py::build_conflict_pairs",
+      "mainline_hook": "SubmitSurface.conflict_pairs → 报告冲突节／质证；装箱只消费 id，不消费权威权重"
+    },
+    {
+      "item": "通稿／近同文簇 keep-one（抗挤）",
+      "layer": "stage2／density_submit 簇内代表",
+      "module": "app/kg_lab/density_submit.py::_cluster_wire_keep_one",
+      "mainline_hook": "留在二筛；主线 pack_material 已有 duplicate_map，勿再灌实验簇系数；接盒结果即可"
+    },
+    {
+      "item": "繁简对照折叠（近同判定用，不改原文）",
+      "layer": "stage2／density_submit 指纹归一",
+      "module": "app/kg_lab/density_submit.py::_TRAD_TO_SIMP",
+      "mainline_hook": "属二筛簇判据；主线若复用只进近同检测，不进 pack 参数面"
+    },
+    {
+      "item": "树17 引用纪律（细读带宽／成对／采信·对立标签）",
+      "layer": "submit／L3（盒后）",
+      "module": "app/kg_lab/tree17_cite.py::apply_tree17_cite / attach_tree17_plan",
+      "mainline_hook": "accounting['tree17_cite']＋focus_segment_ids=close_read；提示词注入，零改 pack_material 签名"
+    },
+    {
+      "item": "一筛多维系数（R9／R21）",
+      "layer": "stage1_pool 内部",
+      "module": "app/kg_lab/r8_fit.py::evaluate + r21_coeff",
+      "mainline_hook": "系数只活在一筛打分；出口仅 pool_ids。若动系数须整套重拟合 ±0.08；禁止整包进 pack_material"
+    },
+    {
+      "item": "二筛权威权重（DEFAULT_WEIGHTS）",
+      "layer": "stage2 内部 portable_authority_unit",
+      "module": "app/kg_lab/stage2_authority.py::DEFAULT_WEIGHTS",
+      "mainline_hook": "权重只服务盒内裁决；交卷只留 rank／pairs。主线接盒序，不接 weights dict"
+    }
+  ],
+  "gate": {
+    "dens_holdout_ok": true,
+    "n_holdout_ge23": 3,
+    "dens_regress_ok": true,
+    "liuxiang_ok": true,
+    "liuxiang_at7": 12,
+    "cite_plan_ok": true,
+    "cite_frozen_ok": true,
+    "holdout_mean_usable": 0.3704,
+    "n_leaks": 0,
+    "all_submit_ok": true,
+    "no_coeff_leak": true,
+    "gate3_pass": true
+  },
+  "cases": [
+    {
+      "slug": "liuxiang",
+      "role": "regression",
+      "pool_hits": {
+        "20": 8,
+        "50": 9
+      },
+      "cut_hits": {
+        "7": 12
+      },
+      "density_rows": [
+        {
+          "qid": "q_001",
+          "route": "adjudicate",
+          "k": 7,
+          "n_gold": 4,
+          "gold_density": 0.5714,
+          "box": [
+            "doc_002#p3",
+            "doc_035#p7",
+            "doc_024#p1",
+            "doc_025#p6",
+            "doc_033#p2",
+            "doc_043#p1",
+            "doc_012#p5"
+          ]
+        },
+        {
+          "qid": "q_002",
+          "route": "adjudicate",
+          "k": 7,
+          "n_gold": 4,
+          "gold_density": 0.5714,
+          "box": [
+            "doc_009#p5",
+            "doc_011#p7",
+            "doc_041#p1",
+            "doc_002#p3",
+            "doc_051#p3",
+            "doc_051#p5",
+            "doc_029#p7"
+          ]
+        },
+        {
+          "qid": "q_003",
+          "route": "adjudicate",
+          "k": 7,
+          "n_gold": 4,
+          "gold_density": 0.5714,
+          "box": [
+            "doc_012#p5",
+            "doc_046#p3",
+            "doc_006#p3",
+            "doc_002#p3",
+            "doc_033#p5",
+            "doc_027#p3",
+            "doc_050#p10"
+          ]
+        }
+      ],
+      "micro_gold_density": 0.5714,
+      "sum_gold_in_boxes": 12,
+      "sum_k": 21,
+      "layer_rows": [
+        {
+          "qid": "q_001",
+          "stage1_pool_n": 20,
+          "stage2_k": 7,
+          "submit_k": 7,
+          "n_conflict_pairs": 8,
+          "n_close_read": 7,
+          "pack_hint_keys": [
+            "conflict_pairs",
+            "focus_segment_ids",
+            "max_segments",
+            "priority_segment_ids"
+          ],
+          "submit_ok": true
+        },
+        {
+          "qid": "q_002",
+          "stage1_pool_n": 20,
+          "stage2_k": 7,
+          "submit_k": 7,
+          "n_conflict_pairs": 0,
+          "n_close_read": 7,
+          "pack_hint_keys": [
+            "conflict_pairs",
+            "focus_segment_ids",
+            "max_segments",
+            "priority_segment_ids"
+          ],
+          "submit_ok": true
+        },
+        {
+          "qid": "q_003",
+          "stage1_pool_n": 20,
+          "stage2_k": 7,
+          "submit_k": 7,
+          "n_conflict_pairs": 0,
+          "n_close_read": 7,
+          "pack_hint_keys": [
+            "conflict_pairs",
+            "focus_segment_ids",
+            "max_segments",
+            "priority_segment_ids"
+          ],
+          "submit_ok": true
+        }
+      ],
+      "cite_plan_rows": [
+        {
+          "qid": "q_001",
+          "box_k": 7,
+          "pair_required": false,
+          "gold_in_box_to_close": 1.0,
+          "close_k": 7,
+          "l3_gold_box_to_close": null
+        },
+        {
+          "qid": "q_002",
+          "box_k": 7,
+          "pair_required": false,
+          "gold_in_box_to_close": 1.0,
+          "close_k": 7,
+          "l3_gold_box_to_close": null
+        },
+        {
+          "qid": "q_003",
+          "box_k": 7,
+          "pair_required": false,
+          "gold_in_box_to_close": 1.0,
+          "close_k": 7,
+          "l3_gold_box_to_close": null
+        }
+      ],
+      "mean_gold_box_to_close": 1.0,
+      "n_layer_leaks": 0,
+      "layer_leak_sample": [],
+      "wall_s": 6.3
+    },
+    {
+      "slug": "jilong",
+      "role": "smoke",
+      "pool_hits": {
+        "20": 5,
+        "50": 7
+      },
+      "cut_hits": {
+        "7": 6
+      },
+      "density_rows": [
+        {
+          "qid": "q_001",
+          "route": "adjudicate",
+          "k": 3,
+          "n_gold": 2,
+          "gold_density": 0.6667,
+          "box": [
+            "doc_001#p237",
+            "doc_061#p2",
+            "doc_001#p21"
+          ]
+        },
+        {
+          "qid": "q_002",
+          "route": "adjudicate",
+          "k": 3,
+          "n_gold": 2,
+          "gold_density": 0.6667,
+          "box": [
+            "doc_001#p291",
+            "doc_115#p21",
+            "doc_001#p235"
+          ]
+        },
+        {
+          "qid": "q_003",
+          "route": "adjudicate",
+          "k": 3,
+          "n_gold": 2,
+          "gold_density": 0.6667,
+          "box": [
+            "doc_001#p237",
+            "doc_001#p2",
+            "doc_079#p1"
+          ]
+        }
+      ],
+      "micro_gold_density": 0.6667,
+      "sum_gold_in_boxes": 6,
+      "sum_k": 9,
+      "layer_rows": [
+        {
+          "qid": "q_001",
+          "stage1_pool_n": 20,
+          "stage2_k": 3,
+          "submit_k": 3,
+          "n_conflict_pairs": 0,
+          "n_close_read": 3,
+          "pack_hint_keys": [
+            "conflict_pairs",
+            "focus_segment_ids",
+            "max_segments",
+            "priority_segment_ids"
+          ],
+          "submit_ok": true
+        },
+        {
+          "qid": "q_002",
+          "stage1_pool_n": 20,
+          "stage2_k": 3,
+          "submit_k": 3,
+          "n_conflict_pairs": 0,
+          "n_close_read": 3,
+          "pack_hint_keys": [
+            "conflict_pairs",
+            "focus_segment_ids",
+            "max_segments",
+            "priority_segment_ids"
+          ],
+          "submit_ok": true
+        },
+        {
+          "qid": "q_003",
+          "stage1_pool_n": 20,
+          "stage2_k": 3,
+          "submit_k": 3,
+          "n_conflict_pairs": 0,
+          "n_close_read": 3,
+          "pack_hint_keys": [
+            "conflict_pairs",
+            "focus_segment_ids",
+            "max_segments",
+            "priority_segment_ids"
+          ],
+          "submit_ok": true
+        }
+      ],
+      "cite_plan_rows": [
+        {
+          "qid": "q_001",
+          "box_k": 3,
+          "pair_required": false,
+          "gold_in_box_to_close": 1.0,
+          "close_k": 3,
+          "l3_gold_box_to_close": null
+        },
+        {
+          "qid": "q_002",
+          "box_k": 3,
+          "pair_required": true,
+          "gold_in_box_to_close": 1.0,
+          "close_k": 3,
+          "l3_gold_box_to_close": null
+        },
+        {
+          "qid": "q_003",
+          "box_k": 3,
+          "pair_required": false,
+          "gold_in_box_to_close": 1.0,
+          "close_k": 3,
+          "l3_gold_box_to_close": null
+        }
+      ],
+      "mean_gold_box_to_close": 1.0,
+      "n_layer_leaks": 0,
+      "layer_leak_sample": [],
+      "wall_s": 22.9
+    },
+    {
+      "slug": "us_cn_ai",
+      "role": "smoke",
+      "pool_hits": {
+        "20": 8,
+        "50": 10
+      },
+      "cut_hits": {
+        "7": 6
+      },
+      "density_rows": [
+        {
+          "qid": "q_001",
+          "route": "adjudicate",
+          "k": 3,
+          "n_gold": 2,
+          "gold_density": 0.6667,
+          "box": [
+            "doc_007#p10",
+            "doc_018#p12",
+            "doc_047#p4"
+          ]
+        },
+        {
+          "qid": "q_002",
+          "route": "adjudicate",
+          "k": 3,
+          "n_gold": 2,
+          "gold_density": 0.6667,
+          "box": [
+            "doc_005#p3",
+            "doc_004#p4",
+            "doc_011#p3"
+          ]
+        },
+        {
+          "qid": "q_003",
+          "route": "adjudicate",
+          "k": 3,
+          "n_gold": 2,
+          "gold_density": 0.6667,
+          "box": [
+            "doc_058#p2",
+            "doc_017#p10",
+            "doc_018#p12"
+          ]
+        }
+      ],
+      "micro_gold_density": 0.6667,
+      "sum_gold_in_boxes": 6,
+      "sum_k": 9,
+      "layer_rows": [
+        {
+          "qid": "q_001",
+          "stage1_pool_n": 20,
+          "stage2_k": 3,
+          "submit_k": 3,
+          "n_conflict_pairs": 0,
+          "n_close_read": 3,
+          "pack_hint_keys": [
+            "conflict_pairs",
+            "focus_segment_ids",
+            "max_segments",
+            "priority_segment_ids"
+          ],
+          "submit_ok": true
+        },
+        {
+          "qid": "q_002",
+          "stage1_pool_n": 20,
+          "stage2_k": 3,
+          "submit_k": 3,
+          "n_conflict_pairs": 0,
+          "n_close_read": 3,
+          "pack_hint_keys": [
+            "conflict_pairs",
+            "focus_segment_ids",
+            "max_segments",
+            "priority_segment_ids"
+          ],
+          "submit_ok": true
+        },
+        {
+          "qid": "q_003",
+          "stage1_pool_n": 20,
+          "stage2_k": 3,
+          "submit_k": 3,
+          "n_conflict_pairs": 0,
+          "n_close_read": 3,
+          "pack_hint_keys": [
+            "conflict_pairs",
+            "focus_segment_ids",
+            "max_segments",
+            "priority_segment_ids"
+          ],
+          "submit_ok": true
+        }
+      ],
+      "cite_plan_rows": [
+        {
+          "qid": "q_001",
+          "box_k": 3,
+          "pair_required": false,
+          "gold_in_box_to_close": 1.0,
+          "close_k": 3,
+          "l3_gold_box_to_close": null
+        },
+        {
+          "qid": "q_002",
+          "box_k": 3,
+          "pair_required": false,
+          "gold_in_box_to_close": 1.0,
+          "close_k": 3,
+          "l3_gold_box_to_close": null
+        },
+        {
+          "qid": "q_003",
+          "box_k": 3,
+          "pair_required": true,
+          "gold_in_box_to_close": 1.0,
+          "close_k": 3,
+          "l3_gold_box_to_close": null
+        }
+      ],
+      "mean_gold_box_to_close": 1.0,
+      "n_layer_leaks": 0,
+      "layer_leak_sample": [],
+      "wall_s": 14.7
+    },
+    {
+      "slug": "wanghong",
+      "role": "holdout",
+      "pool_hits": {
+        "20": 9,
+        "50": 11
+      },
+      "cut_hits": {
+        "7": 5
+      },
+      "density_rows": [
+        {
+          "qid": "q_001",
+          "route": "fact_check",
+          "k": 1,
+          "n_gold": 1,
+          "gold_density": 1.0,
+          "box": [
+            "doc_001#p1"
+          ]
+        },
+        {
+          "qid": "q_002",
+          "route": "adjudicate",
+          "k": 3,
+          "n_gold": 1,
+          "gold_density": 0.3333,
+          "box": [
+            "doc_010#p7",
+            "doc_063#p3",
+            "doc_010#p5"
+          ]
+        },
+        {
+          "qid": "q_003",
+          "route": "adjudicate",
+          "k": 3,
+          "n_gold": 3,
+          "gold_density": 1.0,
+          "box": [
+            "doc_007#p1",
+            "doc_007#p2",
+            "doc_003#p5"
+          ]
+        }
+      ],
+      "micro_gold_density": 0.7143,
+      "sum_gold_in_boxes": 5,
+      "sum_k": 7,
+      "layer_rows": [
+        {
+          "qid": "q_001",
+          "stage1_pool_n": 20,
+          "stage2_k": 1,
+          "submit_k": 1,
+          "n_conflict_pairs": 0,
+          "n_close_read": 1,
+          "pack_hint_keys": [
+            "conflict_pairs",
+            "focus_segment_ids",
+            "max_segments",
+            "priority_segment_ids"
+          ],
+          "submit_ok": true
+        },
+        {
+          "qid": "q_002",
+          "stage1_pool_n": 20,
+          "stage2_k": 3,
+          "submit_k": 3,
+          "n_conflict_pairs": 0,
+          "n_close_read": 3,
+          "pack_hint_keys": [
+            "conflict_pairs",
+            "focus_segment_ids",
+            "max_segments",
+            "priority_segment_ids"
+          ],
+          "submit_ok": true
+        },
+        {
+          "qid": "q_003",
+          "stage1_pool_n": 20,
+          "stage2_k": 3,
+          "submit_k": 3,
+          "n_conflict_pairs": 0,
+          "n_close_read": 3,
+          "pack_hint_keys": [
+            "conflict_pairs",
+            "focus_segment_ids",
+            "max_segments",
+            "priority_segment_ids"
+          ],
+          "submit_ok": true
+        }
+      ],
+      "cite_plan_rows": [
+        {
+          "qid": "q_001",
+          "box_k": 1,
+          "pair_required": false,
+          "gold_in_box_to_close": 1.0,
+          "close_k": 1,
+          "l3_gold_box_to_close": null
+        },
+        {
+          "qid": "q_002",
+          "box_k": 3,
+          "pair_required": false,
+          "gold_in_box_to_close": 1.0,
+          "close_k": 3,
+          "l3_gold_box_to_close": null
+        },
+        {
+          "qid": "q_003",
+          "box_k": 3,
+          "pair_required": false,
+          "gold_in_box_to_close": 1.0,
+          "close_k": 3,
+          "l3_gold_box_to_close": null
+        }
+      ],
+      "mean_gold_box_to_close": 1.0,
+      "n_layer_leaks": 0,
+      "layer_leak_sample": [],
+      "wall_s": 16.6
+    },
+    {
+      "slug": "kh_th",
+      "role": "holdout",
+      "pool_hits": {
+        "20": 6,
+        "50": 6
+      },
+      "cut_hits": {
+        "7": 4
+      },
+      "density_rows": [
+        {
+          "qid": "q_001",
+          "route": "fact_check",
+          "k": 1,
+          "n_gold": 1,
+          "gold_density": 1.0,
+          "box": [
+            "doc_027#p2"
+          ]
+        },
+        {
+          "qid": "q_002",
+          "route": "fact_check",
+          "k": 3,
+          "n_gold": 2,
+          "gold_density": 0.6667,
+          "box": [
+            "doc_009#p10",
+            "doc_103#p3",
+            "doc_006#p4"
+          ]
+        },
+        {
+          "qid": "q_003",
+          "route": "fact_check",
+          "k": 1,
+          "n_gold": 1,
+          "gold_density": 1.0,
+          "box": [
+            "doc_023#p2"
+          ]
+        }
+      ],
+      "micro_gold_density": 0.8,
+      "sum_gold_in_boxes": 4,
+      "sum_k": 5,
+      "layer_rows": [
+        {
+          "qid": "q_001",
+          "stage1_pool_n": 20,
+          "stage2_k": 1,
+          "submit_k": 1,
+          "n_conflict_pairs": 0,
+          "n_close_read": 1,
+          "pack_hint_keys": [
+            "conflict_pairs",
+            "focus_segment_ids",
+            "max_segments",
+            "priority_segment_ids"
+          ],
+          "submit_ok": true
+        },
+        {
+          "qid": "q_002",
+          "stage1_pool_n": 20,
+          "stage2_k": 3,
+          "submit_k": 3,
+          "n_conflict_pairs": 0,
+          "n_close_read": 3,
+          "pack_hint_keys": [
+            "conflict_pairs",
+            "focus_segment_ids",
+            "max_segments",
+            "priority_segment_ids"
+          ],
+          "submit_ok": true
+        },
+        {
+          "qid": "q_003",
+          "stage1_pool_n": 20,
+          "stage2_k": 1,
+          "submit_k": 1,
+          "n_conflict_pairs": 0,
+          "n_close_read": 1,
+          "pack_hint_keys": [
+            "conflict_pairs",
+            "focus_segment_ids",
+            "max_segments",
+            "priority_segment_ids"
+          ],
+          "submit_ok": true
+        }
+      ],
+      "cite_plan_rows": [
+        {
+          "qid": "q_001",
+          "box_k": 1,
+          "pair_required": false,
+          "gold_in_box_to_close": 1.0,
+          "close_k": 1,
+          "l3_gold_box_to_close": null
+        },
+        {
+          "qid": "q_002",
+          "box_k": 3,
+          "pair_required": false,
+          "gold_in_box_to_close": 1.0,
+          "close_k": 3,
+          "l3_gold_box_to_close": null
+        },
+        {
+          "qid": "q_003",
+          "box_k": 1,
+          "pair_required": false,
+          "gold_in_box_to_close": 1.0,
+          "close_k": 1,
+          "l3_gold_box_to_close": null
+        }
+      ],
+      "mean_gold_box_to_close": 1.0,
+      "n_layer_leaks": 0,
+      "layer_leak_sample": [],
+      "wall_s": 10.3
+    },
+    {
+      "slug": "ai171",
+      "role": "holdout",
+      "pool_hits": {
+        "20": 6,
+        "50": 11
+      },
+      "cut_hits": {
+        "7": 5
+      },
+      "density_rows": [
+        {
+          "qid": "q_001",
+          "route": "adjudicate",
+          "k": 3,
+          "n_gold": 2,
+          "gold_density": 0.6667,
+          "box": [
+            "doc_001#p3",
+            "doc_015#p5",
+            "doc_017#p4"
+          ]
+        },
+        {
+          "qid": "q_002",
+          "route": "fact_check",
+          "k": 1,
+          "n_gold": 1,
+          "gold_density": 1.0,
+          "box": [
+            "doc_015#p6"
+          ]
+        },
+        {
+          "qid": "q_003",
+          "route": "adjudicate",
+          "k": 1,
+          "n_gold": 1,
+          "gold_density": 1.0,
+          "box": [
+            "doc_004#p3"
+          ]
+        }
+      ],
+      "micro_gold_density": 0.8,
+      "sum_gold_in_boxes": 4,
+      "sum_k": 5,
+      "layer_rows": [
+        {
+          "qid": "q_001",
+          "stage1_pool_n": 20,
+          "stage2_k": 3,
+          "submit_k": 3,
+          "n_conflict_pairs": 0,
+          "n_close_read": 3,
+          "pack_hint_keys": [
+            "conflict_pairs",
+            "focus_segment_ids",
+            "max_segments",
+            "priority_segment_ids"
+          ],
+          "submit_ok": true
+        },
+        {
+          "qid": "q_002",
+          "stage1_pool_n": 20,
+          "stage2_k": 1,
+          "submit_k": 1,
+          "n_conflict_pairs": 0,
+          "n_close_read": 1,
+          "pack_hint_keys": [
+            "conflict_pairs",
+            "focus_segment_ids",
+            "max_segments",
+            "priority_segment_ids"
+          ],
+          "submit_ok": true
+        },
+        {
+          "qid": "q_003",
+          "stage1_pool_n": 20,
+          "stage2_k": 1,
+          "submit_k": 1,
+          "n_conflict_pairs": 0,
+          "n_close_read": 1,
+          "pack_hint_keys": [
+            "conflict_pairs",
+            "focus_segment_ids",
+            "max_segments",
+            "priority_segment_ids"
+          ],
+          "submit_ok": true
+        }
+      ],
+      "cite_plan_rows": [
+        {
+          "qid": "q_001",
+          "box_k": 3,
+          "pair_required": false,
+          "gold_in_box_to_close": 1.0,
+          "close_k": 3,
+          "l3_gold_box_to_close": null
+        },
+        {
+          "qid": "q_002",
+          "box_k": 1,
+          "pair_required": false,
+          "gold_in_box_to_close": 1.0,
+          "close_k": 1,
+          "l3_gold_box_to_close": null
+        },
+        {
+          "qid": "q_003",
+          "box_k": 1,
+          "pair_required": false,
+          "gold_in_box_to_close": 1.0,
+          "close_k": 1,
+          "l3_gold_box_to_close": null
+        }
+      ],
+      "mean_gold_box_to_close": 1.0,
+      "n_layer_leaks": 0,
+      "layer_leak_sample": [],
+      "wall_s": 19.6
+    }
+  ],
+  "r41_cite_frozen": {
+    "liuxiang": {
+      "n_full_ok": 3,
+      "n_q": 3,
+      "axes_ok": 9,
+      "axes_total": 9,
+      "usable": 0.2857
+    },
+    "jilong": {
+      "n_full_ok": 3,
+      "n_q": 3,
+      "axes_ok": 9,
+      "axes_total": 9,
+      "usable": 0.5556
+    },
+    "us_cn_ai": {
+      "n_full_ok": 3,
+      "n_q": 3,
+      "axes_ok": 9,
+      "axes_total": 9,
+      "usable": 0.3333
+    },
+    "wanghong": {
+      "n_full_ok": 3,
+      "n_q": 3,
+      "axes_ok": 9,
+      "axes_total": 9,
+      "usable": 0.0
+    },
+    "kh_th": {
+      "n_full_ok": 3,
+      "n_q": 3,
+      "axes_ok": 9,
+      "axes_total": 9,
+      "usable": 0.6667
+    },
+    "ai171": {
+      "n_full_ok": 3,
+      "n_q": 3,
+      "axes_ok": 9,
+      "axes_total": 9,
+      "usable": 0.4444
+    }
+  },
+  "r40_l2": {
+    "liuxiang": {
+      "micro": 0.5714,
+      "at7": 12
+    },
+    "wanghong": {
+      "micro": 0.7143,
+      "at7": 5
+    },
+    "kh_th": {
+      "micro": 0.8,
+      "at7": 4
+    },
+    "ai171": {
+      "micro": 0.8,
+      "at7": 5
+    },
+    "jilong": {
+      "micro": 0.6667,
+      "at7": 6
+    },
+    "us_cn_ai": {
+      "micro": 0.6667,
+      "at7": 6
+    }
+  }
+}
