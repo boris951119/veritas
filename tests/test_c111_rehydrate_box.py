@@ -109,7 +109,7 @@ def test_c111_seed_hit_by_query_sha(monkeypatch):
     from pathlib import Path
     raw = json.loads(
         (Path(__file__).resolve().parents[1]
-         / "app/core/data/kg_rehydrate_seeds.json").read_text(encoding="utf-8")
+         / "app/core/kg_rehydrate_seeds.json").read_text(encoding="utf-8")
     )
     q = raw[0]["query"]
     assert query_sha16(q) == raw[0]["query_sha1_16"]

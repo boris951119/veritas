@@ -1,7 +1,7 @@
 <!-- C-111-REHYDRATE -->
 ## 〔C-111〕保底回灌短盒（rehydrate_box；过线／建议合入）
 
-- **枝**：`cursor/c109-stage1-pool`。模块 `app/core/kg_rehydrate.py`＋仓内种子 `app/core/data/kg_rehydrate_seeds.json`（自 C-108／R44 对照盒按问句 sha 迁入，**不**读外仓 R44 文件）。
+- **枝**：`cursor/c109-stage1-pool`。模块 `app/core/kg_rehydrate.py`＋仓内种子 `app/core/kg_rehydrate_seeds.json`（自 C-108／R44 对照盒按问句 sha 迁入，**不**读外仓 R44 文件）。
 - **行为**：无上游短盒 → 种子命中则信任为短盒；未命中则密度盒算法垫到 k≈7。有上游盒仍优先。
 - **旗**：`VERITAS_KG_REHYDRATE_BOX` 默认开；`=0` 回退 C-109。系数／R9／R21 不进 pack。
 - **读数**（`artifacts/C111_rehydrate_box.md`）：刘翔@7 A12／**B12**／C4；holdout L2 29／**29**／25；泄漏＝0。**过线**。

@@ -19,7 +19,7 @@ from typing import Any
 
 from app.kg_lab.density_submit import K_MAX
 
-_SEED_PATH = Path(__file__).resolve().parent / "data" / "kg_rehydrate_seeds.json"
+_SEED_PATH = Path(__file__).resolve().parent / "kg_rehydrate_seeds.json"
 _TARGET_K = K_MAX  # 7
 
 
