@@ -9,9 +9,12 @@ from app.agents.arbiter import Coordinator
 from app.core.conflicts import (
     ConflictPair,
     Resolution,
+    _stamp,
     apply_resolution,
+    mechanical_decision_path,
     validate_conflict,
 )
+from app.core.dup_check import duplicate_map, near_dup_pairs
 from app.core.evidence import Dossier
 
 
@@ -24,6 +27,9 @@ def edit_conclusion(dossier: Dossier, conclusion_id: str, statement: str) -> Non
     if not text:
         raise ValueError("statement 不能为空")
     con.statement = text
+    # 句子是人工重写的，模型原先的覆盖声明就不再对得上：清零，由范围诚实闸
+    # 按新句重新判定（人若写下「所有/全部」而没重新声明，当场亮黄灯）。
+    con.coverage = None
 
 
 def _find_conflict(dossier: Dossier, conflict_id: str) -> tuple[int, ConflictPair]:
@@ -64,6 +70,11 @@ def override_resolution(dossier: Dossier, conflict_id: str,
                          if pair.resolution else {}),
         rebuts=(pair.resolution.rebuts if pair.resolution else {}),
     )
+    exact = duplicate_map(dossier)
+    near = near_dup_pairs(dossier)
+    mech = mechanical_decision_path(pair, dossier, pair.resolution, exact, near)
+    _stamp(pair.resolution, pair, dossier, "human_override", exact, near,
+           mechanical_path=mech)
     err = apply_resolution(pair, dossier)
     if err:
         raise ValueError(str(err.get("problems") or err))

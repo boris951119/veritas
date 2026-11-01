@@ -201,12 +201,14 @@ def audit_level_consistency(dossier: Dossier) -> list[dict]:
 
 
 def audit_causation_support(dossier: Dossier) -> list[dict]:
-    """causation 机制词闸：因果标注但引文与说明均无机制性表述 → 黄牌
-    （因果有置信度加成，模型有虚标动机；计分侧同步按相关降权——见
+    """causation 机制词闸：当前标因果或曾声明因果（declared_relation），
+    但引文与说明均无机制性表述 → 黄牌（R-C32-1：与 causal_claim_missing
+    并存，不因降级互顶；计分侧同步按相关降权——见
     confidence.evidence_strength_of）。"""
     flags: list[dict] = []
     for ev in dossier.evidences:
-        if ev.relation.value != "causation":
+        declared = (getattr(ev, "declared_relation", "") or "")
+        if ev.relation.value != "causation" and declared != "causation":
             continue
         if not has_mechanism_word(ev.quote, ev.note):
             flags.append({

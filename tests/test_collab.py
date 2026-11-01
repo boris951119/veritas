@@ -14,7 +14,9 @@ from app.core.conflicts import (
     apply_resolution,
     validate_conflict,
 )
-from app.core.evidence import Conclusion, Dossier, EvidenceNode, Segment, Source, SourceType
+from app.core.evidence import (
+    Conclusion, Dossier, EvidenceLevel, EvidenceNode, Segment, Source, SourceType,
+)
 from app.pipeline import run_case
 from app.pipeline import RunDeps, RunSpec
 
@@ -30,17 +32,47 @@ PANEL_JSON = """{"conclusions": [
 ]}"""
 
 
-class ScriptedClient:
-    """按脚本队列响应；队列项可为文本、异常或 callable(messages)->str。"""
+def _analyst_name_from_messages(messages) -> str:
+    """从系统提示词首句「你是一名{persona}。」反查 DEFAULT_ROSTER 的 name。"""
+    for msg in messages or []:
+        if not isinstance(msg, dict) or msg.get("role") != "system":
+            continue
+        content = str(msg.get("content") or "")
+        if not content.startswith("你是一名"):
+            continue
+        rest = content[len("你是一名"):]
+        for name, persona in DEFAULT_ROSTER:
+            if rest.startswith(persona + "。"):
+                return name
+    raise KeyError("无法从 messages 识别分析师身份")
 
-    def __init__(self, responses):
-        self.responses = list(responses)
+
+class ScriptedClient:
+    """按脚本队列响应；队列项可为文本、异常或 callable(messages)->str。
+
+    by_name 非空时按分析师名各取各的队列（身份只从 messages 认）；
+    未传或空则仍走 responses.pop(0)。
+    """
+
+    def __init__(self, responses=None, by_name: dict | None = None):
+        self.responses = list(responses or [])
+        self.by_name = (
+            {name: list(queue) for name, queue in by_name.items()}
+            if by_name else None
+        )
         self.calls: list[dict] = []
 
     def chat(self, model, messages, json_mode=False):
         self.calls.append({"model": model, "messages": messages,
                            "json_mode": json_mode})
-        item = self.responses.pop(0)
+        if self.by_name is not None:
+            name = _analyst_name_from_messages(messages)
+            queue = self.by_name.get(name)
+            if not queue:
+                raise KeyError(f"分析师 {name!r} 没有剩余脚本响应")
+            item = queue.pop(0)
+        else:
+            item = self.responses.pop(0)
         if callable(item):
             item = item(messages)
         if isinstance(item, Exception):
@@ -71,7 +103,8 @@ def _dossier_with_two_conclusions() -> Dossier:
         d.conclusions.append(con)
         d.add_evidence(EvidenceNode.create(
             f"CON-{i}", "全固态电芯的中试良率尚不足百分之四十", ["SRC1#s1"],
-            id=f"EV-{i}"))
+            id=f"EV-{i}",
+            level=EvidenceLevel.A if i == 0 else EvidenceLevel.C))
     return d
 
 
@@ -107,7 +140,11 @@ def test_panel_single_failure_degrades(tmp_path):
     from app.ingest.case_loader import load_case
 
     dossier = load_case(tmp_path)
-    client = ScriptedClient([PANEL_JSON, RuntimeError("429 网关抖动"), PANEL_JSON])
+    client = ScriptedClient(by_name={
+        "mainstream": [PANEL_JSON],
+        "redteam": [RuntimeError("429 网关抖动")],
+        "technologist": [PANEL_JSON],
+    })
     panel = build_panel(client=client, model="m")
     results = run_panel(dossier, panel)
     assert set(results["_failures"]) == {"redteam"}
@@ -233,7 +270,31 @@ def test_rebuttal_single_side_failure_degrades():
 
 
 def test_run_case_full_collaboration_pipeline(tmp_path):
-    _case(tmp_path)
+    """两组结论挂不同信源、文案语义不同，强度差 >0.20 → 有胜方与少数意见。"""
+    (tmp_path / "manifest.yaml").write_text(
+        "question: 固态电池 2030 能否规模上车？\n"
+        "sources:\n"
+        "  - file: density.md\n    type: paper\n"
+        "  - file: yield.md\n    type: news\n",
+        encoding="utf-8")
+    (tmp_path / "density.md").write_text(
+        "# 密度\n\n2025 年行业测评显示，半固态电池包的能量密度显著高于传统"
+        "液态锂离子电池，头部厂商已在高端车型上小批量装车验证。\n",
+        encoding="utf-8")
+    (tmp_path / "yield.md").write_text(
+        "# 良率\n\n产线良率是当前最大瓶颈，全固态电芯的中试良率尚不足百分之四十，"
+        "与能量密度测评不是同一份材料。\n",
+        encoding="utf-8")
+    panel = """{"conclusions": [
+  {"statement": "固态电池2030年前难以在乘用车上规模量产",
+   "evidence": [{"quote": "全固态电芯的中试良率尚不足百分之四十",
+                 "segment_id": "SRC2#s1", "relation": "correlation",
+                 "level": "D", "note": "良率瓶颈"}]},
+  {"statement": "固态电池能量密度优势已获装车验证",
+   "evidence": [{"quote": "能量密度显著高于传统液态锂离子电池",
+                 "segment_id": "SRC1#s1", "relation": "correlation",
+                 "level": "A", "note": "直接引证"}]}
+]}"""
     merge = lambda messages: '{"groups": [' \
         '{"statement": "良率瓶颈使2030年前难以规模量产", "member_ids": [%s]},' \
         '{"statement": "能量密度优势已获装车验证", "member_ids": [%s]}]}' % (
@@ -241,27 +302,28 @@ def test_run_case_full_collaboration_pipeline(tmp_path):
             ",".join(sorted(_ids_in_dedup(messages, "优势"))))
 
     def conflict(messages):
-        ids = sorted({i for item in messages[-1]["content"].split("\n")
-                      for i in re.findall(r"\[(CON-[0-9a-f]+)\]", item)})
+        text = messages[-1]["content"]
+        weak = re.findall(r"\[(CON-[0-9a-f]+)\].*难以", text)
+        strong = re.findall(r"\[(CON-[0-9a-f]+)\].*优势", text)
         return '{"conflicts": [{"a": "%s", "b": "%s", "topic": "量产前景", ' \
-               '"description": "对量产时间表判断对立"}]}' % (ids[0], ids[1])
+               '"description": "对量产时间表判断对立"}]}' % (weak[0], strong[0])
 
     def arbitrate(messages):
         a_id = re.search(r"\[(CON-[0-9a-f]+)\]", messages[-1]["content"]).group(1)
         return '{"winner": "%s", "rationale": "甲方证据等级与质证占优"}' % a_id
 
     client = ScriptedClient(
-        [PANEL_JSON] * 3 + [merge, conflict, "甲方质证文本", "乙方质证文本", arbitrate])
+        [panel] * 3 + [merge, conflict, "甲方质证文本", "乙方质证文本", arbitrate])
     result = run_case(RunSpec(case_dir=tmp_path, out_dir=tmp_path / "out"),
              RunDeps(client=client))
 
-    # 归并：6 条 → 2 组（每组 3 分析师署名）
+    # 归并：6 条 → 2 组。密度组挂论文 A 级、良率组挂新闻 D 级，强度差 >0.20，
+    # 破平给出胜方，败方保留为少数意见。tie 形状仍由 test_c 钉住。
     assert len(result.dossier.conflicts) == 1
     pair = ConflictPair.from_dict(result.dossier.conflicts[0])
-    assert pair.resolution.winner_id == pair.a_id
-    # 败方组降为少数意见，胜方挂 dissent 记录
+    assert pair.resolution.winner_id != "tie"
     losers = [c for c in result.dossier.conclusions if c.status == "dissent"]
-    assert losers and losers[0].id == pair.b_id
+    assert losers and losers[0].id != pair.resolution.winner_id
     events = [r.event for r in result.chain.records]
     assert {"merged", "conflicts_detected", "conflict_resolved"} <= set(events)
     assert result.chain.verify_chain().ok

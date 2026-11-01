@@ -46,8 +46,9 @@ def test_registry_completeness():
     assert {s.name for s in SKILLS} == {
         "table_citation", "calc_discipline", "number_provenance",
         "counting_discipline", "hedged_claim", "level_tone",
+        "warrant_theme",
         "as_of_discipline", "question_focus", "question_scoped",
-        "negation_guard", "sic_verbatim",
+        "negation_guard", "sic_verbatim", "scope_honesty",
     }
 
 

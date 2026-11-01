@@ -1,0 +1,199 @@
+{
+  "finished_at": "2026-10-12T23:51:44+08:00",
+  "elapsed_s": 70.9,
+  "model": "openai/veritas-qwen3-14b",
+  "expand": [
+    {
+      "question": "南山铝业2024年累计现金分红比例为多少",
+      "status": "ok",
+      "reason": "expand",
+      "variants": [
+        "南山铝业2024年累计现金分红占比是多少",
+        "南山铝业2024年现金分红比例是多少"
+      ],
+      "n_queries": 3,
+      "note": "检索另用模型同义拓展「南山铝业2024年累计现金分红占比是多少；南山铝业2024年现金分红比例是多少」（未替换原议题；已过主体/数字闸）",
+      "elapsed_s": 6.2,
+      "poison_kept": []
+    },
+    {
+      "question": "某制造公司会不会倒闭？",
+      "status": "ok",
+      "reason": "expand",
+      "variants": [
+        "某制造公司是否会面临破产？",
+        "某制造公司有没有可能停止运营？",
+        "某制造公司是否存在倒闭的风险？"
+      ],
+      "n_queries": 4,
+      "note": "检索另用模型同义拓展「某制造公司是否会面临破产？；某制造公司有没有可能停止运营？」 等3条（未替换原议题；已过主体/数字闸）",
+      "elapsed_s": 2.2,
+      "poison_kept": []
+    },
+    {
+      "question": "客户是否拖欠回款？",
+      "status": "ok",
+      "reason": "expand",
+      "variants": [
+        "客户是否拖欠应付款项？"
+      ],
+      "n_queries": 2,
+      "note": "检索另用模型同义拓展「客户是否拖欠应付款项？」（未替换原议题；已过主体/数字闸）",
+      "elapsed_s": 2.1,
+      "poison_kept": []
+    },
+    {
+      "question": "恒兴新材海外营收占比是多少？",
+      "status": "ok",
+      "reason": "expand",
+      "variants": [
+        "恒兴新材的海外营业收入占比是多少？",
+        "恒兴新材海外业务收入占总营收的比例是多少？",
+        "恒兴新材的海外销售额占比是多少？"
+      ],
+      "n_queries": 4,
+      "note": "检索另用模型同义拓展「恒兴新材的海外营业收入占比是多少？；恒兴新材海外业务收入占总营收的比例是多少？」 等3条（未替换原议题；已过主体/数字闸）",
+      "elapsed_s": 2.9,
+      "poison_kept": []
+    },
+    {
+      "question": "公司是否收到环保处罚？",
+      "status": "ok",
+      "reason": "expand",
+      "variants": [
+        "公司是否因环保问题受到处罚？",
+        "公司有没有被环保部门处罚？",
+        "公司是否被环保机构处以罚款？"
+      ],
+      "n_queries": 4,
+      "note": "检索另用模型同义拓展「公司是否因环保问题受到处罚？；公司有没有被环保部门处罚？」 等3条（未替换原议题；已过主体/数字闸）",
+      "elapsed_s": 2.3,
+      "poison_kept": []
+    },
+    {
+      "question": "它的净利润呢",
+      "status": "ok",
+      "reason": "clarified_expand",
+      "variants": [
+        "南山铝业2024年累计净利润是多少",
+        "南山铝业2024年净利润总额是多少",
+        "南山铝业2024年全年净利润是多少"
+      ],
+      "n_queries": 4,
+      "note": "检索另用模型同义拓展「南山铝业2024年累计净利润是多少；南山铝业2024年净利润总额是多少」 等3条（未替换原议题；已过主体/数字闸）",
+      "elapsed_s": 2.9,
+      "poison_kept": []
+    },
+    {
+      "question": "应收账款结清了吗",
+      "status": "ok",
+      "reason": "expand",
+      "variants": [
+        "应收账款是否已经结清？",
+        "应收账款是否已全部收回？",
+        "应收账款是否已处理完毕？"
+      ],
+      "n_queries": 4,
+      "note": "检索另用模型同义拓展「应收账款是否已经结清？；应收账款是否已全部收回？」 等3条（未替换原议题；已过主体/数字闸）",
+      "elapsed_s": 1.9,
+      "poison_kept": []
+    },
+    {
+      "question": "停工传闻是否属实？",
+      "status": "ok",
+      "reason": "expand",
+      "variants": [
+        "停工传闻是否真实？",
+        "关于停工的传闻是否成立？"
+      ],
+      "n_queries": 3,
+      "note": "检索另用模型同义拓展「停工传闻是否真实？；关于停工的传闻是否成立？」（未替换原议题；已过主体/数字闸）",
+      "elapsed_s": 1.8,
+      "poison_kept": []
+    }
+  ],
+  "blindspot": [
+    {
+      "id": "倒闭→资金链/停工",
+      "question": "某制造公司会不会倒闭？",
+      "gold": "OFF#s1",
+      "rank_original_only": 2,
+      "rank_lexicon": 2,
+      "rank_model_expand": 2,
+      "expand_status": "ok",
+      "variants": [
+        "某制造公司是否会破产？",
+        "某制造公司有没有可能停止运营？",
+        "某制造公司是否存在倒闭的风险？"
+      ],
+      "improved_vs_original": false
+    },
+    {
+      "id": "回款↔应收",
+      "question": "客户是否拖欠回款？",
+      "gold": "AR#s1",
+      "rank_original_only": 1,
+      "rank_lexicon": 1,
+      "rank_model_expand": 1,
+      "expand_status": "ok",
+      "variants": [
+        "客户是否拖欠应付款项？"
+      ],
+      "improved_vs_original": false
+    },
+    {
+      "id": "停工↔停产",
+      "question": "停工传闻是否属实？",
+      "gold": "OFF#s1",
+      "rank_original_only": 2,
+      "rank_lexicon": 2,
+      "rank_model_expand": 2,
+      "expand_status": "ok",
+      "variants": [
+        "停工传闻是否真实？",
+        "关于停工的传闻是否成立？"
+      ],
+      "improved_vs_original": false
+    }
+  ],
+  "select": {
+    "ok": true,
+    "elapsed_s": 42.9,
+    "n_sources_loaded": 8,
+    "n_segments": 59,
+    "corpus_select": {
+      "kind": "corpus_select",
+      "store": "sqlite",
+      "project_id": "南山铝业",
+      "segmenter_version": "hier-v1",
+      "n_library_sources": 268,
+      "n_library_segments": 12507,
+      "n_selected_sources": 8,
+      "n_selected_segments": 59,
+      "n_expanded_segments": 18,
+      "max_sources": 50,
+      "protected_ids": [
+        "SRC201",
+        "SRC292",
+        "SRC200",
+        "SRC203",
+        "SRC133",
+        "SRC137",
+        "SRC293",
+        "SRC217"
+      ],
+      "entity_forced_ids": [
+        "SRC200",
+        "SRC133",
+        "SRC137",
+        "SRC293",
+        "SRC217"
+      ],
+      "omitted_sources": 260,
+      "note": "库内 268 份 / 12507 段，本次纳入 8 份 / 59 段。未入候选不等于已审完全库。",
+      "db_path": "/Users/liuboyu/Desktop/veritas-testcases/eval-corpus/南山铝业/.corpus/index.sqlite"
+    },
+    "note": "库内 268 份 / 12507 段，本次纳入 8 份 / 59 段。未入候选不等于已审完全库。",
+    "has_NM_disclosure": true
+  }
+}

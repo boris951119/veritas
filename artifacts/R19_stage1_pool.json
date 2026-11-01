@@ -1,0 +1,1244 @@
+{
+  "ticket": "R19-stage1-pool",
+  "defaults": {
+    "use_llm_views": false,
+    "pools": [
+      20,
+      50
+    ],
+    "neighbor_window": 1,
+    "stage2": "inbox_rerank pool20",
+    "no_grid_refit": true
+  },
+  "cases": [
+    {
+      "slug": "liuxiang",
+      "name": "刘翔编制“二选一”事件",
+      "n_union": 362,
+      "gold_total": 14,
+      "pool_hits": {
+        "20": 8,
+        "50": 9
+      },
+      "pool_rate": {
+        "20": 0.5714,
+        "50": 0.6429
+      },
+      "cut_hits": {
+        "4": 9,
+        "5": 11,
+        "7": 12
+      },
+      "questions": [
+        {
+          "qid": "q_001",
+          "question": "这笔49.4万元应认定为买断费还是自主择业经济补偿金，以哪方口径为准？",
+          "n_l2": 4,
+          "n_pack_miss": 0,
+          "pool": {
+            "20": {
+              "hits": 4,
+              "gold_total": 4,
+              "hit_ids": [
+                "doc_002#p3",
+                "doc_024#p1",
+                "doc_025#p6",
+                "doc_035#p7"
+              ],
+              "miss_ids": []
+            },
+            "50": {
+              "hits": 4,
+              "gold_total": 4,
+              "hit_ids": [
+                "doc_002#p3",
+                "doc_024#p1",
+                "doc_025#p6",
+                "doc_035#p7"
+              ],
+              "miss_ids": []
+            }
+          },
+          "cuts": {
+            "4": {
+              "hits": 4,
+              "gold_total": 4,
+              "nongold": 0,
+              "hit_ids": [
+                "doc_002#p3",
+                "doc_024#p1",
+                "doc_025#p6",
+                "doc_035#p7"
+              ]
+            },
+            "5": {
+              "hits": 4,
+              "gold_total": 4,
+              "nongold": 1,
+              "hit_ids": [
+                "doc_002#p3",
+                "doc_024#p1",
+                "doc_025#p6",
+                "doc_035#p7"
+              ]
+            },
+            "7": {
+              "hits": 4,
+              "gold_total": 4,
+              "nongold": 3,
+              "hit_ids": [
+                "doc_002#p3",
+                "doc_024#p1",
+                "doc_025#p6",
+                "doc_035#p7"
+              ]
+            }
+          },
+          "fuse": {
+            "mode": "r19",
+            "n_neighbor_added": 79,
+            "views": [
+              {
+                "id": "conclusion_or",
+                "view": "conclusion",
+                "query": "买断费 还是 自主择业经济补偿金 哪方口径 认定"
+              },
+              {
+                "id": "conclusion_opt0",
+                "view": "conclusion",
+                "query": "买断费 买断 自主择业 认定 口径"
+              },
+              {
+                "id": "conclusion_core0",
+                "view": "conclusion",
+                "query": "买断费 买断 自主择业"
+              },
+              {
+                "id": "conclusion_opt1",
+                "view": "conclusion",
+                "query": "自主择业经济补偿金 自主择业 经济补偿 认定 口径"
+              },
+              {
+                "id": "conclusion_core1",
+                "view": "conclusion",
+                "query": "自主择业经济补偿金 自主择业 经济补偿"
+              },
+              {
+                "id": "cause",
+                "view": "cause",
+                "query": "这笔 49 万元应认定为买断 费还是自主择业经 济补偿金 以哪方口径为准 原因 为何 导致 认定 口径"
+              },
+              {
+                "id": "evidence",
+                "view": "evidence",
+                "query": "通报 证实 证据 数据 调查 回应 这笔 49 万元应认定为买断 费还是自主择业经 济补偿金 以哪方口径为准"
+              }
+            ]
+          },
+          "frame": {
+            "actors": [],
+            "options": [
+              "买断费",
+              "自主择业经济补偿金"
+            ],
+            "time_cues": [],
+            "qual_predicates": [
+              "认定",
+              "口径"
+            ],
+            "evidence_cues": [],
+            "scope_cues": [],
+            "question_terms": [
+              "这笔",
+              "49",
+              "万元应认定为买断",
+              "费还是自主择业经",
+              "济补偿金",
+              "以哪方口径为准"
+            ]
+          }
+        },
+        {
+          "qid": "q_002",
+          "question": "拖了11年才安置，是刘翔不愿走还是体育局未放行，哪一方说法站得住？",
+          "n_l2": 5,
+          "n_pack_miss": 0,
+          "pool": {
+            "20": {
+              "hits": 2,
+              "gold_total": 5,
+              "hit_ids": [
+                "doc_009#p5",
+                "doc_028#p1"
+              ],
+              "miss_ids": [
+                {
+                  "id": "doc_002#p3",
+                  "stage1_rank": 241
+                },
+                {
+                  "id": "doc_029#p7",
+                  "stage1_rank": 179
+                },
+                {
+                  "id": "doc_051#p3",
+                  "stage1_rank": 26
+                }
+              ]
+            },
+            "50": {
+              "hits": 3,
+              "gold_total": 5,
+              "hit_ids": [
+                "doc_009#p5",
+                "doc_028#p1",
+                "doc_051#p3"
+              ],
+              "miss_ids": [
+                {
+                  "id": "doc_002#p3",
+                  "stage1_rank": 241
+                },
+                {
+                  "id": "doc_029#p7",
+                  "stage1_rank": 179
+                }
+              ]
+            }
+          },
+          "cuts": {
+            "4": {
+              "hits": 2,
+              "gold_total": 5,
+              "nongold": 2,
+              "hit_ids": [
+                "doc_002#p3",
+                "doc_009#p5"
+              ]
+            },
+            "5": {
+              "hits": 3,
+              "gold_total": 5,
+              "nongold": 2,
+              "hit_ids": [
+                "doc_002#p3",
+                "doc_009#p5",
+                "doc_051#p3"
+              ]
+            },
+            "7": {
+              "hits": 4,
+              "gold_total": 5,
+              "nongold": 3,
+              "hit_ids": [
+                "doc_002#p3",
+                "doc_009#p5",
+                "doc_029#p7",
+                "doc_051#p3"
+              ]
+            }
+          },
+          "fuse": {
+            "mode": "r19",
+            "n_neighbor_added": 80,
+            "views": [
+              {
+                "id": "conclusion_or",
+                "view": "conclusion",
+                "query": "刘翔 体育局 刘翔不愿走 还是 体育局未放行 哪方口径 认定"
+              },
+              {
+                "id": "conclusion_opt0",
+                "view": "conclusion",
+                "query": "刘翔 体育局 刘翔不愿走 不愿走 不想走 没让我走"
+              },
+              {
+                "id": "conclusion_core0",
+                "view": "conclusion",
+                "query": "刘翔不愿走 不愿走 不想走"
+              },
+              {
+                "id": "conclusion_opt1",
+                "view": "conclusion",
+                "query": "刘翔 体育局 体育局未放行 未放行 没让我走 不放"
+              },
+              {
+                "id": "conclusion_core1",
+                "view": "conclusion",
+                "query": "体育局未放行 未放行 没让我走"
+              },
+              {
+                "id": "cause",
+                "view": "cause",
+                "query": "刘翔 体育局 11年 拖了 11 年才安置 是刘翔不愿走还是 哪一方说法站得住 原因 为何 导致"
+              },
+              {
+                "id": "evidence",
+                "view": "evidence",
+                "query": "刘翔 体育局 11年 通报 证实 证据 数据 调查 回应 拖了 11 年才安置 是刘翔不愿走还是 哪一方说法站得住"
+              },
+              {
+                "id": "frame_time_actor",
+                "view": "evidence",
+                "query": "刘翔 体育局 11年 刘翔不愿走 监控 通稿"
+              }
+            ]
+          },
+          "frame": {
+            "actors": [
+              "刘翔",
+              "体育局"
+            ],
+            "options": [
+              "刘翔不愿走",
+              "体育局未放行"
+            ],
+            "time_cues": [
+              "11年"
+            ],
+            "qual_predicates": [],
+            "evidence_cues": [],
+            "scope_cues": [],
+            "question_terms": [
+              "拖了",
+              "11",
+              "年才安置",
+              "是刘翔不愿走还是",
+              "哪一方说法站得住"
+            ]
+          }
+        },
+        {
+          "qid": "q_003",
+          "question": "刘翔退役至今是否真有编制与岗位，官方称其在编不在岗能否以人事档案证实？",
+          "n_l2": 5,
+          "n_pack_miss": 0,
+          "pool": {
+            "20": {
+              "hits": 2,
+              "gold_total": 5,
+              "hit_ids": [
+                "doc_006#p3",
+                "doc_012#p5"
+              ],
+              "miss_ids": [
+                {
+                  "id": "doc_002#p3",
+                  "stage1_rank": 71
+                },
+                {
+                  "id": "doc_033#p5",
+                  "stage1_rank": 92
+                },
+                {
+                  "id": "doc_033#p6",
+                  "stage1_rank": 163
+                }
+              ]
+            },
+            "50": {
+              "hits": 2,
+              "gold_total": 5,
+              "hit_ids": [
+                "doc_006#p3",
+                "doc_012#p5"
+              ],
+              "miss_ids": [
+                {
+                  "id": "doc_002#p3",
+                  "stage1_rank": 71
+                },
+                {
+                  "id": "doc_033#p5",
+                  "stage1_rank": 92
+                },
+                {
+                  "id": "doc_033#p6",
+                  "stage1_rank": 163
+                }
+              ]
+            }
+          },
+          "cuts": {
+            "4": {
+              "hits": 3,
+              "gold_total": 5,
+              "nongold": 1,
+              "hit_ids": [
+                "doc_002#p3",
+                "doc_006#p3",
+                "doc_012#p5"
+              ]
+            },
+            "5": {
+              "hits": 4,
+              "gold_total": 5,
+              "nongold": 1,
+              "hit_ids": [
+                "doc_002#p3",
+                "doc_006#p3",
+                "doc_012#p5",
+                "doc_033#p5"
+              ]
+            },
+            "7": {
+              "hits": 4,
+              "gold_total": 5,
+              "nongold": 3,
+              "hit_ids": [
+                "doc_002#p3",
+                "doc_006#p3",
+                "doc_012#p5",
+                "doc_033#p5"
+              ]
+            }
+          },
+          "fuse": {
+            "mode": "r19",
+            "n_neighbor_added": 80,
+            "views": [
+              {
+                "id": "conclusion_or",
+                "view": "conclusion",
+                "query": "官方 刘翔 在编不在岗 哪方口径 认定"
+              },
+              {
+                "id": "conclusion_opt0",
+                "view": "conclusion",
+                "query": "官方 刘翔 在编不在岗 在编 不在岗 编制 证实 是否 能否 官方"
+              },
+              {
+                "id": "conclusion_core0",
+                "view": "conclusion",
+                "query": "在编不在岗 在编 不在岗"
+              },
+              {
+                "id": "cause",
+                "view": "cause",
+                "query": "官方 刘翔 刘翔退役至今是否 真有编制与岗位 官方称其在编不在 岗能否以人事档案 原因 为何 导致 证实 是否 能否 官方"
+              },
+              {
+                "id": "evidence",
+                "view": "evidence",
+                "query": "官方 刘翔 通报 证实 证据 数据 调查 回应 证实 官方 人事档案 刘翔退役至今是否 真有编制与岗位 官方称其在编不在 岗能否以人事档案"
+              }
+            ]
+          },
+          "frame": {
+            "actors": [
+              "官方",
+              "刘翔"
+            ],
+            "options": [
+              "在编不在岗"
+            ],
+            "time_cues": [],
+            "qual_predicates": [
+              "证实",
+              "是否",
+              "能否",
+              "官方",
+              "编制",
+              "岗位",
+              "在编",
+              "档案"
+            ],
+            "evidence_cues": [
+              "证实",
+              "官方",
+              "人事档案"
+            ],
+            "scope_cues": [],
+            "question_terms": [
+              "刘翔退役至今是否",
+              "真有编制与岗位",
+              "官方称其在编不在",
+              "岗能否以人事档案"
+            ]
+          }
+        }
+      ],
+      "wall_s": 6.5
+    },
+    {
+      "slug": "jilong",
+      "name": "2026·8·26 吉隆口岸泥石流灾害",
+      "n_union": 1202,
+      "gold_total": 13,
+      "pool_hits": {
+        "20": 4,
+        "50": 5
+      },
+      "pool_rate": {
+        "20": 0.3077,
+        "50": 0.3846
+      },
+      "cut_hits": {
+        "4": 1,
+        "5": 2,
+        "7": 2
+      },
+      "questions": [
+        {
+          "qid": "q_001",
+          "question": "吉隆口岸泥石流灾害的起始时刻，应以官方通稿的8月26日10时30分许为准，还是以监控记录的10时52分至59分为准？",
+          "n_l2": 3,
+          "n_pack_miss": 0,
+          "pool": {
+            "20": {
+              "hits": 0,
+              "gold_total": 3,
+              "hit_ids": [],
+              "miss_ids": [
+                {
+                  "id": "doc_001#p2",
+                  "stage1_rank": 88
+                },
+                {
+                  "id": "doc_001#p21",
+                  "stage1_rank": 146
+                },
+                {
+                  "id": "doc_001#p237",
+                  "stage1_rank": 43
+                }
+              ]
+            },
+            "50": {
+              "hits": 1,
+              "gold_total": 3,
+              "hit_ids": [
+                "doc_001#p237"
+              ],
+              "miss_ids": [
+                {
+                  "id": "doc_001#p2",
+                  "stage1_rank": 88
+                },
+                {
+                  "id": "doc_001#p21",
+                  "stage1_rank": 146
+                }
+              ]
+            }
+          },
+          "cuts": {
+            "4": {
+              "hits": 0,
+              "gold_total": 3,
+              "nongold": 4,
+              "hit_ids": []
+            },
+            "5": {
+              "hits": 0,
+              "gold_total": 3,
+              "nongold": 5,
+              "hit_ids": []
+            },
+            "7": {
+              "hits": 0,
+              "gold_total": 3,
+              "nongold": 7,
+              "hit_ids": []
+            }
+          },
+          "fuse": {
+            "mode": "r19",
+            "n_neighbor_added": 29,
+            "views": [
+              {
+                "id": "conclusion_or",
+                "view": "conclusion",
+                "query": "官方 官方通稿的8月26日10时30分许 还是 监控记录的10时52分至59分 哪方口径 认定"
+              },
+              {
+                "id": "conclusion_opt0",
+                "view": "conclusion",
+                "query": "官方 官方通稿的8月26日10时30分许 官方"
+              },
+              {
+                "id": "conclusion_opt1",
+                "view": "conclusion",
+                "query": "官方 监控记录的10时52分至59分 官方"
+              },
+              {
+                "id": "cause",
+                "view": "cause",
+                "query": "官方 8月26日 10时30分 10时52分 吉隆口岸泥石流灾 害的起始时刻 应以官方通稿的 26 10时30分 许为准 原因 为何 导致 官方"
+              },
+              {
+                "id": "evidence",
+                "view": "evidence",
+                "query": "官方 8月26日 10时30分 10时52分 通报 证实 证据 数据 调查 回应 官方 监控 吉隆口岸泥石流灾 害的起始时刻 应以官方通稿的 26 10时30分 许为准"
+              },
+              {
+                "id": "frame_time_actor",
+                "view": "evidence",
+                "query": "官方 8月26日 10时30分 10时52分 官方通稿的8月26日10时30分许 监控 通稿"
+              }
+            ]
+          },
+          "frame": {
+            "actors": [
+              "官方"
+            ],
+            "options": [
+              "官方通稿的8月26日10时30分许",
+              "监控记录的10时52分至59分"
+            ],
+            "time_cues": [
+              "8月26日",
+              "10时30分",
+              "10时52分"
+            ],
+            "qual_predicates": [
+              "官方"
+            ],
+            "evidence_cues": [
+              "官方",
+              "监控"
+            ],
+            "scope_cues": [
+              "口岸"
+            ],
+            "question_terms": [
+              "吉隆口岸泥石流灾",
+              "害的起始时刻",
+              "应以官方通稿的",
+              "26",
+              "10时30分",
+              "许为准",
+              "还是以监控记录的",
+              "10时52分",
+              "59分",
+              "为准"
+            ]
+          }
+        },
+        {
+          "qid": "q_002",
+          "question": "中方称泥石流、联合国与尼泊尔称洪灾或山崩，评估伤亡与受灾统计时应采用哪一口径？",
+          "n_l2": 4,
+          "n_pack_miss": 5,
+          "pool": {
+            "20": {
+              "hits": 2,
+              "gold_total": 4,
+              "hit_ids": [
+                "doc_001#p291",
+                "doc_001#p306"
+              ],
+              "miss_ids": [
+                {
+                  "id": "doc_001#p2",
+                  "stage1_rank": 189
+                },
+                {
+                  "id": "doc_001#p235",
+                  "stage1_rank": 207
+                }
+              ]
+            },
+            "50": {
+              "hits": 2,
+              "gold_total": 4,
+              "hit_ids": [
+                "doc_001#p291",
+                "doc_001#p306"
+              ],
+              "miss_ids": [
+                {
+                  "id": "doc_001#p2",
+                  "stage1_rank": 189
+                },
+                {
+                  "id": "doc_001#p235",
+                  "stage1_rank": 207
+                }
+              ]
+            }
+          },
+          "cuts": {
+            "4": {
+              "hits": 1,
+              "gold_total": 4,
+              "nongold": 3,
+              "hit_ids": [
+                "doc_001#p291"
+              ]
+            },
+            "5": {
+              "hits": 2,
+              "gold_total": 4,
+              "nongold": 3,
+              "hit_ids": [
+                "doc_001#p291",
+                "doc_001#p306"
+              ]
+            },
+            "7": {
+              "hits": 2,
+              "gold_total": 4,
+              "nongold": 5,
+              "hit_ids": [
+                "doc_001#p291",
+                "doc_001#p306"
+              ]
+            }
+          },
+          "fuse": {
+            "mode": "r19",
+            "n_neighbor_added": 19,
+            "views": [
+              {
+                "id": "conclusion_plain",
+                "view": "conclusion",
+                "query": "中方称泥石流 联合国与尼泊尔称 洪灾或山崩 评估伤亡与受灾统 计时应采用哪一口 口径 伤亡 结论 认定"
+              },
+              {
+                "id": "cause",
+                "view": "cause",
+                "query": "中方称泥石流 联合国与尼泊尔称 洪灾或山崩 评估伤亡与受灾统 计时应采用哪一口 原因 为何 导致 口径 伤亡"
+              },
+              {
+                "id": "evidence",
+                "view": "evidence",
+                "query": "通报 证实 证据 数据 调查 回应 中方称泥石流 联合国与尼泊尔称 洪灾或山崩 评估伤亡与受灾统 计时应采用哪一口"
+              }
+            ]
+          },
+          "frame": {
+            "actors": [],
+            "options": [],
+            "time_cues": [],
+            "qual_predicates": [
+              "口径",
+              "伤亡"
+            ],
+            "evidence_cues": [],
+            "scope_cues": [],
+            "question_terms": [
+              "中方称泥石流",
+              "联合国与尼泊尔称",
+              "洪灾或山崩",
+              "评估伤亡与受灾统",
+              "计时应采用哪一口"
+            ]
+          }
+        },
+        {
+          "qid": "q_003",
+          "question": "官方与中科院认定的海拔约5200米冰川断裂冰岩崩，与媒体所称上游冰湖溃决，哪一说法成立？",
+          "n_l2": 6,
+          "n_pack_miss": 0,
+          "pool": {
+            "20": {
+              "hits": 2,
+              "gold_total": 6,
+              "hit_ids": [
+                "doc_001#p2",
+                "doc_001#p237"
+              ],
+              "miss_ids": [
+                {
+                  "id": "doc_001#p233",
+                  "stage1_rank": 148
+                },
+                {
+                  "id": "doc_001#p419",
+                  "stage1_rank": 119
+                },
+                {
+                  "id": "doc_001#p422",
+                  "stage1_rank": 126
+                },
+                {
+                  "id": "doc_001#p85",
+                  "stage1_rank": 194
+                }
+              ]
+            },
+            "50": {
+              "hits": 2,
+              "gold_total": 6,
+              "hit_ids": [
+                "doc_001#p2",
+                "doc_001#p237"
+              ],
+              "miss_ids": [
+                {
+                  "id": "doc_001#p233",
+                  "stage1_rank": 148
+                },
+                {
+                  "id": "doc_001#p419",
+                  "stage1_rank": 119
+                },
+                {
+                  "id": "doc_001#p422",
+                  "stage1_rank": 126
+                },
+                {
+                  "id": "doc_001#p85",
+                  "stage1_rank": 194
+                }
+              ]
+            }
+          },
+          "cuts": {
+            "4": {
+              "hits": 0,
+              "gold_total": 6,
+              "nongold": 4,
+              "hit_ids": []
+            },
+            "5": {
+              "hits": 0,
+              "gold_total": 6,
+              "nongold": 5,
+              "hit_ids": []
+            },
+            "7": {
+              "hits": 0,
+              "gold_total": 6,
+              "nongold": 7,
+              "hit_ids": []
+            }
+          },
+          "fuse": {
+            "mode": "r19",
+            "n_neighbor_added": 28,
+            "views": [
+              {
+                "id": "conclusion_plain",
+                "view": "conclusion",
+                "query": "官方 官方与中科院认定 的海拔约 5200 米冰川断裂冰岩崩 与媒体所称上游冰 湖溃决 认定 官方 结论 认定"
+              },
+              {
+                "id": "cause",
+                "view": "cause",
+                "query": "官方 官方与中科院认定 的海拔约 5200 米冰川断裂冰岩崩 与媒体所称上游冰 湖溃决 原因 为何 导致 认定 官方"
+              },
+              {
+                "id": "evidence",
+                "view": "evidence",
+                "query": "官方 通报 证实 证据 数据 调查 回应 官方 官方与中科院认定 的海拔约 5200 米冰川断裂冰岩崩 与媒体所称上游冰 湖溃决"
+              }
+            ]
+          },
+          "frame": {
+            "actors": [
+              "官方"
+            ],
+            "options": [],
+            "time_cues": [],
+            "qual_predicates": [
+              "认定",
+              "官方"
+            ],
+            "evidence_cues": [
+              "官方"
+            ],
+            "scope_cues": [],
+            "question_terms": [
+              "官方与中科院认定",
+              "的海拔约",
+              "5200",
+              "米冰川断裂冰岩崩",
+              "与媒体所称上游冰",
+              "湖溃决",
+              "哪一说法成立"
+            ]
+          }
+        }
+      ],
+      "wall_s": 23.0
+    },
+    {
+      "slug": "us_cn_ai",
+      "name": "中美AI事故预警提议（2026.9）",
+      "n_union": 534,
+      "gold_total": 13,
+      "pool_hits": {
+        "20": 6,
+        "50": 8
+      },
+      "pool_rate": {
+        "20": 0.4615,
+        "50": 0.6154
+      },
+      "cut_hits": {
+        "4": 0,
+        "5": 0,
+        "7": 0
+      },
+      "questions": [
+        {
+          "qid": "q_001",
+          "question": "AI事故通报热线到底能否在2026年11月的中美对话后就绪启用，还是如WIRED所称短期不会就绪？",
+          "n_l2": 6,
+          "n_pack_miss": 0,
+          "pool": {
+            "20": {
+              "hits": 3,
+              "gold_total": 6,
+              "hit_ids": [
+                "doc_004#p4",
+                "doc_007#p10",
+                "doc_047#p4"
+              ],
+              "miss_ids": [
+                {
+                  "id": "doc_009#p12",
+                  "stage1_rank": 178
+                },
+                {
+                  "id": "doc_016#p5",
+                  "stage1_rank": 56
+                },
+                {
+                  "id": "doc_023#p4",
+                  "stage1_rank": 121
+                }
+              ]
+            },
+            "50": {
+              "hits": 3,
+              "gold_total": 6,
+              "hit_ids": [
+                "doc_004#p4",
+                "doc_007#p10",
+                "doc_047#p4"
+              ],
+              "miss_ids": [
+                {
+                  "id": "doc_009#p12",
+                  "stage1_rank": 178
+                },
+                {
+                  "id": "doc_016#p5",
+                  "stage1_rank": 56
+                },
+                {
+                  "id": "doc_023#p4",
+                  "stage1_rank": 121
+                }
+              ]
+            }
+          },
+          "cuts": {
+            "4": {
+              "hits": 0,
+              "gold_total": 6,
+              "nongold": 4,
+              "hit_ids": []
+            },
+            "5": {
+              "hits": 0,
+              "gold_total": 6,
+              "nongold": 5,
+              "hit_ids": []
+            },
+            "7": {
+              "hits": 0,
+              "gold_total": 6,
+              "nongold": 7,
+              "hit_ids": []
+            }
+          },
+          "fuse": {
+            "mode": "r19",
+            "n_neighbor_added": 65,
+            "views": [
+              {
+                "id": "conclusion_plain",
+                "view": "conclusion",
+                "query": "事故通报热线到底 能否在 2026 11 月的中美对话后就 绪启用 能否 通报 对话 结论 认定"
+              },
+              {
+                "id": "cause",
+                "view": "cause",
+                "query": "2026年 事故通报热线到底 能否在 2026 11 月的中美对话后就 绪启用 原因 为何 导致 能否 通报 对话"
+              },
+              {
+                "id": "evidence",
+                "view": "evidence",
+                "query": "2026年 通报 证实 证据 数据 调查 回应 通报 事故通报热线到底 能否在 2026 11 月的中美对话后就 绪启用"
+              },
+              {
+                "id": "frame_time_actor",
+                "view": "evidence",
+                "query": "2026年 事故通报热线到底 能否在 2026 11 月的中美对话后就 绪启用 监控 通稿"
+              }
+            ]
+          },
+          "frame": {
+            "actors": [],
+            "options": [],
+            "time_cues": [
+              "2026年"
+            ],
+            "qual_predicates": [
+              "能否",
+              "通报",
+              "对话"
+            ],
+            "evidence_cues": [
+              "通报"
+            ],
+            "scope_cues": [],
+            "question_terms": [
+              "事故通报热线到底",
+              "能否在",
+              "2026",
+              "11",
+              "月的中美对话后就",
+              "绪启用",
+              "还是如",
+              "WIRED",
+              "所称短期不会就绪"
+            ]
+          }
+        },
+        {
+          "qid": "q_002",
+          "question": "中美AI对话机制应定性为危机管理安排，还是联合国主渠道下的全球AI治理安排？",
+          "n_l2": 3,
+          "n_pack_miss": 1,
+          "pool": {
+            "20": {
+              "hits": 2,
+              "gold_total": 3,
+              "hit_ids": [
+                "doc_005#p3",
+                "doc_011#p3"
+              ],
+              "miss_ids": [
+                {
+                  "id": "doc_018#p12",
+                  "stage1_rank": 47
+                }
+              ]
+            },
+            "50": {
+              "hits": 3,
+              "gold_total": 3,
+              "hit_ids": [
+                "doc_005#p3",
+                "doc_011#p3",
+                "doc_018#p12"
+              ],
+              "miss_ids": []
+            }
+          },
+          "cuts": {
+            "4": {
+              "hits": 0,
+              "gold_total": 3,
+              "nongold": 4,
+              "hit_ids": []
+            },
+            "5": {
+              "hits": 0,
+              "gold_total": 3,
+              "nongold": 5,
+              "hit_ids": []
+            },
+            "7": {
+              "hits": 0,
+              "gold_total": 3,
+              "nongold": 7,
+              "hit_ids": []
+            }
+          },
+          "fuse": {
+            "mode": "r19",
+            "n_neighbor_added": 70,
+            "views": [
+              {
+                "id": "conclusion_plain",
+                "view": "conclusion",
+                "query": "中美 对话机制应定性为 危机管理安排 还是联合国主渠道 下的全球 治理安排 对话 结论 认定"
+              },
+              {
+                "id": "cause",
+                "view": "cause",
+                "query": "中美 对话机制应定性为 危机管理安排 还是联合国主渠道 下的全球 治理安排 原因 为何 导致 对话"
+              },
+              {
+                "id": "evidence",
+                "view": "evidence",
+                "query": "通报 证实 证据 数据 调查 回应 中美 对话机制应定性为 危机管理安排 还是联合国主渠道 下的全球 治理安排"
+              }
+            ]
+          },
+          "frame": {
+            "actors": [],
+            "options": [],
+            "time_cues": [],
+            "qual_predicates": [
+              "对话"
+            ],
+            "evidence_cues": [],
+            "scope_cues": [],
+            "question_terms": [
+              "中美",
+              "对话机制应定性为",
+              "危机管理安排",
+              "还是联合国主渠道",
+              "下的全球",
+              "治理安排"
+            ]
+          }
+        },
+        {
+          "qid": "q_003",
+          "question": "AI失控责任该由OpenAI管理层等企业承担，还是如Anthropic、奥尔特曼所主张由政府介入承担？",
+          "n_l2": 4,
+          "n_pack_miss": 0,
+          "pool": {
+            "20": {
+              "hits": 1,
+              "gold_total": 4,
+              "hit_ids": [
+                "doc_058#p2"
+              ],
+              "miss_ids": [
+                {
+                  "id": "doc_017#p10",
+                  "stage1_rank": 46
+                },
+                {
+                  "id": "doc_017#p12",
+                  "stage1_rank": 171
+                },
+                {
+                  "id": "doc_017#p9",
+                  "stage1_rank": 66
+                }
+              ]
+            },
+            "50": {
+              "hits": 2,
+              "gold_total": 4,
+              "hit_ids": [
+                "doc_017#p10",
+                "doc_058#p2"
+              ],
+              "miss_ids": [
+                {
+                  "id": "doc_017#p12",
+                  "stage1_rank": 171
+                },
+                {
+                  "id": "doc_017#p9",
+                  "stage1_rank": 66
+                }
+              ]
+            }
+          },
+          "cuts": {
+            "4": {
+              "hits": 0,
+              "gold_total": 4,
+              "nongold": 4,
+              "hit_ids": []
+            },
+            "5": {
+              "hits": 0,
+              "gold_total": 4,
+              "nongold": 5,
+              "hit_ids": []
+            },
+            "7": {
+              "hits": 0,
+              "gold_total": 4,
+              "nongold": 7,
+              "hit_ids": []
+            }
+          },
+          "fuse": {
+            "mode": "r19",
+            "n_neighbor_added": 64,
+            "views": [
+              {
+                "id": "conclusion_plain",
+                "view": "conclusion",
+                "query": "失控责任该由 OpenAI 管理层等企业承担 还是如 Anthropic 奥尔特曼所主张由 责任 结论 认定"
+              },
+              {
+                "id": "cause",
+                "view": "cause",
+                "query": "失控责任该由 OpenAI 管理层等企业承担 还是如 Anthropic 奥尔特曼所主张由 原因 为何 导致 责任"
+              },
+              {
+                "id": "evidence",
+                "view": "evidence",
+                "query": "通报 证实 证据 数据 调查 回应 失控责任该由 OpenAI 管理层等企业承担 还是如 Anthropic 奥尔特曼所主张由"
+              }
+            ]
+          },
+          "frame": {
+            "actors": [],
+            "options": [],
+            "time_cues": [],
+            "qual_predicates": [
+              "责任"
+            ],
+            "evidence_cues": [],
+            "scope_cues": [],
+            "question_terms": [
+              "失控责任该由",
+              "OpenAI",
+              "管理层等企业承担",
+              "还是如",
+              "Anthropic",
+              "奥尔特曼所主张由",
+              "政府介入承担"
+            ]
+          }
+        }
+      ],
+      "wall_s": 15.0
+    }
+  ],
+  "baselines": [
+    {
+      "source": "R17",
+      "slug": "liuxiang",
+      "pool20": "14/14",
+      "at7": "12/14"
+    },
+    {
+      "source": "R17",
+      "slug": "jilong",
+      "pool20": "2/13",
+      "at7": "2/13"
+    },
+    {
+      "source": "R17",
+      "slug": "us_cn_ai",
+      "pool20": "3/13",
+      "at7": "0/13"
+    },
+    {
+      "source": "R16",
+      "slug": "jilong",
+      "pool20": "~3/13",
+      "at7": "2/13"
+    },
+    {
+      "source": "R16",
+      "slug": "us_cn_ai",
+      "pool20": "~3/13",
+      "at7": "0/13"
+    }
+  ],
+  "verdict_bullets": [
+    "刘翔回归：池20 **8/14**，@7 **12/14**（目标池满、@7≥12）。",
+    "jilong：池20 **4/13**（31%），池50 **5/13**，@7 2/13。",
+    "us_cn_ai：池20 **6/13**（46%），池50 **8/13**，@7 0/13。",
+    "相对 R17：吉隆池20 31% vs 15%；中美AI池20 46% vs 23%。"
+  ],
+  "wall_s": 44.5
+}

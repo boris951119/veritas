@@ -8,6 +8,7 @@
 - conflicts_with: 冲突 → 双方结论
 - rebuts:       质证 → 冲突
 - decides:      仲裁/冲突 → 胜方结论（tie 时不连 decides）
+- depends_on:   结论 → 前提结论（C-13；from 以 to 为前提）
 """
 
 from __future__ import annotations
@@ -16,8 +17,10 @@ from app.core.conflicts import ConflictPair
 from app.core.evidence import Dossier
 
 
-def _node(nid: str, kind: str, label: str) -> dict:
-    return {"id": nid, "kind": kind, "label": (label or "")[:120]}
+def _node(nid: str, kind: str, label: str, **extra) -> dict:
+    n = {"id": nid, "kind": kind, "label": (label or "")[:120]}
+    n.update(extra)
+    return n
 
 
 def _edge(source: str, target: str, kind: str) -> dict:
@@ -42,9 +45,16 @@ def build_reasoning_graph(dossier: Dossier,
     nodes: dict[str, dict] = {}
     edges: list[dict] = []
 
-    def add_node(nid: str, kind: str, label: str) -> None:
+    # 中间结论＝被任何 depends_on 指向的既有结论（结构性，非新节点类型）
+    premise_ids = {
+        p for con in dossier.conclusions for p in (con.depends_on or [])
+    }
+
+    def add_node(nid: str, kind: str, label: str, **extra) -> None:
         if nid not in nodes:
-            nodes[nid] = _node(nid, kind, label)
+            nodes[nid] = _node(nid, kind, label, **extra)
+        elif kind == "conclusion" and "is_premise" in extra:
+            nodes[nid]["is_premise"] = extra["is_premise"]
 
     for name in dossier.panel or []:
         add_node(f"analyst:{name}", "analyst", name)
@@ -58,11 +68,21 @@ def build_reasoning_graph(dossier: Dossier,
     for con in dossier.conclusions:
         if con.status == "merged":
             continue  # 溯源成员不进主图，避免噪点；证据已转挂组结论
-        add_node(con.id, "conclusion", con.statement)
+        add_node(con.id, "conclusion", con.statement,
+                 is_premise=(con.id in premise_ids))
         for author in con.author_names():
             aid = f"analyst:{author}"
             add_node(aid, "analyst", author)
             edges.append(_edge(con.id, aid, "authored_by"))
+        for prem in con.depends_on or []:
+            prem_con = dossier.conclusion(prem)
+            if prem_con is None:
+                continue
+            if prem_con.status == "merged":
+                continue
+            add_node(prem, "conclusion", prem_con.statement,
+                     is_premise=(prem in premise_ids))
+            edges.append(_edge(con.id, prem, "depends_on"))
 
     for ev in dossier.evidences:
         con = dossier.conclusion(ev.conclusion_id)
@@ -87,7 +107,8 @@ def build_reasoning_graph(dossier: Dossier,
             if cid in nodes or dossier.conclusion(cid) is not None:
                 con = dossier.conclusion(cid)
                 if con is not None:
-                    add_node(cid, "conclusion", con.statement)
+                    add_node(cid, "conclusion", con.statement,
+                             is_premise=(cid in premise_ids))
                 edges.append(_edge(pair.id, cid, "conflicts_with"))
         if pair.resolution is None:
             continue

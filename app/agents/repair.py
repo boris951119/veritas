@@ -17,7 +17,9 @@ from dataclasses import dataclass, field
 
 from app.agents.base import Agent, Analyst, extract_json
 from app.core.citation_check import check_evidence
-from app.core.evidence import Conclusion, Dossier, EvidenceLevel, EvidenceNode, RelationKind
+from app.core.evidence import (
+    Conclusion, Dossier, EvidenceLevel, EvidenceNode, RelationKind, record_parse_drop,
+)
 from app.core.numeric_check import audit_counting, audit_numeric
 from app.llm.model_client import ModelClient
 
@@ -43,12 +45,14 @@ class _Snapshot:
     statement: str
     evidences: list[EvidenceNode]
     evidence_ids: list[str]
+    n_parse_drops: int
 
 
 def _snapshot(dossier: Dossier, con: Conclusion) -> _Snapshot:
     return _Snapshot(statement=con.statement,
                      evidences=[copy.deepcopy(e) for e in dossier.evidences_of(con.id)],
-                     evidence_ids=list(con.evidence_ids))
+                     evidence_ids=list(con.evidence_ids),
+                     n_parse_drops=len(dossier.parse_drops))
 
 
 def _rollback(dossier: Dossier, con: Conclusion, snap: _Snapshot) -> None:
@@ -57,6 +61,7 @@ def _rollback(dossier: Dossier, con: Conclusion, snap: _Snapshot) -> None:
     dossier.evidences.extend(snap.evidences)
     con.evidence_ids = list(snap.evidence_ids)
     con.statement = snap.statement
+    del dossier.parse_drops[snap.n_parse_drops:]
 
 
 def _conclusion_flags(dossier: Dossier, conclusion_id: str) -> list[dict]:
@@ -94,7 +99,7 @@ def run_repair_round(dossier: Dossier, flags: list[dict],
         if f.get("kind") in _REPAIR_KINDS and f.get("conclusion_id"):
             by_con.setdefault(f["conclusion_id"], []).append(f)
 
-    attempted = accepted = 0
+    attempted = accepted = n_unused = 0
     consecutive_rejects = 0
     stopped_early = False
     for cid, con_flags in by_con.items():
@@ -120,7 +125,7 @@ def run_repair_round(dossier: Dossier, flags: list[dict],
             consecutive_rejects += 1
             continue  # 修复调用失败：保留原状与警示
         snap = _snapshot(dossier, con)
-        _apply_repair(dossier, con, data)
+        n_unused += _apply_repair(dossier, con, data)
         if len(_conclusion_flags(dossier, cid)) < len(con_flags) \
                 and dossier.evidences_of(cid):
             accepted += 1
@@ -136,24 +141,55 @@ def run_repair_round(dossier: Dossier, flags: list[dict],
         "accepted": accepted,
         "repair_accept_rate": rate,
         "stopped_early": stopped_early,
+        "n_unused": n_unused,
     }
 
 
-def _apply_repair(dossier: Dossier, con: Conclusion, data: dict) -> None:
-    """重写产物 → 试装：新证据逐条过引文闸后替换，statement 允许改写。"""
+def _apply_repair(dossier: Dossier, con: Conclusion, data: dict) -> int:
+    """重写产物 → 试装：新证据逐条过引文闸后替换，statement 允许改写。
+
+    仍然只装第一条对象。非对象与空 statement 留痕；多出来的条数记 n_unused。
+    """
     for ev in list(dossier.evidences_of(con.id)):
         dossier.remove_evidence(ev.id)
-    items = [x for x in (data.get("conclusions") or []) if isinstance(x, dict)]
+    items: list[dict] = []
+    for x in data.get("conclusions") or []:
+        if not isinstance(x, dict):
+            record_parse_drop(
+                dossier, conclusion_id="", author=con.author,
+                ev=x, kind="conclusion_not_object")
+            continue
+        items.append(x)
+        if not str(x.get("statement") or "").strip():
+            record_parse_drop(
+                dossier, conclusion_id="", author=con.author,
+                ev=x, kind="conclusion_empty_statement")
+    # 一次只重写第一条。多出来的对象不装，只计 n_unused。
     item = items[0] if items else {}
+    unused = len(items) - 1 if len(items) > 1 else 0
+    if unused:
+        dossier.accounting["n_unused"] = (
+            int(dossier.accounting.get("n_unused") or 0) + unused)
     statement = str(item.get("statement") or "").strip()
     if statement:
         con.statement = statement
     derived = Analyst._derived_note(item)
     for ev in item.get("evidence") or []:
         if not isinstance(ev, dict):
+            record_parse_drop(
+                dossier, conclusion_id=con.id, author=con.author,
+                ev=ev, kind="not_object")
             continue
         seg_ids = [str(ev.get("segment_id") or "").strip()]
-        if not seg_ids[0] or dossier.segment(seg_ids[0]) is None:
+        if not seg_ids[0]:
+            record_parse_drop(
+                dossier, conclusion_id=con.id, author=con.author,
+                ev=ev, kind="missing_id")
+            continue
+        if dossier.segment(seg_ids[0]) is None:
+            record_parse_drop(
+                dossier, conclusion_id=con.id, author=con.author,
+                ev=ev, kind="missing_segment", segment_id=seg_ids[0])
             continue
         try:
             relation = RelationKind(str(ev.get("relation") or "correlation"))
@@ -173,6 +209,7 @@ def _apply_repair(dossier: Dossier, con: Conclusion, data: dict) -> None:
         if check_evidence(node, dossier):
             continue  # 新引文不过闸：宁缺毋滥
         dossier.add_evidence(node)
+    return unused
 
 
 def _segments_of(dossier: Dossier, con: Conclusion) -> str:

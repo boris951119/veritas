@@ -36,6 +36,8 @@ PROTECTED_TYPES = frozenset({
     SourceType.PATENT.value,
 })
 EXPAND_FRACTION = 0.30
+# 签名默认值常量；生产生效值来自 settings.corpus_select_max_sources
+#（pipeline 显式传入）。勿把本常量当作现场可配上限。
 _MAX_SOURCES = 50
 _HITS_PER_SOURCE = 6
 

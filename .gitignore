@@ -5,6 +5,7 @@ __pycache__/
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
+.venv
 .venv/
 venv/
 
@@ -49,3 +50,8 @@ vendor/python/
 vendor/READY
 .runtime/
 run-server.bat
+
+# kg_lab spike (exp only)
+vaults/
+artifacts/
+data/

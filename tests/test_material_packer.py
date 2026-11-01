@@ -101,17 +101,42 @@ def test_all_in_when_under_budget():
     d = _wide_dossier()
     pack = pack_material(d, budget_chars=100_000)
     assert not pack["excluded"]
-    # SRC2（天气/遛狗段）被相关性分层判零相关整源出局 → 资格线上 4 段
-    assert pack["n_total"] == 4
-    assert pack["n_selected"] == 4
+    # C-70：软闸开＝SRC2 天气段不再整源出局，6 段全进资格线；
+    # 改前断言 n_total==4（SRC2 被 zero 踢掉）。
+    assert pack["n_total"] == 6
+    assert pack["n_selected"] == 6
+
+
+def test_c81_default_kwargs_match_legacy_selected():
+    """C-81：不传窄箱参数 ⇒ 与显式默认逐字同形（生产零行为变）。"""
+    d = _wide_dossier()
+    a = pack_material(d, budget_chars=80)
+    b = pack_material(
+        d, budget_chars=80,
+        max_segments=None, fill_zero_score=True, min_bm25=0.0)
+    assert a["selected"] == b["selected"]
+    assert a["n_selected"] == b["n_selected"]
+
+
+def test_c81_max_segments_caps_box():
+    d = _wide_dossier()
+    pack = pack_material(
+        d, budget_chars=100_000, max_segments=2, fill_zero_score=False)
+    assert pack["n_selected"] <= 2
 
 
 def test_tiny_budget_keeps_top_and_discloses_rest():
+    from app.core.material import set_exclude_budget_reason
+    from app.core.relevance import set_relevance_soft_gate
+    set_relevance_soft_gate(True)  # 与生产默认一致
+    # 复位他测（render_report→align）留下的窗口截断 reason，避免污染本格
+    set_exclude_budget_reason("预算截断")
     d = _wide_dossier()
     pack = pack_material(d, budget_chars=40)
     assert pack["selected"]                        # 至少装入最高分段
     assert len(pack["excluded"]) >= 2
-    assert all("预算" in e["reason"] for e in pack["excluded"])
+    # C-70：软闸开后资格面多了 SRC2；理由须带「预算」
+    assert all("预算" in e["reason"] for e in pack["excluded"]), pack["excluded"]
     # 确定性：同案卷同预算两次装箱结果一致
     again = pack_material(d, budget_chars=40)
     assert again["selected"] == pack["selected"]
