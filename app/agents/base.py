@@ -112,13 +112,19 @@ class Analyst(Agent):
         from app.agents.prompts import render_segments_block, render_system_prompt
         from app.core.skills import render_skills_rules
 
+        # C-107：显式 focus 优先（second_pass／multi_box）；否则旗开窄面注入
+        focus = focus_segment_ids
+        if focus is None:
+            from app.core.kg_submit_surface import kg_focus_segment_ids
+            focus = kg_focus_segment_ids(dossier)
+
         messages = [
             {"role": "system",
              "content": render_system_prompt(
                  self.persona,
                  skills_rules=render_skills_rules(dossier, self.profile_tier))},
             {"role": "user", "content": render_segments_block(
-                dossier, focus_segment_ids=focus_segment_ids)},
+                dossier, focus_segment_ids=focus)},
         ]
         # C-9 丙：发送前窗口估算披露（不截断、不收窄预算）。
         # settings 在构造时已钉死，这里不再读配置。

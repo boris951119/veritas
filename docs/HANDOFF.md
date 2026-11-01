@@ -1,3 +1,13 @@
+<!-- C-107-STEP1 -->
+## 〔C-107〕交卷窄面第 1 步（未合入／默认关）
+
+- **借鉴了什么**：R42/R44 `layer_boundary` 薄拷贝 → `app/core/kg_submit_surface.py`；`conflict_pairs`（洗净 support/oppose id）→ 报告「交付窄面冲突成对」；树17 `close_read` → `focus_segment_ids`／`accounting["tree17_cite"]`；`rank_order`+`k` → `priority_segment_ids` 覆盖＋`max_segments=k`。`FORBIDDEN_PACK_KEYS`＋`assert_clean_pack_kwargs` 禁 coeff／feats／weights／multidim 进 pack kwargs。
+- **没借鉴什么**：一筛 R9／R21 多维系数、二筛 `DEFAULT_WEIGHTS`、`density_submit` 整段（下一步）、实验仓拟合／扫参。
+- **旗名**：`VERITAS_KG_SUBMIT_SURFACE`（`Settings.kg_submit_surface`，**默认关**）。开法：`export VERITAS_KG_SUBMIT_SURFACE=1` 或 config.json `"kg_submit_surface": true`；有输入时把窄面放进 `dossier.accounting["kg_submit"]`（或 `submit_surface`）。旗关／无输入＝现主线零行为差。
+- **分支／PR**：`cursor/c107-kg-submit-surface`；不合入、不默认开。单测 `tests/test_c107_kg_submit_surface.py`。
+
+---
+
 # HANDOFF · 当前状态与交接页
 
 > **这份文件是跨工具交接的唯一入口。**

@@ -208,7 +208,16 @@ def assess_slots(dossier: Dossier) -> list[dict]:
 
 
 def priority_segment_ids(dossier: Dossier, limit: int = 6) -> list[str]:
-    """与议题指标同段的期间观察优先装箱（含最近可得，便于声明缺口）。"""
+    """与议题指标同段的期间观察优先装箱（含最近可得，便于声明缺口）。
+
+    C-107：旗开且已 apply 交卷窄面时，rank_order 覆盖现产槽位优先序
+    （装箱只消费 segment id；不经 pack_material 新参）。
+    """
+    from app.core.kg_submit_surface import kg_priority_override
+
+    override = kg_priority_override(dossier)
+    if override is not None:
+        return list(override)
     slots = parse_slots(dossier.question)
     if not slots:
         return []

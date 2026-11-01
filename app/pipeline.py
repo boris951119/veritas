@@ -584,7 +584,18 @@ def run_case(spec: RunSpec | None = None,
                 })
         # 钉死后全员同料：不许再传 settings.material_char_budget 实参
 
-        pack = pack_material(dossier)
+        # C-107：旗开才消费交卷窄面（priority／max_segments／focus／pairs）
+        _kg_pack_kw: dict = {}
+        if bool(getattr(settings, "kg_submit_surface", False)):
+            from app.core.kg_submit_surface import (
+                apply_kg_submit_surface, assert_clean_pack_kwargs,
+                pack_kwargs_for_kg,
+            )
+            apply_kg_submit_surface(dossier, enabled=True)
+            _kg_pack_kw = pack_kwargs_for_kg(dossier)
+            assert_clean_pack_kwargs(_kg_pack_kw)
+
+        pack = pack_material(dossier, **_kg_pack_kw)
         # C-99：锚审支撑分 + A0 软保底（默认开；失败／桩／测试守卫 → 回退 A0）
         # 只在真实 ModelClient 上跑——注入桩会吃脚本应答；测试会话守卫上膛也不跑
         review_disc: dict = {"applied": False, "reason": "skipped"}
@@ -936,7 +947,11 @@ def run_case(spec: RunSpec | None = None,
                      "corpus_select_max_disclosures", "causal_claim",
                      "claim_slots", "ledger_outlier_tag",
                      "multi_box", "material_pack_union", "review_boost",
-                     "window_ledger")}
+                     "window_ledger",
+                     # C-107 交卷窄面（旗关时不会写入这些键）
+                     "kg_submit_active", "kg_submit", "kg_pack_hints",
+                     "kg_conflict_pairs", "kg_focus_segment_ids",
+                     "kg_priority_segment_ids", "tree17_cite")}
     dossier.accounting = {
         **kept,
         "elapsed_s": round(time.monotonic() - t0, 1),
@@ -1233,6 +1248,7 @@ def render_report_md(dossier: Dossier, chain: HashChain, rejected: list[dict]) -
     _render_synthesis(lines, dossier)
     _render_triage_ledger(lines, dossier)
     _render_conflicts_section(lines, dossier)
+    _render_kg_conflict_pairs_section(lines, dossier)
     _render_dissent_section(lines, dossier)
     _render_fact_collisions(lines, dossier)
     # C-29 R1：同类对照节插在对撞与窗口披露之间；字数闸分母＝其余节合计，
@@ -1518,6 +1534,48 @@ def _render_triage_ledger(lines: list[str], dossier: Dossier) -> None:
         label = ROUTE_LABEL.get(r.get("route"), r.get("route"))
         reason = f"——{r['reason']}" if r.get("reason") else ""
         lines.append(f"- `{r['file']}` → **{label}**{reason}")
+    lines.append("")
+
+
+def _render_kg_conflict_pairs_section(
+        lines: list[str], dossier: Dossier) -> None:
+    """C-107：交卷窄面 conflict_pairs → 报告冲突节（旗开且已 apply）。"""
+    acc = dossier.accounting or {}
+    if not acc.get("kg_submit_active"):
+        return
+    pairs = acc.get("kg_conflict_pairs")
+    if not pairs:
+        return
+    lines += ["## 交付窄面冲突成对（KG）", ""]
+    if isinstance(pairs, dict):
+        for side, label in (("support", "支持"), ("oppose", "反对")):
+            rows = pairs.get(side) or []
+            if not rows:
+                continue
+            lines.append(f"- **{label}**：")
+            for row in rows:
+                if not isinstance(row, dict):
+                    continue
+                sid = str(row.get("id") or "")
+                opt = str(row.get("option") or "")
+                lines.append(f"  - `{sid}`" + (f" · {opt}" if opt else ""))
+        for p in pairs.get("conflicts") or []:
+            if not isinstance(p, dict):
+                continue
+            a = str(p.get("support_id") or "")
+            b = str(p.get("oppose_id") or "")
+            reason = str(p.get("reason") or "")
+            lines.append(
+                f"- 成对：`{a}` ↔ `{b}`"
+                + (f"（{reason}）" if reason else "")
+            )
+    elif isinstance(pairs, list):
+        for p in pairs:
+            if not isinstance(p, dict):
+                continue
+            a = str(p.get("support_id") or p.get("a") or "")
+            b = str(p.get("oppose_id") or p.get("b") or "")
+            lines.append(f"- 成对：`{a}` ↔ `{b}`")
     lines.append("")
 
 
@@ -1828,10 +1886,11 @@ def _render_prompt_window(lines: list[str], dossier: Dossier) -> None:
 def _render_excluded_sources(lines: list[str], dossier: Dossier) -> None:
     """丢弃必须可见：预算裁剪、零相关/重复排除、摄取失败三类披露。"""
     from app.core.dup_check import duplicate_map
+    from app.core.kg_submit_surface import pack_kwargs_for_kg
     from app.core.material import WINDOW_EXCLUDE_REASON, pack_material
     from app.core.relevance import classify_sources
 
-    pack = pack_material(dossier)
+    pack = pack_material(dossier, **pack_kwargs_for_kg(dossier))
     mb = (dossier.accounting or {}).get("multi_box") or {}
     if isinstance(mb, dict) and int(mb.get("n_boxes") or 0) > 1:
         lines += ["## 续盒（多箱）", ""]

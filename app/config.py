@@ -537,6 +537,12 @@ class Settings:
     review_boost_k: int = 180
     review_boost_refill: int = 40
 
+    # C-107：分析师 R44 交卷窄面（conflict_pairs／树17 focus／k＋rank）。
+    # 默认 False＝现主线行为；开＝VERITAS_KG_SUBMIT_SURFACE=1 才消费窄面。
+    # 禁 r9／r21／DEFAULT_WEIGHTS／多维 feats 进 pack_material。
+    # env VERITAS_KG_SUBMIT_SURFACE；config.json kg_submit_surface。
+    kg_submit_surface: bool = False
+
     # 语料收窄阈值：信源数达到该值才走索引选料（默认 50=自动；
     # 0=强制关闭，小案例到不了阈值则整卷研判、不建 .corpus）。
     # 收窄后研判只看见 hydrate 出的小案卷，并披露「库内 N / 本次 M」。
@@ -792,6 +798,11 @@ class Settings:
         rbr = (os.environ.get("VERITAS_REVIEW_BOOST_REFILL") or "").strip()
         if rbr.isdigit() and int(rbr) >= 0:
             s.review_boost_refill = int(rbr)
+        kgs = (os.environ.get("VERITAS_KG_SUBMIT_SURFACE") or "").strip().lower()
+        if kgs in ("0", "false", "off", "no"):
+            s.kg_submit_surface = False
+        elif kgs in ("1", "true", "on", "yes"):
+            s.kg_submit_surface = True
         return s.validate()
 
     @classmethod
@@ -926,6 +937,13 @@ class Settings:
             if isinstance(raw_rbr, int) and not isinstance(raw_rbr, bool) \
                     and raw_rbr >= 0:
                 s.review_boost_refill = raw_rbr
+        if "kg_submit_surface" in data:
+            raw_kgs = data.get("kg_submit_surface")
+            if isinstance(raw_kgs, bool):
+                s.kg_submit_surface = raw_kgs
+            elif isinstance(raw_kgs, (int, str)):
+                s.kg_submit_surface = str(raw_kgs).strip().lower() not in (
+                    "0", "false", "off", "no", "")
         select_min = data.get("corpus_select_min_sources")
         if isinstance(select_min, int) and not isinstance(select_min, bool) \
                 and select_min >= 0:
