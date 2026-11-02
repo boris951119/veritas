@@ -1,3 +1,14 @@
+<!-- C-114-ANCHOR -->
+## 〔C-114〕证据定位稳（Q4；实验旗默认关；过线／建议可合、本票不合）
+
+- **枝**：`cursor/c114-anchor-stable`（自 main／C-111 tip；**未**并 C-113）。
+- **模块**：`app/core/anchor_stable.py`；挂点 `official_case` 加固切片／解包、`export/official` 缺锚披露、`config` 旗。
+- **旗**：`VERITAS_ANCHOR_STABLE` 默认 **关**；＝1 开 BOM／换行归一＋段落指纹回绑＋信封解包＋missing_anchor／drift 披露。不改 BM25／不往 pack 塞系数／不动树15／树17。
+- **读数**（`artifacts/C114_anchor_stable.md`，零 LLM）：一致率 关 **0.0019** → 开 **1.0000**（528/528）；泄漏＝0；刘翔@7 12／12；holdout L2 29／29。
+- **合入建议**：过线 **YES** → **可建议合 main**（仍默认关）；本票不直接合；C-113 仍不合。
+
+---
+
 <!-- C-111-REHYDRATE -->
 ## 〔C-111〕保底回灌短盒（rehydrate_box；过线／建议合入）
 

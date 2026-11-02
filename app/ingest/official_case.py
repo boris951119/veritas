@@ -57,7 +57,21 @@ def load_question_list(path: Path) -> list[dict]:
 def load_official_case(case_dir: Path) -> Dossier:
     """读 case_dir/raw_documents.json，返回尚未填议题的案卷。"""
     path = Path(case_dir) / "raw_documents.json"
-    data = json.loads(path.read_text(encoding="utf-8"))
+    raw_text = path.read_text(encoding="utf-8")
+    data = json.loads(raw_text)
+    # C-114：轻量转存偶发包一层 {"documents"|"raw_documents": [...]}
+    from app.core.anchor_stable import (
+        anchor_stable_enabled,
+        apply_ingest_anchor_accounting,
+        resolve_paragraph_text,
+    )
+    harden = anchor_stable_enabled()
+    if isinstance(data, dict) and harden:
+        for wrap_key in ("raw_documents", "documents", "docs"):
+            inner = data.get(wrap_key)
+            if isinstance(inner, list):
+                data = inner
+                break
     if not isinstance(data, list):
         raise ValueError("raw_documents.json 须为文档数组")
 
@@ -68,6 +82,12 @@ def load_official_case(case_dir: Path) -> Dossier:
     n_full_iso = 0
     n_present_non_iso = 0
     n_key_missing = 0
+    # C-114：加固路径计数（旗关不写 accounting）
+    n_anchor_ok = 0
+    n_anchor_rebound = 0
+    n_anchor_missing = 0
+    n_anchor_drift = 0
+    anchor_samples: list[dict] = []
     from app.core.temporal_check import source_time_unified
     unified = bool(source_time_unified())
     for doc in data:
@@ -87,9 +107,32 @@ def load_official_case(case_dir: Path) -> Dossier:
             if not isinstance(para, dict) or "para_id" not in para:
                 continue
             para_id = str(para["para_id"])
-            start = int(para.get("char_start") or 0)
-            end = int(para.get("char_end") or 0)
-            text = content[start:end]
+            resolved = resolve_paragraph_text(content, para, harden=harden)
+            text = str(resolved.get("text") or "")
+            status = str(resolved.get("status") or "ok")
+            if harden:
+                if status == "missing_anchor":
+                    n_anchor_missing += 1
+                    if len(anchor_samples) < 12:
+                        anchor_samples.append({
+                            "doc_id": doc_id, "para_id": para_id,
+                            "status": status,
+                        })
+                    # 不静默吞：记条后跳过入卷（无可靠正文）
+                    continue
+                if status == "rebound":
+                    n_anchor_rebound += 1
+                elif status == "drift":
+                    n_anchor_drift += 1
+                else:
+                    n_anchor_ok += 1
+                if status != "ok" and len(anchor_samples) < 12:
+                    anchor_samples.append({
+                        "doc_id": doc_id, "para_id": para_id,
+                        "status": status,
+                        "char_start": resolved.get("char_start"),
+                        "char_end": resolved.get("char_end"),
+                    })
             if len(text) < MIN_PARA_CHARS:
                 n_short += 1
                 continue
@@ -101,8 +144,8 @@ def load_official_case(case_dir: Path) -> Dossier:
         published = publish_time_or_blank(raw_pt)
         if not published:
             n_bad_time += 1
-            raw_text = str(raw_pt or "").strip()
-            if not raw_text:
+            raw_text_pt = str(raw_pt or "").strip()
+            if not raw_text_pt:
                 n_key_missing += 1
             else:
                 n_present_non_iso += 1
@@ -112,18 +155,19 @@ def load_official_case(case_dir: Path) -> Dossier:
         credibility = cred if isinstance(cred, (int, float)) and not isinstance(cred, bool) else None
         if credibility is None or not 0.0 <= float(credibility) <= 1.0:
             credibility = None
+        meta = {
+            "doc_id": doc_id,
+            "publish_time": published,
+            "source_credibility": cred,
+            "official": True,
+        }
         source = Source.create(
             str(doc.get("title") or doc_id),
             SourceType.WEB,
             credibility=None if credibility is None else float(credibility),
             id=doc_id,
             url=str(doc.get("content_url") or ""),
-            meta={
-                "doc_id": doc_id,
-                "publish_time": published,
-                "source_credibility": cred,
-                "official": True,
-            },
+            meta=meta,
         )
         source.segments = kept
         dossier.add_source(source)
@@ -156,4 +200,25 @@ def load_official_case(case_dir: Path) -> Dossier:
         note["n_present_non_iso"] = n_present_non_iso
         note["n_key_missing"] = n_key_missing
     dossier.ingest_notes.append(note)
+    if harden:
+        apply_ingest_anchor_accounting(
+            dossier,
+            n_ok=n_anchor_ok,
+            n_rebound=n_anchor_rebound,
+            n_missing=n_anchor_missing,
+            n_drift=n_anchor_drift,
+            samples=anchor_samples,
+        )
+        dossier.ingest_notes.append({
+            "file": "raw_documents.json",
+            "kind": "anchor_stable",
+            "detail": (
+                f"C-114 定位加固：ok={n_anchor_ok}／rebound={n_anchor_rebound}／"
+                f"missing_anchor={n_anchor_missing}／drift={n_anchor_drift}"
+            ),
+            "n_ok": n_anchor_ok,
+            "n_rebound": n_anchor_rebound,
+            "n_missing_anchor": n_anchor_missing,
+            "n_drift": n_anchor_drift,
+        })
     return dossier

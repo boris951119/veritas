@@ -1,0 +1,360 @@
+{
+  "advice": "YES",
+  "off_rate": 0.001893939393939394,
+  "on_rate": 1.0,
+  "off_ok": 1,
+  "on_ok": 528,
+  "n_total": 528,
+  "leaks": 0,
+  "gain_rows": 18,
+  "flat_rows": 0,
+  "side": {
+    "skipped": false,
+    "lx_at7_off": 12,
+    "lx_at7_on": 12,
+    "lx_l2_off": 13,
+    "lx_l2_on": 13,
+    "holdout_l2_off": 29,
+    "holdout_l2_on": 29,
+    "pack_leaks": 0,
+    "lx_detail_off": [
+      {
+        "l2": 4,
+        "at7": 4,
+        "gold": 4,
+        "leaks": 0
+      },
+      {
+        "l2": 5,
+        "at7": 4,
+        "gold": 5,
+        "leaks": 0
+      },
+      {
+        "l2": 4,
+        "at7": 4,
+        "gold": 5,
+        "leaks": 0
+      }
+    ],
+    "lx_detail_on": [
+      {
+        "l2": 4,
+        "at7": 4,
+        "gold": 4,
+        "leaks": 0
+      },
+      {
+        "l2": 5,
+        "at7": 4,
+        "gold": 5,
+        "leaks": 0
+      },
+      {
+        "l2": 4,
+        "at7": 4,
+        "gold": 5,
+        "leaks": 0
+      }
+    ]
+  },
+  "cases": [
+    {
+      "case": "刘翔编制“二选一”事件",
+      "gold_n": 34,
+      "rows": [
+        {
+          "stress": "bom",
+          "gold_n": 34,
+          "off_rate": 0.0,
+          "off_ok": 0,
+          "off_missing": 0,
+          "off_drift": 34,
+          "off_err": "",
+          "on_rate": 1.0,
+          "on_ok": 34,
+          "on_missing": 0,
+          "on_drift": 0,
+          "on_err": "",
+          "leaks": []
+        },
+        {
+          "stress": "bom_env",
+          "gold_n": 34,
+          "off_rate": 0.0,
+          "off_ok": 0,
+          "off_missing": 34,
+          "off_drift": 0,
+          "off_err": "ValueError: raw_documents.json 须为文档数组",
+          "on_rate": 1.0,
+          "on_ok": 34,
+          "on_missing": 0,
+          "on_drift": 0,
+          "on_err": "",
+          "leaks": []
+        },
+        {
+          "stress": "crlf",
+          "gold_n": 34,
+          "off_rate": 0.029411764705882353,
+          "off_ok": 1,
+          "off_missing": 0,
+          "off_drift": 33,
+          "off_err": "",
+          "on_rate": 1.0,
+          "on_ok": 34,
+          "on_missing": 0,
+          "on_drift": 0,
+          "on_err": "",
+          "leaks": []
+        },
+        {
+          "stress": "crlf_env",
+          "gold_n": 34,
+          "off_rate": 0.0,
+          "off_ok": 0,
+          "off_missing": 34,
+          "off_drift": 0,
+          "off_err": "ValueError: raw_documents.json 须为文档数组",
+          "on_rate": 1.0,
+          "on_ok": 34,
+          "on_missing": 0,
+          "on_drift": 0,
+          "on_err": "",
+          "leaks": []
+        },
+        {
+          "stress": "bom_crlf",
+          "gold_n": 34,
+          "off_rate": 0.0,
+          "off_ok": 0,
+          "off_missing": 0,
+          "off_drift": 34,
+          "off_err": "",
+          "on_rate": 1.0,
+          "on_ok": 34,
+          "on_missing": 0,
+          "on_drift": 0,
+          "on_err": "",
+          "leaks": []
+        },
+        {
+          "stress": "bom_crlf_env",
+          "gold_n": 34,
+          "off_rate": 0.0,
+          "off_ok": 0,
+          "off_missing": 34,
+          "off_drift": 0,
+          "off_err": "ValueError: raw_documents.json 须为文档数组",
+          "on_rate": 1.0,
+          "on_ok": 34,
+          "on_missing": 0,
+          "on_drift": 0,
+          "on_err": "",
+          "leaks": []
+        }
+      ]
+    },
+    {
+      "case": "王虹“北大discouraged”事件",
+      "gold_n": 37,
+      "rows": [
+        {
+          "stress": "bom",
+          "gold_n": 37,
+          "off_rate": 0.0,
+          "off_ok": 0,
+          "off_missing": 0,
+          "off_drift": 37,
+          "off_err": "",
+          "on_rate": 1.0,
+          "on_ok": 37,
+          "on_missing": 0,
+          "on_drift": 0,
+          "on_err": "",
+          "leaks": []
+        },
+        {
+          "stress": "bom_env",
+          "gold_n": 37,
+          "off_rate": 0.0,
+          "off_ok": 0,
+          "off_missing": 37,
+          "off_drift": 0,
+          "off_err": "ValueError: raw_documents.json 须为文档数组",
+          "on_rate": 1.0,
+          "on_ok": 37,
+          "on_missing": 0,
+          "on_drift": 0,
+          "on_err": "",
+          "leaks": []
+        },
+        {
+          "stress": "crlf",
+          "gold_n": 37,
+          "off_rate": 0.0,
+          "off_ok": 0,
+          "off_missing": 0,
+          "off_drift": 37,
+          "off_err": "",
+          "on_rate": 1.0,
+          "on_ok": 37,
+          "on_missing": 0,
+          "on_drift": 0,
+          "on_err": "",
+          "leaks": []
+        },
+        {
+          "stress": "crlf_env",
+          "gold_n": 37,
+          "off_rate": 0.0,
+          "off_ok": 0,
+          "off_missing": 37,
+          "off_drift": 0,
+          "off_err": "ValueError: raw_documents.json 须为文档数组",
+          "on_rate": 1.0,
+          "on_ok": 37,
+          "on_missing": 0,
+          "on_drift": 0,
+          "on_err": "",
+          "leaks": []
+        },
+        {
+          "stress": "bom_crlf",
+          "gold_n": 37,
+          "off_rate": 0.0,
+          "off_ok": 0,
+          "off_missing": 0,
+          "off_drift": 37,
+          "off_err": "",
+          "on_rate": 1.0,
+          "on_ok": 37,
+          "on_missing": 0,
+          "on_drift": 0,
+          "on_err": "",
+          "leaks": []
+        },
+        {
+          "stress": "bom_crlf_env",
+          "gold_n": 37,
+          "off_rate": 0.0,
+          "off_ok": 0,
+          "off_missing": 37,
+          "off_drift": 0,
+          "off_err": "ValueError: raw_documents.json 须为文档数组",
+          "on_rate": 1.0,
+          "on_ok": 37,
+          "on_missing": 0,
+          "on_drift": 0,
+          "on_err": "",
+          "leaks": []
+        }
+      ]
+    },
+    {
+      "case": "柬泰边境争端（2025.12–2026.9）",
+      "gold_n": 17,
+      "rows": [
+        {
+          "stress": "bom",
+          "gold_n": 17,
+          "off_rate": 0.0,
+          "off_ok": 0,
+          "off_missing": 0,
+          "off_drift": 17,
+          "off_err": "",
+          "on_rate": 1.0,
+          "on_ok": 17,
+          "on_missing": 0,
+          "on_drift": 0,
+          "on_err": "",
+          "leaks": []
+        },
+        {
+          "stress": "bom_env",
+          "gold_n": 17,
+          "off_rate": 0.0,
+          "off_ok": 0,
+          "off_missing": 17,
+          "off_drift": 0,
+          "off_err": "ValueError: raw_documents.json 须为文档数组",
+          "on_rate": 1.0,
+          "on_ok": 17,
+          "on_missing": 0,
+          "on_drift": 0,
+          "on_err": "",
+          "leaks": []
+        },
+        {
+          "stress": "crlf",
+          "gold_n": 17,
+          "off_rate": 0.0,
+          "off_ok": 0,
+          "off_missing": 0,
+          "off_drift": 17,
+          "off_err": "",
+          "on_rate": 1.0,
+          "on_ok": 17,
+          "on_missing": 0,
+          "on_drift": 0,
+          "on_err": "",
+          "leaks": []
+        },
+        {
+          "stress": "crlf_env",
+          "gold_n": 17,
+          "off_rate": 0.0,
+          "off_ok": 0,
+          "off_missing": 17,
+          "off_drift": 0,
+          "off_err": "ValueError: raw_documents.json 须为文档数组",
+          "on_rate": 1.0,
+          "on_ok": 17,
+          "on_missing": 0,
+          "on_drift": 0,
+          "on_err": "",
+          "leaks": []
+        },
+        {
+          "stress": "bom_crlf",
+          "gold_n": 17,
+          "off_rate": 0.0,
+          "off_ok": 0,
+          "off_missing": 0,
+          "off_drift": 17,
+          "off_err": "",
+          "on_rate": 1.0,
+          "on_ok": 17,
+          "on_missing": 0,
+          "on_drift": 0,
+          "on_err": "",
+          "leaks": []
+        },
+        {
+          "stress": "bom_crlf_env",
+          "gold_n": 17,
+          "off_rate": 0.0,
+          "off_ok": 0,
+          "off_missing": 17,
+          "off_drift": 0,
+          "off_err": "ValueError: raw_documents.json 须为文档数组",
+          "on_rate": 1.0,
+          "on_ok": 17,
+          "on_missing": 0,
+          "on_drift": 0,
+          "on_err": "",
+          "leaks": []
+        }
+      ]
+    }
+  ],
+  "wall_s": 7.556621074676514,
+  "hooks": [
+    "app/core/anchor_stable.py",
+    "app/ingest/official_case.py",
+    "app/export/official.py",
+    "app/config.py"
+  ],
+  "flag": "VERITAS_ANCHOR_STABLE",
+  "flag_default": false
+}
