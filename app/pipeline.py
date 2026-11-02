@@ -638,6 +638,17 @@ def run_case(spec: RunSpec | None = None,
                     getattr(settings, "review_boost_refill", 40) or 0) > 0,
             )
         dossier.accounting["review_boost"] = dict(review_disc)
+        # C-117：树15 满箱有界加窗（默认关；只 +1 档预算／可选 +1 续盒）
+        _depress_max_boxes = int(getattr(settings, "multi_box_max", 3) or 3)
+        if bool(getattr(settings, "tree15_depress", False)):
+            from app.core.tree15_depress import apply_tree15_depress
+            pack, _dep = apply_tree15_depress(
+                dossier, pack, enabled=True, settings=settings,
+                pack_kwargs=dict(_kg_pack_kw),
+            )
+            _depress_max_boxes = int(
+                (_dep or {}).get("depress_max_boxes") or _depress_max_boxes
+            )
         # C-29：进窗标注只读这份 accounting，不许再调 pack_material（task #60）
         # 首箱 selected＝主编队同料；续盒并集另记 multi_box（树16）
         dossier.accounting["material_pack_selected"] = sorted(pack["selected"])
@@ -649,7 +660,7 @@ def run_case(spec: RunSpec | None = None,
             multi_plan = pack_continuation_boxes(
                 dossier,
                 budget_chars=pack.get("budget"),
-                max_boxes=int(getattr(settings, "multi_box_max", 3) or 3),
+                max_boxes=_depress_max_boxes,
             )
             dossier.accounting["multi_box"] = multi_box_accounting(multi_plan)
             dossier.accounting["material_pack_union"] = sorted(
