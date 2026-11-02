@@ -1,3 +1,15 @@
+<!-- C-116-CONF -->
+## 〔C-116〕置信档校准闸（Q6；实验旗默认关；过线／末批合）
+
+- **枝**：`cursor/c116-conf-calib`（自 main；**未**并 C-113～115）。
+- **模块**：`app/core/conf_calib.py`；挂点 pipeline finalize＋export 交卷 `band`。
+- **闸**：高档须过 min_evidence／锚定／链完整／编队一致／冲突未决；不过 → 降「中」＋demote 披露；**分数不动**。
+- **旗**：`VERITAS_CONF_CALIB` 默认 **关**；＝1 开。禁金标进提示；禁 pack 系数。
+- **读数**（`artifacts/C116_conf_calib.md`，face_v2 自标快照）：高档精确度 0.2069→**0.2727**；ECE 0.0565→**0.0550**；泄漏0；@7=12／holdout=29。
+- **合入建议**：过线 **YES** → **末批统一合**（仍默认关）；本票不合 main。
+
+---
+
 <!-- C-115-CONFLICT -->
 ## 〔C-115〕冲突三类覆盖＋处置留痕（Q5；实验旗默认关；过线／末批合）
 

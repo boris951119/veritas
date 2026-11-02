@@ -867,6 +867,10 @@ def run_case(spec: RunSpec | None = None,
         chain.append("causal_claim_gate", "pipeline", claim_rec)
         # 一致性按原编队人数计（减员已在 panel_attrition 披露）
         recompute_all(dossier, n_panel=len(roster_names) or len(analysts))
+        # C-116：置信档校准闸（默认关；只调交卷档／披露，不改合式分数）
+        if bool(getattr(settings, "conf_calib", False)):
+            from app.core.conf_calib import apply_conf_calib
+            apply_conf_calib(dossier, enabled=True, settings=settings)
         refresh_premise_broken(dossier)
         chain.append("confidence_computed", "pipeline", {
             "n_majority": len(majority_conclusions(dossier)),

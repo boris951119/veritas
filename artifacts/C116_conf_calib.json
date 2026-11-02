@@ -1,0 +1,58 @@
+{
+  "advice": "YES",
+  "prec_off": 0.20689655172413793,
+  "prec_on": 0.2727272727272727,
+  "acc_off": 0.5172413793103449,
+  "acc_on": 0.6363636363636364,
+  "ece_off": 0.056505,
+  "ece_on": 0.054964,
+  "high_cov_off": 29,
+  "high_cov_on": 11,
+  "n_demoted": 18,
+  "leaks": 0,
+  "side": {
+    "skipped": false,
+    "lx_at7_off": 12,
+    "lx_at7_on": 12,
+    "holdout_l2_off": 29,
+    "holdout_l2_on": 29,
+    "pack_leaks": 0
+  },
+  "detail": {
+    "n": 226,
+    "prec_off": {
+      "n_high": 29,
+      "n_hit": 6,
+      "precision": 0.20689655172413793,
+      "accuracy": 0.5172413793103449,
+      "strict": true
+    },
+    "prec_on": {
+      "n_high": 11,
+      "n_hit": 3,
+      "precision": 0.2727272727272727,
+      "accuracy": 0.6363636363636364,
+      "strict": true
+    },
+    "ece_off": 0.056505,
+    "ece_on": 0.054964,
+    "high_cov_off": 29,
+    "high_cov_on": 11,
+    "n_demoted": 18,
+    "leaks": [],
+    "sample_demote_reasons": [
+      "min_evidence",
+      "panel_disagreement"
+    ]
+  },
+  "wall_s": 7.070060968399048,
+  "hooks": [
+    "app/core/conf_calib.py",
+    "app/pipeline.py",
+    "app/export/official.py",
+    "app/config.py"
+  ],
+  "flag": "VERITAS_CONF_CALIB",
+  "flag_default": false,
+  "labels_source": "calibration/face_v2_row_snapshot.jsonl"
+}
