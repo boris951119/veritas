@@ -402,6 +402,16 @@ def _confidence_rows(question_id: str, dossier: Dossier) -> list[dict]:
             "band": band_of(score),
             "band_rule": BAND_RULE,
         })
+        # C-116：旗开后置降档（不改 score）；披露 predicted_band／demote
+        from app.core.conf_calib import conf_calib_enabled, gated_band
+        if conf_calib_enabled():
+            gated = gated_band(
+                score, dossier=dossier, conclusion=con, enabled=True,
+            )
+            rows[-1]["predicted_band"] = gated["predicted_band"]
+            rows[-1]["band"] = gated["band"]
+            if gated["demoted"]:
+                rows[-1]["demote_reasons"] = list(gated["demote_reasons"])
     return rows
 
 

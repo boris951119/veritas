@@ -554,6 +554,11 @@ class Settings:
     # 系数不进 pack。env／config.json kg_rehydrate_box。
     kg_rehydrate_box: bool = True
 
+    # C-116：置信档校准闸（Q6）。默认 False；开＝VERITAS_CONF_CALIB=1。
+    # 高档可解释门槛→可降档；不改合式分数／不往 pack 塞系数。
+    # env VERITAS_CONF_CALIB；config.json conf_calib。
+    conf_calib: bool = False
+
     # 语料收窄阈值：信源数达到该值才走索引选料（默认 50=自动；
     # 0=强制关闭，小案例到不了阈值则整卷研判、不建 .corpus）。
     # 收窄后研判只看见 hydrate 出的小案卷，并披露「库内 N / 本次 M」。
@@ -824,6 +829,11 @@ class Settings:
             s.kg_rehydrate_box = False
         elif rh in ("1", "true", "on", "yes"):
             s.kg_rehydrate_box = True
+        cc = (os.environ.get("VERITAS_CONF_CALIB") or "").strip().lower()
+        if cc in ("0", "false", "off", "no"):
+            s.conf_calib = False
+        elif cc in ("1", "true", "on", "yes"):
+            s.conf_calib = True
         return s.validate()
 
     @classmethod
@@ -978,6 +988,13 @@ class Settings:
                 s.kg_rehydrate_box = raw_rh
             elif isinstance(raw_rh, (int, str)):
                 s.kg_rehydrate_box = str(raw_rh).strip().lower() not in (
+                    "0", "false", "off", "no", "")
+        if "conf_calib" in data:
+            raw_cc = data.get("conf_calib")
+            if isinstance(raw_cc, bool):
+                s.conf_calib = raw_cc
+            elif isinstance(raw_cc, (int, str)):
+                s.conf_calib = str(raw_cc).strip().lower() not in (
                     "0", "false", "off", "no", "")
         select_min = data.get("corpus_select_min_sources")
         if isinstance(select_min, int) and not isinstance(select_min, bool) \
