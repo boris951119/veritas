@@ -554,6 +554,11 @@ class Settings:
     # 系数不进 pack。env／config.json kg_rehydrate_box。
     kg_rehydrate_box: bool = True
 
+    # C-114：证据定位稳（重构／转存后再解析仍落到 doc_id#para_id）。
+    # 默认 False；开＝VERITAS_ANCHOR_STABLE=1。不改 BM25／不往 pack 塞系数。
+    # env VERITAS_ANCHOR_STABLE；config.json anchor_stable。
+    anchor_stable: bool = False
+
     # 语料收窄阈值：信源数达到该值才走索引选料（默认 50=自动；
     # 0=强制关闭，小案例到不了阈值则整卷研判、不建 .corpus）。
     # 收窄后研判只看见 hydrate 出的小案卷，并披露「库内 N / 本次 M」。
@@ -824,6 +829,11 @@ class Settings:
             s.kg_rehydrate_box = False
         elif rh in ("1", "true", "on", "yes"):
             s.kg_rehydrate_box = True
+        anc = (os.environ.get("VERITAS_ANCHOR_STABLE") or "").strip().lower()
+        if anc in ("0", "false", "off", "no"):
+            s.anchor_stable = False
+        elif anc in ("1", "true", "on", "yes"):
+            s.anchor_stable = True
         return s.validate()
 
     @classmethod
@@ -978,6 +988,13 @@ class Settings:
                 s.kg_rehydrate_box = raw_rh
             elif isinstance(raw_rh, (int, str)):
                 s.kg_rehydrate_box = str(raw_rh).strip().lower() not in (
+                    "0", "false", "off", "no", "")
+        if "anchor_stable" in data:
+            raw_anc = data.get("anchor_stable")
+            if isinstance(raw_anc, bool):
+                s.anchor_stable = raw_anc
+            elif isinstance(raw_anc, (int, str)):
+                s.anchor_stable = str(raw_anc).strip().lower() not in (
                     "0", "false", "off", "no", "")
         select_min = data.get("corpus_select_min_sources")
         if isinstance(select_min, int) and not isinstance(select_min, bool) \

@@ -230,16 +230,42 @@ def _bare_gate_line(n_questions: int, dropped_ids: list[str],
 
 
 def _facts_from_evidences(dossier: Dossier, evidences) -> list[dict]:
-    """把证据列表映射成去重后的 (doc_id, para_id) 行；locator 取不到的跳过。"""
+    """把证据列表映射成去重后的 (doc_id, para_id) 行；locator 取不到的跳过。
+
+    C-114：旗开时把取不到的 segment_id 记入 accounting["anchor_stable"]["missing_anchor"]，
+    不静默吞（行仍不交——契约禁止无 doc_id#para_id 的模糊锚）。
+    """
     facts: list[dict] = []
     seen: set[tuple[str, str]] = set()
+    missing: list[dict] = []
+    from app.core.anchor_stable import anchor_stable_enabled
+    harden = anchor_stable_enabled()
     for ev in evidences:
         for sid in ev.segment_ids:
             loc = _segment_locator(dossier, sid)
-            if loc is None or loc in seen:
+            if loc is None:
+                if harden:
+                    missing.append({
+                        "segment_id": str(sid),
+                        "reason": "missing_anchor",
+                    })
+                continue
+            if loc in seen:
                 continue
             seen.add(loc)
             facts.append({"doc_id": loc[0], "para_id": loc[1]})
+    if harden and missing:
+        acc = getattr(dossier, "accounting", None)
+        if acc is None:
+            dossier.accounting = {}
+            acc = dossier.accounting
+        bucket = acc.setdefault("anchor_stable", {})
+        if not isinstance(bucket, dict):
+            bucket = {}
+            acc["anchor_stable"] = bucket
+        prev = list(bucket.get("missing_anchor") or [])
+        bucket["missing_anchor"] = prev + missing
+        bucket["n_export_missing_anchor"] = len(bucket["missing_anchor"])
     return facts
 
 
