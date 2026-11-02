@@ -6,7 +6,7 @@
 - **旗**：`VERITAS_ANCHOR_STABLE`／`CONFLICT_TRACE`／`CONF_CALIB`／`TREE15_DEPRESS` 均默认 **关**（生产＝旧路径）。
 - **冲突**：三轮仅 config＋HANDOFF 机械并；逻辑零改。
 - **合后旁证**（`artifacts/C118_batch_merge_114_117.md`，零 LLM）：@7=**12**／holdout L2=**29**／leak=**0**（对齐合前 7c3d24e）。
-- **状态**：过线 **YES**；未宣称树15 红标已灭。
+- **状态**：过线 **YES**；main tip `e214f4e4bd99` 已推 origin；未宣称树15 红标已灭。
 
 ---
 
