@@ -826,6 +826,32 @@ def export_official(runs: list[tuple[dict, Dossier]], out_dir: Path) -> dict[str
     paths["causal_evidence"].write_text(
         json.dumps(causal_evidence, ensure_ascii=False, indent=2),
         encoding="utf-8")
+    # C-115：旗开且案卷有 conflict_trace → 导出回放面（旗关不写文件）
+    from app.core.conflict_trace import conflict_trace_enabled, summarize_trace
+    if conflict_trace_enabled():
+        merged: list[dict] = []
+        for question, dossier in runs:
+            bucket = (getattr(dossier, "accounting", None) or {}).get(
+                "conflict_trace")
+            if isinstance(bucket, dict):
+                for row in bucket.get("records") or []:
+                    if isinstance(row, dict):
+                        item = dict(row)
+                        item["question_id"] = str(
+                            (question or {}).get("question_id") or "")
+                        merged.append(item)
+        if merged:
+            paths["conflict_trace"] = out_dir / "conflict_trace.json"
+            paths["conflict_trace"].write_text(
+                json.dumps({
+                    "records": merged,
+                    "summary": summarize_trace(merged),
+                    "detail": "C-115 三类冲突＋处置留痕回放面；"
+                              "conflict_class∈{same_window,cross_day,unknown_time,"
+                              "unclassified}；disposition∈{keep,dissent,undecided}",
+                }, ensure_ascii=False, indent=2),
+                encoding="utf-8",
+            )
     paths["notes"].write_text(
         _FIELD_NOTES + "\n## 本次导出\n" + gate_line + "\n"
         + slot_line + "\n" + dedup_line + "\n" + face_line + "\n"

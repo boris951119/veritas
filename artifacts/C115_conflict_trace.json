@@ -1,0 +1,200 @@
+{
+  "advice": "YES",
+  "off_coverage": 0.0,
+  "on_coverage": 1.0,
+  "off_trace": 0.0,
+  "on_trace": 1.0,
+  "on_n": 35,
+  "on_classified": 35,
+  "on_unclassified": 0,
+  "leaks": 0,
+  "unclass_drop": 35,
+  "side": {
+    "skipped": false,
+    "lx_at7_off": 12,
+    "lx_at7_on": 12,
+    "holdout_l2_off": 29,
+    "holdout_l2_on": 29,
+    "pack_leaks": 0
+  },
+  "cases": [
+    {
+      "case": "刘翔编制“二选一”事件",
+      "n_collisions": 3,
+      "off": {
+        "n": 3,
+        "classified": 0,
+        "unclassified": 3,
+        "coverage_rate": 0.0,
+        "trace_complete": 0,
+        "trace_complete_rate": 0.0,
+        "by_class": {},
+        "written": false
+      },
+      "on": {
+        "n": 3,
+        "classified": 3,
+        "unclassified": 0,
+        "coverage_rate": 1.0,
+        "trace_complete": 3,
+        "trace_complete_rate": 1.0,
+        "by_class": {
+          "same_window": 0,
+          "unknown_time": 3,
+          "cross_day": 0,
+          "unclassified": 0
+        },
+        "by_disposition": {
+          "keep": 0,
+          "dissent": 0,
+          "undecided": 3
+        }
+      },
+      "on_trace_complete_check": 3,
+      "leaks": [],
+      "by_class": {
+        "same_window": 0,
+        "unknown_time": 3,
+        "cross_day": 0,
+        "unclassified": 0
+      }
+    },
+    {
+      "case": "王虹“北大discouraged”事件",
+      "n_collisions": 5,
+      "off": {
+        "n": 5,
+        "classified": 0,
+        "unclassified": 5,
+        "coverage_rate": 0.0,
+        "trace_complete": 0,
+        "trace_complete_rate": 0.0,
+        "by_class": {},
+        "written": false
+      },
+      "on": {
+        "n": 5,
+        "classified": 5,
+        "unclassified": 0,
+        "coverage_rate": 1.0,
+        "trace_complete": 5,
+        "trace_complete_rate": 1.0,
+        "by_class": {
+          "same_window": 0,
+          "unknown_time": 5,
+          "cross_day": 0,
+          "unclassified": 0
+        },
+        "by_disposition": {
+          "keep": 0,
+          "dissent": 0,
+          "undecided": 5
+        }
+      },
+      "on_trace_complete_check": 5,
+      "leaks": [],
+      "by_class": {
+        "same_window": 0,
+        "unknown_time": 5,
+        "cross_day": 0,
+        "unclassified": 0
+      }
+    },
+    {
+      "case": "柬泰边境争端（2025.12–2026.9）",
+      "n_collisions": 15,
+      "off": {
+        "n": 15,
+        "classified": 0,
+        "unclassified": 15,
+        "coverage_rate": 0.0,
+        "trace_complete": 0,
+        "trace_complete_rate": 0.0,
+        "by_class": {},
+        "written": false
+      },
+      "on": {
+        "n": 15,
+        "classified": 15,
+        "unclassified": 0,
+        "coverage_rate": 1.0,
+        "trace_complete": 15,
+        "trace_complete_rate": 1.0,
+        "by_class": {
+          "same_window": 0,
+          "unknown_time": 15,
+          "cross_day": 0,
+          "unclassified": 0
+        },
+        "by_disposition": {
+          "keep": 0,
+          "dissent": 0,
+          "undecided": 15
+        }
+      },
+      "on_trace_complete_check": 15,
+      "leaks": [],
+      "by_class": {
+        "same_window": 0,
+        "unknown_time": 15,
+        "cross_day": 0,
+        "unclassified": 0
+      }
+    },
+    {
+      "case": "印度航空 AI171 空难（2025.6–2026.5）",
+      "n_collisions": 12,
+      "off": {
+        "n": 12,
+        "classified": 0,
+        "unclassified": 12,
+        "coverage_rate": 0.0,
+        "trace_complete": 0,
+        "trace_complete_rate": 0.0,
+        "by_class": {},
+        "written": false
+      },
+      "on": {
+        "n": 12,
+        "classified": 12,
+        "unclassified": 0,
+        "coverage_rate": 1.0,
+        "trace_complete": 12,
+        "trace_complete_rate": 1.0,
+        "by_class": {
+          "same_window": 3,
+          "unknown_time": 0,
+          "cross_day": 9,
+          "unclassified": 0
+        },
+        "by_disposition": {
+          "keep": 9,
+          "dissent": 0,
+          "undecided": 3
+        }
+      },
+      "on_trace_complete_check": 12,
+      "leaks": [],
+      "by_class": {
+        "same_window": 3,
+        "unknown_time": 0,
+        "cross_day": 9,
+        "unclassified": 0
+      }
+    }
+  ],
+  "wall_s": 8.130357027053833,
+  "hooks": [
+    "app/core/conflict_trace.py",
+    "app/pipeline.py",
+    "app/export/official.py",
+    "app/config.py"
+  ],
+  "flag": "VERITAS_CONFLICT_TRACE",
+  "flag_default": false,
+  "classes": [
+    "same_window",
+    "cross_day",
+    "unknown_time"
+  ]
+}

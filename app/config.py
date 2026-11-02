@@ -554,6 +554,11 @@ class Settings:
     # 系数不进 pack。env／config.json kg_rehydrate_box。
     kg_rehydrate_box: bool = True
 
+    # C-115：冲突三类覆盖＋处置留痕（Q5）。默认 False；
+    # 开＝VERITAS_CONFLICT_TRACE=1。三档＝same_window／cross_day／unknown_time；
+    # 不改 BM25／不往 pack 塞系数。env／config.json conflict_trace。
+    conflict_trace: bool = False
+
     # 语料收窄阈值：信源数达到该值才走索引选料（默认 50=自动；
     # 0=强制关闭，小案例到不了阈值则整卷研判、不建 .corpus）。
     # 收窄后研判只看见 hydrate 出的小案卷，并披露「库内 N / 本次 M」。
@@ -824,6 +829,11 @@ class Settings:
             s.kg_rehydrate_box = False
         elif rh in ("1", "true", "on", "yes"):
             s.kg_rehydrate_box = True
+        ctr = (os.environ.get("VERITAS_CONFLICT_TRACE") or "").strip().lower()
+        if ctr in ("0", "false", "off", "no"):
+            s.conflict_trace = False
+        elif ctr in ("1", "true", "on", "yes"):
+            s.conflict_trace = True
         return s.validate()
 
     @classmethod
@@ -978,6 +988,13 @@ class Settings:
                 s.kg_rehydrate_box = raw_rh
             elif isinstance(raw_rh, (int, str)):
                 s.kg_rehydrate_box = str(raw_rh).strip().lower() not in (
+                    "0", "false", "off", "no", "")
+        if "conflict_trace" in data:
+            raw_ctr = data.get("conflict_trace")
+            if isinstance(raw_ctr, bool):
+                s.conflict_trace = raw_ctr
+            elif isinstance(raw_ctr, (int, str)):
+                s.conflict_trace = str(raw_ctr).strip().lower() not in (
                     "0", "false", "off", "no", "")
         select_min = data.get("corpus_select_min_sources")
         if isinstance(select_min, int) and not isinstance(select_min, bool) \

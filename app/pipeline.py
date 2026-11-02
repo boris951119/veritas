@@ -361,6 +361,12 @@ def run_case(spec: RunSpec | None = None,
         )
         if ledger_outlier_tag_enabled():
             dossier.accounting["ledger_outlier_tag"] = dispersion_accounting(facts)
+        # C-115：冲突三类＋处置留痕（默认关；只写 accounting，不改检出）
+        if bool(getattr(settings, "conflict_trace", False)):
+            from app.core.conflict_trace import apply_conflict_trace
+            apply_conflict_trace(
+                dossier, collisions=collisions, enabled=True, settings=settings,
+            )
         chain.append("fact_ledger", "pipeline", {
             "n_facts": fact_stats["n_facts"],
             "n_collisions": len(collisions),
@@ -1081,6 +1087,10 @@ def _run_collaboration(dossier: Dossier, ctx: CollabCtx) -> None:
                 "winner": pair.resolution.winner_id,
                 "method": pair.resolution.method,
             })
+    # C-115：仲裁后刷新留痕（并入 conflict_pair；旗关不写）
+    from app.core.conflict_trace import apply_conflict_trace, conflict_trace_enabled
+    if conflict_trace_enabled():
+        apply_conflict_trace(dossier, collisions=None, enabled=True)
 
 
 def _decorate_attrition(note: str, empty_runs: list[dict] | None) -> str:
