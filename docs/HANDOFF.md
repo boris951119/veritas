@@ -1,3 +1,16 @@
+<!-- C-115-CONFLICT -->
+## 〔C-115〕冲突三类覆盖＋处置留痕（Q5；实验旗默认关；过线／末批合）
+
+- **枝**：`cursor/c115-conflict-trace`（自 main；**未**并 C-113／C-114）。
+- **模块**：`app/core/conflict_trace.py`；挂点 pipeline hygiene／仲裁后＋`export/official` 回放面。
+- **三档**（树10 既有名）：`same_window`／`cross_day`／`unknown_time`；无法归类 → `unclassified` 披露。
+- **处置**：`keep`／`dissent`／`undecided`＋理由码／短理由 → accounting（可 export）。
+- **旗**：`VERITAS_CONFLICT_TRACE` 默认 **关**；＝1 开。不改 BM25／pack 系数／树15／17。
+- **读数**（`artifacts/C115_conflict_trace.md`）：覆盖 0→**1.0**；留痕 0→**1.0**；unclassified 35→0；泄漏0；@7=12／holdout=29。
+- **合入建议**：过线 **YES** → **末批统一合**（仍默认关）；本票不合 main。
+
+---
+
 <!-- C-114-ANCHOR -->
 ## 〔C-114〕证据定位稳（Q4；实验旗默认关；过线／建议可合、本票不合）
 
