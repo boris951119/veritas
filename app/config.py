@@ -569,6 +569,12 @@ class Settings:
     # env VERITAS_CONF_CALIB；config.json conf_calib。
     conf_calib: bool = False
 
+    # C-117：树15 满箱减压（有界加一档字预算／可选 +1 续盒）。默认 False；
+    # 开＝VERITAS_TREE15_DEPRESS=1。禁无界开窗；禁 pack 多维系数。
+    # env VERITAS_TREE15_DEPRESS；config.json tree15_depress。
+    tree15_depress: bool = False
+
+
     # 语料收窄阈值：信源数达到该值才走索引选料（默认 50=自动；
     # 0=强制关闭，小案例到不了阈值则整卷研判、不建 .corpus）。
     # 收窄后研判只看见 hydrate 出的小案卷，并披露「库内 N / 本次 M」。
@@ -854,6 +860,11 @@ class Settings:
             s.conf_calib = False
         elif cc in ("1", "true", "on", "yes"):
             s.conf_calib = True
+        t15 = (os.environ.get("VERITAS_TREE15_DEPRESS") or "").strip().lower()
+        if t15 in ("0", "false", "off", "no"):
+            s.tree15_depress = False
+        elif t15 in ("1", "true", "on", "yes"):
+            s.tree15_depress = True
         return s.validate()
 
     @classmethod
@@ -1029,6 +1040,13 @@ class Settings:
                 s.conf_calib = raw_cc
             elif isinstance(raw_cc, (int, str)):
                 s.conf_calib = str(raw_cc).strip().lower() not in (
+                    "0", "false", "off", "no", "")
+        if "tree15_depress" in data:
+            raw_t15 = data.get("tree15_depress")
+            if isinstance(raw_t15, bool):
+                s.tree15_depress = raw_t15
+            elif isinstance(raw_t15, (int, str)):
+                s.tree15_depress = str(raw_t15).strip().lower() not in (
                     "0", "false", "off", "no", "")
         select_min = data.get("corpus_select_min_sources")
         if isinstance(select_min, int) and not isinstance(select_min, bool) \

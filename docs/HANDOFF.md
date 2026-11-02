@@ -1,3 +1,15 @@
+<!-- C-117-TREE15 -->
+## 〔C-117〕树15 L2 满箱减压（实验旗默认关；过线／末批合）
+
+- **枝**：`cursor/c117-tree15-depress`（自 main；**未**并 C-113～116）。
+- **主路径**：`bounded_budget_bump`（有界加窗；excluded 触发 → +1 档字预算重装，factor≤1.5／ABS≤120k；续盒 max_boxes 最多 +1≤4）。
+- **模块**：`app/core/tree15_depress.py`；挂点 `pipeline` 装箱／review_boost 后；FORBIDDEN_PACK_KEYS 守卫。
+- **旗**：`VERITAS_TREE15_DEPRESS` 默认 **关**；＝1 开。禁无界开窗；禁 pack 多维系数；禁宣称满箱红标已灭。
+- **读数**（`artifacts/C117_tree15_depress.md`，零 LLM）：L2 合计 关 **42**→开 **48**（Δ+6；刘翔 13→13／holdout 29→35）；满箱题数 关 12／开后仍装不下 **12**（触发加重装 12）；@7 12→12；泄漏 **0**。
+- **合入建议**：过线 **YES** → **末批统一合**（仍默认关）；本票不合 main；未并 C-113。
+
+---
+
 <!-- C-116-CONF -->
 ## 〔C-116〕置信档校准闸（Q6；实验旗默认关；过线／末批合）
 
