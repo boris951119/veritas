@@ -1,0 +1,248 @@
+{
+  "advice": "YES",
+  "lx_at7": 12,
+  "lx_l2": 13,
+  "holdout_l2": 29,
+  "total_l2": 42,
+  "leaks": 0,
+  "flag_defaults": {
+    "anchor_stable": false,
+    "conflict_trace": false,
+    "conf_calib": false,
+    "tree15_depress": false
+  },
+  "flag_envs": [
+    "VERITAS_ANCHOR_STABLE",
+    "VERITAS_CONFLICT_TRACE",
+    "VERITAS_CONF_CALIB",
+    "VERITAS_TREE15_DEPRESS"
+  ],
+  "smoke": {
+    "anchor_stable": {
+      "env": "VERITAS_ANCHOR_STABLE",
+      "settings_on": true,
+      "module": "app.core.anchor_stable",
+      "import_ok": true
+    },
+    "conflict_trace": {
+      "env": "VERITAS_CONFLICT_TRACE",
+      "settings_on": true,
+      "module": "app.core.conflict_trace",
+      "import_ok": true
+    },
+    "conf_calib": {
+      "env": "VERITAS_CONF_CALIB",
+      "settings_on": true,
+      "module": "app.core.conf_calib",
+      "import_ok": true
+    },
+    "tree15_depress": {
+      "env": "VERITAS_TREE15_DEPRESS",
+      "settings_on": true,
+      "module": "app.core.tree15_depress",
+      "import_ok": true
+    }
+  },
+  "rows": [
+    {
+      "slug": "liuxiang",
+      "case": "刘翔编制“二选一”事件",
+      "qid": "q_001",
+      "role": "regression",
+      "l2": 4,
+      "at7": 4,
+      "leaks": 0,
+      "n_sel": 88,
+      "n_excluded": 274
+    },
+    {
+      "slug": "liuxiang",
+      "case": "刘翔编制“二选一”事件",
+      "qid": "q_002",
+      "role": "regression",
+      "l2": 5,
+      "at7": 4,
+      "leaks": 0,
+      "n_sel": 94,
+      "n_excluded": 268
+    },
+    {
+      "slug": "liuxiang",
+      "case": "刘翔编制“二选一”事件",
+      "qid": "q_003",
+      "role": "regression",
+      "l2": 4,
+      "at7": 4,
+      "leaks": 0,
+      "n_sel": 95,
+      "n_excluded": 267
+    },
+    {
+      "slug": "wanghong",
+      "case": "王虹“北大discouraged”事件",
+      "qid": "q_001",
+      "role": "holdout",
+      "l2": 2,
+      "at7": 1,
+      "leaks": 0,
+      "n_sel": 76,
+      "n_excluded": 538
+    },
+    {
+      "slug": "wanghong",
+      "case": "王虹“北大discouraged”事件",
+      "qid": "q_002",
+      "role": "holdout",
+      "l2": 2,
+      "at7": 2,
+      "leaks": 0,
+      "n_sel": 92,
+      "n_excluded": 522
+    },
+    {
+      "slug": "wanghong",
+      "case": "王虹“北大discouraged”事件",
+      "qid": "q_003",
+      "role": "holdout",
+      "l2": 3,
+      "at7": 3,
+      "leaks": 0,
+      "n_sel": 78,
+      "n_excluded": 536
+    },
+    {
+      "slug": "kh_th",
+      "case": "柬泰边境争端（2025.12–2026.9）",
+      "qid": "q_001",
+      "role": "holdout",
+      "l2": 1,
+      "at7": 1,
+      "leaks": 0,
+      "n_sel": 79,
+      "n_excluded": 664
+    },
+    {
+      "slug": "kh_th",
+      "case": "柬泰边境争端（2025.12–2026.9）",
+      "qid": "q_002",
+      "role": "holdout",
+      "l2": 3,
+      "at7": 2,
+      "leaks": 0,
+      "n_sel": 64,
+      "n_excluded": 679
+    },
+    {
+      "slug": "kh_th",
+      "case": "柬泰边境争端（2025.12–2026.9）",
+      "qid": "q_003",
+      "role": "holdout",
+      "l2": 5,
+      "at7": 2,
+      "leaks": 0,
+      "n_sel": 77,
+      "n_excluded": 666
+    },
+    {
+      "slug": "ai171",
+      "case": "印度航空 AI171 空难（2025.6–2026.5）",
+      "qid": "q_001",
+      "role": "holdout",
+      "l2": 4,
+      "at7": 2,
+      "leaks": 0,
+      "n_sel": 108,
+      "n_excluded": 1278
+    },
+    {
+      "slug": "ai171",
+      "case": "印度航空 AI171 空难（2025.6–2026.5）",
+      "qid": "q_002",
+      "role": "holdout",
+      "l2": 5,
+      "at7": 1,
+      "leaks": 0,
+      "n_sel": 118,
+      "n_excluded": 1268
+    },
+    {
+      "slug": "ai171",
+      "case": "印度航空 AI171 空难（2025.6–2026.5）",
+      "qid": "q_003",
+      "role": "holdout",
+      "l2": 4,
+      "at7": 1,
+      "leaks": 0,
+      "n_sel": 151,
+      "n_excluded": 1235
+    }
+  ],
+  "wall_s": 3.5573251247406006,
+  "baseline_ref": {
+    "main_before": "7c3d24e",
+    "expected_at7": 12,
+    "expected_holdout_l2": 29,
+    "expected_leak": 0
+  },
+  "merge": {
+    "batch_branch": "cursor/c118-batch-merge-114-117",
+    "main_before": "7c3d24e6c60f569ce9ed1158badddcf3e8b0f7ee",
+    "sources": {
+      "C-114": {
+        "branch": "cursor/c114-anchor-stable",
+        "tip": "af7fff78165db983c1f99be26fa4cf7dfe167d46"
+      },
+      "C-115": {
+        "branch": "cursor/c115-conflict-trace",
+        "tip": "f08b64e9901963e46e5ba8b579090d666cc92f95"
+      },
+      "C-116": {
+        "branch": "cursor/c116-conf-calib",
+        "tip": "2fa0e71ca6c051932282429f08e3a400c76473b3"
+      },
+      "C-117": {
+        "branch": "cursor/c117-tree15-depress",
+        "tip": "2c5e50d7f5babf809ea46790fc32b202918a5ef4"
+      }
+    },
+    "excluded": {
+      "C-113": "弱 YES／q_003 回落；明确不合"
+    },
+    "merge_order": [
+      "C-114",
+      "C-115",
+      "C-116",
+      "C-117"
+    ],
+    "conflicts": [
+      {
+        "when": "C-115",
+        "files": [
+          "app/config.py",
+          "docs/HANDOFF.md"
+        ],
+        "resolution": "机械并保留 C-114+C-115 两旗与条目"
+      },
+      {
+        "when": "C-116",
+        "files": [
+          "app/config.py",
+          "docs/HANDOFF.md"
+        ],
+        "resolution": "机械并保留 C-114～116 三旗与条目"
+      },
+      {
+        "when": "C-117",
+        "files": [
+          "app/config.py",
+          "docs/HANDOFF.md"
+        ],
+        "resolution": "机械并保留 C-114～117 四旗与条目"
+      }
+    ],
+    "logic_changed": false,
+    "c113_merged": false,
+    "pack_coeffs_added": false,
+    "force_push": false
+  }
+}

@@ -1,3 +1,15 @@
+<!-- C-118-BATCH -->
+## 〔C-118〕末批合入 C-114～117 → main（禁 C-113；四旗默认关）
+
+- **枝**：`cursor/c118-batch-merge-114-117` → **合入 main**（非 squash；禁 force）。
+- **含**：C-114 锚稳／C-115 冲突三类＋留痕／C-116 置信校准／C-117 树15 有界减压。**不含 C-113**。
+- **旗**：`VERITAS_ANCHOR_STABLE`／`CONFLICT_TRACE`／`CONF_CALIB`／`TREE15_DEPRESS` 均默认 **关**（生产＝旧路径）。
+- **冲突**：三轮仅 config＋HANDOFF 机械并；逻辑零改。
+- **合后旁证**（`artifacts/C118_batch_merge_114_117.md`，零 LLM）：@7=**12**／holdout L2=**29**／leak=**0**（对齐合前 7c3d24e）。
+- **状态**：过线 **YES**；未宣称树15 红标已灭。
+
+---
+
 <!-- C-117-TREE15 -->
 ## 〔C-117〕树15 L2 满箱减压（实验旗默认关；过线／末批合）
 
