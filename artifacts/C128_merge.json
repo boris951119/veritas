@@ -1,0 +1,69 @@
+{
+  "ticket": "C-128",
+  "action": "merge_to_main",
+  "date": "2026-11-03",
+  "branch": "qoder/c128-case-slug-wiring",
+  "branch_tip": "c2306e7",
+  "main_before": "1157723",
+  "main_after": "5a2d736",
+  "merge_mode": "ff-only",
+  "conflicts": 0,
+  "merge_diff": {"files": 6, "insertions": 320, "deletions": 12},
+  "fix_commit": {
+    "sha": "5a2d736",
+    "reason": "probe CASE_MARKS unpack direction bug caught by post-merge gate rerun",
+    "guard_cell": "test_d4_probe_case_marks_direction"
+  },
+  "push": [
+    {"range": "1157723..c2306e7", "ok": true},
+    {"range": "c2306e7..5a2d736", "ok": true}
+  ],
+  "flags": {
+    "dataclass": false,
+    "from_env": false
+  },
+  "resolver_on_main": {
+    "CASE_MARK_PAIRS_n": 6,
+    "resolve_liuxiang_title": "liuxiang",
+    "resolve_empty_title_fallback": "case"
+  },
+  "off_face_probe": {
+    "off_surface_sha16": "c6ff9d478007b287",
+    "off_sel_sha16": "be657d8db1e7dbde",
+    "sel_n": 362,
+    "kw": {},
+    "byte_equal_to_pre_merge": true
+  },
+  "gate_rerun": {
+    "ready": "YES",
+    "wall_s": 278.7,
+    "cases": [
+      {"slug": "liuxiang", "density_pct": 57, "at7": 12, "gold_to_close": 1.0, "leak": 0},
+      {"slug": "wanghong", "density_pct": 86, "at7": 6, "gold_to_close": 1.0, "leak": 0},
+      {"slug": "us_cn_ai", "density_pct": 67, "at7": 6, "gold_to_close": 1.0, "leak": 0},
+      {"slug": "ai171", "density_pct": 80, "at7": 5, "gold_to_close": 1.0, "leak": 0},
+      {"slug": "kh_th", "density_pct": 80, "at7": 4, "gold_to_close": 1.0, "leak": 0},
+      {"slug": "jilong", "density_pct": 67, "at7": 6, "gold_to_close": 1.0, "leak": 0}
+    ],
+    "diffs_vs_branch": ["case iteration order now follows CASE_MARK_PAIRS order", "wall clock"]
+  },
+  "pytest_full": {
+    "failed": 7,
+    "passed": 1232,
+    "skipped": 1,
+    "failed_names_baseline": [
+      "c19 test_m_production_messages_bite",
+      "c37 except_pass_registry_bidirectional",
+      "c38_knife_blank_line",
+      "c37_script_zero_ref",
+      "c37_knife8",
+      "c37_knife9",
+      "c73 knife"
+    ]
+  },
+  "not_merged_forbidden_branches": ["C-123 (e1526a4+148c140)", "C-113", "C-121", "C-122", "C-124"],
+  "correction": {
+    "account": "exec (me)",
+    "text": "post-merge gate rerun caught probe CASE_MARKS unpack direction bug introduced by my C-128 refactor; pytest does not import probes and branch skipped gate rerun per ticket, so it slipped through; fixed in 5a2d736 with direction guard cell; rerun byte-equal to branch numbers"
+  }
+}
