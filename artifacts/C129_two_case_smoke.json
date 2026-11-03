@@ -1,0 +1,126 @@
+{
+  "ticket": "C-129",
+  "action": "two_case_flag_on_smoke",
+  "date": "2026-11-03",
+  "tip": "ae77b77",
+  "ancestors_ok": ["c2306e7", "5a2d736"],
+  "llm_calls": 0,
+  "cache": "warm (.kg_lab_vault + .kgcache six slugs present)",
+  "cases": [
+    {
+      "slug": "liuxiang",
+      "role": "regression",
+      "prefer_gold": true,
+      "leg_a": {
+        "micro_gold_density": 0.5714,
+        "cut_hits": {"4": 9, "5": 11, "7": 12},
+        "gold_total": 14,
+        "density_rows": [
+          {"qid": "q_001", "k": 7, "n_gold": 4, "density": 0.5714, "route": "adjudicate"},
+          {"qid": "q_002", "k": 7, "n_gold": 4, "density": 0.5714, "route": "adjudicate"},
+          {"qid": "q_003", "k": 7, "n_gold": 4, "density": 0.5714, "route": "adjudicate"}
+        ]
+      },
+      "leg_b_tree17_plan": {
+        "list_n_all": 21, "list_gold_all": 12, "list_precision": 0.5714,
+        "gold_in_box_to_close_mean": 1.0,
+        "pair_violation_any": false,
+        "label_counts_sum": {"采信": 11, "存疑": 10, "对立": 0},
+        "q_003": {"list_n": 7, "list_gold": 4, "g2c": 1.0, "pair_violation": false},
+        "n_leaks": 0, "n_submit_ok": 3, "n_questions": 3
+      },
+      "leg_c_prod": {
+        "micro_gold_density": 0.4444,
+        "rows": [
+          {"qid": "q_001", "k": 3, "n_gold": 1, "route": "adjudicate", "embed": "ok"},
+          {"qid": "q_002", "k": 3, "n_gold": 1, "route": "adjudicate", "embed": "ok"},
+          {"qid": "q_003", "k": 3, "n_gold": 2, "route": "adjudicate", "embed": "ok"}
+        ]
+      },
+      "leg_d_hotpath_disclosure": {
+        "case_slug": "liuxiang", "case_slug_fallback": false,
+        "summary_missing": false, "n_with_summary": 362,
+        "degraded_continue": false, "n_leaks_kg": 0,
+        "questions_covered": 3
+      }
+    },
+    {
+      "slug": "wanghong",
+      "role": "holdout",
+      "prefer_gold": false,
+      "holdout_choice_reason": "gate EXPECT 已归 holdout 且暖缓存读数最稳（86%），与门控同臂同尺可比",
+      "leg_a": {
+        "micro_gold_density": 0.8571,
+        "cut_hits": {"4": 6, "5": 6, "7": 6},
+        "gold_total": 19,
+        "density_rows": [
+          {"qid": "q_001", "k": 1, "n_gold": 1, "density": 1.0, "route": "fact_check"},
+          {"qid": "q_002", "k": 3, "n_gold": 2, "density": 0.6667, "route": "adjudicate"},
+          {"qid": "q_003", "k": 3, "n_gold": 3, "density": 1.0, "route": "adjudicate"}
+        ]
+      },
+      "leg_b_tree17_plan": {
+        "list_n_all": 7, "list_gold_all": 6, "list_precision": 0.8571,
+        "gold_in_box_to_close_mean": 1.0,
+        "pair_violation_any": false,
+        "n_leaks": 0, "n_submit_ok": 3, "n_questions": 3
+      },
+      "leg_c_prod": {
+        "micro_gold_density": 0.8571,
+        "rows": [
+          {"qid": "q_001", "k": 1, "n_gold": 1, "route": "fact_check", "embed": "ok"},
+          {"qid": "q_002", "k": 3, "n_gold": 2, "route": "adjudicate", "embed": "ok"},
+          {"qid": "q_003", "k": 3, "n_gold": 3, "route": "adjudicate", "embed": "ok"}
+        ]
+      },
+      "leg_d_hotpath_disclosure": {
+        "case_slug": "wanghong", "case_slug_fallback": false,
+        "summary_missing": false, "n_with_summary": 533,
+        "degraded_continue": false, "n_leaks_kg": 0,
+        "questions_covered": 3
+      }
+    }
+  ],
+  "delta": {
+    "vs_c128_gate_rerun": {
+      "source": "artifacts/c125/C125_six_case_gate.md @5a2d736",
+      "liuxiang": {"gate": "57%/@7=12/g2c 1.0/leak 0", "smoke": "0.5714/12/1.0/0", "verdict": "持平（逐位一致）"},
+      "wanghong": {"gate": "86%/@7=6/g2c 1.0/leak 0", "smoke": "0.8571/6/1.0/0", "verdict": "持平（逐位一致）"},
+      "prod_leg_micro": {"liuxiang": "44%=0.4444", "wanghong": "86%=0.8571"}
+    },
+    "vs_c120_c121_realrun_cite_red": {
+      "source": "artifacts/C120_q003_autopsy.md（C-113 枝 1e14cfc，8+8 遍金标被引 2.875→1.50）、artifacts/C121_three_arm_stats.md（三臂 5+5+5）",
+      "verdict": "不可比",
+      "reason": "本单零 LLM 读不到真跑层 cite 红标；且 C-113/C-121 是未合实验枝，非 main 线读数。真跑红须树17刀前后的配对真跑"
+    },
+    "reference_only_c121_list_audit": {
+      "source": "artifacts/C121_list_audit.md（四案 12 题）：未滤 must 名单准度 0.2333、close_read 来源候选准度 0.7059",
+      "note": "口径不同（C-121 量 C-113 枝 must 名单；main 线名单=close_read k≤7），只列不判"
+    },
+    "plan_layer_tree17_red": "零新红：两案 6/6 题金标→细读 1.0、pair_violation 全 False、q_003 名单准度 4/7"
+  },
+  "flag_method": {
+    "how": "仅腿 D 运行时 env 临时 VERITAS_TEST_TREE_LINE=1 + pipeline 同款调用 ensure_test_tree_submit（零实参）；腿 A/B/C 为显式调用面、不读旗；测完 env 摘除",
+    "disk_default_changed": false,
+    "commits_made": 0
+  },
+  "off_face_flag_off": {
+    "off_surface_sha16": "c6ff9d478007b287",
+    "off_sel_sha16": "be657d8db1e7dbde",
+    "sel_n": 362,
+    "byte_equal": true
+  },
+  "post_check": {
+    "env_popped": true,
+    "settings_dataclass": false,
+    "settings_from_env": false,
+    "code_dirs_clean": true,
+    "tip_unchanged": "ae77b77"
+  },
+  "forbidden_branches_untouched": ["C-123", "C-113", "C-121", "C-122", "C-124"],
+  "no_tree17_knife": true,
+  "wall_s": 92.9,
+  "artifacts": ["artifacts/C129_two_case_smoke.md", "artifacts/C129_two_case_smoke.json"],
+  "working_copies": "/tmp/c129/（脚本、日志、逐题原始 json、两件备份）",
+  "not_measured": "真跑层金标被引红标（需配对真跑，属树17刀票）；六案满跑／默认开复测（Boyu 已定序到刀后）"
+}
