@@ -447,7 +447,10 @@ def run_case(spec: RunSpec | None = None,
                 if k in ("corpus_select", "query_rewrite", "slot_disclosures",
                          "panel_attrition", "repair_accept_rate", "premise",
                          "fact_ledger_stats", "prompt_window", "pack_window",
-                         "window_ledger")}
+                         "window_ledger",
+                         # C-143：冲突留痕键登记（与主路径白名单保持一致；
+                         # 早退路径无 LLM 留痕，登记只为两处清单不漂移）
+                         "conflict_trace")}
         dossier.accounting = {
             **kept,
             "elapsed_s": round(time.monotonic() - t0, 1),
@@ -999,7 +1002,9 @@ def run_case(spec: RunSpec | None = None,
                      "kg_density", "kg_cap_segments", "kg_stage1",
                      "kg_rehydrate", "kg_test_tree",
                      "kg_submit_skipped",
-                     "cite_accept", "submit_top7")}
+                     "cite_accept", "submit_top7",
+                     # C-143：C-115 冲突留痕键活到产物（旗关不写键＝无差异）
+                     "conflict_trace")}
     dossier.accounting = {
         **kept,
         "elapsed_s": round(time.monotonic() - t0, 1),
