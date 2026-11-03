@@ -332,7 +332,14 @@ def test_g_kept_whitelist_and_config_override(monkeypatch, tmp_path):
     spec = importlib.util.find_spec("app.pipeline")
     src = (spec.origin and __import__("pathlib").Path(spec.origin)
            .read_text(encoding="utf-8")) or ""
-    assert '"kg_submit_skipped", "submit_top7"' in src
+    # 锚定 kept 白名单区域（C-139 cite_accept 与 C-140 submit_top7 同区登记；
+    # 不钉逐字排版——解冲突换行不断格）
+    anchor = '"kg_rehydrate", "kg_test_tree",'
+    i = src.find(anchor)
+    assert i >= 0, "kept 白名单锚点丢失"
+    tail = src[i:i + 400]
+    assert '"cite_accept"' in tail, "C-139 cite_accept 未登记 kept"
+    assert '"submit_top7"' in tail, "C-140 submit_top7 未登记 kept"
 
     # config.json 覆写可关
     cfg = tmp_path / "config.json"
