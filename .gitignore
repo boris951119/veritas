@@ -50,3 +50,7 @@ vendor/python/
 vendor/READY
 .runtime/
 run-server.bat
+
+# C-125：测试树整线运行时缓存（摘要／嵌入，不进库）
+.kg_lab_vault/
+.kgcache/

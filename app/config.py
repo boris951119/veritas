@@ -554,6 +554,13 @@ class Settings:
     # 系数不进 pack。env／config.json kg_rehydrate_box。
     kg_rehydrate_box: bool = True
 
+    # C-125：测试树整线（KG 前端→一筛多维→二筛密度盒→窄面→tree17）。
+    # 默认 False＝C-108 密度桥路径一个字节不变；开＝VERITAS_TEST_TREE_LINE=1
+    # 走整棵实验测试树前半（app/kg_lab 全量模块），出口仍走 C-107 窄面契约。
+    # 一筛系数只活在一筛打分（r9_coeff.json），禁进 pack_material。
+    # env VERITAS_TEST_TREE_LINE；config.json test_tree_line。
+    test_tree_line: bool = False
+
     # C-114：证据定位稳（重构／转存后再解析仍落到 doc_id#para_id）。
     # 默认 False；开＝VERITAS_ANCHOR_STABLE=1。不改 BM25／不往 pack 塞系数。
     # env VERITAS_ANCHOR_STABLE；config.json anchor_stable。
@@ -865,6 +872,11 @@ class Settings:
             s.tree15_depress = False
         elif t15 in ("1", "true", "on", "yes"):
             s.tree15_depress = True
+        ttl = (os.environ.get("VERITAS_TEST_TREE_LINE") or "").strip().lower()
+        if ttl in ("0", "false", "off", "no"):
+            s.test_tree_line = False
+        elif ttl in ("1", "true", "on", "yes"):
+            s.test_tree_line = True
         return s.validate()
 
     @classmethod
@@ -1040,6 +1052,13 @@ class Settings:
                 s.conf_calib = raw_cc
             elif isinstance(raw_cc, (int, str)):
                 s.conf_calib = str(raw_cc).strip().lower() not in (
+                    "0", "false", "off", "no", "")
+        if "test_tree_line" in data:
+            raw_ttl = data.get("test_tree_line")
+            if isinstance(raw_ttl, bool):
+                s.test_tree_line = raw_ttl
+            elif isinstance(raw_ttl, (int, str)):
+                s.test_tree_line = str(raw_ttl).strip().lower() not in (
                     "0", "false", "off", "no", "")
         if "tree15_depress" in data:
             raw_t15 = data.get("tree15_depress")

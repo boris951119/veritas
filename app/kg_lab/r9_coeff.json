@@ -1,0 +1,626 @@
+{
+  "ticket": "R9-refine-buckets",
+  "defaults": {
+    "expand_top_n": 16,
+    "n_paraphrase": 1,
+    "causal_expand": false,
+    "grid_cap": 0.12,
+    "comment_buckets": [
+      "party_comment",
+      "institutional_gloss",
+      "mixed_roundup",
+      "pure_opinion"
+    ],
+    "relay_buckets": [
+      "relay_official_bulletin",
+      "relay_party_primary",
+      "relay_secondary"
+    ],
+    "llm": null
+  },
+  "leak_any_bad": false,
+  "n_gold": 14,
+  "n_nonzero": 14,
+  "questions_meta": [
+    {
+      "qid": "q_001",
+      "n_l2": 4,
+      "question": "这笔49.4万元应认定为买断费还是自主择业经济补偿金，以哪方口径为准？"
+    },
+    {
+      "qid": "q_002",
+      "n_l2": 5,
+      "question": "拖了11年才安置，是刘翔不愿走还是体育局未放行，哪一方说法站得住？"
+    },
+    {
+      "qid": "q_003",
+      "n_l2": 5,
+      "question": "刘翔退役至今是否真有编制与岗位，官方称其在编不在岗能否以人事档案证实？"
+    }
+  ],
+  "bucket_counts": [
+    [
+      "pure_opinion",
+      237
+    ],
+    [
+      "mixed_roundup",
+      24
+    ],
+    [
+      "institutional_gloss",
+      19
+    ],
+    [
+      "relay_secondary",
+      13
+    ],
+    [
+      "relay_party_primary",
+      12
+    ],
+    [
+      "relay_official_bulletin",
+      9
+    ],
+    [
+      "party_comment",
+      8
+    ]
+  ],
+  "init": {
+    "claim_full": 0.08,
+    "claim_keyword": 0.08,
+    "cmt_party_comment": -0.02,
+    "cmt_institutional_gloss": -0.02,
+    "cmt_mixed_roundup": -0.02,
+    "cmt_pure_opinion": -0.02,
+    "relay_official_bulletin": 0.02,
+    "relay_party_primary": 0.02,
+    "relay_secondary": 0.02,
+    "subject_match": 0.04,
+    "time_anchor": 0.02,
+    "channel_self": -0.08,
+    "role_official_primary": 0.02,
+    "tier_foreign_media": 0.02
+  },
+  "coeff": {
+    "claim_full": 0.08,
+    "claim_keyword": 0.08,
+    "subject_x_channel": 0.0,
+    "cmt_party_comment": 0.0,
+    "cmt_institutional_gloss": 0.02,
+    "cmt_mixed_roundup": -0.02,
+    "cmt_pure_opinion": -0.02,
+    "relay_official_bulletin": 0.0,
+    "relay_party_primary": 0.02,
+    "relay_secondary": 0.02,
+    "subject_match": 0.04,
+    "amount_status": 0.0,
+    "time_anchor": 0.04,
+    "credibility": 0.04,
+    "channel_self": -0.02,
+    "role_official_primary": 0.02,
+    "role_official_reprint": 0.0,
+    "role_institution_def": 0.0,
+    "role_party_primary": 0.0,
+    "role_opposition_framing": -0.02,
+    "role_mixed_summary": 0.0,
+    "tier_central_official": 0.0,
+    "tier_local_official": 0.0,
+    "tier_market_media": 0.0,
+    "tier_foreign_media": 0.02,
+    "tier_self_media": 0.0,
+    "tier_other": 0.0
+  },
+  "coeff_nonzero": [
+    [
+      "claim_full",
+      0.08
+    ],
+    [
+      "claim_keyword",
+      0.08
+    ],
+    [
+      "cmt_institutional_gloss",
+      0.02
+    ],
+    [
+      "cmt_mixed_roundup",
+      -0.02
+    ],
+    [
+      "cmt_pure_opinion",
+      -0.02
+    ],
+    [
+      "relay_party_primary",
+      0.02
+    ],
+    [
+      "relay_secondary",
+      0.02
+    ],
+    [
+      "subject_match",
+      0.04
+    ],
+    [
+      "time_anchor",
+      0.04
+    ],
+    [
+      "credibility",
+      0.04
+    ],
+    [
+      "channel_self",
+      -0.02
+    ],
+    [
+      "role_official_primary",
+      0.02
+    ],
+    [
+      "role_opposition_framing",
+      -0.02
+    ],
+    [
+      "tier_foreign_media",
+      0.02
+    ]
+  ],
+  "trace": [
+    {
+      "step": "init",
+      "sum7": 11,
+      "sum15": 12,
+      "l2": 0.1575
+    },
+    {
+      "step": "lap1",
+      "sum7": 11,
+      "sum15": 12,
+      "l2": 0.172
+    },
+    {
+      "step": "lap2",
+      "sum7": 11,
+      "sum15": 13,
+      "l2": 0.1549
+    },
+    {
+      "step": "eliminate",
+      "sum7": 11,
+      "sum15": 13,
+      "l2": 0.1456
+    },
+    {
+      "step": "new_bucket_grid",
+      "sum7": 11,
+      "sum15": 13,
+      "l2": 0.1456
+    }
+  ],
+  "r8_replay": {
+    "sum7": 11,
+    "sum15": 12,
+    "mean_capped": 10.15,
+    "l2": 0.1575,
+    "questions": [
+      {
+        "qid": "q_001",
+        "at7": [
+          "doc_002#p3",
+          "doc_024#p1",
+          "doc_025#p6",
+          "doc_035#p7"
+        ],
+        "at15": [
+          "doc_002#p3",
+          "doc_024#p1",
+          "doc_025#p6",
+          "doc_035#p7"
+        ],
+        "n7": 4,
+        "n15": 4,
+        "mean_capped": 3.25,
+        "top7": [
+          "doc_035#p7",
+          "doc_002#p3",
+          "doc_024#p1",
+          "doc_012#p2",
+          "doc_030#p5",
+          "doc_029#p6",
+          "doc_025#p6"
+        ],
+        "ranks": {
+          "doc_002#p3": 2,
+          "doc_024#p1": 3,
+          "doc_025#p6": 7,
+          "doc_035#p7": 1
+        }
+      },
+      {
+        "qid": "q_002",
+        "at7": [
+          "doc_002#p3",
+          "doc_028#p1",
+          "doc_051#p3"
+        ],
+        "at15": [
+          "doc_002#p3",
+          "doc_009#p5",
+          "doc_028#p1",
+          "doc_051#p3"
+        ],
+        "n7": 3,
+        "n15": 4,
+        "mean_capped": 14.6,
+        "top7": [
+          "doc_029#p4",
+          "doc_024#p1",
+          "doc_051#p3",
+          "doc_028#p1",
+          "doc_012#p2",
+          "doc_035#p7",
+          "doc_002#p3"
+        ],
+        "ranks": {
+          "doc_002#p3": 7,
+          "doc_009#p5": 11,
+          "doc_028#p1": 4,
+          "doc_029#p7": 48,
+          "doc_051#p3": 3
+        }
+      },
+      {
+        "qid": "q_003",
+        "at7": [
+          "doc_002#p3",
+          "doc_006#p3",
+          "doc_012#p5",
+          "doc_033#p5"
+        ],
+        "at15": [
+          "doc_002#p3",
+          "doc_006#p3",
+          "doc_012#p5",
+          "doc_033#p5"
+        ],
+        "n7": 4,
+        "n15": 4,
+        "mean_capped": 12.6,
+        "top7": [
+          "doc_006#p3",
+          "doc_012#p2",
+          "doc_046#p3",
+          "doc_002#p3",
+          "doc_012#p5",
+          "doc_033#p5",
+          "doc_035#p7"
+        ],
+        "ranks": {
+          "doc_002#p3": 4,
+          "doc_006#p3": 1,
+          "doc_012#p5": 5,
+          "doc_033#p5": 6,
+          "doc_033#p6": 47
+        }
+      }
+    ]
+  },
+  "r9": {
+    "sum7": 11,
+    "sum15": 13,
+    "mean_capped": 6.3,
+    "l2": 0.1456,
+    "questions": [
+      {
+        "qid": "q_001",
+        "at7": [
+          "doc_002#p3",
+          "doc_024#p1",
+          "doc_025#p6",
+          "doc_035#p7"
+        ],
+        "at15": [
+          "doc_002#p3",
+          "doc_024#p1",
+          "doc_025#p6",
+          "doc_035#p7"
+        ],
+        "n7": 4,
+        "n15": 4,
+        "mean_capped": 3.5,
+        "top7": [
+          "doc_002#p3",
+          "doc_024#p1",
+          "doc_012#p2",
+          "doc_035#p7",
+          "doc_030#p5",
+          "doc_029#p6",
+          "doc_025#p6"
+        ],
+        "ranks": {
+          "doc_002#p3": 1,
+          "doc_024#p1": 2,
+          "doc_025#p6": 7,
+          "doc_035#p7": 4
+        }
+      },
+      {
+        "qid": "q_002",
+        "at7": [
+          "doc_002#p3",
+          "doc_028#p1",
+          "doc_051#p3"
+        ],
+        "at15": [
+          "doc_002#p3",
+          "doc_028#p1",
+          "doc_029#p7",
+          "doc_051#p3"
+        ],
+        "n7": 3,
+        "n15": 4,
+        "mean_capped": 9.6,
+        "top7": [
+          "doc_029#p4",
+          "doc_024#p1",
+          "doc_012#p2",
+          "doc_002#p3",
+          "doc_051#p3",
+          "doc_035#p7",
+          "doc_028#p1"
+        ],
+        "ranks": {
+          "doc_002#p3": 4,
+          "doc_009#p5": 17,
+          "doc_028#p1": 7,
+          "doc_029#p7": 15,
+          "doc_051#p3": 5
+        }
+      },
+      {
+        "qid": "q_003",
+        "at7": [
+          "doc_002#p3",
+          "doc_006#p3",
+          "doc_012#p5",
+          "doc_033#p5"
+        ],
+        "at15": [
+          "doc_002#p3",
+          "doc_006#p3",
+          "doc_012#p5",
+          "doc_033#p5",
+          "doc_033#p6"
+        ],
+        "n7": 4,
+        "n15": 5,
+        "mean_capped": 5.8,
+        "top7": [
+          "doc_006#p3",
+          "doc_002#p3",
+          "doc_012#p2",
+          "doc_012#p5",
+          "doc_027#p3",
+          "doc_050#p10",
+          "doc_033#p5"
+        ],
+        "ranks": {
+          "doc_002#p3": 2,
+          "doc_006#p3": 1,
+          "doc_012#p5": 4,
+          "doc_033#p5": 7,
+          "doc_033#p6": 15
+        }
+      }
+    ]
+  },
+  "focus": [
+    {
+      "qid": "q_002",
+      "id": "doc_009#p5",
+      "r8_rank": 11,
+      "r9_rank": 17,
+      "in7": false,
+      "comment": "",
+      "relay": "relay_party_primary",
+      "claim_full": 1.0,
+      "claim_keyword": 0.0,
+      "subject_x_channel": 1.0
+    },
+    {
+      "qid": "q_002",
+      "id": "doc_029#p7",
+      "r8_rank": 48,
+      "r9_rank": 15,
+      "in7": false,
+      "comment": "institutional_gloss",
+      "relay": "",
+      "claim_full": 0.0,
+      "claim_keyword": 1.0,
+      "subject_x_channel": 0.0
+    },
+    {
+      "qid": "q_003",
+      "id": "doc_033#p6",
+      "r8_rank": 47,
+      "r9_rank": 15,
+      "in7": false,
+      "comment": "institutional_gloss",
+      "relay": "",
+      "claim_full": 0.0,
+      "claim_keyword": 1.0,
+      "subject_x_channel": 0.0
+    }
+  ],
+  "misses": [
+    {
+      "qid": "q_002",
+      "id": "doc_009#p5",
+      "rank": 17,
+      "comment": "",
+      "relay": "relay_party_primary",
+      "claim_full": 1.0,
+      "claim_keyword": 0.0,
+      "subject_x_channel": 1.0,
+      "why": "名次 17，细桶已经分开，幅度内仍进不了前 7"
+    },
+    {
+      "qid": "q_002",
+      "id": "doc_029#p7",
+      "rank": 15,
+      "comment": "institutional_gloss",
+      "relay": "",
+      "claim_full": 0.0,
+      "claim_keyword": 1.0,
+      "subject_x_channel": 0.0,
+      "why": "已标成制度说明，和混口径综述分开；名次仍在 7 名外，封顶里这段检索分太靠后"
+    },
+    {
+      "qid": "q_003",
+      "id": "doc_033#p6",
+      "rank": 15,
+      "comment": "institutional_gloss",
+      "relay": "",
+      "claim_full": 0.0,
+      "claim_keyword": 1.0,
+      "subject_x_channel": 0.0,
+      "why": "已标成制度说明，和混口径综述分开；名次仍在 7 名外，封顶里这段检索分太靠后"
+    }
+  ],
+  "sensitivity": [
+    {
+      "dim": "claim_full",
+      "probe": "zero",
+      "value": 0.0,
+      "sum7": 6,
+      "sum15": 7,
+      "d7": -5,
+      "d15": -6
+    },
+    {
+      "dim": "claim_keyword",
+      "probe": "zero",
+      "value": 0.0,
+      "sum7": 8,
+      "sum15": 8,
+      "d7": -3,
+      "d15": -5
+    },
+    {
+      "dim": "cmt_institutional_gloss",
+      "probe": "zero",
+      "value": 0.0,
+      "sum7": 11,
+      "sum15": 12,
+      "d7": 0,
+      "d15": -1
+    },
+    {
+      "dim": "cmt_mixed_roundup",
+      "probe": "zero",
+      "value": -0.0,
+      "sum7": 10,
+      "sum15": 12,
+      "d7": -1,
+      "d15": -1
+    },
+    {
+      "dim": "cmt_pure_opinion",
+      "probe": "zero",
+      "value": -0.0,
+      "sum7": 9,
+      "sum15": 12,
+      "d7": -2,
+      "d15": -1
+    },
+    {
+      "dim": "relay_party_primary",
+      "probe": "zero",
+      "value": 0.0,
+      "sum7": 10,
+      "sum15": 13,
+      "d7": -1,
+      "d15": 0
+    },
+    {
+      "dim": "relay_secondary",
+      "probe": "zero",
+      "value": 0.0,
+      "sum7": 10,
+      "sum15": 13,
+      "d7": -1,
+      "d15": 0
+    },
+    {
+      "dim": "subject_match",
+      "probe": "zero",
+      "value": 0.0,
+      "sum7": 8,
+      "sum15": 13,
+      "d7": -3,
+      "d15": 0
+    },
+    {
+      "dim": "time_anchor",
+      "probe": "zero",
+      "value": 0.0,
+      "sum7": 9,
+      "sum15": 11,
+      "d7": -2,
+      "d15": -2
+    },
+    {
+      "dim": "credibility",
+      "probe": "zero",
+      "value": 0.0,
+      "sum7": 10,
+      "sum15": 12,
+      "d7": -1,
+      "d15": -1
+    },
+    {
+      "dim": "channel_self",
+      "probe": "zero",
+      "value": -0.0,
+      "sum7": 10,
+      "sum15": 12,
+      "d7": -1,
+      "d15": -1
+    },
+    {
+      "dim": "role_official_primary",
+      "probe": "zero",
+      "value": 0.0,
+      "sum7": 10,
+      "sum15": 13,
+      "d7": -1,
+      "d15": 0
+    },
+    {
+      "dim": "role_opposition_framing",
+      "probe": "zero",
+      "value": -0.0,
+      "sum7": 10,
+      "sum15": 12,
+      "d7": -1,
+      "d15": -1
+    },
+    {
+      "dim": "tier_foreign_media",
+      "probe": "zero",
+      "value": 0.0,
+      "sum7": 10,
+      "sum15": 12,
+      "d7": -1,
+      "d15": -1
+    }
+  ],
+  "overfit": "系数在这 3 题、14 条严格金标上拟合，没有留出题。幅度夹在 ±0.12，消元后 14 个非零系数，L2=0.1456。距离 14/14@7 还差 3 条。细桶把三条漏标从「评论／粗转述」里拆出来了；差下的名次见上表，不是再把同一个粗桶加大就能单独补上的。",
+  "wall_s": 6.268
+}

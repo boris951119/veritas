@@ -592,6 +592,8 @@ def run_case(spec: RunSpec | None = None,
 
         # C-108：默认开——密度交卷 → kg_submit 窄面 → priority／可选 max_segments
         # 关旗 VERITAS_KG_SUBMIT_SURFACE=0 回退旧装满。
+        # C-125：总旗 VERITAS_TEST_TREE_LINE（默认关）＝整棵测试树线
+        # （KG 前端→一筛多维→二筛密度盒→窄面→tree17）；关＝密度桥路径零变。
         _kg_pack_kw: dict = {}
         if bool(getattr(settings, "kg_submit_surface", True)):
             from app.core.kg_density_bridge import ensure_kg_submit_from_density
@@ -599,7 +601,11 @@ def run_case(spec: RunSpec | None = None,
                 apply_kg_submit_surface, assert_clean_pack_kwargs,
                 pack_kwargs_for_kg,
             )
-            ensure_kg_submit_from_density(dossier)
+            if bool(getattr(settings, "test_tree_line", False)):
+                from app.core.kg_test_tree_line import ensure_test_tree_submit
+                ensure_test_tree_submit(dossier)
+            else:
+                ensure_kg_submit_from_density(dossier)
             apply_kg_submit_surface(dossier, enabled=True)
             _kg_pack_kw = pack_kwargs_for_kg(dossier)
             assert_clean_pack_kwargs(_kg_pack_kw)
@@ -977,7 +983,7 @@ def run_case(spec: RunSpec | None = None,
                      "kg_conflict_pairs", "kg_focus_segment_ids",
                      "kg_priority_segment_ids", "tree17_cite",
                      "kg_density", "kg_cap_segments", "kg_stage1",
-                     "kg_rehydrate")}
+                     "kg_rehydrate", "kg_test_tree")}
     dossier.accounting = {
         **kept,
         "elapsed_s": round(time.monotonic() - t0, 1),
