@@ -367,7 +367,7 @@
 
   <h1>veritas 流水线步骤树</h1>
   <p class="sub">从上到下：从「用户丢材料＋提问」走到「交官方 JSON」· 花盆树干版 · 同步 2026-11-03 夜 · tip c833ee2（C-135 docs）</p>
-  <p class="legend">读法：从上往下＝流程前进（01 顶 → 27 底）；花盆＝入口在顶；彩色竖干＝同一条流水线；左右交替水平枝。<strong>唯一主线＝测试树整线，出厂默认开（无 env 即走）</strong>：切段标签 → 问题扩写／KG 召回进池 → 一筛 stage1 多维加权 → 二筛缩盒（可变 k／簇 keep-one／conflict_pairs／密度≥约 2/3＋交卷 rank）→ 交卷窄面（不带系数）→ 树17 只管引用；扩写计数披露在 <code>accounting.kg_test_tree.expand</code>（C-135：enabled／terms_n／paraphrase_n）。旧预算＋BM25 交卷主路已删（C-132／C-133）＝没有第二路可走；显式 <code>VERITAS_TEST_TREE_LINE=0</code>＝跳过交卷面（不回旧路）。绿标＝已入库·默认开（交卷窄面／主线一筛池／续盒／审阅软保底；短盒回灌旗默认开）；蓝点＝要点／已入库·默认关（C-114～C-117 旁路四件，与主线默认开分开写）；红底＝已知问题（树15 满箱仍红；树17 引用条数偏少——带外乱引已消）；橙标＝停线（冲突数值线 STOP）。C-134 两案并线复验三闸曾过（镜像＝生产逐位等价）、探针已入库；C-135 扩写披露进账。C-113／121／122／123／124＝旧档已废、不合、不作路线图。正式 Nov 5 测集＝只交卷。下一步刀＝问题树／树17 引用条数。点<strong class="hint-click">绿标／蓝点／红问题</strong> → 弹窗。</p>
+  <p class="legend">读法：从上往下＝流程前进（01 顶 → 27 底）；花盆＝入口在顶；彩色竖干＝同一条流水线；左右交替水平枝。<strong>唯一主线＝测试树整线，出厂默认开（无 env 即走）</strong>：切段标签 → 问题扩写／KG 召回进池 → 一筛 stage1 多维加权 → 二筛缩盒（可变 k／簇 keep-one／conflict_pairs／密度≥约 2/3＋交卷 rank）→ 交卷窄面（不带系数）→ 树17 只管引用；扩写计数披露在 <code>accounting.kg_test_tree.expand</code>（C-135：enabled／terms_n／paraphrase_n）。旧预算＋BM25 交卷主路已删（C-132／C-133）＝没有第二路可走；显式 <code>VERITAS_TEST_TREE_LINE=0</code>＝跳过交卷面（不回旧路）。绿标＝已入库·默认开（交卷窄面／主线一筛池／续盒／审阅软保底；短盒回灌旗默认开）；蓝点＝要点／已入库·默认关（C-114～C-117 旁路四件，与主线默认开分开写）；红底＝已知问题（树17 引用条数偏少——带外乱引已消；树15 满箱红标已收＝C-138 续盒验通：单窗仍可溢出，由树16 续盒覆盖）；橙标＝停线（冲突数值线 STOP）。C-138 树15 满箱续盒验通（生产 18 题交卷窄面 lost=0＋构造超窗探针 lost=0；量尺＝artifacts/C138_tree15_multibox_clear.md）。C-134 两案并线复验三闸曾过（镜像＝生产逐位等价）、探针已入库；C-135 扩写披露进账。C-113／121／122／123／124＝旧档已废、不合、不作路线图。正式 Nov 5 测集＝只交卷。下一步刀＝问题树／树17 引用条数。点<strong class="hint-click">绿标／蓝点／红问题</strong> → 弹窗。</p>
 
   <div class="tree">
     <!-- 多色竖干（贯穿全部枝到花盆） -->
@@ -623,8 +623,8 @@
           <div class="card focus">
             <div class="icon"><svg viewBox="0 0 24 24"><path d="M4 7h7v10H4zM13 7h7v6h-7zM13 15h7v2h-7z"/></svg></div>
             <div class="body">
-              <div class="title"><span class="num">15</span>二筛缩盒＋交卷窄面 <span class="tip" tabindex="0" role="button" data-pop="s15e" title="主线③④：二筛缩盒＋交卷窄面（出厂默认开）">主线③④·默认开</span> <span class="badge-ok" tabindex="0" role="button" data-pop="s15c" title="C-107～C-111 交卷窄面默认开">交卷窄面·默认开</span> <span class="badge-ok" tabindex="0" role="button" data-pop="s15b" title="C-99 审阅软保底默认开">审阅软保底·默认开</span> <span class="tip" tabindex="0" role="button" data-pop="s15d" title="C-117 有界减压已入库·默认关">有界减压·默认关</span> <span class="issue" tabindex="0" role="button" data-pop="s15">L2装不下／窗口满箱</span></div>
-              <p class="note">主线③④：二筛缩盒（可变 k／簇 keep-one／conflict_pairs／密度≥约 2/3＋交卷 rank）→ 交卷窄面（不带系数；全员同料）——出厂默认开。旧「预算装箱」交卷主路已删（C-132／C-133）。审阅软保底默认开；满箱减压默认关。扩写计数进 accounting.kg_test_tree.expand（C-135）。树15 满箱红标仍在。</p>
+              <div class="title"><span class="num">15</span>二筛缩盒＋交卷窄面 <span class="tip" tabindex="0" role="button" data-pop="s15e" title="主线③④：二筛缩盒＋交卷窄面（出厂默认开）">主线③④·默认开</span> <span class="badge-ok" tabindex="0" role="button" data-pop="s15c" title="C-107～C-111 交卷窄面默认开">交卷窄面·默认开</span> <span class="badge-ok" tabindex="0" role="button" data-pop="s15b" title="C-99 审阅软保底默认开">审阅软保底·默认开</span> <span class="tip" tabindex="0" role="button" data-pop="s15d" title="C-117 有界减压已入库·默认关">有界减压·默认关</span> <span class="badge-ok" tabindex="0" role="button" data-pop="s15" title="满箱已由树16 续盒覆盖（C-138 红标收）">满箱→续盒覆盖·红标收</span></div>
+              <p class="note">主线③④：二筛缩盒（可变 k／簇 keep-one／conflict_pairs／密度≥约 2/3＋交卷 rank）→ 交卷窄面（不带系数；全员同料）——出厂默认开。旧「预算装箱」交卷主路已删（C-132／C-133）。审阅软保底默认开；满箱减压默认关。扩写计数进 accounting.kg_test_tree.expand（C-135）。单窗仍可溢出，由树16 续盒覆盖（C-138 红标收）。</p>
             </div>
           </div>
         </div>
@@ -887,7 +887,7 @@
     s15c: {
       title: '15 · 交卷窄面（C-107～C-111）已入库·默认开',
       meta: 'tip c833ee2 · 窄面绿标默认开 · 系数隔离 · 与主线整线同一出口',
-      body: '交卷窄面＝主线出口（C-132 起与测试树整线一体，默认开）：C-107＝禁系数进装箱（FORBIDDEN_PACK_KEYS＋assert_clean_pack_kwargs）；C-108 的交卷槽位现由测试树整线出 surface（密度桥本体已删＝C-133）；C-109／C-111 的 app/core 旧适配件暂无主线调用方＝孤儿待处置（主线一筛真身在 app/kg_lab/stage1_pool）。⚠ 窄面≠窗口变大：改的是「交哪几段」的顺序与形状，满箱红标不动。',
+      body: '交卷窄面＝主线出口（C-132 起与测试树整线一体，默认开）：C-107＝禁系数进装箱（FORBIDDEN_PACK_KEYS＋assert_clean_pack_kwargs）；C-108 的交卷槽位现由测试树整线出 surface（密度桥本体已删＝C-133）；C-109／C-111 的 app/core 旧适配件暂无主线调用方＝孤儿待处置（主线一筛真身在 app/kg_lab/stage1_pool）。⚠ 窄面≠窗口变大：改的是「交哪几段」的顺序与形状（满箱由树16 续盒覆盖，见 s15）。',
       ruler: '量尺（C-134 两案并线复验，不宣称涨分）：镜像＝生产逐位等价 6/6；刘翔@7＝12、微密度 0.5714；王虹 0.8571、q_002 67%；泄漏／FORBIDDEN＝0。｜开关：总旗＝VERITAS_TEST_TREE_LINE（出厂默认开，显式 0＝跳过交卷面）；硬顶段数＝VERITAS_KG_CAP_SEGMENTS（默认关）。'
     },
     s15d: {
@@ -899,7 +899,7 @@
     s15e: {
       title: '15 · 主线③④：二筛缩盒＋交卷窄面',
       meta: 'tip c833ee2 · 测试树整线 · 出厂默认开 · C-134 两案复验三闸曾过',
-      body: '主线第③④步：二筛缩盒（可变 k／通稿簇 keep-one／conflict_pairs／密度≥约 2/3＋交卷前 rank）→ 交卷窄面（不带系数；FORBIDDEN_PACK_KEYS 双闸）。整条主线＝切段标签→问题扩写／KG 召回→一筛→二筛→窄面→树17 cite；出厂默认开＝无 env 即走，显式 0＝跳过交卷面。C-125～128 端口与披露；C-132 删旧路＋默认开；C-133 清桥；C-134 两案并线复验＝三闸曾过、镜像＝生产逐位等价；C-135 扩写计数进 accounting.kg_test_tree.expand（enabled／terms_n／paraphrase_n）。树15 满箱红标不因此动。',
+      body: '主线第③④步：二筛缩盒（可变 k／通稿簇 keep-one／conflict_pairs／密度≥约 2/3＋交卷前 rank）→ 交卷窄面（不带系数；FORBIDDEN_PACK_KEYS 双闸）。整条主线＝切段标签→问题扩写／KG 召回→一筛→二筛→窄面→树17 cite；出厂默认开＝无 env 即走，显式 0＝跳过交卷面。C-125～128 端口与披露；C-132 删旧路＋默认开；C-133 清桥；C-134 两案并线复验＝三闸曾过、镜像＝生产逐位等价；C-135 扩写计数进 accounting.kg_test_tree.expand（enabled／terms_n／paraphrase_n）。树15 满箱红标已收（C-138 续盒验通，见 s15）。',
       ruler: '旁证（C-134，零 LLM 门控复刻＋真跑 14B 各 3 题）：刘翔@7＝12、微密度 0.5714；王虹 0.8571、q_002 67%；计划层金标→close 1.0；leak＝0；读数与 R44／C-129 逐位一致。下一步刀＝问题树／树17 引用条数。'
     },
     s15b: {
@@ -909,16 +909,16 @@
       ruler: '量尺（合入依据＝HANDOFF〔221〕〔222〕）：刘翔 14 金标段 A0 9→on 11 lost=0 gained=2；B=7000 钉死不扫参；回滚＝VERITAS_REVIEW_BOOST=0。'
     },
     s15: {
-      title: '15 · L2 装不下／窗口满箱',
-      meta: '已知问题 · 漏斗 · tip c833ee2',
-      body: '六案金标「理论必读量」往往小于窗口，但装进去的大量是无关段。C-99 软保底抬的是到达侧，不是窗口上限；交卷窄面只改「交哪几段」；C-117 有界减压旗开后「仍装不下」题数照旧＝红标不灭（该旗＝VERITAS_TREE15_DEPRESS 还默认关）。测试树整线同样不碰窗口上限——红标仍挂。',
-      ruler: '量尺：六案 L2 ≈ 48/105（旧 A0，历史读数）；预算 ×2→66、×3→74；oracle 开大箱→90、全开→105。⇒ 上限是窗口，不是算法。刘翔主尺另见 s15b；减压臂另见 s15d；主线整线另见 s15e。'
+      title: '15 · 满箱→续盒覆盖（红标收）',
+      meta: 'C-138 · 量尺＝artifacts/C138_tree15_multibox_clear.md · 单窗仍可溢出，由树16 续盒覆盖',
+      body: '现状真数（C-138 零调用生产镜像）：六案 18 题全部满箱——14B 声明窗 16384、对齐后单箱预算 ≈8k～15k 字、单箱装 60～140 段、3 箱并集 200～300 段。交卷窄面应看段对续盒 lost＝0（焦点强制入选绕过装箱＋并集逐题复核）；溢出段整体 3 箱装不下（宇宙几千段）＝诚实边界，只承诺到 max_boxes（构造边界题实测 lost=92）。关旗 VERITAS_MULTI_BOX=0 回退可测（无 multi_box 账、lost=全部 excluded）；C-134 旁证 dens/leak 逐位不掉。⚠ L2 并集到达 ≠ 官方涨分；不许说「看得全＝分更高」。',
+      ruler: '量尺（artifacts/C138_tree15_multibox_clear.md，四闸）：①满箱样本＝生产 18 题、交卷窄面 lost=0；②构造超窗探针 lost=0（真溢出自检在场）、宇宙>三箱 lost=92＝边界披露；③C-134 同尺 dens/leak 逐位等证＋真跑带外 0；④关旗回退可测。改标后红标不再挂本步。'
     },
     s16: {
       title: '16 · 续盒看全（多箱）',
       meta: '已入库·默认开（Boyu 10-28 拍「先把续盒加进来」；VERITAS_MULTI_BOX／multi_box_max；形态＝B′ 只续盒不归并）',
-      body: '单窗塞不下就拆成多箱续喂（上限默认 3）。首箱仍走主编队；第 2‥N 箱＝一名分析师＋focus 段（second_pass 同形）。末箱归并仍未接。⚠ 墙钟随盒数上升；L2 并集到达 ≠ 官方得分涨分。关＝VERITAS_MULTI_BOX=0。',
-      ruler: '量尺（合入前）：六案 105 金标段、离线装箱＝单窗 48 → 三箱并集 71；一次开大窗 ×3＝74 ＞ 续盒 71（税＝每箱非正文开销）。真跑小样（印航 q_001、本机 14B）＝三盒合计 ≈2.87× 墙钟。生产形态本轮＝定向续盒（非整面板×N）。'
+      body: '单窗塞不下就拆成多箱续喂（上限默认 3）。首箱仍走主编队；第 2‥N 箱＝一名分析师＋focus 段（second_pass 同形）。末箱归并仍未接。⚠ 墙钟随盒数上升；L2 并集到达 ≠ 官方得分涨分。关＝VERITAS_MULTI_BOX=0。C-138 验通：六案 18 题满箱场景下续盒账可回放（per_box 段数／字数、并集 id 表）；构造超窗探针三箱覆盖 lost=0；宇宙>三箱的余段仍不可达（边界披露）。量尺＝artifacts/C138_tree15_multibox_clear.md。',
+      ruler: '量尺（合入前）：六案 105 金标段、离线装箱＝单窗 48 → 三箱并集 71；一次开大窗 ×3＝74 ＞ 续盒 71（税＝每箱非正文开销）。真跑小样（印航 q_001、本机 14B）＝三盒合计 ≈2.87× 墙钟。生产形态本轮＝定向续盒（非整面板×N）。C-138 追加：生产 18 题满箱续盒验通＋构造探针 lost=0（artifacts/C138_tree15_multibox_clear.md）。'
     },
     s17: {
       title: '17 · 引用条数偏少',
