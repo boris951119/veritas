@@ -1,0 +1,1229 @@
+{
+ "ticket": "C-140",
+ "tip": "e2ff20e85f57852f52f847dc9af474ad696aa0a9",
+ "branch": "qoder/c140-top7-conflict-reserve",
+ "model": "openai/veritas-qwen3-14b",
+ "env_group": {
+  "VERITAS_KG_SUBMIT_SURFACE": "1",
+  "VERITAS_KG_STAGE1": "1",
+  "VERITAS_KG_REHYDRATE_BOX": "1",
+  "VERITAS_MULTI_BOX": "0",
+  "VERITAS_SECOND_PASS": "0",
+  "VERITAS_REVIEW_BOOST": "0"
+ },
+ "one_line": "YES｜final_n=li001:9/li002:7/li003:7/wa001:7/wa002:7/wa003:7（保位合计2）｜dens/leak=逐位｜带外face=0｜金标face 10→14(cut_gold=8)｜L3 8 vs 7｜tip e2ff20e／qoder/c140-top7-conflict-reserve",
+ "verdict": {
+  "g1_final_n_replay": true,
+  "g2_dens_leak_oob": true,
+  "dens_bitwise": true,
+  "g3_gold_face_no_drop": true,
+  "g4_off_fallback": true,
+  "box_t17_untouched": true,
+  "final_n_rows": [
+   [
+    "liuxiang",
+    "q_001",
+    9,
+    7,
+    2
+   ],
+   [
+    "liuxiang",
+    "q_002",
+    7,
+    7,
+    0
+   ],
+   [
+    "liuxiang",
+    "q_003",
+    7,
+    7,
+    0
+   ],
+   [
+    "wanghong",
+    "q_001",
+    7,
+    7,
+    0
+   ],
+   [
+    "wanghong",
+    "q_002",
+    7,
+    7,
+    0
+   ],
+   [
+    "wanghong",
+    "q_003",
+    7,
+    7,
+    0
+   ]
+  ],
+  "gold_face_before_total": 10,
+  "gold_face_after_total": 14,
+  "cut_gold_total": 8,
+  "gold_anchor_ok": true,
+  "l3_new_total": 8,
+  "l3_c134_total": 7,
+  "real_oob_face_total": 0,
+  "real_oob_box_total": 10,
+  "all_yes": true
+ },
+ "zero": {
+  "gate": {
+   "liuxiang": {
+    "slug": "liuxiang",
+    "gold_total": 14,
+    "cut_hits": {
+     "4": 9,
+     "5": 11,
+     "7": 12
+    },
+    "micro_gold_density": 0.5714,
+    "avg_gold_density": 0.5714,
+    "mean_gold_box_to_close": 1.0,
+    "n_leaks": 0,
+    "n_submit_ok": 3,
+    "prod_leg": {
+     "rows": [
+      {
+       "qid": "q_001",
+       "k": 3,
+       "n_gold": 1,
+       "gold_density": 0.3333,
+       "route": "adjudicate",
+       "embed": "ok",
+       "n_pairs": 8
+      },
+      {
+       "qid": "q_002",
+       "k": 3,
+       "n_gold": 1,
+       "gold_density": 0.3333,
+       "route": "adjudicate",
+       "embed": "ok",
+       "n_pairs": 0
+      },
+      {
+       "qid": "q_003",
+       "k": 3,
+       "n_gold": 2,
+       "gold_density": 0.6667,
+       "route": "adjudicate",
+       "embed": "ok",
+       "n_pairs": 0
+      }
+     ],
+     "micro_gold_density": 0.4444
+    }
+   },
+   "wanghong": {
+    "slug": "wanghong",
+    "gold_total": 19,
+    "cut_hits": {
+     "4": 6,
+     "5": 6,
+     "7": 6
+    },
+    "micro_gold_density": 0.8571,
+    "avg_gold_density": 0.8889,
+    "mean_gold_box_to_close": 1.0,
+    "n_leaks": 0,
+    "n_submit_ok": 3,
+    "prod_leg": {
+     "rows": [
+      {
+       "qid": "q_001",
+       "k": 1,
+       "n_gold": 1,
+       "gold_density": 1.0,
+       "route": "fact_check",
+       "embed": "ok",
+       "n_pairs": 0
+      },
+      {
+       "qid": "q_002",
+       "k": 3,
+       "n_gold": 2,
+       "gold_density": 0.6667,
+       "route": "adjudicate",
+       "embed": "ok",
+       "n_pairs": 0
+      },
+      {
+       "qid": "q_003",
+       "k": 3,
+       "n_gold": 3,
+       "gold_density": 1.0,
+       "route": "adjudicate",
+       "embed": "ok",
+       "n_pairs": 0
+      }
+     ],
+     "micro_gold_density": 0.8571
+    }
+   }
+  },
+  "gate_cmp": {
+   "liuxiang": {
+    "bitwise_equal": true,
+    "old": {
+     "slug": "liuxiang",
+     "gold_total": 14,
+     "cut_hits": {
+      "4": 9,
+      "5": 11,
+      "7": 12
+     },
+     "density_rows": [
+      {
+       "qid": "q_001",
+       "route": "adjudicate",
+       "k": 7,
+       "n_gold": 4,
+       "gold_density": 0.5714,
+       "density_cut": false
+      },
+      {
+       "qid": "q_002",
+       "route": "adjudicate",
+       "k": 7,
+       "n_gold": 4,
+       "gold_density": 0.5714,
+       "density_cut": false
+      },
+      {
+       "qid": "q_003",
+       "route": "adjudicate",
+       "k": 7,
+       "n_gold": 4,
+       "gold_density": 0.5714,
+       "density_cut": false
+      }
+     ],
+     "avg_gold_density": 0.5714,
+     "micro_gold_density": 0.5714,
+     "sum_gold_in_boxes": 12,
+     "sum_k": 21,
+     "wall_s": 7.1,
+     "plan_rows": [
+      {
+       "qid": "q_001",
+       "k": 7,
+       "n_gold": 4,
+       "gold_density": 0.5714,
+       "gold_in_box_to_close": 1.0,
+       "n_pairs": 8
+      },
+      {
+       "qid": "q_002",
+       "k": 7,
+       "n_gold": 4,
+       "gold_density": 0.5714,
+       "gold_in_box_to_close": 1.0,
+       "n_pairs": 0
+      },
+      {
+       "qid": "q_003",
+       "k": 7,
+       "n_gold": 4,
+       "gold_density": 0.5714,
+       "gold_in_box_to_close": 1.0,
+       "n_pairs": 0
+      }
+     ],
+     "mean_gold_box_to_close": 1.0,
+     "n_leaks": 0,
+     "leak_sample": [],
+     "n_submit_ok": 3,
+     "n_questions": 3,
+     "prod_leg": {
+      "rows": [
+       {
+        "qid": "q_001",
+        "k": 3,
+        "n_gold": 1,
+        "gold_density": 0.3333,
+        "route": "adjudicate",
+        "embed": "ok",
+        "n_pairs": 8
+       },
+       {
+        "qid": "q_002",
+        "k": 3,
+        "n_gold": 1,
+        "gold_density": 0.3333,
+        "route": "adjudicate",
+        "embed": "ok",
+        "n_pairs": 0
+       },
+       {
+        "qid": "q_003",
+        "k": 3,
+        "n_gold": 2,
+        "gold_density": 0.6667,
+        "route": "adjudicate",
+        "embed": "ok",
+        "n_pairs": 0
+       }
+      ],
+      "micro_gold_density": 0.4444
+     }
+    },
+    "new": {
+     "slug": "liuxiang",
+     "gold_total": 14,
+     "cut_hits": {
+      "4": 9,
+      "5": 11,
+      "7": 12
+     },
+     "micro_gold_density": 0.5714,
+     "avg_gold_density": 0.5714,
+     "mean_gold_box_to_close": 1.0,
+     "n_leaks": 0,
+     "n_submit_ok": 3,
+     "prod_leg": {
+      "rows": [
+       {
+        "qid": "q_001",
+        "k": 3,
+        "n_gold": 1,
+        "gold_density": 0.3333,
+        "route": "adjudicate",
+        "embed": "ok",
+        "n_pairs": 8
+       },
+       {
+        "qid": "q_002",
+        "k": 3,
+        "n_gold": 1,
+        "gold_density": 0.3333,
+        "route": "adjudicate",
+        "embed": "ok",
+        "n_pairs": 0
+       },
+       {
+        "qid": "q_003",
+        "k": 3,
+        "n_gold": 2,
+        "gold_density": 0.6667,
+        "route": "adjudicate",
+        "embed": "ok",
+        "n_pairs": 0
+       }
+      ],
+      "micro_gold_density": 0.4444
+     }
+    }
+   },
+   "wanghong": {
+    "bitwise_equal": true,
+    "old": {
+     "slug": "wanghong",
+     "gold_total": 19,
+     "cut_hits": {
+      "4": 6,
+      "5": 6,
+      "7": 6
+     },
+     "density_rows": [
+      {
+       "qid": "q_001",
+       "route": "fact_check",
+       "k": 1,
+       "n_gold": 1,
+       "gold_density": 1.0,
+       "density_cut": true
+      },
+      {
+       "qid": "q_002",
+       "route": "adjudicate",
+       "k": 3,
+       "n_gold": 2,
+       "gold_density": 0.6667,
+       "density_cut": true
+      },
+      {
+       "qid": "q_003",
+       "route": "adjudicate",
+       "k": 3,
+       "n_gold": 3,
+       "gold_density": 1.0,
+       "density_cut": true
+      }
+     ],
+     "avg_gold_density": 0.8889,
+     "micro_gold_density": 0.8571,
+     "sum_gold_in_boxes": 6,
+     "sum_k": 7,
+     "wall_s": 16.9,
+     "plan_rows": [
+      {
+       "qid": "q_001",
+       "k": 1,
+       "n_gold": 1,
+       "gold_density": 1.0,
+       "gold_in_box_to_close": 1.0,
+       "n_pairs": 0
+      },
+      {
+       "qid": "q_002",
+       "k": 3,
+       "n_gold": 2,
+       "gold_density": 0.6667,
+       "gold_in_box_to_close": 1.0,
+       "n_pairs": 0
+      },
+      {
+       "qid": "q_003",
+       "k": 3,
+       "n_gold": 3,
+       "gold_density": 1.0,
+       "gold_in_box_to_close": 1.0,
+       "n_pairs": 0
+      }
+     ],
+     "mean_gold_box_to_close": 1.0,
+     "n_leaks": 0,
+     "leak_sample": [],
+     "n_submit_ok": 3,
+     "n_questions": 3,
+     "prod_leg": {
+      "rows": [
+       {
+        "qid": "q_001",
+        "k": 1,
+        "n_gold": 1,
+        "gold_density": 1.0,
+        "route": "fact_check",
+        "embed": "ok",
+        "n_pairs": 0
+       },
+       {
+        "qid": "q_002",
+        "k": 3,
+        "n_gold": 2,
+        "gold_density": 0.6667,
+        "route": "adjudicate",
+        "embed": "ok",
+        "n_pairs": 0
+       },
+       {
+        "qid": "q_003",
+        "k": 3,
+        "n_gold": 3,
+        "gold_density": 1.0,
+        "route": "adjudicate",
+        "embed": "ok",
+        "n_pairs": 0
+       }
+      ],
+      "micro_gold_density": 0.8571
+     }
+    },
+    "new": {
+     "slug": "wanghong",
+     "gold_total": 19,
+     "cut_hits": {
+      "4": 6,
+      "5": 6,
+      "7": 6
+     },
+     "micro_gold_density": 0.8571,
+     "avg_gold_density": 0.8889,
+     "mean_gold_box_to_close": 1.0,
+     "n_leaks": 0,
+     "n_submit_ok": 3,
+     "prod_leg": {
+      "rows": [
+       {
+        "qid": "q_001",
+        "k": 1,
+        "n_gold": 1,
+        "gold_density": 1.0,
+        "route": "fact_check",
+        "embed": "ok",
+        "n_pairs": 0
+       },
+       {
+        "qid": "q_002",
+        "k": 3,
+        "n_gold": 2,
+        "gold_density": 0.6667,
+        "route": "adjudicate",
+        "embed": "ok",
+        "n_pairs": 0
+       },
+       {
+        "qid": "q_003",
+        "k": 3,
+        "n_gold": 3,
+        "gold_density": 1.0,
+        "route": "adjudicate",
+        "embed": "ok",
+        "n_pairs": 0
+       }
+      ],
+      "micro_gold_density": 0.8571
+     }
+    }
+   }
+  },
+  "mirror": [
+   {
+    "slug": "liuxiang",
+    "qid": "q_001",
+    "box": [
+     "doc_002#p3",
+     "doc_030#p12",
+     "doc_014#p1"
+    ],
+    "box_n": 3,
+    "candidates_n": 27,
+    "candidates_source": "rerank_order",
+    "k_top": 7,
+    "reserve_added": 2,
+    "final_n": 9,
+    "top_ids": [
+     "doc_002#p3",
+     "doc_030#p12",
+     "doc_014#p1",
+     "doc_049#p10",
+     "doc_037#p2",
+     "doc_035#p7",
+     "doc_024#p1"
+    ],
+    "reserve_ids": [
+     "doc_012#p3",
+     "doc_012#p2"
+    ],
+    "final_ids": [
+     "doc_002#p3",
+     "doc_030#p12",
+     "doc_014#p1",
+     "doc_049#p10",
+     "doc_037#p2",
+     "doc_035#p7",
+     "doc_024#p1",
+     "doc_012#p3",
+     "doc_012#p2"
+    ],
+    "cut_ids": [
+     "doc_038#p1",
+     "doc_042#p2",
+     "doc_043#p1",
+     "doc_048#p2",
+     "doc_043#p2",
+     "doc_030#p5",
+     "doc_029#p6",
+     "doc_017#p1",
+     "doc_016#p1",
+     "doc_043#p4",
+     "doc_024#p2",
+     "doc_007#p4",
+     "doc_026#p4",
+     "doc_046#p9",
+     "doc_033#p2",
+     "doc_012#p5",
+     "doc_043#p5",
+     "doc_025#p6"
+    ],
+    "pair_rows_n": 8,
+    "pair_reserve_n": 2,
+    "replay_ok": true,
+    "box_untouched": true,
+    "t17_untouched": true,
+    "focus_pre_n": 3,
+    "focus_off_ids": [
+     "doc_030#p12",
+     "doc_014#p1",
+     "doc_002#p3"
+    ],
+    "focus_off_vs_c134": "IDENTICAL",
+    "face_off_chars": 1580,
+    "face_off_sha8": "e34f503d",
+    "face_on_chars": 3375,
+    "face_on_sha8": "6d97efa2",
+    "gold_n": 4,
+    "face_gold_before_ids": [
+     "doc_002#p3"
+    ],
+    "face_gold_after_ids": [
+     "doc_002#p3",
+     "doc_024#p1",
+     "doc_035#p7"
+    ],
+    "cut_gold_ids": [
+     "doc_025#p6"
+    ],
+    "box_dropped_n": 0,
+    "box_dropped_gold_ids": [],
+    "face_off_vs_c134": "BYTE_IDENTICAL",
+    "c134_focus_gold_n": 1,
+    "gold_anchor_ok": true
+   },
+   {
+    "slug": "liuxiang",
+    "qid": "q_002",
+    "box": [
+     "doc_002#p3",
+     "doc_002#p2",
+     "doc_012#p3"
+    ],
+    "box_n": 3,
+    "candidates_n": 23,
+    "candidates_source": "rerank_order",
+    "k_top": 7,
+    "reserve_added": 0,
+    "final_n": 7,
+    "top_ids": [
+     "doc_002#p3",
+     "doc_002#p2",
+     "doc_012#p3",
+     "doc_009#p5",
+     "doc_029#p5",
+     "doc_026#p1",
+     "doc_041#p1"
+    ],
+    "reserve_ids": [],
+    "final_ids": [
+     "doc_002#p3",
+     "doc_002#p2",
+     "doc_012#p3",
+     "doc_009#p5",
+     "doc_029#p5",
+     "doc_026#p1",
+     "doc_041#p1"
+    ],
+    "cut_ids": [
+     "doc_005#p3",
+     "doc_051#p5",
+     "doc_029#p7",
+     "doc_043#p1",
+     "doc_035#p7",
+     "doc_029#p9",
+     "doc_041#p4",
+     "doc_027#p4",
+     "doc_029#p4",
+     "doc_027#p2",
+     "doc_045#p5",
+     "doc_036#p1",
+     "doc_036#p2",
+     "doc_041#p6",
+     "doc_011#p7",
+     "doc_047#p4"
+    ],
+    "pair_rows_n": 0,
+    "pair_reserve_n": 0,
+    "replay_ok": true,
+    "box_untouched": true,
+    "t17_untouched": true,
+    "focus_pre_n": 3,
+    "focus_off_ids": [
+     "doc_002#p3",
+     "doc_012#p3",
+     "doc_002#p2"
+    ],
+    "focus_off_vs_c134": "IDENTICAL",
+    "face_off_chars": 932,
+    "face_off_sha8": "b3a0ecd8",
+    "face_on_chars": 2386,
+    "face_on_sha8": "b1f63912",
+    "gold_n": 5,
+    "face_gold_before_ids": [
+     "doc_002#p3"
+    ],
+    "face_gold_after_ids": [
+     "doc_002#p3",
+     "doc_009#p5"
+    ],
+    "cut_gold_ids": [
+     "doc_029#p7"
+    ],
+    "box_dropped_n": 0,
+    "box_dropped_gold_ids": [],
+    "face_off_vs_c134": "BYTE_IDENTICAL",
+    "c134_focus_gold_n": 1,
+    "gold_anchor_ok": true
+   },
+   {
+    "slug": "liuxiang",
+    "qid": "q_003",
+    "box": [
+     "doc_002#p3",
+     "doc_050#p9",
+     "doc_006#p3"
+    ],
+    "box_n": 3,
+    "candidates_n": 27,
+    "candidates_source": "rerank_order",
+    "k_top": 7,
+    "reserve_added": 0,
+    "final_n": 7,
+    "top_ids": [
+     "doc_002#p3",
+     "doc_050#p9",
+     "doc_006#p3",
+     "doc_012#p5",
+     "doc_030#p8",
+     "doc_046#p3",
+     "doc_007#p2"
+    ],
+    "reserve_ids": [],
+    "final_ids": [
+     "doc_002#p3",
+     "doc_050#p9",
+     "doc_006#p3",
+     "doc_012#p5",
+     "doc_030#p8",
+     "doc_046#p3",
+     "doc_007#p2"
+    ],
+    "cut_ids": [
+     "doc_027#p3",
+     "doc_050#p10",
+     "doc_027#p5",
+     "doc_013#p3",
+     "doc_033#p6",
+     "doc_035#p7",
+     "doc_050#p8",
+     "doc_025#p6",
+     "doc_006#p4",
+     "doc_029#p9",
+     "doc_025#p5",
+     "doc_025#p3",
+     "doc_029#p5",
+     "doc_011#p7",
+     "doc_045#p6",
+     "doc_046#p8",
+     "doc_028#p3",
+     "doc_026#p4",
+     "doc_033#p5",
+     "doc_033#p2"
+    ],
+    "pair_rows_n": 0,
+    "pair_reserve_n": 0,
+    "replay_ok": true,
+    "box_untouched": true,
+    "t17_untouched": true,
+    "focus_pre_n": 3,
+    "focus_off_ids": [
+     "doc_002#p3",
+     "doc_050#p9",
+     "doc_006#p3"
+    ],
+    "focus_off_vs_c134": "IDENTICAL",
+    "face_off_chars": 933,
+    "face_off_sha8": "81809109",
+    "face_on_chars": 2270,
+    "face_on_sha8": "7099a2da",
+    "gold_n": 5,
+    "face_gold_before_ids": [
+     "doc_002#p3",
+     "doc_006#p3"
+    ],
+    "face_gold_after_ids": [
+     "doc_002#p3",
+     "doc_006#p3",
+     "doc_012#p5"
+    ],
+    "cut_gold_ids": [
+     "doc_033#p5",
+     "doc_033#p6"
+    ],
+    "box_dropped_n": 0,
+    "box_dropped_gold_ids": [],
+    "face_off_vs_c134": "BYTE_IDENTICAL",
+    "c134_focus_gold_n": 2,
+    "gold_anchor_ok": true
+   },
+   {
+    "slug": "wanghong",
+    "qid": "q_001",
+    "box": [
+     "doc_001#p1"
+    ],
+    "box_n": 1,
+    "candidates_n": 25,
+    "candidates_source": "rerank_order",
+    "k_top": 7,
+    "reserve_added": 0,
+    "final_n": 7,
+    "top_ids": [
+     "doc_001#p1",
+     "doc_007#p4",
+     "doc_035#p12",
+     "doc_012#p5",
+     "doc_050#p3",
+     "doc_012#p4",
+     "doc_050#p1"
+    ],
+    "reserve_ids": [],
+    "final_ids": [
+     "doc_001#p1",
+     "doc_007#p4",
+     "doc_035#p12",
+     "doc_012#p5",
+     "doc_050#p3",
+     "doc_012#p4",
+     "doc_050#p1"
+    ],
+    "cut_ids": [
+     "doc_003#p5",
+     "doc_007#p2",
+     "doc_067#p8",
+     "doc_014#p2",
+     "doc_011#p8",
+     "doc_048#p8",
+     "doc_011#p2",
+     "doc_064#p5",
+     "doc_030#p4",
+     "doc_010#p4",
+     "doc_054#p1",
+     "doc_059#p12",
+     "doc_059#p1",
+     "doc_038#p2",
+     "doc_029#p6",
+     "doc_004#p2",
+     "doc_047#p1",
+     "doc_017#p1"
+    ],
+    "pair_rows_n": 0,
+    "pair_reserve_n": 0,
+    "replay_ok": true,
+    "box_untouched": true,
+    "t17_untouched": true,
+    "focus_pre_n": 1,
+    "focus_off_ids": [
+     "doc_001#p1"
+    ],
+    "focus_off_vs_c134": "IDENTICAL",
+    "face_off_chars": 471,
+    "face_off_sha8": "1bbd5432",
+    "face_on_chars": 2645,
+    "face_on_sha8": "9a18013f",
+    "gold_n": 5,
+    "face_gold_before_ids": [
+     "doc_001#p1"
+    ],
+    "face_gold_after_ids": [
+     "doc_001#p1"
+    ],
+    "cut_gold_ids": [
+     "doc_010#p4"
+    ],
+    "box_dropped_n": 0,
+    "box_dropped_gold_ids": [],
+    "face_off_vs_c134": "BYTE_IDENTICAL",
+    "c134_focus_gold_n": 1,
+    "gold_anchor_ok": true
+   },
+   {
+    "slug": "wanghong",
+    "qid": "q_002",
+    "box": [
+     "doc_010#p7",
+     "doc_011#p1",
+     "doc_011#p5"
+    ],
+    "box_n": 3,
+    "candidates_n": 28,
+    "candidates_source": "rerank_order",
+    "k_top": 7,
+    "reserve_added": 0,
+    "final_n": 7,
+    "top_ids": [
+     "doc_010#p7",
+     "doc_011#p1",
+     "doc_011#p5",
+     "doc_050#p1",
+     "doc_029#p12",
+     "doc_007#p4",
+     "doc_050#p3"
+    ],
+    "reserve_ids": [],
+    "final_ids": [
+     "doc_010#p7",
+     "doc_011#p1",
+     "doc_011#p5",
+     "doc_050#p1",
+     "doc_029#p12",
+     "doc_007#p4",
+     "doc_050#p3"
+    ],
+    "cut_ids": [
+     "doc_012#p4",
+     "doc_064#p3",
+     "doc_048#p8",
+     "doc_011#p2",
+     "doc_030#p4",
+     "doc_012#p5",
+     "doc_039#p2",
+     "doc_039#p1",
+     "doc_048#p1",
+     "doc_030#p2",
+     "doc_035#p4",
+     "doc_063#p1",
+     "doc_073#p1",
+     "doc_059#p4",
+     "doc_035#p7",
+     "doc_035#p3",
+     "doc_035#p5",
+     "doc_063#p3",
+     "doc_046#p3",
+     "doc_011#p8",
+     "doc_010#p5"
+    ],
+    "pair_rows_n": 0,
+    "pair_reserve_n": 0,
+    "replay_ok": true,
+    "box_untouched": true,
+    "t17_untouched": true,
+    "focus_pre_n": 3,
+    "focus_off_ids": [
+     "doc_011#p1",
+     "doc_010#p7",
+     "doc_011#p5"
+    ],
+    "focus_off_vs_c134": "IDENTICAL",
+    "face_off_chars": 976,
+    "face_off_sha8": "be586b55",
+    "face_on_chars": 2562,
+    "face_on_sha8": "8f91cfbc",
+    "gold_n": 5,
+    "face_gold_before_ids": [
+     "doc_010#p7",
+     "doc_011#p1"
+    ],
+    "face_gold_after_ids": [
+     "doc_010#p7",
+     "doc_011#p1"
+    ],
+    "cut_gold_ids": [
+     "doc_011#p2"
+    ],
+    "box_dropped_n": 0,
+    "box_dropped_gold_ids": [],
+    "face_off_vs_c134": "BYTE_IDENTICAL",
+    "c134_focus_gold_n": 2,
+    "gold_anchor_ok": true
+   },
+   {
+    "slug": "wanghong",
+    "qid": "q_003",
+    "box": [
+     "doc_007#p1",
+     "doc_007#p2",
+     "doc_003#p5"
+    ],
+    "box_n": 3,
+    "candidates_n": 25,
+    "candidates_source": "rerank_order",
+    "k_top": 7,
+    "reserve_added": 0,
+    "final_n": 7,
+    "top_ids": [
+     "doc_007#p1",
+     "doc_007#p2",
+     "doc_003#p5",
+     "doc_007#p4",
+     "doc_024#p2",
+     "doc_050#p1",
+     "doc_050#p3"
+    ],
+    "reserve_ids": [],
+    "final_ids": [
+     "doc_007#p1",
+     "doc_007#p2",
+     "doc_003#p5",
+     "doc_007#p4",
+     "doc_024#p2",
+     "doc_050#p1",
+     "doc_050#p3"
+    ],
+    "cut_ids": [
+     "doc_030#p4",
+     "doc_012#p4",
+     "doc_067#p8",
+     "doc_048#p8",
+     "doc_064#p1",
+     "doc_012#p5",
+     "doc_003#p4",
+     "doc_003#p3",
+     "doc_064#p5",
+     "doc_011#p2",
+     "doc_010#p8",
+     "doc_054#p1",
+     "doc_010#p10",
+     "doc_010#p4",
+     "doc_010#p9",
+     "doc_004#p2",
+     "doc_011#p8",
+     "doc_014#p2"
+    ],
+    "pair_rows_n": 0,
+    "pair_reserve_n": 0,
+    "replay_ok": true,
+    "box_untouched": true,
+    "t17_untouched": true,
+    "focus_pre_n": 3,
+    "focus_off_ids": [
+     "doc_007#p1",
+     "doc_007#p2",
+     "doc_003#p5"
+    ],
+    "focus_off_vs_c134": "IDENTICAL",
+    "face_off_chars": 947,
+    "face_off_sha8": "e5a1cdda",
+    "face_on_chars": 1903,
+    "face_on_sha8": "815fb1d2",
+    "gold_n": 9,
+    "face_gold_before_ids": [
+     "doc_003#p5",
+     "doc_007#p1",
+     "doc_007#p2"
+    ],
+    "face_gold_after_ids": [
+     "doc_003#p5",
+     "doc_007#p1",
+     "doc_007#p2"
+    ],
+    "cut_gold_ids": [
+     "doc_003#p3",
+     "doc_003#p4"
+    ],
+    "box_dropped_n": 0,
+    "box_dropped_gold_ids": [],
+    "face_off_vs_c134": "BYTE_IDENTICAL",
+    "c134_focus_gold_n": 3,
+    "gold_anchor_ok": true
+   }
+  ]
+ },
+ "real": [
+  {
+   "slug": "liuxiang",
+   "qid": "q_001",
+   "surface_line": "test_tree(factory)+c140_top7",
+   "box_n": 3,
+   "focus_n": 9,
+   "k_top": 7,
+   "reserve_added": 2,
+   "final_n": 9,
+   "focus_gold_n": 3,
+   "face_chars": 3375,
+   "face_sha8": "6d97efa2",
+   "denom": 4,
+   "l3": 1,
+   "cited_gold_ids": [
+    "doc_002#p3"
+   ],
+   "cited_n": 3,
+   "oob_face_ids": [],
+   "oob_box_ids": [],
+   "n_conclusions": 3,
+   "n_evidences": 3,
+   "n_ev_check_fail": 2,
+   "fail_buckets": {
+    "empty_quote": 0,
+    "seg_missing": 0,
+    "verbatim_miss": 2,
+    "adjacent_only": 0,
+    "other": 0
+   },
+   "server_input_tokens": null,
+   "over_window": false,
+   "wall_s": 52.9
+  },
+  {
+   "slug": "liuxiang",
+   "qid": "q_002",
+   "surface_line": "test_tree(factory)+c140_top7",
+   "box_n": 3,
+   "focus_n": 7,
+   "k_top": 7,
+   "reserve_added": 0,
+   "final_n": 7,
+   "focus_gold_n": 2,
+   "face_chars": 2386,
+   "face_sha8": "b1f63912",
+   "denom": 5,
+   "l3": 1,
+   "cited_gold_ids": [
+    "doc_002#p3"
+   ],
+   "cited_n": 5,
+   "oob_face_ids": [],
+   "oob_box_ids": [
+    "doc_026#p1",
+    "doc_029#p5",
+    "doc_041#p1"
+   ],
+   "n_conclusions": 5,
+   "n_evidences": 5,
+   "n_ev_check_fail": 3,
+   "fail_buckets": {
+    "empty_quote": 0,
+    "seg_missing": 0,
+    "verbatim_miss": 3,
+    "adjacent_only": 0,
+    "other": 0
+   },
+   "server_input_tokens": null,
+   "over_window": false,
+   "wall_s": 62.4
+  },
+  {
+   "slug": "liuxiang",
+   "qid": "q_003",
+   "surface_line": "test_tree(factory)+c140_top7",
+   "box_n": 3,
+   "focus_n": 7,
+   "k_top": 7,
+   "reserve_added": 0,
+   "final_n": 7,
+   "focus_gold_n": 3,
+   "face_chars": 2270,
+   "face_sha8": "7099a2da",
+   "denom": 5,
+   "l3": 3,
+   "cited_gold_ids": [
+    "doc_002#p3",
+    "doc_006#p3",
+    "doc_012#p5"
+   ],
+   "cited_n": 5,
+   "oob_face_ids": [],
+   "oob_box_ids": [
+    "doc_012#p5",
+    "doc_030#p8",
+    "doc_046#p3"
+   ],
+   "n_conclusions": 5,
+   "n_evidences": 5,
+   "n_ev_check_fail": 4,
+   "fail_buckets": {
+    "empty_quote": 0,
+    "seg_missing": 0,
+    "verbatim_miss": 4,
+    "adjacent_only": 0,
+    "other": 0
+   },
+   "server_input_tokens": null,
+   "over_window": false,
+   "wall_s": 62.2
+  },
+  {
+   "slug": "wanghong",
+   "qid": "q_001",
+   "surface_line": "test_tree(factory)+c140_top7",
+   "box_n": 1,
+   "focus_n": 7,
+   "k_top": 7,
+   "reserve_added": 0,
+   "final_n": 7,
+   "focus_gold_n": 1,
+   "face_chars": 2645,
+   "face_sha8": "9a18013f",
+   "denom": 5,
+   "l3": 0,
+   "cited_gold_ids": [],
+   "cited_n": 3,
+   "oob_face_ids": [],
+   "oob_box_ids": [
+    "doc_007#p4",
+    "doc_012#p4",
+    "doc_035#p12"
+   ],
+   "n_conclusions": 2,
+   "n_evidences": 3,
+   "n_ev_check_fail": 0,
+   "fail_buckets": {
+    "empty_quote": 0,
+    "seg_missing": 0,
+    "verbatim_miss": 0,
+    "adjacent_only": 0,
+    "other": 0
+   },
+   "server_input_tokens": null,
+   "over_window": false,
+   "wall_s": 40.8
+  },
+  {
+   "slug": "wanghong",
+   "qid": "q_002",
+   "surface_line": "test_tree(factory)+c140_top7",
+   "box_n": 3,
+   "focus_n": 7,
+   "k_top": 7,
+   "reserve_added": 0,
+   "final_n": 7,
+   "focus_gold_n": 2,
+   "face_chars": 2562,
+   "face_sha8": "8f91cfbc",
+   "denom": 5,
+   "l3": 2,
+   "cited_gold_ids": [
+    "doc_010#p7",
+    "doc_011#p1"
+   ],
+   "cited_n": 3,
+   "oob_face_ids": [],
+   "oob_box_ids": [],
+   "n_conclusions": 4,
+   "n_evidences": 4,
+   "n_ev_check_fail": 0,
+   "fail_buckets": {
+    "empty_quote": 0,
+    "seg_missing": 0,
+    "verbatim_miss": 0,
+    "adjacent_only": 0,
+    "other": 0
+   },
+   "server_input_tokens": null,
+   "over_window": false,
+   "wall_s": 62.3
+  },
+  {
+   "slug": "wanghong",
+   "qid": "q_003",
+   "surface_line": "test_tree(factory)+c140_top7",
+   "box_n": 3,
+   "focus_n": 7,
+   "k_top": 7,
+   "reserve_added": 0,
+   "final_n": 7,
+   "focus_gold_n": 3,
+   "face_chars": 1903,
+   "face_sha8": "815fb1d2",
+   "denom": 9,
+   "l3": 1,
+   "cited_gold_ids": [
+    "doc_007#p1"
+   ],
+   "cited_n": 2,
+   "oob_face_ids": [],
+   "oob_box_ids": [
+    "doc_007#p4"
+   ],
+   "n_conclusions": 1,
+   "n_evidences": 2,
+   "n_ev_check_fail": 0,
+   "fail_buckets": {
+    "empty_quote": 0,
+    "seg_missing": 0,
+    "verbatim_miss": 0,
+    "adjacent_only": 0,
+    "other": 0
+   },
+   "server_input_tokens": null,
+   "over_window": false,
+   "wall_s": 27.3
+  }
+ ]
+}

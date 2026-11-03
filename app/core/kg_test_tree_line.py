@@ -315,6 +315,11 @@ def build_test_tree_surface(
         "hints": hints,
         "box": list(box),
         "k": k_sel,
+        # C-140：二筛显式全序（rerank 行只取 id；序尾补盒内缺员，与
+        # build_conflict_pairs 同一补法）——交卷 Top-7 的候选池。
+        "rerank_order": list(order) + [
+            str(x) for x in box if x not in set(order)
+        ],
         "density": {
             "k": dens.get("k"),
             "n_core": dens.get("n_core"),
@@ -390,6 +395,9 @@ def ensure_test_tree_submit(
         "close_read_n": len(out["close_read"]),
         "n_pairs": out["n_pairs"],
         "stage1_names": out["stage1_names"],
+        # C-140：二筛显式序 id 列表（候选池；只 id、零分值零系数）
+        "rerank_order_n": len(out["rerank_order"]),
+        "rerank_order": [str(x) for x in out["rerank_order"]],
     }
     from app.kg_lab.layer_boundary import audit_forbidden_keys
 

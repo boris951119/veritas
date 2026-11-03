@@ -527,6 +527,10 @@ class Settings:
     # env VERITAS_MULTI_BOX／VERITAS_MULTI_BOX_MAX；config.json multi_box／multi_box_max。
     multi_box: bool = True
     multi_box_max: int = 3
+    # C-140：交卷硬 Top-7＋冲突成对保位（只重写分析师焦点面）。默认 True
+    # ＝本刀行为出厂开；关＝VERITAS_SUBMIT_TOP7=0（config.json submit_top7）
+    # 回退旧可变 k 焦点面（与改前逐字相同、accounting 无 submit_top7 键）。
+    submit_top7: bool = True
     # C-99：锚审支撑分 + A0 软保底装箱。默认 True＝Boyu 10-30 拍「默认先开」。
     # 关＝VERITAS_REVIEW_BOOST=0。失败／测试禁真调用 → 回退现产 A0 并披露。
     # ⚠ 增加装箱前 LLM 调用（抽锚＋批审±补召回）；不许说官方涨分。
@@ -832,6 +836,11 @@ class Settings:
         mbm = (os.environ.get("VERITAS_MULTI_BOX_MAX") or "").strip()
         if mbm.isdigit() and int(mbm) >= 1:
             s.multi_box_max = int(mbm)
+        st7 = (os.environ.get("VERITAS_SUBMIT_TOP7") or "").strip().lower()
+        if st7 in ("0", "false", "off", "no"):
+            s.submit_top7 = False
+        elif st7 in ("1", "true", "on", "yes"):
+            s.submit_top7 = True
         rb = (os.environ.get("VERITAS_REVIEW_BOOST") or "").strip().lower()
         if rb in ("0", "false", "off", "no"):
             s.review_boost = False
@@ -1010,6 +1019,13 @@ class Settings:
             if isinstance(raw_mbm, int) and not isinstance(raw_mbm, bool) \
                     and raw_mbm >= 1:
                 s.multi_box_max = raw_mbm
+        if "submit_top7" in data:
+            raw_st7 = data.get("submit_top7")
+            if isinstance(raw_st7, bool):
+                s.submit_top7 = raw_st7
+            elif isinstance(raw_st7, (int, str)):
+                s.submit_top7 = str(raw_st7).strip().lower() not in (
+                    "0", "false", "off", "no", "")
         if "review_boost" in data:
             raw_rb = data.get("review_boost")
             if isinstance(raw_rb, bool):
