@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>veritas 流水线步骤树 · 花盆生长版 · 2026-10-27</title>
+<title>veritas 流水线步骤树 · 花盆生长版 · 2026-11-03</title>
 <style>
   :root {
     --bg: #f3f4f6;
@@ -366,8 +366,8 @@
   <p class="top-link">旧全景图（2026-10-12 版）已退役：逐项读数与长文都在 <code>docs/HANDOFF.md</code>，关键点已迁入本树标签弹窗，日常不必再开。</p>
 
   <h1>veritas 流水线步骤树</h1>
-  <p class="sub">从上到下：从「用户丢材料＋提问」走到「交官方 JSON」· 花盆树干版 · 2026-10-27</p>
-  <p class="legend">读法：从上往下＝流程前进（01 顶 → 27 底）；花盆＝入口在顶；彩色竖干＝同一条流水线；左右交替水平枝。橙色卡＝<strong>当前主修＝装窗／续盒看全</strong>（续盒已入库默认开；单窗另接审阅软保底默认开；末盒归并仍未接）。红底标签＝<strong>已知问题</strong>（仅标有 HANDOFF／量尺证据的）。每步一两句白话。点<strong class="hint-click">橙主修／红问题／蓝要点</strong>标签 → 弹出仍有效的关键信息（白话＋可选量尺）。</p>
+  <p class="sub">从上到下：从「用户丢材料＋提问」走到「交官方 JSON」· 花盆树干版 · 同步 2026-11-03 夜 · tip c833ee2（C-135 docs）</p>
+  <p class="legend">读法：从上往下＝流程前进（01 顶 → 27 底）；花盆＝入口在顶；彩色竖干＝同一条流水线；左右交替水平枝。<strong>唯一主线＝测试树整线，出厂默认开（无 env 即走）</strong>：切段标签 → 问题扩写／KG 召回进池 → 一筛 stage1 多维加权 → 二筛缩盒（可变 k／簇 keep-one／conflict_pairs／密度≥约 2/3＋交卷 rank）→ 交卷窄面（不带系数）→ 树17 只管引用；扩写计数披露在 <code>accounting.kg_test_tree.expand</code>（C-135：enabled／terms_n／paraphrase_n）。旧预算＋BM25 交卷主路已删（C-132／C-133）＝没有第二路可走；显式 <code>VERITAS_TEST_TREE_LINE=0</code>＝跳过交卷面（不回旧路）。绿标＝已入库·默认开（交卷窄面／主线一筛池／续盒／审阅软保底；短盒回灌旗默认开）；蓝点＝要点／已入库·默认关（C-114～C-117 旁路四件，与主线默认开分开写）；红底＝已知问题（树15 满箱仍红；树17 引用条数偏少——带外乱引已消）；橙标＝停线（冲突数值线 STOP）。C-134 两案并线复验三闸曾过（镜像＝生产逐位等价）、探针已入库；C-135 扩写披露进账。C-113／121／122／123／124＝旧档已废、不合、不作路线图。正式 Nov 5 测集＝只交卷。下一步刀＝问题树／树17 引用条数。点<strong class="hint-click">绿标／蓝点／红问题</strong> → 弹窗。</p>
 
   <div class="tree">
     <!-- 多色竖干（贯穿全部枝到花盆） -->
@@ -527,8 +527,8 @@
           <div class="card">
             <div class="icon"><svg viewBox="0 0 24 24"><path d="M8 6h8M6 12h12M9 18h6"/><path d="M12 6v12"/></svg></div>
             <div class="body">
-              <div class="title"><span class="num">09</span>问句同义拓展 <span class="tip" tabindex="0" role="button" data-pop="s09">要点·云端未验</span></div>
-              <p class="note">原问＋变体给后面 BM25 用；机械闸拦住换主体、瞎编实体。</p>
+              <div class="title"><span class="num">09</span>问句同义拓展 <span class="tip" tabindex="0" role="button" data-pop="s09">要点·主线扩写常开</span></div>
+              <p class="note">主线：测试树侧问句扩写常开（经典臂对原问＋规则改写各做一次扩写再融合；计数进 accounting.kg_test_tree.expand＝C-135）。机械闸拦住换主体、瞎编实体。</p>
             </div>
           </div>
         </div>
@@ -582,7 +582,7 @@
         <div class="slot right empty"></div>
       </div>
 
-      <!-- 13 右 黄橙 · 主修 -->
+      <!-- 13 右 黄橙 · 主线① KG召回进池（测试树整线·默认开） -->
       <div class="row" style="--c:#f9a825">
         <div class="slot left empty"></div>
         <div class="hub"></div>
@@ -591,21 +591,21 @@
           <div class="card focus">
             <div class="icon"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"/><path d="M20 20l-3.5-3.5"/><path d="M8 11h6"/></svg></div>
             <div class="body">
-              <div class="title"><span class="num">13</span>BM25 精排 <span class="badge" tabindex="0" role="button" data-pop="s13">当前主修带</span></div>
-              <p class="note">按拓展后的问句给段落打分排序；找得到，才谈得上往后装。</p>
+              <div class="title"><span class="num">13</span>KG 召回前端进池 <span class="tip" tabindex="0" role="button" data-pop="s13t" title="主线前置：切段／标签槽位">切段标签·主线前置</span> <span class="tip" tabindex="0" role="button" data-pop="s13" title="测试树主线①：KG 召回进池（出厂默认开）">主线①·默认开</span></div>
+              <p class="note">主线①：切段标签之后走 KG 召回前端进池（无 env 即走；出厂默认开）。旧「BM25 精排→装窗」交卷主路已删（C-132／C-133）＝没有第二路。</p>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- 14 左 橙 · 主修 -->
+      <!-- 14 左 橙 · 主线② 一筛 stage1 多维加权 -->
       <div class="row" style="--c:#fb8c00">
         <div class="slot left">
           <div class="card focus">
             <div class="icon"><svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M7 10h4M7 14h8"/></svg></div>
             <div class="body">
-              <div class="title"><span class="num">14</span>对齐窗口缩预算 <span class="badge" tabindex="0" role="button" data-pop="s14">当前主修</span></div>
-              <p class="note">用「和生产同形」的提示词估会不会超窗；超了就有界缩字预算，装不下要披露。</p>
+              <div class="title"><span class="num">14</span>一筛 stage1 多维加权 <span class="tip" tabindex="0" role="button" data-pop="s14" title="主线②：stage1 pool 多维加权进池（出厂默认开）">主线②·默认开</span></div>
+              <p class="note">主线②：一筛 stage1 pool 多维加权筛池；出口只出池序，系数不过窄面。提示词层的对齐窗口缩预算照常在跑（与旧交卷主路的删除无关）。</p>
             </div>
           </div>
           <div class="arm left"></div>
@@ -614,7 +614,7 @@
         <div class="slot right empty"></div>
       </div>
 
-      <!-- 15 右 蓝 · 主修 -->
+      <!-- 15 右 蓝 · 主线③④ 二筛缩盒＋交卷窄面 -->
       <div class="row" style="--c:#1e88e5">
         <div class="slot left empty"></div>
         <div class="hub"></div>
@@ -623,21 +623,21 @@
           <div class="card focus">
             <div class="icon"><svg viewBox="0 0 24 24"><path d="M4 7h7v10H4zM13 7h7v6h-7zM13 15h7v2h-7z"/></svg></div>
             <div class="body">
-              <div class="title"><span class="num">15</span>预算装箱（单窗） <span class="badge" tabindex="0" role="button" data-pop="s15a">当前主修</span> <span class="badge-ok" tabindex="0" role="button" data-pop="s15b" title="C-99 审阅软保底默认开">审阅软保底·默认开</span> <span class="issue" tabindex="0" role="button" data-pop="s15">L2装不下／窗口满箱</span></div>
-              <p class="note">按分数把段装进上下文；全员同料钉死。默认再跑锚审支撑分＋A0 软保底（B=7000）；关＝VERITAS_REVIEW_BOOST=0。</p>
+              <div class="title"><span class="num">15</span>二筛缩盒＋交卷窄面 <span class="tip" tabindex="0" role="button" data-pop="s15e" title="主线③④：二筛缩盒＋交卷窄面（出厂默认开）">主线③④·默认开</span> <span class="badge-ok" tabindex="0" role="button" data-pop="s15c" title="C-107～C-111 交卷窄面默认开">交卷窄面·默认开</span> <span class="badge-ok" tabindex="0" role="button" data-pop="s15b" title="C-99 审阅软保底默认开">审阅软保底·默认开</span> <span class="tip" tabindex="0" role="button" data-pop="s15d" title="C-117 有界减压已入库·默认关">有界减压·默认关</span> <span class="issue" tabindex="0" role="button" data-pop="s15">L2装不下／窗口满箱</span></div>
+              <p class="note">主线③④：二筛缩盒（可变 k／簇 keep-one／conflict_pairs／密度≥约 2/3＋交卷 rank）→ 交卷窄面（不带系数；全员同料）——出厂默认开。旧「预算装箱」交卷主路已删（C-132／C-133）。审阅软保底默认开；满箱减压默认关。扩写计数进 accounting.kg_test_tree.expand（C-135）。树15 满箱红标仍在。</p>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- 16 左 红 · 主修 -->
+      <!-- 16 左 红 · 续盒（已入库·默认开） -->
       <div class="row" style="--c:#e53935">
         <div class="slot left">
           <div class="card focus">
             <div class="icon"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="7" height="14" rx="1"/><rect x="14" y="5" width="7" height="14" rx="1"/><path d="M10 12h4"/></svg></div>
             <div class="body">
-              <div class="title"><span class="num">16</span>续盒看全（多箱） <span class="badge" tabindex="0" role="button" data-pop="s16">已入库·默认开</span></div>
-              <p class="note">单窗塞不下就拆成多箱续喂（有上限）。首箱三分析师；第 2‥N 箱定向补答。关＝VERITAS_MULTI_BOX=0。末箱归并仍未接。</p>
+              <div class="title"><span class="num">16</span>续盒看全（多箱） <span class="badge-ok" tabindex="0" role="button" data-pop="s16">已入库·默认开</span></div>
+              <p class="note">续盒仍默认开（与测试树总旗无关）：单窗塞不下就拆成多箱续喂（有上限）。首箱三分析师；第 2‥N 箱定向补答。关＝VERITAS_MULTI_BOX=0。末箱归并仍未接。</p>
             </div>
           </div>
           <div class="arm left"></div>
@@ -655,8 +655,8 @@
           <div class="card">
             <div class="icon"><svg viewBox="0 0 24 24"><circle cx="8" cy="9" r="2.5"/><circle cx="16" cy="9" r="2.5"/><circle cx="12" cy="16" r="2.5"/><path d="M10 10.5l1.2 3.2M14 10.5l-1.2 3.2"/></svg></div>
             <div class="body">
-              <div class="title"><span class="num">17</span>三分析师并行 <span class="issue" tabindex="0" role="button" data-pop="s17">L3引用不足</span> <span class="tip" tabindex="0" role="button" data-pop="s17b">病因1·双峰</span></div>
-              <p class="note">每人只见议题＋同一盒材料＋自身角色，互看不到别人输出；有人空交付记减员。</p>
+              <div class="title"><span class="num">17</span>三分析师并行 · 树17 只管引用 <span class="tip" tabindex="0" role="button" data-pop="s17c" title="主线⑤：tree17 只管引用／名单（出厂默认开）">主线⑤·默认开</span> <span class="issue" tabindex="0" role="button" data-pop="s17">引用条数偏少</span> <span class="tip" tabindex="0" role="button" data-pop="s17b">病因1·双峰</span></div>
+              <p class="note">主线⑤：树17 只管引用（读盒＋rank＋pairs，不重 pack、不带系数）——出厂默认开。三人硬隔离只见议题＋同一盒＋自身角色；空交付记减员。带外乱引已消；仍红＝引用条数偏少（盒里有金标也不够引）。依据＝C-134：计划层金标→close 1.0、14B 真跑核对失败 0、L3 命中仍低。勿把 C-113／121／122 当路线图。</p>
             </div>
           </div>
         </div>
@@ -668,7 +668,7 @@
           <div class="card">
             <div class="icon"><svg viewBox="0 0 24 24"><path d="M7 4h10v16H7z"/><path d="M10 8h4M10 12h4M10 16h2"/></svg></div>
             <div class="body">
-              <div class="title"><span class="num">18</span>引文逐字核对 <span class="tip" tabindex="0" role="button" data-pop="s18">主张·原文定位</span></div>
+              <div class="title"><span class="num">18</span>引文逐字核对 <span class="tip" tabindex="0" role="button" data-pop="s18">主张·原文定位</span> <span class="tip" tabindex="0" role="button" data-pop="s18b" title="C-114 证据定位稳已入库·默认关">锚稳·默认关</span></div>
               <p class="note">挂不上原文的引用直接打掉，结论不能空口。</p>
             </div>
           </div>
@@ -732,7 +732,7 @@
           <div class="card">
             <div class="icon"><svg viewBox="0 0 24 24"><path d="M7 8h10M7 12h10M7 16h6"/><path d="M17 14l2 2-2 2"/></svg></div>
             <div class="body">
-              <div class="title"><span class="num">22</span>归并 → 冲突 → 质证 → 仲裁 <span class="issue" tabindex="0" role="button" data-pop="s22">2.5冲突口径</span> <span class="badge" tabindex="0" role="button" data-pop="s22">冲突数值线 STOP</span></div>
+              <div class="title"><span class="num">22</span>归并 → 冲突 → 质证 → 仲裁 <span class="issue" tabindex="0" role="button" data-pop="s22">2.5冲突口径</span> <span class="badge" tabindex="0" role="button" data-pop="s22">冲突数值线 STOP</span> <span class="tip" tabindex="0" role="button" data-pop="s22b" title="C-115 冲突三类＋处置留痕已入库·默认关">三类留痕·默认关</span> <span class="tip" tabindex="0" role="button" data-pop="s22c" title="C-123 可用枝＝已废·不合；C-124 否决归档">已废旧枝·不合</span></div>
               <p class="note">多视角结论先合并；对撞的两边互相质证，再由仲裁定输赢。2026-10-28 边界起，语义对撞与主张级相关性归这一环裁（在 17 出货之后），不在树10——树10 只交台账时间标签与预检披露。⚠ 归口不等于已有程序侧闸。</p>
             </div>
           </div>
@@ -764,7 +764,7 @@
           <div class="card">
             <div class="icon"><svg viewBox="0 0 24 24"><path d="M12 3v3M12 18v3M4.9 6.5l2.1 2.1M17 15.4l2.1 2.1M3 12h3M18 12h3M4.9 17.5l2.1-2.1M17 8.6l2.1-2.1"/><circle cx="12" cy="12" r="3.5"/></svg></div>
             <div class="body">
-              <div class="title"><span class="num">24</span>置信度融合 <span class="tip" tabindex="0" role="button" data-pop="s24">主张·硬门＋转载</span></div>
+              <div class="title"><span class="num">24</span>置信度融合 <span class="tip" tabindex="0" role="button" data-pop="s24">主张·硬门＋转载</span> <span class="tip" tabindex="0" role="button" data-pop="s24b" title="C-116 置信档校准闸已入库·默认关">校准闸·默认关</span> <span class="tip" tabindex="0" role="button" data-pop="s22c" title="C-123 可用枝＝已废·不合；C-124 否决归档">已废旧枝·不合</span></div>
               <p class="note">因果主张闸＋一致性等规则重算多数／异议结论的可信度；只讲机制、不自称达标。</p>
             </div>
           </div>
@@ -783,7 +783,7 @@
           <div class="card">
             <div class="icon"><svg viewBox="0 0 24 24"><path d="M6 4h12v16H6z"/><path d="M9 8h6M9 12h6M9 16h4"/></svg></div>
             <div class="body">
-              <div class="title"><span class="num">25</span>主席汇总 <span class="issue" tabindex="0" role="button" data-pop="s25">2.3部分一致</span></div>
+              <div class="title"><span class="num">25</span>主席汇总 <span class="issue" tabindex="0" role="button" data-pop="s25">2.3部分一致</span> <span class="tip" tabindex="0" role="button" data-pop="s22c" title="C-123 可用枝＝已废·不合；C-124 否决归档">已废旧枝·不合</span></div>
               <p class="note">收成可读叙事；未答子问、未用关键段写进待办／缺口。</p>
             </div>
           </div>
@@ -855,46 +855,64 @@
       ruler: '量尺：比赛路径＝官方段直用，自切对照只能仓外探针硬套，不是交卷真实路径 ⇒ 用比赛用例测不出自切优劣对官方分的贡献。自切残留风险（通用路径）：定长／空行断段可能劈数或指标与数字分家 → BM25 漏命中；台账「裸数不进」→ 真冲突静默消失（见步骤 10）。「劈数字」7 击复核多为时间戳假阳。'
     },
     s09: {
-      title: '09 · 同义拓展：买到名次、没买到分（云端仍未验）',
-      meta: '问题带② · 仍有效',
-      body: '有模型时生成同义问法（原议题不替换），机械闸拦住换主体、瞎编实体——闸本身有 16 颗离线守护格。⚠ 此前这里写的「本地 14B 抽检 8/8 ok」在仓库账里查无出处（10-27 收编本图时逐条回查过），已改标［未量］；云端同样没验过。',
-      ruler: '量尺：［未量］＝"拓展后金标段 Top-K 是否优于纯原问"从没配对量过。要量＝同案卷两臂（拓展开／关）比金标名次，零付费可跑。 ｜ 2026-10-27 树09 已量（六案 18 题、同案卷两臂、生成源＝产物缓存、零新调用）：金标进 Top-20＝on 27 对 off 22、Top-50＝44 对 38、每题金标名次中位 83 对 96 ⇒ 名次确实前移；但 L2 只 48 对 46（+2/105）、且 3 题反而退 1～2 段 ⇒ 结论＝留着，别指望它买分（2.4 首档要 58 段命中）。'
+      title: '09 · 同义拓展：主线扩写常开（云端仍未验）',
+      meta: '问题带② · 主线在用 · C-135 起计数进账',
+      body: '主线（测试树侧）问句扩写常开：经典臂对原问＋规则改写各做一次 keyword_expand_query 再融合进 BM25／嵌入视图；扩写计数（enabled／terms_n／paraphrase_n）写进 accounting.kg_test_tree.expand（C-135，只记计数、词表原文不进窄面）。机械闸拦住换主体、瞎编实体——闸本身有 16 颗离线守护格。⚠ 此前「本地 14B 抽检 8/8 ok」在仓库账里查无出处，已标［未量］；云端同样没验过。',
+      ruler: '量尺：［未量］＝"拓展后金标段 Top-K 是否优于纯原问"从没配对量过。要量＝同案卷两臂（拓展开／关）比金标名次，零付费可跑。 ｜ 2026-10-27 旧线上已量（六案 18 题、同案卷两臂、生成源＝产物缓存、零新调用；历史读数、旧线口径）：金标进 Top-20＝on 27 对 off 22、Top-50＝44 对 38、每题金标名次中位 83 对 96 ⇒ 名次确实前移；但 L2 只 48 对 46（+2/105）、且 3 题反而退 1～2 段 ⇒ 别指望它单独买分。'
     },
     s10: {
       title: '10 · 议题预检＋时间纪律（程序侧贴标与披露）',
       meta: '2026-10-28 夜 · 实现票齐 · C-69／C-78／C-79／C-80① 默认开·Boyu拍板 · 不许说涨分',
-      body: '【本环＝程序侧两条；实现票已齐】① 议题预检贴标与披露：议题前提／缺时间／时点不明＝已实现；C-78＝对撞行追加「组内相对偏差（中位数±k×MAD）」派生标签（`97d1570`，默认开，关＝VERITAS_LEDGER_OUTLIER_TAG=0）；C-80①＝规范量名覆盖行（rule:v1 机械赋值，原 metric 保留，分组键优先 canon，默认开，关＝VERITAS_METRIC_CANON=0）；C-79＝同值多时点标「重复报道」＋黄灯（默认开，关＝VERITAS_EVOLVE_VALUE_CHANGE=0）。能贴就贴、能披露就披露，不替模型下结论。② 时间纪律：C-69 键名统一读点＋同窗／跨日／时点不明三档＋过时黄牌（〔196〕默认开）。C-76／C-77 已量完＝不开实现票（别名前提错／按时间合并落点错）。【本环不做】对撞裁决、语义去重砍行、主张级相关性 → 树22。材料级相关性 → 树15／16。【残留（诚实披露，不是未完成实现票）】同源转载独立预检标签树10 未另立（冲突侧已有「已折掉 N 件同源转载」）；C-80 模型契约＋配对真跑／涨分证明排 11/6 后；台账老病＝字面分组漏真冲突、差约 1% 就叫冲突、只记抓到不记漏了。⚠ 不许说涨分；不许说「已能识别重复报道」。',
+      body: '【本环＝程序侧两条；实现票已齐】① 议题预检贴标与披露：议题前提／缺时间／时点不明＝已实现；C-78＝对撞行追加「组内相对偏差（中位数±k×MAD）」派生标签（`97d1570`，默认开，关＝VERITAS_LEDGER_OUTLIER_TAG=0）；C-80①＝规范量名覆盖行（rule:v1 机械赋值，原 metric 保留，分组键优先 canon，默认开，关＝VERITAS_METRIC_CANON=0）；C-79＝同值多时点标「重复报道」＋黄灯（默认开，关＝VERITAS_EVOLVE_VALUE_CHANGE=0）。能贴就贴、能披露就披露，不替模型下结论。② 时间纪律：C-69 键名统一读点＋同窗／跨日／时点不明三档＋过时黄牌（〔196〕默认开）。C-76／C-77 已量完＝不开实现票（别名前提错／按时间合并落点错）。【本环不做】对撞裁决、语义去重砍行、主张级相关性 → 树22。材料级相关性 → 树15／16。【残留（诚实披露，不是未完成实现票）】同源转载独立预检标签树10 未另立（冲突侧已有「已折掉 N 件同源转载」）；C-80 模型契约＋配对真跑／涨分证明排 11/6 后；台账老病＝字面分组漏真冲突、差约 1% 就叫冲突、只记抓到不记漏了。⚠ 不许说涨分；不许说「已能识别重复报道」。旁注（C-118 合入）：这里的时间三档名（同窗／跨日／时点不明）＝冲突侧 C-115 归类沿用的同一套名，没另发明第四类主路径；C-115 已入库但默认关（见步骤 22 蓝标），本环这四张旗仍默认开。',
       ruler: '两句不许说：①别把「漏了但知道漏了」说成这一环已经盖住；②别把「标签默认开／文案收窄」说成「已提分」。｜量过（10-27）：补字段名后三档＝同窗 26／跨日 50／时间不明 32。｜本环在＝预检＋时间纪律＋C-69／C-78／C-79／C-80①（均默认开）。｜本环不在＝对撞裁决／语义去重／主张级相关性（→22）。｜量完不开票＝C-76／C-77。｜后置＝C-80 模型契约＋配对真跑。',
     },
     s13: {
-      title: '13 · 精排：便宜招已量尽',
-      meta: '主修带 · 漏斗 L2 侧 · C-89 只量旁注',
-      body: '按拓展后的问句给段落打分排序。生产里用的仍是词面 BM25＋密度键（现产读数 48/105）；C-62 五臂对照量尽＝最高一臂 54/105 但仍丢命中，没一臂过线（门槛＝≥54/105 且 gained≥6 且 lost=0）→ 不进生产。⚠ 别把这条读成「已换更强精排」。旁注（C-89 只量）：借鉴唯稳律＝装箱前三态闸／拒标通道（allow／deny／review），非因果发现、不接 DSH；挂点在召回后装箱前；实测闸臂 L2 24/105、误杀金标高 → 默认关、不进生产。 旁注（C-93 只量）：双切召回合并候选后仍按官方段装箱；六案 RRF 最好 47/105 lost=7 ⇒ 逃逸、默认关。旁注（C-95 只量）：刘翔主尺复放软保底±C-85；排序族尽，杠杆在装箱键／到达。→ C-99 已把「审阅分＋A0+B」合入单窗装箱默认开（见步骤 15 绿标），此处不重复画成精排替换。',
-      ruler: '量尺口径：分母 105 金标段；剩下的代价是「多装模型＋必须联网带钥匙」。C-89＝结构纪律借鉴，不是「已接入唯稳律因果引擎」。精排本身仍是词面 BM25。'
+      title: '13 · 主线①：KG 召回前端进池',
+      meta: 'tip c833ee2 · 测试树整线 · 出厂默认开（无 env 即走）',
+      body: '主线第①步：切段标签之后走 Obsidian KG 召回前端进池（召回→一筛→二筛→窄面→树17 cite 整线的一部分）。C-125 端口、C-127 缓存披露、C-128 case_slug；C-132 起出厂默认开＝唯一主线，无 env 即走。显式 VERITAS_TEST_TREE_LINE=0＝跳过交卷面（不回旧路——旧「BM25 精排→装窗」交卷主路已删＝C-133，模块级删除，import 必失败）。不宣称涨分。',
+      ruler: '旁证（C-134 两案并线复验，零 LLM 镜像＋等价断言）：镜像盒与生产入口逐位相等 6/6；三闸读数与 R44／C-129 逐位一致（刘翔@7＝12；王虹微密度 0.8571；leak＝0）。'
+    },
+    s13t: {
+      title: '13 · 主线前置⓪：切段／标签槽位',
+      meta: '测试树主线前置 · tip c833ee2 · 总旗出厂默认开',
+      body: '测试树主线第⓪步：切段／标签槽位（segment／tag slots）——摘要窗与 portable tags 为后续 KG 召回备料。主线可读暖摘要（如 .kg_lab_vault）；缺摘要／vault／嵌入时须有披露（accounting.kg_test_tree.cache／embed＝C-127），不静默空面。本步不改官方 para_id 交卷口径。⚠ 细节以仓内 kg_test_tree_line／kg_lab 接线为准；此处只标主线位置。',
+      ruler: null
     },
     s14: {
-      title: '14 · 对齐窗口：超窗不是丢一截',
-      meta: '当前主修 · 仍有效',
-      body: '用「和生产同形」的整条提示词估会不会超窗（系统＋议题＋资料围栏，不只装箱字数）。一超窗，常见行为是整条截到约半窗——前面的纪律／议题都可能丢，只剩尾巴。',
-      ruler: '量尺：约束必须落在渲染后的整条提示词上（发送前估窗、不截断不收窄）。实测两条＝同一模型 2 万字报 2,050 tok、4.8 万字报 8,194 tok ⇒ 服务端报的输入 token 数不可信，只有"暗号复述"能判到没到；同码同案卷现场重算，缩档后的预算相对差 −7.57%～+9.54%（18/18 题）＝窗那层稳、不稳的是收敛到哪一步。'
+      title: '14 · 主线②：一筛 stage1 多维加权',
+      meta: 'tip c833ee2 · 测试树整线 · 出厂默认开 · 系数不过窄面',
+      body: '主线第②步：一筛 stage1 pool 做多维加权筛池（app/kg_lab/stage1_pool＋r8/r9/r21 系数只活在一筛打分）；出口只出 pool 序，系数不得整包进交卷窄面／pack（FORBIDDEN_PACK_KEYS 审计）。C-134 复验＝镜像与生产逐位等价。提示词层的对齐窗口缩预算照常在跑（那是渲染层机制，与已删的旧交卷主路无关）。旁注：app/core 下两个 C-109／C-111 旧适配件（kg_stage1_pool／kg_rehydrate）自 C-133 删桥后暂无主线调用方＝孤儿，待 Boyu 处置。',
+      ruler: null
     },
-    s15a: {
-      title: '15 · 单窗装箱＝当前主修',
-      meta: '主修橙标 · 现产仍先 pack_material（A0）',
-      body: '按分数把段装进上下文，全员同料钉死；装不下的段记排除原因并披露。默认按模型窗口装箱（可回字预算老路）。随后默认接审阅软保底（见绿标 s15b）；提示词只读 accounting 的 material_pack_selected。',
-      ruler: '和红标同一件事：L2 上限是窗口大小，不是再换一个排序算法。'
+    s15c: {
+      title: '15 · 交卷窄面（C-107～C-111）已入库·默认开',
+      meta: 'tip c833ee2 · 窄面绿标默认开 · 系数隔离 · 与主线整线同一出口',
+      body: '交卷窄面＝主线出口（C-132 起与测试树整线一体，默认开）：C-107＝禁系数进装箱（FORBIDDEN_PACK_KEYS＋assert_clean_pack_kwargs）；C-108 的交卷槽位现由测试树整线出 surface（密度桥本体已删＝C-133）；C-109／C-111 的 app/core 旧适配件暂无主线调用方＝孤儿待处置（主线一筛真身在 app/kg_lab/stage1_pool）。⚠ 窄面≠窗口变大：改的是「交哪几段」的顺序与形状，满箱红标不动。',
+      ruler: '量尺（C-134 两案并线复验，不宣称涨分）：镜像＝生产逐位等价 6/6；刘翔@7＝12、微密度 0.5714；王虹 0.8571、q_002 67%；泄漏／FORBIDDEN＝0。｜开关：总旗＝VERITAS_TEST_TREE_LINE（出厂默认开，显式 0＝跳过交卷面）；硬顶段数＝VERITAS_KG_CAP_SEGMENTS（默认关）。'
+    },
+    s15d: {
+      title: '15 · 满箱有界减压（C-117）已入库·默认关',
+      meta: 'C-118 末批合入 · 旗 VERITAS_TREE15_DEPRESS 默认关 · 模块 app/core/tree15_depress.py',
+      body: '主路径＝`bounded_budget_bump`：首装出现 excluded（装不下）时，再给一档字预算重装一次，硬顶＝factor≤1.5 且绝对上限≤120k，并可把续盒上限 +1（最多 4 箱）；挂点在装箱／审阅软保底之后，仍过 `FORBIDDEN_PACK_KEYS` 守卫。禁无界开窗，禁多维系数整包进装箱。未设 env＝走旧窗＝生产行为与合入前相同。⚠ 这条只减压，不宣称灭红标：开减压旗后仍装不下的题数没变（见量尺），红标仍挂在本步。',
+      ruler: '量尺（现抄 `artifacts/C117_tree15_depress.md`，零 LLM 开关对照）：L2 合计（刘翔＋holdout）关 42 → 开 48（Δ+6；刘翔 13→13、holdout 29→35）；满箱题数关 12／减压旗触发 12／开后仍 excluded 仍是 12；旁证刘翔@7 关 12／开 12；泄漏 0。⇒ 到达侧在 holdout 上动了 6 段，窗口满箱本身没解。关＝默认；开＝VERITAS_TREE15_DEPRESS=1。',
+    },
+    s15e: {
+      title: '15 · 主线③④：二筛缩盒＋交卷窄面',
+      meta: 'tip c833ee2 · 测试树整线 · 出厂默认开 · C-134 两案复验三闸曾过',
+      body: '主线第③④步：二筛缩盒（可变 k／通稿簇 keep-one／conflict_pairs／密度≥约 2/3＋交卷前 rank）→ 交卷窄面（不带系数；FORBIDDEN_PACK_KEYS 双闸）。整条主线＝切段标签→问题扩写／KG 召回→一筛→二筛→窄面→树17 cite；出厂默认开＝无 env 即走，显式 0＝跳过交卷面。C-125～128 端口与披露；C-132 删旧路＋默认开；C-133 清桥；C-134 两案并线复验＝三闸曾过、镜像＝生产逐位等价；C-135 扩写计数进 accounting.kg_test_tree.expand（enabled／terms_n／paraphrase_n）。树15 满箱红标不因此动。',
+      ruler: '旁证（C-134，零 LLM 门控复刻＋真跑 14B 各 3 题）：刘翔@7＝12、微密度 0.5714；王虹 0.8571、q_002 67%；计划层金标→close 1.0；leak＝0；读数与 R44／C-129 逐位一致。下一步刀＝问题树／树17 引用条数。'
     },
     s15b: {
       title: '15 · 审阅软保底（C-99）已入库·默认开',
       meta: 'Boyu 10-30 拍「默认先开」；VERITAS_REVIEW_BOOST／review_boost_b=7000／k=180；失败／桩／测试守卫→回退 A0',
-      body: 'A0 装箱后：BM25 前 K 候选 → LLM 抽审查锚 + 批审「直接支撑」分 → 弱锚补召回再审 → 融合分＝审阅×1000＋bm25_norm，A0 段再 +B，分主序装箱。关旗／无真实 ModelClient／测试守卫上膛／任一步异常 ⇒ 回退 A0 并披露 accounting.review_boost。⚠ 刘翔配对尺 IMPROVE（9→11/14 lost=0）；恒兴旁证 Δ0；不许说官方涨分；全链路答题真跑另票。',
+      body: 'A0 装箱后：BM25 前 K 候选 → LLM 抽审查锚 + 批审「直接支撑」分 → 弱锚补召回再审 → 融合分＝审阅×1000＋bm25_norm，A0 段再 +B，分主序装箱。关保底旗（VERITAS_REVIEW_BOOST=0）／无真实 ModelClient／测试守卫上膛／任一步异常 ⇒ 回退 A0 并披露 accounting.review_boost。⚠ 刘翔配对尺 IMPROVE（9→11/14 lost=0）；恒兴旁证 Δ0；不许说官方涨分；全链路答题真跑另票。',
       ruler: '量尺（合入依据＝HANDOFF〔221〕〔222〕）：刘翔 14 金标段 A0 9→on 11 lost=0 gained=2；B=7000 钉死不扫参；回滚＝VERITAS_REVIEW_BOOST=0。'
     },
     s15: {
       title: '15 · L2 装不下／窗口满箱',
-      meta: '已知问题 · 漏斗',
-      body: '六案金标「理论必读量」往往小于窗口，但装进去的大量是无关段；资格线、混合检索、精排补位都量过——能塞下的候选经常是 0 段。C-99 软保底抬的是到达侧（刘翔尺），不是窗口上限本身。',
-      ruler: '量尺：六案 L2 ≈ 48/105（旧 A0）；预算 ×2→66、×3→74；oracle 开大箱→90、全开→105。⇒ 上限是窗口，不是算法。刘翔主尺另见 s15b。'
+      meta: '已知问题 · 漏斗 · tip c833ee2',
+      body: '六案金标「理论必读量」往往小于窗口，但装进去的大量是无关段。C-99 软保底抬的是到达侧，不是窗口上限；交卷窄面只改「交哪几段」；C-117 有界减压旗开后「仍装不下」题数照旧＝红标不灭（该旗＝VERITAS_TREE15_DEPRESS 还默认关）。测试树整线同样不碰窗口上限——红标仍挂。',
+      ruler: '量尺：六案 L2 ≈ 48/105（旧 A0，历史读数）；预算 ×2→66、×3→74；oracle 开大箱→90、全开→105。⇒ 上限是窗口，不是算法。刘翔主尺另见 s15b；减压臂另见 s15d；主线整线另见 s15e。'
     },
     s16: {
       title: '16 · 续盒看全（多箱）',
@@ -903,15 +921,21 @@
       ruler: '量尺（合入前）：六案 105 金标段、离线装箱＝单窗 48 → 三箱并集 71；一次开大窗 ×3＝74 ＞ 续盒 71（税＝每箱非正文开销）。真跑小样（印航 q_001、本机 14B）＝三盒合计 ≈2.87× 墙钟。生产形态本轮＝定向续盒（非整面板×N）。'
     },
     s17: {
-      title: '17 · L3 引用不足',
-      meta: '已知问题 · 漏斗',
-      body: '三人硬隔离只见同一盒材料；有人空交付记减员（封面说谎已修）。材料到了分析师，引用／覆盖仍偏弱——二次定向是补丁，不是根治。',
-      ruler: '量尺方向：补漏后曾见 L3 抬一截，但归因只能诚实记「可复现＋几段」，别写虚高增益。'
+      title: '17 · 引用条数偏少',
+      meta: '已知问题 · 漏斗 · tip c833ee2 · 红标仍在（带外乱引已消）',
+      body: '红标改口径：带外乱引已消（C-134 实测带宽外引用 0——引用都落在交卷盒内）；仍红＝引用条数偏少：盒里有金标也不够引（C-130 开臂 L3 均值 2.875→1.50 反而更少；C-134 真跑六题 L3 命中 1/4～2/5 量级）。旁证：计划层金标→close 1.0（盒里有、名单也排进了细读）；14B 真跑引文核对失败 0（转写质量那桶已清零）。⚠ 不是「以前那套全坏」，也不是「已修好」——缺的是引用条数这一环。多维系数仍禁进装箱；C-113／121／122＝旧档已废、不作路线图。',
+      ruler: '量尺（C-134 真跑，本机 14B、温度未钉）：L3 金标被引 liuxiang 1/4、1/5、2/5；wanghong 1/5、1/5、1/9；引文核对失败 0；带宽外引用 0。计划层（零 LLM）金标→close 1.0。⚠ 分析师枝旧合规尺≠官方 2.4；不作过线宣称。'
+    },
+    s17c: {
+      title: '17 · 主线⑤：树17 只管引用',
+      meta: 'tip c833ee2 · 测试树整线末步 · 出厂默认开',
+      body: '主线第⑤步：tree17_cite／名单面只读盒内材料＋rank＋conflict_pairs 等形状，不重 pack、不往装箱塞系数。职责＝引用／名单准度，不是再做召回或扩窗。C-134 两案复验＝镜像与生产逐位等价、计划层金标→close 1.0；探针已入库（scripts/probe_c134_two_case_gate.py）。⚠ 红标（引用条数偏少）仍挂；勿把 C-113／121／122 当路线图。',
+      ruler: '旁证（C-134）：镜像盒/k/close 逐位相等 6/6；计划层金标→close 1.0；真跑 L3 命中 1/4～2/5 量级（引用条数仍少）。'
     },
     s17b: {
       title: '17 · 病因 1：答案质量双峰',
-      meta: '五条病因 · 仍有效',
-      body: '窄题相对稳，开放题曾废；二次定向抬了一截。旧病：风险台账 0 引用、置信度挤在低位；空交付曾印满编队名单——减员显影已修，质量下半（第三人真交卷／置信抬升）仍要验。',
+      meta: '五条病因 · 仍有效 · 旧档不合不作路线图',
+      body: '窄题相对稳，开放题曾废；二次定向抬了一截。旧病：风险台账 0 引用、置信度挤在低位；空交付曾印满编队名单——减员显影已修，质量下半（第三人真交卷／置信抬升）仍要验。旁注（来源角色／force-cite）：抬「谁在说话」能把专访／官方口径段顶进盒（刘翔窄面复量@7=12 用的就是这套形状），但顶进盒≠引对——开放题仍出现「盒里有料、结论不引」；整包角色系数未合主线（FORBIDDEN_PACK_KEYS 拦在装箱外）。⚠ C-113／121／122 旧档读数可能已不准，不作本环路线图；下一步刀＝问题树／树17 引用条数。',
       ruler: null
     },
     s18: {
@@ -919,6 +943,12 @@
       meta: '核心技术主张 · 最硬一块',
       body: '每条证据是对来源段落的逐字引文：结论 → 引文 → 原文，可下钻。核对是纯字符串（零模型、毫秒级、可复现）。不承诺「模型不编」，承诺「编了必被检出」——未过核对的证据进不了正式池。',
       ruler: null
+    },
+    s18b: {
+      title: '18 · 证据定位稳（C-114）已入库·默认关',
+      meta: 'C-118 末批合入 · 旗 VERITAS_ANCHOR_STABLE 默认关 · 模块 app/core/anchor_stable.py',
+      body: '主张本身不变——每条证据仍要在原文逐字定位。这一刀加的是「稳」＝官方切片经 BOM／换行归一、加固再解析后仍落回同一个 `doc_id#para_id`：段落指纹回绑＋信封解包，定位不到就写 `missing_anchor`／drift 披露，不静默吞。挂点＝`app/ingest/official_case.py`（切片／解包）＋`app/export/official.py`（缺锚披露）＋config 旗。不改 BM25、不往装箱塞系数、不动树15／树17。未设 env＝走旧路径＝与合入前行为相同。',
+      ruler: '量尺（现抄 `artifacts/C114_anchor_stable.md`，零 LLM 开关对照）：一致率（金标键×应力）关 1/528＝0.0019 → 开 528/528＝1.0000；泄漏 0；旁证刘翔@7 关 12／开 12、holdout L2 29／29（＝定位稳没花到达的分）。关＝默认；开＝VERITAS_ANCHOR_STABLE=1。',
     },
     s19: {
       title: '19 · 能力边界：数字复算不负责推理支撑',
@@ -935,8 +965,20 @@
     s22: {
       title: '22 · 2.5 冲突口径 · 分歧是资产',
       meta: '主张＋已知问题 · 2026-10-28 起兼管语义对撞与主张级相关性（自树10 挪来）',
-      body: '落败结论不删，转少数意见并挂裁决理由；未决冲突不得抹平。程序按主体×议题生成候选，跨主体永不进场；丢弃写入 conflict_drops 并披露。【交叉说明（2026-10-28 Analyst 拍边界）】语义对撞（这两句讲的是不是同一件事、谁对谁错）与主张级相关性（这段材料支不支持这条主张）都归本环裁（这是职责归口，不等于已有程序侧闸：本环现在做的是智能体归并→冲突→质证→仲裁，位置在 17 出货之后；主张级相关性没有机械闸，冲突数值线仍 STOP）；树10 只交「台账三档时间标签＋预检贴标与披露」，不在那边判输赢、也不在那边做语义去重砍行。⚠ 挪的是职责口径，不是分数：本环的冲突数值线仍 STOP（见依据）。',
+      body: '落败结论不删，转少数意见并挂裁决理由；未决冲突不得抹平。程序按主体×议题生成候选，跨主体永不进场；丢弃写入 conflict_drops 并披露。【交叉说明（2026-10-28 Analyst 拍边界）】语义对撞（这两句讲的是不是同一件事、谁对谁错）与主张级相关性（这段材料支不支持这条主张）都归本环裁（这是职责归口，不等于已有程序侧闸：本环现在做的是智能体归并→冲突→质证→仲裁，位置在 17 出货之后；主张级相关性没有机械闸，冲突数值线仍 STOP）；树10 只交「台账三档时间标签＋预检贴标与披露」，不在那边判输赢、也不在那边做语义去重砍行。⚠ 挪的是职责口径，不是分数：本环的冲突数值线仍 STOP（见依据）。旁注：C-123 可用枝＝已废·不合（见蓝点「已废旧枝·不合」）；C-124＝NO 已归档。',
       ruler: '这条的数值路线已 STOP＝C-44 件① 检出侧 10/78、戊档两批复现 10/78 ⇒ Boyu 2026-10-24 拍不投入（客观冲突那 13 分＝0 分）。机制仍在（落败转少数意见＋conflict_drops 披露），但不自称已拿到冲突分。'
+    },
+    s22b: {
+      title: '22 · 冲突三类＋处置留痕（C-115）已入库·默认关',
+      meta: 'C-118 末批合入 · 旗 VERITAS_CONFLICT_TRACE 默认关 · 模块 app/core/conflict_trace.py',
+      body: '归并→冲突→质证→仲裁跑完后，把每条对撞按时间档归到三类——`same_window`／`cross_day`／`unknown_time`（沿用树10 台账既有三档名，没另发明第四类主路径；归不了类的记 `unclassified` 并披露），再把处置写成可回放的一行：`keep`／`dissent`／`undecided` ＋理由码／短理由，进 accounting、可 export。挂点＝`pipeline` hygiene／仲裁后＋`export/official` 回放面。不改 BM25、不塞装箱系数、不动树15／树17。未设 env＝走旧路径＝与合入前行为相同。⚠ 这条买的是「说得清哪类冲突、怎么处置的」＝留痕面，不是 2.5 的冲突分（数值线仍 STOP，见红标）。',
+      ruler: '量尺（现抄 `artifacts/C115_conflict_trace.md`，零 LLM 开关对照）：三类覆盖率关 0.0000 → 开 35/35＝1.0000；处置留痕齐全率关 0.0000 → 开 1.0000；unclassified 关 35 → 开 0；泄漏 0；旁证刘翔@7 关 12／开 12、holdout L2 29／29。关＝默认；开＝VERITAS_CONFLICT_TRACE=1。',
+    },
+    s22c: {
+      title: '22～25 · C-123 可用枝＝已废·不合',
+      meta: '已废旧枝·不合 · C-124＝NO 已归档 · 不作路线图',
+      body: 'C-123 枝上自评 YES（树22～25 可用面）但未合 main；C-132／C-133 整线删旧路＋默认开后，该枝旧读数更对不上现盘——已废，不合，不再挂「待重测再合」的排期。C-124＝NO，已归档。冲突数值线 STOP（步骤 22 橙标）与置信口径问题（步骤 24／25）照旧挂着。⚠ C-113／121／122／123／124 一律旧档已废、不合、不作路线图。',
+      ruler: null
     },
     s24: {
       title: '24 · 硬门融合 · 转载吹高已降级',
@@ -944,10 +986,16 @@
       body: '置信度＝可解释规则融合，不是概率。加权和＋硬门：引文不命中／无证据／前提破坏，不能被其他维度救回来。转载把 coverage 吹高的机制成立，但官方六案近重复约 4.5%——优先级已下调，剩余价值在篡改检测／孤证显影。',
       ruler: '两个数必须并排说＝自标定 ECE 0.4067、高档覆盖率 0.0＝0/226（六案 226 条结论至今一条 ≥0.8 都没有）⇒ 官方「≥0.8 正确率 ≥85%」那条仍未回答，本图不许写「达标」。演示另一条：勿把人工修改讲成「改答案」——框定为可审计审校。'
     },
+    s24b: {
+      title: '24 · 置信档校准闸（C-116）已入库·默认关',
+      meta: 'C-118 末批合入 · 旗 VERITAS_CONF_CALIB 默认关 · 模块 app/core/conf_calib.py',
+      body: '交卷那一档 `band` 后面再加一道可解释闸：标「高」必须同时过 min_evidence／锚定／链完整／编队一致／冲突未决五道，任一不过就降到「中」并写 demote 披露。分数一个字不改（合式分数与分量都不动），改的只是对外档位与披露。挂点＝`pipeline` finalize＋`export/official` 交卷 band。禁金标进提示、禁装箱塞系数。未设 env＝走旧路径＝与合入前行为相同。⚠ 精确度是「少标高档」换来的（高档覆盖 29→11、降档 18 条），不是把分数抬上去；也不等于官方那条达标行有了答案。',
+      ruler: '量尺（现抄 `artifacts/C116_conf_calib.md`；尺源＝`calibration/face_v2_row_snapshot.jsonl` 自标快照，非官方金标）：高档精确度关 6/29＝0.2069 → 开 3/11＝0.2727；高档加权准确率关 0.5172 → 开 0.6364；ECE 关 0.056505 → 开 0.054964；高档覆盖 29 → 11；泄漏 0；旁证刘翔@7 关 12／开 12、holdout L2 29／29。⚠ 与六案那行自标定读数（ECE 0.4067／高档覆盖率 0.0＝0/226）是两把尺，别并排当同一个数。关＝默认；开＝VERITAS_CONF_CALIB=1。',
+    },
     s25: {
       title: '25 · 2.3 部分一致',
       meta: '已知问题 · 提交对齐',
-      body: '主席收成可读叙事；未答子问、未用关键段进待办／缺口。提交面「严格一致」很少，「部分一致」占大头——缺口已从「料没送到」挪到「送到了、说法对不齐金标」。',
+      body: '主席收成可读叙事；未答子问、未用关键段进待办／缺口。提交面「严格一致」很少，「部分一致」占大头——缺口已从「料没送到」挪到「送到了、说法对不齐金标」。旁注：树22～25 可用枝（C-123）已废不合；本环红标不撤。',
       ruler: '量尺：n 小、只作方向，不构成改判定的理由。'
     },
     s27: {
