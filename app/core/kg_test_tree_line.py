@@ -71,15 +71,13 @@ def resolve_case_slug(dossier: Any) -> str:
 
 
 def test_tree_line_enabled(settings: Any | None = None) -> bool:
-    """默认关。settings 优先；env 兜底（判绿前先看 env 面）。"""
+    """C-132 默认开。settings 优先；env 兜底（显式关＝False，未设＝开）。"""
     if settings is not None and hasattr(settings, "test_tree_line"):
         return bool(getattr(settings, "test_tree_line"))
     v = (os.environ.get(_ENV) or "").strip().lower()
-    if v in ("1", "true", "on", "yes"):
-        return True
     if v in ("0", "false", "off", "no"):
         return False
-    return False
+    return True
 
 
 def test_tree_coeff() -> tuple[dict[str, float], tuple[str, ...]]:

@@ -555,11 +555,12 @@ class Settings:
     kg_rehydrate_box: bool = True
 
     # C-125：测试树整线（KG 前端→一筛多维→二筛密度盒→窄面→tree17）。
-    # 默认 False＝C-108 密度桥路径一个字节不变；开＝VERITAS_TEST_TREE_LINE=1
-    # 走整棵实验测试树前半（app/kg_lab 全量模块），出口仍走 C-107 窄面契约。
+    # C-132：**出厂开＝测试树主线**（Boyu 2026-11-03 硬令：删旧路、测试树作
+    # 唯一主线）；旧密度桥主路径已删，env 显式 0/false/off/no＝紧急停用
+    # 交卷面（跳过，绝不回密度桥）。出口走 C-107 窄面契约。
     # 一筛系数只活在一筛打分（r9_coeff.json），禁进 pack_material。
     # env VERITAS_TEST_TREE_LINE；config.json test_tree_line。
-    test_tree_line: bool = False
+    test_tree_line: bool = True
 
     # C-114：证据定位稳（重构／转存后再解析仍落到 doc_id#para_id）。
     # 默认 False；开＝VERITAS_ANCHOR_STABLE=1。不改 BM25／不往 pack 塞系数。

@@ -1,7 +1,8 @@
 """C-125 守护格：测试树整线（总旗 ``VERITAS_TEST_TREE_LINE``，默认关）。
 
 钉七件事（全部零 LLM、零网络、手造夹具；嵌入一律打桩成常量向量）：
-  a. 三处读点出厂默认关（dataclass／from_env／from_json）＋ enabled 三态；
+  a. 三处读点出厂默认开（C-132 翻转：dataclass／from_env／from_json）
+     ＋ enabled 三态；
   b. 开旗整链可跑：surface 窄面契约齐全、hints 四键、k∈[3,7]、
      box⊆universe、focus⊆box、层闸零泄漏（禁键审计）；
   c. 确定性：同夹具两次 build 的 surface JSON 逐位相同；
@@ -68,12 +69,12 @@ def _on(monkeypatch) -> None:
     monkeypatch.setenv("VERITAS_TEST_TREE_LINE", "1")
 
 
-# ---------------------------------------------------------------- a. 默认关
+# ------------------------------------------------- a. 默认开（C-132 翻转）
 
-def test_a_factory_default_off_three_sites(monkeypatch):
+def test_a_factory_default_on_three_sites(monkeypatch):
     monkeypatch.delenv("VERITAS_TEST_TREE_LINE", raising=False)
-    assert Settings().test_tree_line is False  # dataclass 出厂
-    assert Settings.from_env().test_tree_line is False  # env 未设
+    assert Settings().test_tree_line is True  # C-132 dataclass 出厂开
+    assert Settings.from_env().test_tree_line is True  # env 未设＝开
     monkeypatch.setenv("VERITAS_TEST_TREE_LINE", "0")
     assert Settings.from_env().test_tree_line is False
     monkeypatch.setenv("VERITAS_TEST_TREE_LINE", "false")
@@ -96,18 +97,16 @@ def test_a2_json_site(tmp_path):
     assert _cfg("0").test_tree_line is False
     p2 = tmp_path / "no_key.json"
     p2.write_text("{}", encoding="utf-8")
-    assert Settings.from_json(path=p2).test_tree_line is False  # 缺键＝默认关
+    assert Settings.from_json(path=p2).test_tree_line is True  # 缺键＝C-132 出厂开
 
 
 def test_a3_enabled_tri_state(monkeypatch):
     monkeypatch.delenv("VERITAS_TEST_TREE_LINE", raising=False)
-    assert _line_enabled() is False
-    assert _line_enabled(Settings()) is False
+    assert _line_enabled() is True  # C-132：无 env＝开
+    assert _line_enabled(Settings()) is True
     s = Settings()
-    s.test_tree_line = True
-    assert _line_enabled(s) is True
-    monkeypatch.setenv("VERITAS_TEST_TREE_LINE", "1")
-    assert _line_enabled() is True
+    s.test_tree_line = False
+    assert _line_enabled(s) is False
     monkeypatch.setenv("VERITAS_TEST_TREE_LINE", "0")
     assert _line_enabled() is False
 

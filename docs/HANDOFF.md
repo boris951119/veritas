@@ -1,3 +1,13 @@
+<!-- C-132-DEFAULT-ON -->
+## 〔C-132〕测试树默认开＋删旧路（Boyu 2026-11-03 硬令；枝未合 main）
+
+- **枝**：`qoder/c132-test-tree-default-on`（自 `9481f9e`；**未**合 main，等贴合入指令）。
+- **改**：`test_tree_line` 出厂 **True**；pipeline 主路径**只**走 `ensure_test_tree_submit`，`ensure_kg_submit_from_density` 旧密度桥主路径分支已删（模块保留给直连测试与探针）；显式 `VERITAS_TEST_TREE_LINE=0`＝紧急停用交卷面（跳过＋账面披露 `kg_submit_skipped`，绝不回密度桥）；kept 白名单登记该键。
+- **验收**：全套 `7 failed, 1240 passed, 1 skipped`＝基线同名红零新增（+8＝`tests/test_c132_default_on.py`）；无 env 双读点 True；两案零 LLM 烟测＝测试树面＋case_slug 实名＋泄漏 0。默认开全套墙钟 62.3s（对照 env=0 跳过路径 36.0s＝+26s 嵌入/出面税，有 ollama 机器付、缓存逐轮吸收；无 ollama 快速降级词面）。
+- **注意**：c19 `test_m_production_messages_bite` 对选料面形状敏感（env=0 跳过路径下转绿、默认开下红）——它仍是基线同名红，未盲修。
+
+---
+
 <!-- C-118-BATCH -->
 ## 〔C-118〕末批合入 C-114～117 → main（禁 C-113；四旗默认关）
 

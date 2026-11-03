@@ -148,12 +148,12 @@ def test_c_hot_path_never_builds_summaries(monkeypatch):
             encoding="utf-8")
 
 
-# ------------------------------------------------- d. 出厂默认关未动
+# ------------------------------------- d. 出厂默认开（C-132 翻转）
 
-def test_d_factory_default_off_untouched(monkeypatch):
+def test_d_factory_default_on_c132(monkeypatch):
     monkeypatch.delenv("VERITAS_TEST_TREE_LINE", raising=False)
-    assert Settings().test_tree_line is False
-    assert Settings.from_env().test_tree_line is False
+    assert Settings().test_tree_line is True
+    assert Settings.from_env().test_tree_line is True
 
 
 # ------------------------------------------------- e. 建库脚本空跑

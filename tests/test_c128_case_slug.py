@@ -179,7 +179,7 @@ def test_d4_probe_case_marks_direction():
     assert mod.CASE_MARKS["liuxiang"] == "刘翔"
 
 
-def test_d3_factory_default_off_untouched(monkeypatch):
+def test_d3_factory_default_on_c132(monkeypatch):
     monkeypatch.delenv("VERITAS_TEST_TREE_LINE", raising=False)
-    assert Settings().test_tree_line is False
-    assert Settings.from_env().test_tree_line is False
+    assert Settings().test_tree_line is True
+    assert Settings.from_env().test_tree_line is True

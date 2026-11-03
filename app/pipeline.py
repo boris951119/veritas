@@ -590,25 +590,34 @@ def run_case(spec: RunSpec | None = None,
                 })
         # 钉死后全员同料：不许再传 settings.material_char_budget 实参
 
-        # C-108：默认开——密度交卷 → kg_submit 窄面 → priority／可选 max_segments
+        # C-108：默认开——测试树交卷 → kg_submit 窄面 → priority／可选 max_segments
         # 关旗 VERITAS_KG_SUBMIT_SURFACE=0 回退旧装满。
-        # C-125：总旗 VERITAS_TEST_TREE_LINE（默认关）＝整棵测试树线
-        # （KG 前端→一筛多维→二筛密度盒→窄面→tree17）；关＝密度桥路径零变。
+        # C-132：主线＝测试树（总旗 VERITAS_TEST_TREE_LINE 出厂开）。旧密度桥
+        # 主路径已删（Boyu 2026-11-03 硬令：删旧路、测试树作唯一主线）；
+        # 显式 0/false/off/no＝紧急停用交卷面（跳过，绝不回密度桥）。
+        # （KG 前端→一筛多维→二筛密度盒→窄面→tree17）；出口仍走 C-107 窄面契约。
         _kg_pack_kw: dict = {}
         if bool(getattr(settings, "kg_submit_surface", True)):
-            from app.core.kg_density_bridge import ensure_kg_submit_from_density
-            from app.core.kg_submit_surface import (
-                apply_kg_submit_surface, assert_clean_pack_kwargs,
-                pack_kwargs_for_kg,
-            )
-            if bool(getattr(settings, "test_tree_line", False)):
+            if bool(getattr(settings, "test_tree_line", True)):
+                from app.core.kg_submit_surface import (
+                    apply_kg_submit_surface, assert_clean_pack_kwargs,
+                    pack_kwargs_for_kg,
+                )
                 from app.core.kg_test_tree_line import ensure_test_tree_submit
                 ensure_test_tree_submit(dossier)
+                apply_kg_submit_surface(dossier, enabled=True)
+                _kg_pack_kw = pack_kwargs_for_kg(dossier)
+                assert_clean_pack_kwargs(_kg_pack_kw)
             else:
-                ensure_kg_submit_from_density(dossier)
-            apply_kg_submit_surface(dossier, enabled=True)
-            _kg_pack_kw = pack_kwargs_for_kg(dossier)
-            assert_clean_pack_kwargs(_kg_pack_kw)
+                acc = getattr(dossier, "accounting", None)
+                if acc is None:
+                    dossier.accounting = {}
+                    acc = dossier.accounting
+                acc["kg_submit_skipped"] = {
+                    "reason": "test_tree_line_off",
+                    "note": "C-132 主线＝测试树；旧密度桥主路径已删，"
+                            "显式关＝跳过交卷面（回退无 KG 面装箱）",
+                }
 
         pack = pack_material(dossier, **_kg_pack_kw)
         # C-99：锚审支撑分 + A0 软保底（默认开；失败／桩／测试守卫 → 回退 A0）
@@ -983,7 +992,8 @@ def run_case(spec: RunSpec | None = None,
                      "kg_conflict_pairs", "kg_focus_segment_ids",
                      "kg_priority_segment_ids", "tree17_cite",
                      "kg_density", "kg_cap_segments", "kg_stage1",
-                     "kg_rehydrate", "kg_test_tree")}
+                     "kg_rehydrate", "kg_test_tree",
+                     "kg_submit_skipped")}
     dossier.accounting = {
         **kept,
         "elapsed_s": round(time.monotonic() - t0, 1),
