@@ -1,0 +1,45 @@
+{
+  "ticket": "C-132",
+  "date": "2026-11-03",
+  "base_tip": "9481f9e",
+  "branch": "qoder/c132-test-tree-default-on",
+  "branch_tip": "70fd7f9",
+  "merged_to_main": false,
+  "pushed": false,
+  "order": "Boyu 2026-11-03 硬令：删旧路、测试树作唯一主线、总旗出厂默认开",
+  "diff_summary": {
+    "files": 8, "insertions": 242, "deletions": 40,
+    "app_config_py": "test_tree_line 出厂 True；显式 0/false/off/no＝False（紧急停用）",
+    "app_pipeline_py": "else 密度桥分支删除；恒走 ensure_test_tree_submit＋窄面 apply；显式关＝跳过＋kg_submit_skipped 披露；kept 白名单登记",
+    "app_core_kg_test_tree_line_py": "test_tree_line_enabled env 兜底默认翻 True（改动中发现的第一处隐写死默认）",
+    "tests_flipped": ["test_c125 a/a2/a3", "test_c127 d", "test_c128 d3→default_on_c132"],
+    "tests_new": "tests/test_c132_default_on.py（8 格）",
+    "docs": "docs/HANDOFF.md 顶部一段（含墙钟税与 c19 敏感性备注）"
+  },
+  "default_true_evidence": {
+    "no_env_dataclass": true,
+    "no_env_from_env": true,
+    "from_json_missing_key": true,
+    "config_json_untouched": true,
+    "explicit_off_values": ["0", "false", "off", "no"]
+  },
+  "old_path_removed_evidence": {
+    "static": "ensure_kg_submit_from_density 在 app/pipeline.py 零出现（test_b 钉死）",
+    "dynamic": "密度桥入口打成炸点后默认跑选料块不炸（test_b2）",
+    "module_kept": "app/core/kg_density_bridge.py 保留（test_c108 11 格＋scripts/probe_c108 直连引用；主路径零调用）"
+  },
+  "smoke_zero_llm": [
+    {"case": "liuxiang", "qid": "q_001", "kg_test_tree_line": "test_tree_full", "case_slug": "liuxiang", "fallback": false, "kg_density_line": "test_tree", "kg_submit_layer": "submit", "summary_missing": false, "leak": 0},
+    {"case": "wanghong", "qid": "q_001", "kg_test_tree_line": "test_tree_full", "case_slug": "wanghong", "fallback": false, "kg_density_line": "test_tree", "kg_submit_layer": "submit", "summary_missing": false, "leak": 0}
+  ],
+  "pytest": {
+    "default_on": {"failed": 7, "passed": 1240, "skipped": 1, "wall_s": 62.29, "failed_names": "基线同名（c19 test_m／c37×4／c38 空行／c73 knife），零新增；+8＝test_c132_default_on.py"},
+    "control_env_off": {"failed": 6, "passed": 1241, "skipped": 1, "wall_s": 36.0},
+    "wall_tax_note": "默认开全套税≈+26s＝流水线类测试的嵌入/出面成本；有 ollama 机器付、.kgcache 逐轮吸收；无 ollama 机器 ensure_embeddings 快速炸→fallback_lexical",
+    "c19_sensitivity": "c19 test_m 对选料面形状敏感（env=0 跳过路径转绿、默认开与旧密度桥路径均红）；基线同名红未盲修"
+  },
+  "side_knives_still_off": ["anchor_stable", "conflict_trace", "conf_calib", "tree15_depress", "claim_slots"],
+  "forbidden_branches_untouched": ["C-123", "C-113", "C-121", "C-122", "C-124"],
+  "hygiene": "未提交 .kg_lab_vault/.kgcache/逐题原始 json；产物零官方原文；Boyu 的 docs/architecture-tree-2026-10-27.html 未动未提交",
+  "backups": "/tmp/c132/"
+}

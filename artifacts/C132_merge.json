@@ -1,0 +1,56 @@
+{
+  "ticket": "C-132 合入 main（Boyu 执行单，2026-11-03，模型 glm5.3flash）",
+  "date": "2026-11-03",
+  "branch": "qoder/c132-test-tree-default-on",
+  "branch_tip": "70fd7f9",
+  "main_before": "9481f9e",
+  "main_after": "70fd7f9",
+  "precheck": {
+    "origin_main_at_start": "9481f9e",
+    "ancestors_in_main": ["ae77b77", "c2306e7", "5a2d736"],
+    "ff_possible": true,
+    "c123_commits_not_in_main": ["e1526a4", "148c140"]
+  },
+  "merge": {
+    "mode": "ff-only",
+    "range": "9481f9e..70fd7f9",
+    "conflict": false,
+    "files": 8,
+    "insertions": 242,
+    "deletions": 40
+  },
+  "pushed": true,
+  "push_range": "9481f9e..70fd7f9 main -> main",
+  "post_merge_checks": {
+    "default_true_three_sites": {
+      "dataclass_default": true,
+      "from_env_no_var": true,
+      "from_json_missing_key": true
+    },
+    "old_path_removed": {
+      "grep_ensure_kg_submit_from_density_in_pipeline": 0,
+      "module_kept_for_direct_tests": true
+    },
+    "explicit_off_behavior": "skip surface + kg_submit_skipped disclosure (kept whitelist), no density bridge",
+    "side_knives_factory_off": {
+      "claim_slots": false,
+      "anchor_stable": false,
+      "conflict_trace": false,
+      "conf_calib": false,
+      "tree15_depress": false
+    },
+    "forbidden_branches_not_merged": ["C-123", "C-113", "C-121", "C-122", "C-124"],
+    "deliverable_readable": "artifacts/C132_test_tree_default_on.md + .json"
+  },
+  "evidence_live_copied": {
+    "smoke_zero_llm": [
+      {"case": "liuxiang", "qid": "q_001", "kg_test_tree_line": "test_tree_full", "case_slug": "liuxiang", "fallback": false, "kg_density_line": "test_tree", "kg_submit_layer": "submit", "summary_missing": false, "leak": 0},
+      {"case": "wanghong", "qid": "q_001", "kg_test_tree_line": "test_tree_full", "case_slug": "wanghong", "fallback": false, "kg_density_line": "test_tree", "kg_submit_layer": "submit", "summary_missing": false, "leak": 0}
+    ],
+    "suite_default_on": {"failed": 7, "passed": 1240, "skipped": 1, "wall_s": 62.29, "failed_names": "基线同名零新增（c19 test_m／c37×4／c38 空行／c73 knife）；+8＝tests/test_c132_default_on.py"},
+    "suite_control_env_off": {"failed": 6, "passed": 1241, "wall_s": 36.0, "note": "c19 对交卷面形状敏感（关旗读绿），记名不修"},
+    "wall_tax_note": "默认开 62.3s vs 显式关对照 36.0s＝+26s（建库面），已记 HANDOFF"
+  },
+  "docs_commit": "见 git log（本件随合账提交，不写自身 sha）",
+  "backups": ["/tmp/c132/"]
+}
