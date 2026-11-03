@@ -85,6 +85,13 @@ def render_segments_block(dossier: Dossier,
             f"segment_id 只许使用：{', '.join(sorted(focus))}。",
             "",
         ]
+        # C-137：树17 细读注意力＋硬约束（rank_order 加权；权重只进提示词面）。
+        # 关旗／无注意力面＝空串，提示词与改前逐字相同。
+        from app.core.tree17_rank_weight import attention_prompt_from_dossier
+
+        att_block = attention_prompt_from_dossier(dossier)
+        if att_block:
+            lines += [att_block, ""]
     lines.append("资料清单：")
     from app.core.premise_check import injectible_premise_flags
 

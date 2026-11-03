@@ -300,6 +300,28 @@ def build_test_tree_surface(
     )
     plan = t17.get("plan") or {}
     surface = build_submit_surface(box_export, tree17_plan=plan)
+    # C-137：细读注意力分层（rank_order 唯一线上序；成对强制；钉加成）。
+    # 权重只进树17计划面（surface.tree17.attention）与分析师提示，
+    # 不进 pack／一筛二筛系数面；盒与 rank_order 逐位不动。
+    rank_weight_meta: dict[str, Any] | None = None
+    from app.core.tree17_rank_weight import build_attention, rank_weight_enabled
+    if rank_weight_enabled():
+        att = build_attention(
+            [str(x) for x in (surface.get("rank_order") or [])],
+            plan, surface.get("conflict_pairs"),
+        )
+        if att:
+            tree17_slot = surface.get("tree17")
+            if isinstance(tree17_slot, dict):
+                tree17_slot["attention"] = att
+            rank_weight_meta = {
+                "enabled": True,
+                "head_tier": att["head_tier"],
+                "n_close": att["n_close"],
+                "n_scan": att["n_scan"],
+                "n_pair_both_close": att["n_pair_both_close"],
+                "pair_forced_n": len(att["pair_forced_ids"]),
+            }
     assert_submit_no_coeff(surface)
     hints = pack_hints_from_submit(surface)
     leaks += audit_forbidden_keys(hints)
@@ -334,6 +356,7 @@ def build_test_tree_surface(
         "close_read": list(plan.get("close_read") or []),
         "n_pairs": n_pairs,
         "stage1_names": len(names),
+        "rank_weight": rank_weight_meta,  # C-137 注意力分层披露（关旗＝None）
     }
 
 
@@ -390,6 +413,7 @@ def ensure_test_tree_submit(
         "close_read_n": len(out["close_read"]),
         "n_pairs": out["n_pairs"],
         "stage1_names": out["stage1_names"],
+        "rank_weight": dict(out.get("rank_weight") or {"enabled": False}),
     }
     from app.kg_lab.layer_boundary import audit_forbidden_keys
 
