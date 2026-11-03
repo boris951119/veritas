@@ -26,6 +26,9 @@
 摘要／vault 缓存缺席同样显式披露（C-127：``kg_test_tree.cache``＝
 缺席布尔／影响面 summary|vault|embed／降级继续），不静默当暖缓存跑。
 
+C-135：``kg_test_tree.expand``＝扩写披露（enabled／terms_n／paraphrase_n，
+只记计数、不记扩写词原文）。
+
 C-132 起本模块出厂开＝唯一主线（C-133：旧密度桥已删；显式
 ``VERITAS_TEST_TREE_LINE=0``＝跳过交卷面，不回旧路）。
 """
@@ -117,7 +120,9 @@ def build_test_tree_surface(
     """
     from app.kg_lab.case_lexicon import lexicon_for_question
     from app.kg_lab.event_frame import extract_event_frame
-    from app.kg_lab.index_build import KgIndex, build_corpus_rows
+    from app.kg_lab.index_build import (
+        KgIndex, build_corpus_rows, keyword_expand_query,
+    )
     from app.kg_lab.intent_routes import classify_route
     from app.kg_lab.layer_boundary import (
         assert_submit_no_coeff,
@@ -211,6 +216,18 @@ def build_test_tree_surface(
     fr = fuse_r19(sub, question, use_llm_views=False, neighbor_window=1)
     submit_ranked = fr["ranked"]
     pool_ranked = fr.get("pool_ranked") or fr["ranked"]
+
+    # C-135 披露键组（出口仅 kg_test_tree.expand 一个 dict）：enabled＝扩写
+    # 机制在跑（fuse_r19 经典臂无条件扩写）；terms_n＝canonical 扩写词数
+    # （与经典臂同一调用 keyword_expand_query(question, sub.rows)，只记词数、
+    # 不记词表原文——扩写全文不进窄面／pack）；paraphrase_n＝复用 fuse_r19
+    # 既有键 n_classic_paraphrase（规则改写数，n=1 封顶）。
+    q_expanded = keyword_expand_query(question, sub.rows)
+    expand_meta = {
+        "enabled": True,
+        "terms_n": len(str(q_expanded).split()) if str(q_expanded).strip() else 0,
+        "paraphrase_n": int(fr.get("n_classic_paraphrase") or 0),
+    }
 
     # 2) 一筛多维加权 pool（R19 池序＋R9/R21 系数打分；出口仅序）
     frame = extract_event_frame(question)
@@ -309,6 +326,7 @@ def build_test_tree_surface(
         "route": getattr(route, "route", ""),
         "embed": embed_meta,
         "cache": cache_state,
+        "expand": expand_meta,
         "case_slug": case_slug,
         "pool_n": len(pool_ranked),
         "universe_n": len(universe),
@@ -361,6 +379,7 @@ def ensure_test_tree_submit(
         "line": "test_tree_full",
         "embed": out["embed"],
         "cache": dict(out.get("cache") or {}),
+        "expand": dict(out.get("expand") or {}),  # C-135 扩写披露（只记计数）
         "case_slug": slug,
         "case_slug_fallback": slug == _CASE_FALLBACK,
         "route": out["route"],

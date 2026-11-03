@@ -40,7 +40,7 @@ from app.core.kg_submit_surface import (  # noqa: E402
     apply_kg_submit_surface, assert_clean_pack_kwargs, kg_focus_segment_ids,
     pack_kwargs_for_kg,
 )
-from app.core.kg_test_tree_line import build_test_tree_surface  # noqa: E402
+from app.core.kg_test_tree_line import ensure_test_tree_submit  # noqa: E402
 from app.core.material import pack_material  # noqa: E402
 from app.ingest.official_case import load_official_case  # noqa: E402
 from app.kg_lab.case_lexicon import lexicon_for_question  # noqa: E402
@@ -119,9 +119,8 @@ def _ring_evidence(slug: str, mark: str, qid: str) -> dict[str, Any]:
     # 环0 切片
     max_row_chars = max((len(str(r.get("text") or "")) for r in rows), default=0)
     l1_gold = sorted(g for g in gold_ids if g in universe)
-    # 环2 扩写（机制在 fuse_r19 内部；此处量其产出并披露账面缺口）
-    q_exp = keyword_expand_query(question, index.rows)
-    para = rule_paraphrase_questions(question)
+    # 环2 扩写披露＝读生产 accounting（下方 ensure_test_tree_submit 后取数；
+    # 旧口径的独立量测已并入 ring2 的 disclosure_matches_independent）
     # 环3 一筛（与生产同参）
     fr = fuse_r19(sub, question, use_llm_views=False, neighbor_window=1)
     submit_ranked = fr["ranked"]
@@ -190,13 +189,28 @@ def _ring_evidence(slug: str, mark: str, qid: str) -> dict[str, Any]:
     )
     plan = t17.get("plan") or {}
     close = list(plan.get("close_read") or [])
-    # 生产入口面（零金标）＋等价断言
+    # 生产入口面（零金标）＋等价断言——C-135 起走 ensure_test_tree_submit
+    # （＝生产 accounting 写入路径；build 结果与 build_test_tree_surface 同一 dict）
     d2 = load_official_case(case)
     d2.question = question
-    prod = build_test_tree_surface(d2, case_slug=slug)
+    prod = ensure_test_tree_submit(d2, case_slug=slug)
     equiv_box = list(prod["box"]) == list(box)
     equiv_k = int(prod["k"]) == int(k_sel)
     equiv_close = list(prod["close_read"]) == list(close)
+    # 环2 生产 accounting 披露（C-135）：键集非空＋与独立复算逐键一致
+    expand_acc = ((getattr(d2, "accounting", None) or {})
+                  .get("kg_test_tree") or {}).get("expand")
+    acc_keys = sorted(expand_acc.keys()) if isinstance(expand_acc, dict) else []
+    q_exp_prod = keyword_expand_query(question, sub_rows)
+    para_prod = rule_paraphrase_questions(question, n=1)
+    match_terms = (isinstance(expand_acc, dict)
+                   and expand_acc.get("terms_n") == len(str(q_exp_prod).split()))
+    match_para = (isinstance(expand_acc, dict)
+                  and expand_acc.get("paraphrase_n") == len(para_prod))
+    match_enabled = (isinstance(expand_acc, dict)
+                     and expand_acc.get("enabled") is True)
+    disclosure_match = bool(acc_keys) and match_terms and match_para \
+        and match_enabled
     # 环1 标签（盒内 meta 覆盖率）
     def _nz(pid: str, key: str) -> bool:
         v = (bundle["metas"].get(pid) or {}).get(key)
@@ -238,10 +252,14 @@ def _ring_evidence(slug: str, mark: str, qid: str) -> dict[str, Any]:
         },
         "ring1": ring1,
         "ring2": {
-            "expand_terms_n": len(q_exp),
-            "paraphrase_n": len(para),
-            "accounting_expand_keys": [],
-            "gap_note": "扩写在 fuse_r19 内部跑；accounting 无扩写披露键（缺口，本单不修）",
+            "expand_terms_n": len(str(q_exp_prod).split())
+            if str(q_exp_prod).strip() else 0,
+            "paraphrase_n": len(para_prod),
+            "accounting_expand_keys": acc_keys,
+            "disclosure_matches_independent": disclosure_match,
+            "note": "C-135 已落：accounting.kg_test_tree.expand 三键"
+                    "（enabled/terms_n/paraphrase_n，只记计数不记词原文）；"
+                    "terms_n＝canonical 扩写词数（生产同 rows 口径）",
         },
         "ring3": {
             "pool_n": len(pool_ranked), "pool20_n": len(pool20),
@@ -641,6 +659,17 @@ def main() -> int:
             anomalies.append(f"{r['slug']}/{r['qid']} 环5 泄漏 "
                              f"{r['ring5']['leaks_s2']}")
             g3_leak_ok = False
+    # C-135 环2 判定：两案各 ≥1 题 accounting_expand_keys 非空且逐键
+    # 与独立复算一致（不折进三闸；三闸读数与本单前同源同尺）
+    ring2_by_slug = {s: [r for r in rings if r["slug"] == s] for s in CASES}
+    ring2_ok = True
+    ring2_notes: list[str] = []
+    for s, rs in ring2_by_slug.items():
+        hit = [r for r in rs if r["ring2"]["accounting_expand_keys"]
+               and r["ring2"]["disclosure_matches_independent"]]
+        if not hit:
+            ring2_ok = False
+            ring2_notes.append(f"{s} 环2 无任何题的扩写披露非空且一致")
     gate1 = g1_dens_ok
     gate2 = g2_tree17_ok
     gate3 = g3_leak_ok
@@ -661,6 +690,7 @@ def main() -> int:
         "temperature": "unset(None)＝与 C-120/C-130 同口径",
         "wall_s": round(time.perf_counter() - t0, 1),
         "gate": {"gate1_dens": gate1, "gate2_tree17": gate2, "gate3_leak": gate3,
+                 "ring2_expand_ok": ring2_ok, "ring2_notes": ring2_notes,
                  "anomalies": anomalies},
         "gate_cases": gate_cases,
         "rings": rings,
@@ -675,11 +705,14 @@ def main() -> int:
     }
     (OUT / "C134_two_case_gate.json").write_text(
         json.dumps(report, ensure_ascii=False, indent=1), encoding="utf-8")
-    art = ROOT / "artifacts" / "C134_two_case_gate.json"
-    art.write_text(json.dumps(report, ensure_ascii=False, indent=1),
-                   encoding="utf-8")
-    print(f"wrote {art}", flush=True)
-    print(f"G1={gate1} G2={gate2} G3={gate3} "
+    if not args.no_artifact:
+        art = ROOT / "artifacts" / "C134_two_case_gate.json"
+        art.write_text(json.dumps(report, ensure_ascii=False, indent=1),
+                       encoding="utf-8")
+        print(f"wrote {art}", flush=True)
+    else:
+        print("no-artifact：artifacts/C134 未动（只写 /tmp 中间件）", flush=True)
+    print(f"G1={gate1} G2={gate2} G3={gate3} 环2扩写={ring2_ok} "
           f"症状 仍在{n_still}/已消{n_gone}/新现{n_new}/缺环{n_gap} "
           f"wall={report['wall_s']}s", flush=True)
     if anomalies:

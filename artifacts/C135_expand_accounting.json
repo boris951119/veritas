@@ -1,0 +1,148 @@
+{
+ "ticket": "C-135-expand-accounting",
+ "base_tip": "4e88b58",
+ "branch": "qoder/c135-expand-accounting",
+ "probe_run": "scripts/probe_c134_two_case_gate.py --legs zero --no-artifact（零 LLM；bge-m3 暖缓存；wall=113.1s；worktree＝4e88b58＋本单未提交改，commit 见交付件）",
+ "change_files": [
+  "app/core/kg_test_tree_line.py",
+  "tests/test_c135_expand_accounting.py",
+  "scripts/probe_c134_two_case_gate.py"
+ ],
+ "disclosure": {
+  "path": "accounting.kg_test_tree.expand",
+  "keys": [
+   "enabled",
+   "terms_n",
+   "paraphrase_n"
+  ],
+  "definitions": "enabled＝扩写机制在跑（fuse_r19 经典臂无条件）；terms_n＝canonical 扩写词数（与经典臂同一调用 keyword_expand_query(question, sub.rows)，只记词数不记词原文）；paraphrase_n＝复用 fuse_r19 既有键 n_classic_paraphrase（规则改写数，n=1 封顶）",
+  "no_leak": "surface/hints/pack 零 expand 键；audit_forbidden_keys(acccounting)=0；扩写词原文不进窄面",
+  "pipeline_whitelist": "kg_test_tree 整键已在 kept 白名单（C-125 端口时登记），零 pipeline 改动"
+ },
+ "ring2_rerun": [
+  {
+   "slug": "liuxiang",
+   "qid": "q_001",
+   "expand_keys": [
+    "enabled",
+    "paraphrase_n",
+    "terms_n"
+   ],
+   "terms_n": 9,
+   "paraphrase_n": 1,
+   "disclosure_matches_independent": true,
+   "equiv_prod": true
+  },
+  {
+   "slug": "liuxiang",
+   "qid": "q_002",
+   "expand_keys": [
+    "enabled",
+    "paraphrase_n",
+    "terms_n"
+   ],
+   "terms_n": 17,
+   "paraphrase_n": 1,
+   "disclosure_matches_independent": true,
+   "equiv_prod": true
+  },
+  {
+   "slug": "liuxiang",
+   "qid": "q_003",
+   "expand_keys": [
+    "enabled",
+    "paraphrase_n",
+    "terms_n"
+   ],
+   "terms_n": 17,
+   "paraphrase_n": 1,
+   "disclosure_matches_independent": true,
+   "equiv_prod": true
+  },
+  {
+   "slug": "wanghong",
+   "qid": "q_001",
+   "expand_keys": [
+    "enabled",
+    "paraphrase_n",
+    "terms_n"
+   ],
+   "terms_n": 22,
+   "paraphrase_n": 1,
+   "disclosure_matches_independent": true,
+   "equiv_prod": true
+  },
+  {
+   "slug": "wanghong",
+   "qid": "q_002",
+   "expand_keys": [
+    "enabled",
+    "paraphrase_n",
+    "terms_n"
+   ],
+   "terms_n": 17,
+   "paraphrase_n": 1,
+   "disclosure_matches_independent": true,
+   "equiv_prod": true
+  },
+  {
+   "slug": "wanghong",
+   "qid": "q_003",
+   "expand_keys": [
+    "enabled",
+    "paraphrase_n",
+    "terms_n"
+   ],
+   "terms_n": 17,
+   "paraphrase_n": 1,
+   "disclosure_matches_independent": true,
+   "equiv_prod": true
+  }
+ ],
+ "gates_vs_c134": {
+  "delta": "逐位 Δ0",
+  "new_run": {
+   "liuxiang": {
+    "micro_gold_density": 0.5714,
+    "at7": 12,
+    "gold_to_close": 1.0,
+    "n_leaks": 0,
+    "prod_leg_micro": 0.4444
+   },
+   "wanghong": {
+    "micro_gold_density": 0.8571,
+    "at7": 6,
+    "gold_to_close": 1.0,
+    "n_leaks": 0,
+    "prod_leg_micro": 0.8571
+   }
+  },
+  "c134_ref": {
+   "liuxiang": {
+    "micro": 0.5714,
+    "at7": 12
+   },
+   "wanghong": {
+    "micro": 0.8571,
+    "at7": 6
+   }
+  }
+ },
+ "tests": {
+  "new_file": "tests/test_c135_expand_accounting.py（4 格：三键在场／计数独立复算一致／行为刀 terms_n 跟踪机制输出／无泄漏）",
+  "targeted": "test_c135(4)+test_c132(8)=12 passed",
+  "full_suite": "7 failed, 1235 passed, 1 skipped（+4＝本单新格；7 红与改前同名同位）",
+  "baseline_reds_same_names": [
+   "tests/test_c19_pack_window.py::test_m_production_messages_bite",
+   "tests/test_c37_engineering_gates.py::test_c37_except_pass_registry_bidirectional",
+   "tests/test_c37_engineering_gates.py::test_c38_knife_blank_line_top_does_not_red_registries",
+   "tests/test_c37_engineering_gates.py::test_c37_script_zero_ref_equals_exemption_registry",
+   "tests/test_c37_engineering_gates.py::test_c37_knife8_narrative_mention_does_not_wash",
+   "tests/test_c37_engineering_gates.py::test_c37_knife9_registry_module_import_does_not_wash",
+   "tests/test_c73_window_ledger.py::test_c73_knife_kept_drops_window_ledger_must_red"
+  ]
+ },
+ "probe_fix_note": "探针 --no-artifact 原先只解析未使用（分段跑会整片覆写 artifacts/C134）；本轮起两处落盘按旗门控；C-134 交付件未动（跑前已备份 /tmp/c134/*.c134backup + /tmp/c135）",
+ "scope_note": "只修 C-134 缺口①；缺口②（D 面缺标注维度）③（F 同臂参照缺）④（小盒密度）不动；六案门控、tree17、dens/k、判定面零改动",
+ "merge_note": "本枝＝C-134 探针枝（4e88b58）＋本单一 commit；FF 合入会两票一起带上（探针＋披露）；若只合生产修复须单拆 cherry-pick——等 Boyu 合并指令，不自行合 main"
+}
