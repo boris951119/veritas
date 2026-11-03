@@ -732,7 +732,7 @@
           <div class="card">
             <div class="icon"><svg viewBox="0 0 24 24"><path d="M7 8h10M7 12h10M7 16h6"/><path d="M17 14l2 2-2 2"/></svg></div>
             <div class="body">
-              <div class="title"><span class="num">22</span>归并 → 冲突 → 质证 → 仲裁 <span class="issue" tabindex="0" role="button" data-pop="s22">2.5冲突口径</span> <span class="badge" tabindex="0" role="button" data-pop="s22">冲突数值线 STOP</span> <span class="tip" tabindex="0" role="button" data-pop="s22b" title="C-115 冲突三类＋处置留痕已入库·默认关">三类留痕·默认关</span> <span class="tip" tabindex="0" role="button" data-pop="s22c" title="C-123 可用枝＝已废·不合；C-124 否决归档">已废旧枝·不合</span></div>
+              <div class="title"><span class="num">22</span>归并 → 冲突 → 质证 → 仲裁 <span class="issue" tabindex="0" role="button" data-pop="s22">2.5冲突口径</span> <span class="badge" tabindex="0" role="button" data-pop="s22">冲突数值线 STOP</span> <span class="tip" tabindex="0" role="button" data-pop="s22b" title="C-115 冲突三类＋处置留痕已入库·默认开（C-145a）">三类留痕·默认开</span> <span class="tip" tabindex="0" role="button" data-pop="s22c" title="C-123 可用枝＝已废·不合；C-124 否决归档">已废旧枝·不合</span></div>
               <p class="note">多视角结论先合并；对撞的两边互相质证，再由仲裁定输赢。2026-10-28 边界起，语义对撞与主张级相关性归这一环裁（在 17 出货之后），不在树10——树10 只交台账时间标签与预检披露。⚠ 归口不等于已有程序侧闸。</p>
             </div>
           </div>
@@ -975,10 +975,10 @@
       ruler: '这条的数值路线已 STOP＝C-44 件① 检出侧 10/78、戊档两批复现 10/78 ⇒ Boyu 2026-10-24 拍不投入（客观冲突那 13 分＝0 分）。机制仍在（落败转少数意见＋conflict_drops 披露），但不自称已拿到冲突分。'
     },
     s22b: {
-      title: '22 · 冲突三类＋处置留痕（C-115）已入库·默认关',
-      meta: 'C-118 末批合入 · 旗 VERITAS_CONFLICT_TRACE 默认关 · 模块 app/core/conflict_trace.py',
-      body: '归并→冲突→质证→仲裁跑完后，把每条对撞按时间档归到三类——`same_window`／`cross_day`／`unknown_time`（沿用树10 台账既有三档名，没另发明第四类主路径；归不了类的记 `unclassified` 并披露），再把处置写成可回放的一行：`keep`／`dissent`／`undecided` ＋理由码／短理由，进 accounting、可 export。挂点＝`pipeline` hygiene／仲裁后＋`export/official` 回放面。不改 BM25、不塞装箱系数、不动树15／树17。未设 env＝走旧路径＝与合入前行为相同。⚠ 这条买的是「说得清哪类冲突、怎么处置的」＝留痕面，不是 2.5 的冲突分（数值线仍 STOP，见红标）。',
-      ruler: '量尺（现抄 `artifacts/C115_conflict_trace.md`，零 LLM 开关对照）：三类覆盖率关 0.0000 → 开 35/35＝1.0000；处置留痕齐全率关 0.0000 → 开 1.0000；unclassified 关 35 → 开 0；泄漏 0；旁证刘翔@7 关 12／开 12、holdout L2 29／29。关＝默认；开＝VERITAS_CONFLICT_TRACE=1。',
+      title: '22 · 冲突三类＋处置留痕（C-115）已入库·默认开（C-145a）',
+      meta: 'C-118 末批合入 · C-145a 起旗 VERITAS_CONFLICT_TRACE 默认开（env=0 关）· 模块 app/core/conflict_trace.py',
+      body: '归并→冲突→质证→仲裁跑完后，把每条对撞按时间档归到三类——`same_window`／`cross_day`／`unknown_time`（沿用树10 台账既有三档名，没另发明第四类主路径；归不了类的记 `unclassified` 并披露），再把处置写成可回放的一行：`keep`／`dissent`／`undecided` ＋理由码／短理由，进 accounting、可 export。挂点＝`pipeline` hygiene／仲裁后＋`export/official` 回放面（C-143 窄修后旗开必写回放面，空态也写并注明「未检出≠资料无冲突」）。不改 BM25、不塞装箱系数、不动树15／树17。C-145a 起未设 env＝留痕开；显式 `VERITAS_CONFLICT_TRACE=0`＝关。⚠ 这条买的是「说得清哪类冲突、怎么处置的」＝留痕面，不是 2.5 的冲突分（数值线仍 STOP，见红标）。',
+      ruler: '量尺（现抄 `artifacts/C115_conflict_trace.md`，零 LLM 开关对照）：三类覆盖率关 0.0000 → 开 35/35＝1.0000；处置留痕齐全率关 0.0000 → 开 1.0000；unclassified 关 35 → 开 0；泄漏 0；旁证刘翔@7 关 12／开 12、holdout L2 29／29。默认＝开（C-145a 起）；关＝VERITAS_CONFLICT_TRACE=0。',
     },
     s22c: {
       title: '22～25 · C-123 可用枝＝已废·不合',

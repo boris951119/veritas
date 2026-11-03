@@ -571,10 +571,10 @@ class Settings:
     # env VERITAS_ANCHOR_STABLE；config.json anchor_stable。
     anchor_stable: bool = False
 
-    # C-115：冲突三类覆盖＋处置留痕（Q5）。默认 False；
-    # 开＝VERITAS_CONFLICT_TRACE=1。三档＝same_window／cross_day／unknown_time；
-    # 不改 BM25／不往 pack 塞系数。env／config.json conflict_trace。
-    conflict_trace: bool = False
+    # C-115：冲突三类覆盖＋处置留痕（Q5）。C-145a 起默认 True（路演可见；
+    # 关＝VERITAS_CONFLICT_TRACE=0）。三档＝same_window／cross_day／
+    # unknown_time；不改 BM25／不往 pack 塞系数。env／config.json conflict_trace。
+    conflict_trace: bool = True
 
     # C-116：置信档校准闸（Q6）。默认 False；开＝VERITAS_CONF_CALIB=1。
     # 高档可解释门槛→可降档；不改合式分数／不往 pack 塞系数。

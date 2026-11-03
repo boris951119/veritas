@@ -28,13 +28,14 @@ def _collision(entity: str, metric: str, facts: list[Fact]) -> Collision:
     return Collision(entity=entity, metric=metric, facts=facts)
 
 
-def test_c115_flag_default_off(monkeypatch):
+def test_c115_flag_default_on(monkeypatch):
+    """C-145a：出厂默认开（路演可见）；显式 env=0 关。"""
     monkeypatch.delenv("VERITAS_CONFLICT_TRACE", raising=False)
-    assert Settings().conflict_trace is False
-    assert conflict_trace_enabled() is False
-    monkeypatch.setenv("VERITAS_CONFLICT_TRACE", "1")
-    assert Settings.from_env().conflict_trace is True
+    assert Settings().conflict_trace is True
     assert conflict_trace_enabled() is True
+    monkeypatch.setenv("VERITAS_CONFLICT_TRACE", "0")
+    assert Settings.from_env().conflict_trace is False
+    assert conflict_trace_enabled() is False
 
 
 def test_c115_flag_off_no_accounting(monkeypatch):

@@ -2424,3 +2424,7 @@ Boyu：拓尔思改过刘翔样例；其余专题金标反馈不一定全准。�
 ## 〔C-143〕2026-11-04 · 树22 冲突留痕可用化（借 C-123 窄修）
 
 C-115 旗开算得出、出口被剥：conflict_trace 键不在两处 kept 白名单＋零对撞空态静默。窄修只动出口面（键登记两处＋旗开必写回放面、空态带真实题数原因句）；旗默认仍关；判定／选段／装箱零改动。真引用：`scripts/probe_c143_trace_face.py`（--stage export|real|assemble；跑法同 C-123 四臂 E 腿收窄版）。
+
+## 〔C-145a〕2026-11-04 · VERITAS_CONFLICT_TRACE 出厂默认开
+
+Boyu 拍板路演可见：默认 True（关＝env=0）。只翻默认＋文档／图面表述＋守护翻向；附带真修＝conflict_trace_enabled() 无参回退改走 Settings.from_env()（原回退 env 未设恒 False，翻默认后仲裁／导出挂点会静默不走，新格当场咬住）。真引用：`scripts/probe_c145a_default_on.py`（--stage export|assemble；base/branch 双树同形等证＋demo 冒烟＋C-134 同尺保险腿）。

@@ -123,17 +123,25 @@ def _hash_tree(root: Path) -> dict[str, str]:
             out[rel] = _sha8(_norm_report_json(json.loads(text)))
         elif rel.endswith("report.md"):
             out[rel] = _sha8(_norm_report_md(text))
+        elif rel.endswith("conflict_trace.json"):
+            # C-145a：摘要桶序随进程哈希种子浮动（值恒同）→ 内容面比较
+            out[rel] = _sha8(json.dumps(json.loads(text),
+                                        ensure_ascii=False, sort_keys=True))
         else:
             out[rel] = _sha8(text)
     return out
 
 
-def _export_arm(tag: str, flag: str, values: list[str]) -> dict[str, Any]:
+def _export_arm(tag: str, flag: str | None, values: list[str]) -> dict[str, Any]:
+    """flag=None＝未设 env（看出厂默认）；"0"/"1"＝显式钉旗。"""
     from app.agents.base import Analyst
     from app.export.official import export_official
     from app.pipeline import RunDeps, RunSpec, run_case
 
-    os.environ["VERITAS_CONFLICT_TRACE"] = flag
+    if flag is None:
+        os.environ.pop("VERITAS_CONFLICT_TRACE", None)
+    else:
+        os.environ["VERITAS_CONFLICT_TRACE"] = flag
     tmp = Path(tempfile.mkdtemp(prefix=f"c143_{tag}_"))
     case = tmp / "case"
     case.mkdir(parents=True)
@@ -197,6 +205,18 @@ def _flag_default_off() -> bool:
     saved = os.environ.pop("VERITAS_CONFLICT_TRACE", None)
     try:
         return Settings().conflict_trace is False
+    finally:
+        if saved is not None:
+            os.environ["VERITAS_CONFLICT_TRACE"] = saved
+
+
+def _flag_default_now() -> bool:
+    """C-145a 起：未设 env 时读出厂数据类默认（翻默认后应为 True）。"""
+    from app.config import Settings
+
+    saved = os.environ.pop("VERITAS_CONFLICT_TRACE", None)
+    try:
+        return Settings().conflict_trace
     finally:
         if saved is not None:
             os.environ["VERITAS_CONFLICT_TRACE"] = saved

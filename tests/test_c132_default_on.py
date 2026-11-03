@@ -177,7 +177,8 @@ def test_d2_off_env_via_settings_object(monkeypatch):
 def test_e_side_knives_still_off_by_factory():
     s = Settings()
     assert getattr(s, "anchor_stable", None) is False
-    assert getattr(s, "conflict_trace", None) is False
+    # C-145a：conflict_trace 出厂默认开（路演可见）——已不在旁路关旗集
+    assert getattr(s, "conflict_trace", None) is True
     assert getattr(s, "conf_calib", None) is False
     assert getattr(s, "tree15_depress", None) is False
     assert getattr(s, "claim_slots", None) is False

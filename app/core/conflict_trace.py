@@ -47,8 +47,15 @@ TRACE_REQUIRED_KEYS = frozenset({
 
 
 def conflict_trace_enabled(settings: Any | None = None) -> bool:
-    """默认关。``VERITAS_CONFLICT_TRACE=1`` 开。"""
-    if settings is not None and hasattr(settings, "conflict_trace"):
+    """默认随出厂（C-145a 起 True）。``VERITAS_CONFLICT_TRACE=0`` 关。
+
+    settings 为 None 时走 ``Settings.from_env()``（出厂默认＋env 叠加），
+    不许在无参路径里绕开出厂默认——否则翻默认后仲裁／导出挂点静默不走。
+    """
+    if settings is None:
+        from app.config import Settings
+        settings = Settings.from_env()
+    if hasattr(settings, "conflict_trace"):
         return bool(getattr(settings, "conflict_trace"))
     v = (os.environ.get(_ENV) or "").strip().lower()
     if v in ("1", "true", "on", "yes"):

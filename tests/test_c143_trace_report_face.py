@@ -62,12 +62,12 @@ def _deps() -> RunDeps:
 # ------------------------------------------------ 守护格
 
 
-def test_a_factory_default_off(monkeypatch):
-    """出厂默认仍关（未经 Boyu 拍板不改默认开）。"""
+def test_a_factory_default_on(monkeypatch):
+    """C-145a 起出厂默认开；显式 env=0 关（未经 Boyu 不再翻回）。"""
     monkeypatch.delenv("VERITAS_CONFLICT_TRACE", raising=False)
-    assert Settings().conflict_trace is False
-    assert Settings.from_env().conflict_trace is False
-    assert conflict_trace_enabled() is False
+    assert Settings().conflict_trace is True
+    assert Settings.from_env().conflict_trace is True
+    assert conflict_trace_enabled() is True
 
 
 def test_b_both_whitelists_carry_trace_key():
