@@ -993,7 +993,8 @@ def run_case(spec: RunSpec | None = None,
                      "kg_priority_segment_ids", "tree17_cite",
                      "kg_density", "kg_cap_segments", "kg_stage1",
                      "kg_rehydrate", "kg_test_tree",
-                     "kg_submit_skipped")}
+                     "kg_submit_skipped",
+                     "cite_accept")}
     dossier.accounting = {
         **kept,
         "elapsed_s": round(time.monotonic() - t0, 1),

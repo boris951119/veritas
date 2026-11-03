@@ -113,27 +113,76 @@ class Analyst(Agent):
         from app.core.skills import render_skills_rules
 
         # C-107：显式 focus 优先（second_pass／multi_box）；否则旗开窄面注入
+        explicit_focus = focus_segment_ids is not None
         focus = focus_segment_ids
         if focus is None:
             from app.core.kg_submit_surface import kg_focus_segment_ids
             focus = kg_focus_segment_ids(dossier)
 
-        messages = [
-            {"role": "system",
-             "content": render_system_prompt(
-                 self.persona,
-                 skills_rules=render_skills_rules(dossier, self.profile_tier))},
-            {"role": "user", "content": render_segments_block(
-                dossier, focus_segment_ids=focus)},
-        ]
-        # C-9 丙：发送前窗口估算披露（不截断、不收窄预算）。
-        # settings 在构造时已钉死，这里不再读配置。
-        self._disclose_prompt_window(dossier, messages, self.settings)
-        response = self.client.chat(self.model, messages, json_mode=True)
-        raw = response.content or ""
-        self.last_raw = raw
-        data = extract_json(raw)
-        return self._materialize(data, dossier, raw=raw)
+        # C-139：引用验收闸只在首轮形状（无显式 focus——second_pass／
+        # multi_box 定向轮不在范围）且旗开且交卷盒在场时启用；关＝逐字旧路。
+        gate_ctx = None
+        if not explicit_focus:
+            from app.core.tree17_accept import cite_accept_enabled, gate_context
+            if cite_accept_enabled(self.settings):
+                gate_ctx = gate_context(dossier)
+        attempts_cap = 1
+        if gate_ctx is not None:
+            from app.core.tree17_accept import cite_accept_attempts
+            attempts_cap = cite_accept_attempts(self.settings)
+
+        system_content = render_system_prompt(
+            self.persona, skills_rules=render_skills_rules(dossier, self.profile_tier))
+        raw = ""
+        data: dict | None = None
+        attempts_log: list[dict] = []
+        failure_block = ""
+        verdict: dict | None = None
+        for attempt in range(1, attempts_cap + 1):
+            user_content = render_segments_block(dossier, focus_segment_ids=focus)
+            if failure_block:
+                user_content += failure_block
+            messages = [
+                {"role": "system",
+                 "content": system_content},
+                {"role": "user", "content": user_content},
+            ]
+            # C-9 丙：发送前窗口估算披露（不截断、不收窄预算）。
+            # settings 在构造时已钉死，这里不再读配置。
+            self._disclose_prompt_window(dossier, messages, self.settings)
+            response = self.client.chat(self.model, messages, json_mode=True)
+            raw = response.content or ""
+            self.last_raw = raw
+            try:
+                data = extract_json(raw)
+            except ValueError:
+                data = None
+            if gate_ctx is None:
+                break
+            from app.core.tree17_accept import (
+                accept_payload, render_failure_block, unparsable_verdict,
+            )
+            if data is None:
+                verdict = unparsable_verdict()
+            else:
+                verdict = accept_payload(
+                    data, dossier=dossier, box=gate_ctx["box"],
+                    box_set=gate_ctx["box_set"], pairs=gate_ctx["pairs"])
+            from app.core.tree17_accept import verdict_summary
+            attempts_log.append({"attempt": attempt, **verdict_summary(verdict)})
+            if verdict.get("ok"):
+                break
+            # 打回：失败原因＋原约束追加；资料清单不变（仍只喂盒内段）
+            failure_block = render_failure_block(
+                verdict, attempt=attempt, box=gate_ctx["box"])
+        if gate_ctx is None:
+            if data is None:
+                raise ValueError(f"回复中找不到 JSON 对象: {raw[:200]!r}")
+            return self._materialize(data, dossier, raw=raw)
+        from app.core.tree17_accept import finalize_gate
+        return finalize_gate(
+            self, dossier, gate_ctx=gate_ctx, data=data, verdict=verdict,
+            attempts_log=attempts_log, attempts_cap=attempts_cap, raw=raw)
 
     @staticmethod
     def _disclose_prompt_window(dossier: Dossier, messages: list[dict],
