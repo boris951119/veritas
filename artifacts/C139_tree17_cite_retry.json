@@ -1,0 +1,1833 @@
+{
+ "ticket": "C-139-tree17-cite-retry",
+ "tip": "f6bc348",
+ "branch": "qoder/c139-tree17-cite-retry",
+ "model": "openai/veritas-qwen3-14b",
+ "env_note": "不设 VERITAS_TEST_TREE_LINE（出厂开）；env 组同 C-134 （REVIEW_BOOST 显式 0）＋VERITAS_CITE_ACCEPT=1；attempts＝默认 3（env 未设）",
+ "passes": 3,
+ "wall_s": 0.0,
+ "gates": {
+  "liuxiang": {
+   "deltas_vs_c134": {
+    "micro_gold_density": [
+     0.5714,
+     0.5714
+    ],
+    "mean_gold_box_to_close": [
+     1.0,
+     1.0
+    ],
+    "n_leaks": [
+     0,
+     0
+    ],
+    "at7": [
+     12,
+     12
+    ]
+   },
+   "equal": true
+  },
+  "wanghong": {
+   "deltas_vs_c134": {
+    "micro_gold_density": [
+     0.8571,
+     0.8571
+    ],
+    "mean_gold_box_to_close": [
+     1.0,
+     1.0
+    ],
+    "n_leaks": [
+     0,
+     0
+    ]
+   },
+   "equal": true
+  }
+ },
+ "leg0": [
+  {
+   "slug": "liuxiang",
+   "qid": "q_001",
+   "leg": "zero_call",
+   "box_n": 3,
+   "stub1": {
+    "attempts": 1,
+    "final_ok": true,
+    "n_calls": 1,
+    "oob_n": 0,
+    "n_conclusions": 1
+   },
+   "stub2": {
+    "attempts": 2,
+    "final_ok": true,
+    "n_calls": 2,
+    "oob_n": 0,
+    "attempt1_codes": [
+     "out_of_box",
+     "anchor_miss"
+    ],
+    "failure_block_present": true,
+    "suffix_ids_subset_of_box_or_bad": true,
+    "n_calls_total": 2
+   }
+  },
+  {
+   "slug": "liuxiang",
+   "qid": "q_002",
+   "leg": "zero_call",
+   "box_n": 3,
+   "stub1": {
+    "attempts": 1,
+    "final_ok": true,
+    "n_calls": 1,
+    "oob_n": 0,
+    "n_conclusions": 1
+   },
+   "stub2": {
+    "attempts": 2,
+    "final_ok": true,
+    "n_calls": 2,
+    "oob_n": 0,
+    "attempt1_codes": [
+     "out_of_box",
+     "anchor_miss"
+    ],
+    "failure_block_present": true,
+    "suffix_ids_subset_of_box_or_bad": true,
+    "n_calls_total": 2
+   }
+  },
+  {
+   "slug": "liuxiang",
+   "qid": "q_003",
+   "leg": "zero_call",
+   "box_n": 3,
+   "stub1": {
+    "attempts": 1,
+    "final_ok": true,
+    "n_calls": 1,
+    "oob_n": 0,
+    "n_conclusions": 1
+   },
+   "stub2": {
+    "attempts": 2,
+    "final_ok": true,
+    "n_calls": 2,
+    "oob_n": 0,
+    "attempt1_codes": [
+     "out_of_box",
+     "anchor_miss"
+    ],
+    "failure_block_present": true,
+    "suffix_ids_subset_of_box_or_bad": true,
+    "n_calls_total": 2
+   }
+  },
+  {
+   "slug": "wanghong",
+   "qid": "q_001",
+   "leg": "zero_call",
+   "box_n": 1,
+   "stub1": {
+    "attempts": 1,
+    "final_ok": true,
+    "n_calls": 1,
+    "oob_n": 0,
+    "n_conclusions": 1
+   },
+   "stub2": {
+    "attempts": 2,
+    "final_ok": true,
+    "n_calls": 2,
+    "oob_n": 0,
+    "attempt1_codes": [
+     "out_of_box",
+     "anchor_miss"
+    ],
+    "failure_block_present": true,
+    "suffix_ids_subset_of_box_or_bad": true,
+    "n_calls_total": 2
+   }
+  },
+  {
+   "slug": "wanghong",
+   "qid": "q_002",
+   "leg": "zero_call",
+   "box_n": 3,
+   "stub1": {
+    "attempts": 1,
+    "final_ok": true,
+    "n_calls": 1,
+    "oob_n": 0,
+    "n_conclusions": 1
+   },
+   "stub2": {
+    "attempts": 2,
+    "final_ok": true,
+    "n_calls": 2,
+    "oob_n": 0,
+    "attempt1_codes": [
+     "out_of_box",
+     "anchor_miss"
+    ],
+    "failure_block_present": true,
+    "suffix_ids_subset_of_box_or_bad": true,
+    "n_calls_total": 2
+   }
+  },
+  {
+   "slug": "wanghong",
+   "qid": "q_003",
+   "leg": "zero_call",
+   "box_n": 3,
+   "stub1": {
+    "attempts": 1,
+    "final_ok": true,
+    "n_calls": 1,
+    "oob_n": 0,
+    "n_conclusions": 1
+   },
+   "stub2": {
+    "attempts": 2,
+    "final_ok": true,
+    "n_calls": 2,
+    "oob_n": 0,
+    "attempt1_codes": [
+     "out_of_box",
+     "anchor_miss"
+    ],
+    "failure_block_present": true,
+    "suffix_ids_subset_of_box_or_bad": true,
+    "n_calls_total": 2
+   }
+  }
+ ],
+ "real_runs": [
+  {
+   "slug": "liuxiang",
+   "qid": "q_001",
+   "pass": 1,
+   "attempts": 3,
+   "attempts_cap": 3,
+   "attempts_log": [
+    {
+     "attempt": 1,
+     "codes": [
+      "conflict_one_sided"
+     ],
+     "n_cited": 2,
+     "n_conclusions": 1,
+     "n_cons_without_evidence": 0,
+     "out_of_box_n": 0,
+     "anchor_miss_n": 0,
+     "unverifiable_n": 0,
+     "one_sided_n": 4,
+     "unenforceable_pairs_n": 4
+    },
+    {
+     "attempt": 2,
+     "codes": [
+      "unverifiable"
+     ],
+     "n_cited": 2,
+     "n_conclusions": 2,
+     "n_cons_without_evidence": 0,
+     "out_of_box_n": 0,
+     "anchor_miss_n": 0,
+     "unverifiable_n": 1,
+     "one_sided_n": 0,
+     "unenforceable_pairs_n": 4
+    },
+    {
+     "attempt": 3,
+     "codes": [
+      "unverifiable"
+     ],
+     "n_cited": 3,
+     "n_conclusions": 1,
+     "n_cons_without_evidence": 0,
+     "out_of_box_n": 0,
+     "anchor_miss_n": 0,
+     "unverifiable_n": 1,
+     "one_sided_n": 0,
+     "unenforceable_pairs_n": 4
+    }
+   ],
+   "final_ok": false,
+   "maxed_out": true,
+   "codes_final": [
+    "unverifiable"
+   ],
+   "pruned": {
+    "n_dropped_evidence": 0,
+    "n_dropped_conclusions": 0
+   },
+   "box_n": 3,
+   "focus_n": 3,
+   "focus_gold_n": 1,
+   "focus_precision": 0.3333,
+   "face_sha8": "e34f503d",
+   "denom": 4,
+   "l3": 1,
+   "cited_n": 3,
+   "cited_gold_ids": [
+    "doc_002#p3"
+   ],
+   "out_of_band_ids": [],
+   "pairs": [
+    {
+     "support_id": "doc_014#p1",
+     "oppose_id": "doc_002#p3",
+     "support_cited": true,
+     "oppose_cited": true,
+     "one_sided": false
+    },
+    {
+     "support_id": "doc_014#p1",
+     "oppose_id": "doc_012#p3",
+     "support_cited": true,
+     "oppose_cited": false,
+     "one_sided": true
+    },
+    {
+     "support_id": "doc_014#p1",
+     "oppose_id": "doc_012#p2",
+     "support_cited": true,
+     "oppose_cited": false,
+     "one_sided": true
+    },
+    {
+     "support_id": "doc_014#p1",
+     "oppose_id": "doc_002#p3",
+     "support_cited": true,
+     "oppose_cited": true,
+     "one_sided": false
+    },
+    {
+     "support_id": "doc_014#p1",
+     "oppose_id": "doc_002#p3",
+     "support_cited": true,
+     "oppose_cited": true,
+     "one_sided": false
+    },
+    {
+     "support_id": "doc_014#p1",
+     "oppose_id": "doc_012#p3",
+     "support_cited": true,
+     "oppose_cited": false,
+     "one_sided": true
+    },
+    {
+     "support_id": "doc_014#p1",
+     "oppose_id": "doc_012#p2",
+     "support_cited": true,
+     "oppose_cited": false,
+     "one_sided": true
+    },
+    {
+     "support_id": "doc_014#p1",
+     "oppose_id": "doc_002#p3",
+     "support_cited": true,
+     "oppose_cited": true,
+     "one_sided": false
+    }
+   ],
+   "one_sided_n": 4,
+   "n_conclusions": 1,
+   "n_evidences": 3,
+   "n_ev_check_fail": 1,
+   "fail_buckets": {
+    "empty_quote": 0,
+    "seg_missing": 0,
+    "verbatim_miss": 1,
+    "adjacent_only": 0,
+    "other": 0
+   },
+   "server_input_tokens": null,
+   "wall_s": 155.7
+  },
+  {
+   "slug": "liuxiang",
+   "qid": "q_001",
+   "pass": 2,
+   "attempts": 3,
+   "attempts_cap": 3,
+   "attempts_log": [
+    {
+     "attempt": 1,
+     "codes": [
+      "conflict_one_sided"
+     ],
+     "n_cited": 2,
+     "n_conclusions": 1,
+     "n_cons_without_evidence": 0,
+     "out_of_box_n": 0,
+     "anchor_miss_n": 0,
+     "unverifiable_n": 0,
+     "one_sided_n": 4,
+     "unenforceable_pairs_n": 4
+    },
+    {
+     "attempt": 2,
+     "codes": [
+      "unverifiable"
+     ],
+     "n_cited": 2,
+     "n_conclusions": 1,
+     "n_cons_without_evidence": 0,
+     "out_of_box_n": 0,
+     "anchor_miss_n": 0,
+     "unverifiable_n": 1,
+     "one_sided_n": 0,
+     "unenforceable_pairs_n": 4
+    },
+    {
+     "attempt": 3,
+     "codes": [
+      "unverifiable"
+     ],
+     "n_cited": 3,
+     "n_conclusions": 1,
+     "n_cons_without_evidence": 0,
+     "out_of_box_n": 0,
+     "anchor_miss_n": 0,
+     "unverifiable_n": 1,
+     "one_sided_n": 0,
+     "unenforceable_pairs_n": 4
+    }
+   ],
+   "final_ok": false,
+   "maxed_out": true,
+   "codes_final": [
+    "unverifiable"
+   ],
+   "pruned": {
+    "n_dropped_evidence": 0,
+    "n_dropped_conclusions": 0
+   },
+   "box_n": 3,
+   "focus_n": 3,
+   "focus_gold_n": 1,
+   "focus_precision": 0.3333,
+   "face_sha8": "e34f503d",
+   "denom": 4,
+   "l3": 1,
+   "cited_n": 3,
+   "cited_gold_ids": [
+    "doc_002#p3"
+   ],
+   "out_of_band_ids": [],
+   "pairs": [
+    {
+     "support_id": "doc_014#p1",
+     "oppose_id": "doc_002#p3",
+     "support_cited": true,
+     "oppose_cited": true,
+     "one_sided": false
+    },
+    {
+     "support_id": "doc_014#p1",
+     "oppose_id": "doc_012#p3",
+     "support_cited": true,
+     "oppose_cited": false,
+     "one_sided": true
+    },
+    {
+     "support_id": "doc_014#p1",
+     "oppose_id": "doc_012#p2",
+     "support_cited": true,
+     "oppose_cited": false,
+     "one_sided": true
+    },
+    {
+     "support_id": "doc_014#p1",
+     "oppose_id": "doc_002#p3",
+     "support_cited": true,
+     "oppose_cited": true,
+     "one_sided": false
+    },
+    {
+     "support_id": "doc_014#p1",
+     "oppose_id": "doc_002#p3",
+     "support_cited": true,
+     "oppose_cited": true,
+     "one_sided": false
+    },
+    {
+     "support_id": "doc_014#p1",
+     "oppose_id": "doc_012#p3",
+     "support_cited": true,
+     "oppose_cited": false,
+     "one_sided": true
+    },
+    {
+     "support_id": "doc_014#p1",
+     "oppose_id": "doc_012#p2",
+     "support_cited": true,
+     "oppose_cited": false,
+     "one_sided": true
+    },
+    {
+     "support_id": "doc_014#p1",
+     "oppose_id": "doc_002#p3",
+     "support_cited": true,
+     "oppose_cited": true,
+     "one_sided": false
+    }
+   ],
+   "one_sided_n": 4,
+   "n_conclusions": 1,
+   "n_evidences": 3,
+   "n_ev_check_fail": 1,
+   "fail_buckets": {
+    "empty_quote": 0,
+    "seg_missing": 0,
+    "verbatim_miss": 1,
+    "adjacent_only": 0,
+    "other": 0
+   },
+   "server_input_tokens": null,
+   "wall_s": 82.4
+  },
+  {
+   "slug": "liuxiang",
+   "qid": "q_001",
+   "pass": 3,
+   "attempts": 3,
+   "attempts_cap": 3,
+   "attempts_log": [
+    {
+     "attempt": 1,
+     "codes": [
+      "conflict_one_sided"
+     ],
+     "n_cited": 2,
+     "n_conclusions": 1,
+     "n_cons_without_evidence": 0,
+     "out_of_box_n": 0,
+     "anchor_miss_n": 0,
+     "unverifiable_n": 0,
+     "one_sided_n": 4,
+     "unenforceable_pairs_n": 4
+    },
+    {
+     "attempt": 2,
+     "codes": [
+      "unverifiable"
+     ],
+     "n_cited": 2,
+     "n_conclusions": 3,
+     "n_cons_without_evidence": 0,
+     "out_of_box_n": 0,
+     "anchor_miss_n": 0,
+     "unverifiable_n": 1,
+     "one_sided_n": 0,
+     "unenforceable_pairs_n": 4
+    },
+    {
+     "attempt": 3,
+     "codes": [
+      "unverifiable"
+     ],
+     "n_cited": 3,
+     "n_conclusions": 1,
+     "n_cons_without_evidence": 0,
+     "out_of_box_n": 0,
+     "anchor_miss_n": 0,
+     "unverifiable_n": 1,
+     "one_sided_n": 0,
+     "unenforceable_pairs_n": 4
+    }
+   ],
+   "final_ok": false,
+   "maxed_out": true,
+   "codes_final": [
+    "unverifiable"
+   ],
+   "pruned": {
+    "n_dropped_evidence": 0,
+    "n_dropped_conclusions": 0
+   },
+   "box_n": 3,
+   "focus_n": 3,
+   "focus_gold_n": 1,
+   "focus_precision": 0.3333,
+   "face_sha8": "e34f503d",
+   "denom": 4,
+   "l3": 1,
+   "cited_n": 3,
+   "cited_gold_ids": [
+    "doc_002#p3"
+   ],
+   "out_of_band_ids": [],
+   "pairs": [
+    {
+     "support_id": "doc_014#p1",
+     "oppose_id": "doc_002#p3",
+     "support_cited": true,
+     "oppose_cited": true,
+     "one_sided": false
+    },
+    {
+     "support_id": "doc_014#p1",
+     "oppose_id": "doc_012#p3",
+     "support_cited": true,
+     "oppose_cited": false,
+     "one_sided": true
+    },
+    {
+     "support_id": "doc_014#p1",
+     "oppose_id": "doc_012#p2",
+     "support_cited": true,
+     "oppose_cited": false,
+     "one_sided": true
+    },
+    {
+     "support_id": "doc_014#p1",
+     "oppose_id": "doc_002#p3",
+     "support_cited": true,
+     "oppose_cited": true,
+     "one_sided": false
+    },
+    {
+     "support_id": "doc_014#p1",
+     "oppose_id": "doc_002#p3",
+     "support_cited": true,
+     "oppose_cited": true,
+     "one_sided": false
+    },
+    {
+     "support_id": "doc_014#p1",
+     "oppose_id": "doc_012#p3",
+     "support_cited": true,
+     "oppose_cited": false,
+     "one_sided": true
+    },
+    {
+     "support_id": "doc_014#p1",
+     "oppose_id": "doc_012#p2",
+     "support_cited": true,
+     "oppose_cited": false,
+     "one_sided": true
+    },
+    {
+     "support_id": "doc_014#p1",
+     "oppose_id": "doc_002#p3",
+     "support_cited": true,
+     "oppose_cited": true,
+     "one_sided": false
+    }
+   ],
+   "one_sided_n": 4,
+   "n_conclusions": 1,
+   "n_evidences": 3,
+   "n_ev_check_fail": 1,
+   "fail_buckets": {
+    "empty_quote": 0,
+    "seg_missing": 0,
+    "verbatim_miss": 1,
+    "adjacent_only": 0,
+    "other": 0
+   },
+   "server_input_tokens": null,
+   "wall_s": 105.8
+  },
+  {
+   "slug": "liuxiang",
+   "qid": "q_002",
+   "pass": 1,
+   "attempts": 1,
+   "attempts_cap": 3,
+   "attempts_log": [
+    {
+     "attempt": 1,
+     "codes": [],
+     "n_cited": 3,
+     "n_conclusions": 3,
+     "n_cons_without_evidence": 0,
+     "out_of_box_n": 0,
+     "anchor_miss_n": 0,
+     "unverifiable_n": 0,
+     "one_sided_n": 0,
+     "unenforceable_pairs_n": 0
+    }
+   ],
+   "final_ok": true,
+   "maxed_out": false,
+   "codes_final": [],
+   "pruned": null,
+   "box_n": 3,
+   "focus_n": 3,
+   "focus_gold_n": 1,
+   "focus_precision": 0.3333,
+   "face_sha8": "b3a0ecd8",
+   "denom": 5,
+   "l3": 1,
+   "cited_n": 3,
+   "cited_gold_ids": [
+    "doc_002#p3"
+   ],
+   "out_of_band_ids": [],
+   "pairs": [],
+   "one_sided_n": 0,
+   "n_conclusions": 3,
+   "n_evidences": 3,
+   "n_ev_check_fail": 0,
+   "fail_buckets": {
+    "empty_quote": 0,
+    "seg_missing": 0,
+    "verbatim_miss": 0,
+    "adjacent_only": 0,
+    "other": 0
+   },
+   "server_input_tokens": null,
+   "wall_s": 39.6
+  },
+  {
+   "slug": "liuxiang",
+   "qid": "q_002",
+   "pass": 2,
+   "attempts": 1,
+   "attempts_cap": 3,
+   "attempts_log": [
+    {
+     "attempt": 1,
+     "codes": [],
+     "n_cited": 3,
+     "n_conclusions": 3,
+     "n_cons_without_evidence": 0,
+     "out_of_box_n": 0,
+     "anchor_miss_n": 0,
+     "unverifiable_n": 0,
+     "one_sided_n": 0,
+     "unenforceable_pairs_n": 0
+    }
+   ],
+   "final_ok": true,
+   "maxed_out": false,
+   "codes_final": [],
+   "pruned": null,
+   "box_n": 3,
+   "focus_n": 3,
+   "focus_gold_n": 1,
+   "focus_precision": 0.3333,
+   "face_sha8": "b3a0ecd8",
+   "denom": 5,
+   "l3": 1,
+   "cited_n": 3,
+   "cited_gold_ids": [
+    "doc_002#p3"
+   ],
+   "out_of_band_ids": [],
+   "pairs": [],
+   "one_sided_n": 0,
+   "n_conclusions": 3,
+   "n_evidences": 3,
+   "n_ev_check_fail": 0,
+   "fail_buckets": {
+    "empty_quote": 0,
+    "seg_missing": 0,
+    "verbatim_miss": 0,
+    "adjacent_only": 0,
+    "other": 0
+   },
+   "server_input_tokens": null,
+   "wall_s": 33.6
+  },
+  {
+   "slug": "liuxiang",
+   "qid": "q_002",
+   "pass": 3,
+   "attempts": 2,
+   "attempts_cap": 3,
+   "attempts_log": [
+    {
+     "attempt": 1,
+     "codes": [
+      "unverifiable"
+     ],
+     "n_cited": 3,
+     "n_conclusions": 4,
+     "n_cons_without_evidence": 0,
+     "out_of_box_n": 0,
+     "anchor_miss_n": 0,
+     "unverifiable_n": 1,
+     "one_sided_n": 0,
+     "unenforceable_pairs_n": 0
+    },
+    {
+     "attempt": 2,
+     "codes": [],
+     "n_cited": 3,
+     "n_conclusions": 3,
+     "n_cons_without_evidence": 0,
+     "out_of_box_n": 0,
+     "anchor_miss_n": 0,
+     "unverifiable_n": 0,
+     "one_sided_n": 0,
+     "unenforceable_pairs_n": 0
+    }
+   ],
+   "final_ok": true,
+   "maxed_out": false,
+   "codes_final": [],
+   "pruned": null,
+   "box_n": 3,
+   "focus_n": 3,
+   "focus_gold_n": 1,
+   "focus_precision": 0.3333,
+   "face_sha8": "b3a0ecd8",
+   "denom": 5,
+   "l3": 1,
+   "cited_n": 3,
+   "cited_gold_ids": [
+    "doc_002#p3"
+   ],
+   "out_of_band_ids": [],
+   "pairs": [],
+   "one_sided_n": 0,
+   "n_conclusions": 3,
+   "n_evidences": 3,
+   "n_ev_check_fail": 0,
+   "fail_buckets": {
+    "empty_quote": 0,
+    "seg_missing": 0,
+    "verbatim_miss": 0,
+    "adjacent_only": 0,
+    "other": 0
+   },
+   "server_input_tokens": null,
+   "wall_s": 84.7
+  },
+  {
+   "slug": "liuxiang",
+   "qid": "q_003",
+   "pass": 1,
+   "attempts": 1,
+   "attempts_cap": 3,
+   "attempts_log": [
+    {
+     "attempt": 1,
+     "codes": [],
+     "n_cited": 3,
+     "n_conclusions": 3,
+     "n_cons_without_evidence": 0,
+     "out_of_box_n": 0,
+     "anchor_miss_n": 0,
+     "unverifiable_n": 0,
+     "one_sided_n": 0,
+     "unenforceable_pairs_n": 0
+    }
+   ],
+   "final_ok": true,
+   "maxed_out": false,
+   "codes_final": [],
+   "pruned": null,
+   "box_n": 3,
+   "focus_n": 3,
+   "focus_gold_n": 2,
+   "focus_precision": 0.6667,
+   "face_sha8": "81809109",
+   "denom": 5,
+   "l3": 2,
+   "cited_n": 3,
+   "cited_gold_ids": [
+    "doc_002#p3",
+    "doc_006#p3"
+   ],
+   "out_of_band_ids": [],
+   "pairs": [],
+   "one_sided_n": 0,
+   "n_conclusions": 3,
+   "n_evidences": 3,
+   "n_ev_check_fail": 0,
+   "fail_buckets": {
+    "empty_quote": 0,
+    "seg_missing": 0,
+    "verbatim_miss": 0,
+    "adjacent_only": 0,
+    "other": 0
+   },
+   "server_input_tokens": null,
+   "wall_s": 37.9
+  },
+  {
+   "slug": "liuxiang",
+   "qid": "q_003",
+   "pass": 2,
+   "attempts": 1,
+   "attempts_cap": 3,
+   "attempts_log": [
+    {
+     "attempt": 1,
+     "codes": [],
+     "n_cited": 3,
+     "n_conclusions": 3,
+     "n_cons_without_evidence": 0,
+     "out_of_box_n": 0,
+     "anchor_miss_n": 0,
+     "unverifiable_n": 0,
+     "one_sided_n": 0,
+     "unenforceable_pairs_n": 0
+    }
+   ],
+   "final_ok": true,
+   "maxed_out": false,
+   "codes_final": [],
+   "pruned": null,
+   "box_n": 3,
+   "focus_n": 3,
+   "focus_gold_n": 2,
+   "focus_precision": 0.6667,
+   "face_sha8": "81809109",
+   "denom": 5,
+   "l3": 2,
+   "cited_n": 3,
+   "cited_gold_ids": [
+    "doc_002#p3",
+    "doc_006#p3"
+   ],
+   "out_of_band_ids": [],
+   "pairs": [],
+   "one_sided_n": 0,
+   "n_conclusions": 3,
+   "n_evidences": 3,
+   "n_ev_check_fail": 0,
+   "fail_buckets": {
+    "empty_quote": 0,
+    "seg_missing": 0,
+    "verbatim_miss": 0,
+    "adjacent_only": 0,
+    "other": 0
+   },
+   "server_input_tokens": null,
+   "wall_s": 35.1
+  },
+  {
+   "slug": "liuxiang",
+   "qid": "q_003",
+   "pass": 3,
+   "attempts": 1,
+   "attempts_cap": 3,
+   "attempts_log": [
+    {
+     "attempt": 1,
+     "codes": [],
+     "n_cited": 3,
+     "n_conclusions": 3,
+     "n_cons_without_evidence": 0,
+     "out_of_box_n": 0,
+     "anchor_miss_n": 0,
+     "unverifiable_n": 0,
+     "one_sided_n": 0,
+     "unenforceable_pairs_n": 0
+    }
+   ],
+   "final_ok": true,
+   "maxed_out": false,
+   "codes_final": [],
+   "pruned": null,
+   "box_n": 3,
+   "focus_n": 3,
+   "focus_gold_n": 2,
+   "focus_precision": 0.6667,
+   "face_sha8": "81809109",
+   "denom": 5,
+   "l3": 2,
+   "cited_n": 3,
+   "cited_gold_ids": [
+    "doc_002#p3",
+    "doc_006#p3"
+   ],
+   "out_of_band_ids": [],
+   "pairs": [],
+   "one_sided_n": 0,
+   "n_conclusions": 3,
+   "n_evidences": 3,
+   "n_ev_check_fail": 0,
+   "fail_buckets": {
+    "empty_quote": 0,
+    "seg_missing": 0,
+    "verbatim_miss": 0,
+    "adjacent_only": 0,
+    "other": 0
+   },
+   "server_input_tokens": null,
+   "wall_s": 34.8
+  },
+  {
+   "slug": "wanghong",
+   "qid": "q_001",
+   "pass": 1,
+   "attempts": 1,
+   "attempts_cap": 3,
+   "attempts_log": [
+    {
+     "attempt": 1,
+     "codes": [],
+     "n_cited": 1,
+     "n_conclusions": 1,
+     "n_cons_without_evidence": 0,
+     "out_of_box_n": 0,
+     "anchor_miss_n": 0,
+     "unverifiable_n": 0,
+     "one_sided_n": 0,
+     "unenforceable_pairs_n": 0
+    }
+   ],
+   "final_ok": true,
+   "maxed_out": false,
+   "codes_final": [],
+   "pruned": null,
+   "box_n": 1,
+   "focus_n": 1,
+   "focus_gold_n": 1,
+   "focus_precision": 1.0,
+   "face_sha8": "1bbd5432",
+   "denom": 5,
+   "l3": 1,
+   "cited_n": 1,
+   "cited_gold_ids": [
+    "doc_001#p1"
+   ],
+   "out_of_band_ids": [],
+   "pairs": [],
+   "one_sided_n": 0,
+   "n_conclusions": 1,
+   "n_evidences": 1,
+   "n_ev_check_fail": 0,
+   "fail_buckets": {
+    "empty_quote": 0,
+    "seg_missing": 0,
+    "verbatim_miss": 0,
+    "adjacent_only": 0,
+    "other": 0
+   },
+   "server_input_tokens": null,
+   "wall_s": 22.1
+  },
+  {
+   "slug": "wanghong",
+   "qid": "q_001",
+   "pass": 2,
+   "attempts": 1,
+   "attempts_cap": 3,
+   "attempts_log": [
+    {
+     "attempt": 1,
+     "codes": [],
+     "n_cited": 1,
+     "n_conclusions": 1,
+     "n_cons_without_evidence": 0,
+     "out_of_box_n": 0,
+     "anchor_miss_n": 0,
+     "unverifiable_n": 0,
+     "one_sided_n": 0,
+     "unenforceable_pairs_n": 0
+    }
+   ],
+   "final_ok": true,
+   "maxed_out": false,
+   "codes_final": [],
+   "pruned": null,
+   "box_n": 1,
+   "focus_n": 1,
+   "focus_gold_n": 1,
+   "focus_precision": 1.0,
+   "face_sha8": "1bbd5432",
+   "denom": 5,
+   "l3": 1,
+   "cited_n": 1,
+   "cited_gold_ids": [
+    "doc_001#p1"
+   ],
+   "out_of_band_ids": [],
+   "pairs": [],
+   "one_sided_n": 0,
+   "n_conclusions": 1,
+   "n_evidences": 1,
+   "n_ev_check_fail": 0,
+   "fail_buckets": {
+    "empty_quote": 0,
+    "seg_missing": 0,
+    "verbatim_miss": 0,
+    "adjacent_only": 0,
+    "other": 0
+   },
+   "server_input_tokens": null,
+   "wall_s": 21.1
+  },
+  {
+   "slug": "wanghong",
+   "qid": "q_001",
+   "pass": 3,
+   "attempts": 1,
+   "attempts_cap": 3,
+   "attempts_log": [
+    {
+     "attempt": 1,
+     "codes": [],
+     "n_cited": 1,
+     "n_conclusions": 1,
+     "n_cons_without_evidence": 0,
+     "out_of_box_n": 0,
+     "anchor_miss_n": 0,
+     "unverifiable_n": 0,
+     "one_sided_n": 0,
+     "unenforceable_pairs_n": 0
+    }
+   ],
+   "final_ok": true,
+   "maxed_out": false,
+   "codes_final": [],
+   "pruned": null,
+   "box_n": 1,
+   "focus_n": 1,
+   "focus_gold_n": 1,
+   "focus_precision": 1.0,
+   "face_sha8": "1bbd5432",
+   "denom": 5,
+   "l3": 1,
+   "cited_n": 1,
+   "cited_gold_ids": [
+    "doc_001#p1"
+   ],
+   "out_of_band_ids": [],
+   "pairs": [],
+   "one_sided_n": 0,
+   "n_conclusions": 1,
+   "n_evidences": 1,
+   "n_ev_check_fail": 0,
+   "fail_buckets": {
+    "empty_quote": 0,
+    "seg_missing": 0,
+    "verbatim_miss": 0,
+    "adjacent_only": 0,
+    "other": 0
+   },
+   "server_input_tokens": null,
+   "wall_s": 19.3
+  },
+  {
+   "slug": "wanghong",
+   "qid": "q_002",
+   "pass": 1,
+   "attempts": 1,
+   "attempts_cap": 3,
+   "attempts_log": [
+    {
+     "attempt": 1,
+     "codes": [],
+     "n_cited": 2,
+     "n_conclusions": 3,
+     "n_cons_without_evidence": 0,
+     "out_of_box_n": 0,
+     "anchor_miss_n": 0,
+     "unverifiable_n": 0,
+     "one_sided_n": 0,
+     "unenforceable_pairs_n": 0
+    }
+   ],
+   "final_ok": true,
+   "maxed_out": false,
+   "codes_final": [],
+   "pruned": null,
+   "box_n": 3,
+   "focus_n": 3,
+   "focus_gold_n": 2,
+   "focus_precision": 0.6667,
+   "face_sha8": "be586b55",
+   "denom": 5,
+   "l3": 1,
+   "cited_n": 2,
+   "cited_gold_ids": [
+    "doc_010#p7"
+   ],
+   "out_of_band_ids": [],
+   "pairs": [],
+   "one_sided_n": 0,
+   "n_conclusions": 3,
+   "n_evidences": 3,
+   "n_ev_check_fail": 0,
+   "fail_buckets": {
+    "empty_quote": 0,
+    "seg_missing": 0,
+    "verbatim_miss": 0,
+    "adjacent_only": 0,
+    "other": 0
+   },
+   "server_input_tokens": null,
+   "wall_s": 49.4
+  },
+  {
+   "slug": "wanghong",
+   "qid": "q_002",
+   "pass": 2,
+   "attempts": 1,
+   "attempts_cap": 3,
+   "attempts_log": [
+    {
+     "attempt": 1,
+     "codes": [],
+     "n_cited": 2,
+     "n_conclusions": 3,
+     "n_cons_without_evidence": 0,
+     "out_of_box_n": 0,
+     "anchor_miss_n": 0,
+     "unverifiable_n": 0,
+     "one_sided_n": 0,
+     "unenforceable_pairs_n": 0
+    }
+   ],
+   "final_ok": true,
+   "maxed_out": false,
+   "codes_final": [],
+   "pruned": null,
+   "box_n": 3,
+   "focus_n": 3,
+   "focus_gold_n": 2,
+   "focus_precision": 0.6667,
+   "face_sha8": "be586b55",
+   "denom": 5,
+   "l3": 1,
+   "cited_n": 2,
+   "cited_gold_ids": [
+    "doc_010#p7"
+   ],
+   "out_of_band_ids": [],
+   "pairs": [],
+   "one_sided_n": 0,
+   "n_conclusions": 3,
+   "n_evidences": 3,
+   "n_ev_check_fail": 0,
+   "fail_buckets": {
+    "empty_quote": 0,
+    "seg_missing": 0,
+    "verbatim_miss": 0,
+    "adjacent_only": 0,
+    "other": 0
+   },
+   "server_input_tokens": null,
+   "wall_s": 48.5
+  },
+  {
+   "slug": "wanghong",
+   "qid": "q_002",
+   "pass": 3,
+   "attempts": 1,
+   "attempts_cap": 3,
+   "attempts_log": [
+    {
+     "attempt": 1,
+     "codes": [],
+     "n_cited": 2,
+     "n_conclusions": 3,
+     "n_cons_without_evidence": 0,
+     "out_of_box_n": 0,
+     "anchor_miss_n": 0,
+     "unverifiable_n": 0,
+     "one_sided_n": 0,
+     "unenforceable_pairs_n": 0
+    }
+   ],
+   "final_ok": true,
+   "maxed_out": false,
+   "codes_final": [],
+   "pruned": null,
+   "box_n": 3,
+   "focus_n": 3,
+   "focus_gold_n": 2,
+   "focus_precision": 0.6667,
+   "face_sha8": "be586b55",
+   "denom": 5,
+   "l3": 1,
+   "cited_n": 2,
+   "cited_gold_ids": [
+    "doc_010#p7"
+   ],
+   "out_of_band_ids": [],
+   "pairs": [],
+   "one_sided_n": 0,
+   "n_conclusions": 3,
+   "n_evidences": 3,
+   "n_ev_check_fail": 0,
+   "fail_buckets": {
+    "empty_quote": 0,
+    "seg_missing": 0,
+    "verbatim_miss": 0,
+    "adjacent_only": 0,
+    "other": 0
+   },
+   "server_input_tokens": null,
+   "wall_s": 47.9
+  },
+  {
+   "slug": "wanghong",
+   "qid": "q_003",
+   "pass": 1,
+   "attempts": 1,
+   "attempts_cap": 3,
+   "attempts_log": [
+    {
+     "attempt": 1,
+     "codes": [],
+     "n_cited": 1,
+     "n_conclusions": 1,
+     "n_cons_without_evidence": 0,
+     "out_of_box_n": 0,
+     "anchor_miss_n": 0,
+     "unverifiable_n": 0,
+     "one_sided_n": 0,
+     "unenforceable_pairs_n": 0
+    }
+   ],
+   "final_ok": true,
+   "maxed_out": false,
+   "codes_final": [],
+   "pruned": null,
+   "box_n": 3,
+   "focus_n": 3,
+   "focus_gold_n": 3,
+   "focus_precision": 1.0,
+   "face_sha8": "e5a1cdda",
+   "denom": 9,
+   "l3": 1,
+   "cited_n": 1,
+   "cited_gold_ids": [
+    "doc_007#p1"
+   ],
+   "out_of_band_ids": [],
+   "pairs": [],
+   "one_sided_n": 0,
+   "n_conclusions": 1,
+   "n_evidences": 1,
+   "n_ev_check_fail": 0,
+   "fail_buckets": {
+    "empty_quote": 0,
+    "seg_missing": 0,
+    "verbatim_miss": 0,
+    "adjacent_only": 0,
+    "other": 0
+   },
+   "server_input_tokens": null,
+   "wall_s": 19.0
+  },
+  {
+   "slug": "wanghong",
+   "qid": "q_003",
+   "pass": 2,
+   "attempts": 1,
+   "attempts_cap": 3,
+   "attempts_log": [
+    {
+     "attempt": 1,
+     "codes": [],
+     "n_cited": 1,
+     "n_conclusions": 1,
+     "n_cons_without_evidence": 0,
+     "out_of_box_n": 0,
+     "anchor_miss_n": 0,
+     "unverifiable_n": 0,
+     "one_sided_n": 0,
+     "unenforceable_pairs_n": 0
+    }
+   ],
+   "final_ok": true,
+   "maxed_out": false,
+   "codes_final": [],
+   "pruned": null,
+   "box_n": 3,
+   "focus_n": 3,
+   "focus_gold_n": 3,
+   "focus_precision": 1.0,
+   "face_sha8": "e5a1cdda",
+   "denom": 9,
+   "l3": 1,
+   "cited_n": 1,
+   "cited_gold_ids": [
+    "doc_007#p1"
+   ],
+   "out_of_band_ids": [],
+   "pairs": [],
+   "one_sided_n": 0,
+   "n_conclusions": 1,
+   "n_evidences": 1,
+   "n_ev_check_fail": 0,
+   "fail_buckets": {
+    "empty_quote": 0,
+    "seg_missing": 0,
+    "verbatim_miss": 0,
+    "adjacent_only": 0,
+    "other": 0
+   },
+   "server_input_tokens": null,
+   "wall_s": 17.5
+  },
+  {
+   "slug": "wanghong",
+   "qid": "q_003",
+   "pass": 3,
+   "attempts": 1,
+   "attempts_cap": 3,
+   "attempts_log": [
+    {
+     "attempt": 1,
+     "codes": [],
+     "n_cited": 1,
+     "n_conclusions": 1,
+     "n_cons_without_evidence": 0,
+     "out_of_box_n": 0,
+     "anchor_miss_n": 0,
+     "unverifiable_n": 0,
+     "one_sided_n": 0,
+     "unenforceable_pairs_n": 0
+    }
+   ],
+   "final_ok": true,
+   "maxed_out": false,
+   "codes_final": [],
+   "pruned": null,
+   "box_n": 3,
+   "focus_n": 3,
+   "focus_gold_n": 3,
+   "focus_precision": 1.0,
+   "face_sha8": "e5a1cdda",
+   "denom": 9,
+   "l3": 1,
+   "cited_n": 1,
+   "cited_gold_ids": [
+    "doc_007#p1"
+   ],
+   "out_of_band_ids": [],
+   "pairs": [],
+   "one_sided_n": 0,
+   "n_conclusions": 1,
+   "n_evidences": 1,
+   "n_ev_check_fail": 0,
+   "fail_buckets": {
+    "empty_quote": 0,
+    "seg_missing": 0,
+    "verbatim_miss": 0,
+    "adjacent_only": 0,
+    "other": 0
+   },
+   "server_input_tokens": null,
+   "wall_s": 17.1
+  }
+ ],
+ "judge": {
+  "gate1_dens_leak_unchanged": true,
+  "gate2_oob_zero": true,
+  "gate2_pair_ok_or_disclosed": true,
+  "gate3_ref_not_down": true,
+  "retry_fired_stub": true,
+  "retry_fired_real": true,
+  "maxed_out_disclosed": true,
+  "YES": true,
+  "per_question": [
+   {
+    "slug": "liuxiang",
+    "qid": "q_001",
+    "n_passes": 3,
+    "attempts_vals": [
+     3,
+     3,
+     3
+    ],
+    "final_ok_vals": [
+     false,
+     false,
+     false
+    ],
+    "maxed_out_any": true,
+    "codes_seen": [
+     "conflict_one_sided",
+     "unverifiable"
+    ],
+    "cited_n": {
+     "mean": 3.0,
+     "min": 3,
+     "max": 3
+    },
+    "l3": {
+     "mean": 1.0,
+     "min": 1,
+     "max": 1
+    },
+    "ref_c134": {
+     "cited_n": 2,
+     "l3": 1,
+     "one_sided_n": 4
+    },
+    "delta_cited_mean": 1.0,
+    "delta_l3_mean": 0.0,
+    "oob_n_all_passes": 0,
+    "one_sided_n_vals": [
+     4,
+     4,
+     4
+    ],
+    "one_sided_enforced_final": [
+     0,
+     0,
+     0
+    ],
+    "unenforceable_pairs_final": [
+     4,
+     4,
+     4
+    ],
+    "n_ev_check_fail_vals": [
+     1,
+     1,
+     1
+    ],
+    "ref_n_ev_check_fail_c134": 0,
+    "one_sided_all_passes": true,
+    "face_sha8_vals": [
+     "e34f503d"
+    ],
+    "ref_face_sha8_c134": "e34f503d",
+    "wall_s_vals": [
+     155.7,
+     82.4,
+     105.8
+    ]
+   },
+   {
+    "slug": "liuxiang",
+    "qid": "q_002",
+    "n_passes": 3,
+    "attempts_vals": [
+     1,
+     1,
+     2
+    ],
+    "final_ok_vals": [
+     true,
+     true,
+     true
+    ],
+    "maxed_out_any": false,
+    "codes_seen": [
+     "unverifiable"
+    ],
+    "cited_n": {
+     "mean": 3.0,
+     "min": 3,
+     "max": 3
+    },
+    "l3": {
+     "mean": 1.0,
+     "min": 1,
+     "max": 1
+    },
+    "ref_c134": {
+     "cited_n": 3,
+     "l3": 1,
+     "one_sided_n": 0
+    },
+    "delta_cited_mean": 0.0,
+    "delta_l3_mean": 0.0,
+    "oob_n_all_passes": 0,
+    "one_sided_n_vals": [
+     0,
+     0,
+     0
+    ],
+    "one_sided_enforced_final": [
+     0,
+     0,
+     0
+    ],
+    "unenforceable_pairs_final": [
+     0,
+     0,
+     0
+    ],
+    "n_ev_check_fail_vals": [
+     0,
+     0,
+     0
+    ],
+    "ref_n_ev_check_fail_c134": 0,
+    "one_sided_all_passes": false,
+    "face_sha8_vals": [
+     "b3a0ecd8"
+    ],
+    "ref_face_sha8_c134": "b3a0ecd8",
+    "wall_s_vals": [
+     39.6,
+     33.6,
+     84.7
+    ]
+   },
+   {
+    "slug": "liuxiang",
+    "qid": "q_003",
+    "n_passes": 3,
+    "attempts_vals": [
+     1,
+     1,
+     1
+    ],
+    "final_ok_vals": [
+     true,
+     true,
+     true
+    ],
+    "maxed_out_any": false,
+    "codes_seen": [],
+    "cited_n": {
+     "mean": 3.0,
+     "min": 3,
+     "max": 3
+    },
+    "l3": {
+     "mean": 2.0,
+     "min": 2,
+     "max": 2
+    },
+    "ref_c134": {
+     "cited_n": 3,
+     "l3": 2,
+     "one_sided_n": 0
+    },
+    "delta_cited_mean": 0.0,
+    "delta_l3_mean": 0.0,
+    "oob_n_all_passes": 0,
+    "one_sided_n_vals": [
+     0,
+     0,
+     0
+    ],
+    "one_sided_enforced_final": [
+     0,
+     0,
+     0
+    ],
+    "unenforceable_pairs_final": [
+     0,
+     0,
+     0
+    ],
+    "n_ev_check_fail_vals": [
+     0,
+     0,
+     0
+    ],
+    "ref_n_ev_check_fail_c134": 0,
+    "one_sided_all_passes": false,
+    "face_sha8_vals": [
+     "81809109"
+    ],
+    "ref_face_sha8_c134": "81809109",
+    "wall_s_vals": [
+     37.9,
+     35.1,
+     34.8
+    ]
+   },
+   {
+    "slug": "wanghong",
+    "qid": "q_001",
+    "n_passes": 3,
+    "attempts_vals": [
+     1,
+     1,
+     1
+    ],
+    "final_ok_vals": [
+     true,
+     true,
+     true
+    ],
+    "maxed_out_any": false,
+    "codes_seen": [],
+    "cited_n": {
+     "mean": 1.0,
+     "min": 1,
+     "max": 1
+    },
+    "l3": {
+     "mean": 1.0,
+     "min": 1,
+     "max": 1
+    },
+    "ref_c134": {
+     "cited_n": 1,
+     "l3": 1,
+     "one_sided_n": 0
+    },
+    "delta_cited_mean": 0.0,
+    "delta_l3_mean": 0.0,
+    "oob_n_all_passes": 0,
+    "one_sided_n_vals": [
+     0,
+     0,
+     0
+    ],
+    "one_sided_enforced_final": [
+     0,
+     0,
+     0
+    ],
+    "unenforceable_pairs_final": [
+     0,
+     0,
+     0
+    ],
+    "n_ev_check_fail_vals": [
+     0,
+     0,
+     0
+    ],
+    "ref_n_ev_check_fail_c134": 0,
+    "one_sided_all_passes": false,
+    "face_sha8_vals": [
+     "1bbd5432"
+    ],
+    "ref_face_sha8_c134": "1bbd5432",
+    "wall_s_vals": [
+     22.1,
+     21.1,
+     19.3
+    ]
+   },
+   {
+    "slug": "wanghong",
+    "qid": "q_002",
+    "n_passes": 3,
+    "attempts_vals": [
+     1,
+     1,
+     1
+    ],
+    "final_ok_vals": [
+     true,
+     true,
+     true
+    ],
+    "maxed_out_any": false,
+    "codes_seen": [],
+    "cited_n": {
+     "mean": 2.0,
+     "min": 2,
+     "max": 2
+    },
+    "l3": {
+     "mean": 1.0,
+     "min": 1,
+     "max": 1
+    },
+    "ref_c134": {
+     "cited_n": 2,
+     "l3": 1,
+     "one_sided_n": 0
+    },
+    "delta_cited_mean": 0.0,
+    "delta_l3_mean": 0.0,
+    "oob_n_all_passes": 0,
+    "one_sided_n_vals": [
+     0,
+     0,
+     0
+    ],
+    "one_sided_enforced_final": [
+     0,
+     0,
+     0
+    ],
+    "unenforceable_pairs_final": [
+     0,
+     0,
+     0
+    ],
+    "n_ev_check_fail_vals": [
+     0,
+     0,
+     0
+    ],
+    "ref_n_ev_check_fail_c134": 0,
+    "one_sided_all_passes": false,
+    "face_sha8_vals": [
+     "be586b55"
+    ],
+    "ref_face_sha8_c134": "be586b55",
+    "wall_s_vals": [
+     49.4,
+     48.5,
+     47.9
+    ]
+   },
+   {
+    "slug": "wanghong",
+    "qid": "q_003",
+    "n_passes": 3,
+    "attempts_vals": [
+     1,
+     1,
+     1
+    ],
+    "final_ok_vals": [
+     true,
+     true,
+     true
+    ],
+    "maxed_out_any": false,
+    "codes_seen": [],
+    "cited_n": {
+     "mean": 1.0,
+     "min": 1,
+     "max": 1
+    },
+    "l3": {
+     "mean": 1.0,
+     "min": 1,
+     "max": 1
+    },
+    "ref_c134": {
+     "cited_n": 1,
+     "l3": 1,
+     "one_sided_n": 0
+    },
+    "delta_cited_mean": 0.0,
+    "delta_l3_mean": 0.0,
+    "oob_n_all_passes": 0,
+    "one_sided_n_vals": [
+     0,
+     0,
+     0
+    ],
+    "one_sided_enforced_final": [
+     0,
+     0,
+     0
+    ],
+    "unenforceable_pairs_final": [
+     0,
+     0,
+     0
+    ],
+    "n_ev_check_fail_vals": [
+     0,
+     0,
+     0
+    ],
+    "ref_n_ev_check_fail_c134": 0,
+    "one_sided_all_passes": false,
+    "face_sha8_vals": [
+     "e5a1cdda"
+    ],
+    "ref_face_sha8_c134": "e5a1cdda",
+    "wall_s_vals": [
+     19.0,
+     17.5,
+     17.1
+    ]
+   }
+  ]
+ }
+}

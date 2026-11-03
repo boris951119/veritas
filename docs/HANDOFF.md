@@ -1,3 +1,16 @@
+<!-- C-139-CITE-ACCEPT -->
+## 〔C-139〕树17 引用验收打回循环（机器验收闸；旗默认关；过线／等令合）
+
+- **枝**：`qoder/c139-tree17-cite-retry`（自 `f6bc348`；**未**合 main，等贴合入指令，与 C-138 两枝错开合）。
+- **改**：`app/core/tree17_accept.py`（新：五码机械验收＋打回环＋到顶剪枝披露）；挂点 `Analyst.analyze`（只在首轮形状＋交卷盒在场；second_pass／multi_box 显式 focus 定向轮不在范围）；`config.py` 旗 `cite_accept` **默认 False**／`cite_accept_attempts` 默认 3 硬顶 5（env `VERITAS_CITE_ACCEPT`／`VERITAS_CITE_ACCEPT_ATTEMPTS`；config.json 同名键）；pipeline kept 白名单加 `cite_accept`。
+- **失败码**：`empty_cite`／`out_of_box`／`anchor_miss`／`unverifiable`／`conflict_one_sided`（＋`unparsable`）；零 LLM 可回放；验收在物化「前」跑（打回轮不在案卷留痕）；打回提示只加失败原因＋原约束、仍只喂盒内段、禁金标 id；到顶＝机械剪枝（复用 `filter_payload_to_close_band`）丢盒外 evidence 后物化＋accounting `cite_accept[<analyst>]` 披露 `maxed_out`＋逐次失败码。
+- **成对执行口径**：只执行「两侧都在交卷盒内」的 conflict_pairs（与树17 计划层 pair_required 同口径）；一侧不在盒＝引用面不可达，只计 `unenforceable_pairs_n` 披露、不进失败码——否则成必败打回循环（liuxiang q_001 的 4 条单边全来自盒外成员对 `doc_012#p2/p3`）。
+- **验收**（两案 liuxiang＋wanghong 全题 ×3 真跑、同 C-134 尺；`artifacts/C139_tree17_cite_retry.md`）：总判 **YES**；带外 0（18 真跑＋腿0 桩，独立复算）；dens/leak 与 C-134 逐位同（0.5714/0.8571、金标→close 1.0、泄漏 0、刘翔@7=12）；cited q_001 均值 3 vs 2（Δ+1，打回把对侧补进引用集）其余 5 题 Δ0、L3 全 Δ0；真实打回 4 跑次（q_001×3：首轮成对单边→打回→对侧补上→后败 unverifiable 到顶披露；q_002p3：unverifiable 打回 1 次转绿）；到顶披露齐全；face_sha8 全与 C-134 同（面确定性未动）。
+- **全套**：`7 failed, 1248 passed, 1 skipped`＝基线同名红零新增（＋14＝`tests/test_c139_cite_accept.py`；基线 `f6bc348` 本机复测 `7 failed, 1235 passed, 1 skipped`）。
+- **合入建议**：过线 **YES** → 等令合（默认关＝合入即零行为差；开旗 `VERITAS_CITE_ACCEPT=1` 须 Boyu 拍）。
+
+---
+
 <!-- C-132-DEFAULT-ON -->
 ## 〔C-132〕测试树默认开＋删旧路（Boyu 2026-11-03 硬令；枝未合 main）
 

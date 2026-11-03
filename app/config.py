@@ -582,6 +582,17 @@ class Settings:
     # env VERITAS_TREE15_DEPRESS；config.json tree15_depress。
     tree15_depress: bool = False
 
+    # C-139：树17 引用验收打回循环（分析师答案后挂机器验收，不过则打回重写）。
+    # 默认 False（关＝生产行为与改前逐字相同）；开＝VERITAS_CITE_ACCEPT=1。
+    # 上限 cite_accept_attempts 默认 3，硬顶 ≤5（越界回落 3／夹到顶）。
+    # 只在首轮形状＋交卷盒（kg_submit）在场时启用；second_pass／multi_box
+    # 定向轮不在范围。失败码五枚＋unparsable；到顶＝机械剪枝＋accounting
+    # 披露 maxed_out，不静默脏过。禁金标 id 进重写提示。
+    # env VERITAS_CITE_ACCEPT／VERITAS_CITE_ACCEPT_ATTEMPTS；
+    # config.json cite_accept／cite_accept_attempts。
+    cite_accept: bool = False
+    cite_accept_attempts: int = 3
+
 
     # 语料收窄阈值：信源数达到该值才走索引选料（默认 50=自动；
     # 0=强制关闭，小案例到不了阈值则整卷研判、不建 .corpus）。
@@ -873,6 +884,14 @@ class Settings:
             s.tree15_depress = False
         elif t15 in ("1", "true", "on", "yes"):
             s.tree15_depress = True
+        ca = (os.environ.get("VERITAS_CITE_ACCEPT") or "").strip().lower()
+        if ca in ("0", "false", "off", "no"):
+            s.cite_accept = False
+        elif ca in ("1", "true", "on", "yes"):
+            s.cite_accept = True
+        caa = (os.environ.get("VERITAS_CITE_ACCEPT_ATTEMPTS") or "").strip()
+        if caa.isdigit() and int(caa) >= 1:
+            s.cite_accept_attempts = int(caa)
         ttl = (os.environ.get("VERITAS_TEST_TREE_LINE") or "").strip().lower()
         if ttl in ("0", "false", "off", "no"):
             s.test_tree_line = False
@@ -1068,6 +1087,16 @@ class Settings:
             elif isinstance(raw_t15, (int, str)):
                 s.tree15_depress = str(raw_t15).strip().lower() not in (
                     "0", "false", "off", "no", "")
+        if "cite_accept" in data:
+            raw_ca = data.get("cite_accept")
+            if isinstance(raw_ca, bool):
+                s.cite_accept = raw_ca
+            elif isinstance(raw_ca, (int, str)):
+                s.cite_accept = str(raw_ca).strip().lower() not in (
+                    "0", "false", "off", "no", "")
+        caa_j = data.get("cite_accept_attempts")
+        if isinstance(caa_j, int) and not isinstance(caa_j, bool) and caa_j >= 1:
+            s.cite_accept_attempts = caa_j
         select_min = data.get("corpus_select_min_sources")
         if isinstance(select_min, int) and not isinstance(select_min, bool) \
                 and select_min >= 0:
