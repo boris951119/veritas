@@ -1,0 +1,50 @@
+{
+  "ticket": "C-125-merge",
+  "date": "2026-11-03",
+  "baseline_main": "0e957faa0952e6260c4f981d048d8ca785ec189a",
+  "branch": "qoder/c125-test-tree-port",
+  "branch_tip": "349156e59f41a51b9cf5ca214e29eb76cd862a03",
+  "post_merge_main": "349156e59f41a51b9cf5ca214e29eb76cd862a03",
+  "merge_mode": "fast-forward",
+  "conflicts": 0,
+  "merge_diff": {"files": 40, "insertions": 10353},
+  "push": {"ok": true, "range": "0e957fa..349156e main -> main", "forced": false},
+  "excluded_branches": ["C-123", "C-113", "C-121", "C-122", "C-124"],
+  "flag_default": {
+    "name": "VERITAS_TEST_TREE_LINE",
+    "dataclass_default": false,
+    "from_env_default": false,
+    "off_face_surface_sha16": "c6ff9d478007b287",
+    "off_face_sel_sha16": "be657d8db1e7dbde",
+    "off_face_sel_n": 362,
+    "note": "与合前跨树字节等证一致；关旗行为＝预算＋BM25"
+  },
+  "tests": {"failed": 7, "passed": 1219, "skipped": 1, "note": "既有同 7 红基线＋C-125 十格全绿"},
+  "evidence": {
+    "run": "合后 main 六案门控复跑（缓存对齐后）",
+    "liuxiang_at7": 12,
+    "liuxiang_micro": 0.5714,
+    "holdout_micro": {"wanghong": 0.8571, "kh_th": 0.8, "ai171": 0.8},
+    "gold_to_close_all": 1.0,
+    "leaks": 0,
+    "gate1": true,
+    "gate2": true,
+    "gate3": true,
+    "ready": true,
+    "anomalies": [],
+    "verbatim_vs_branch": true,
+    "wall_s": 279.4
+  },
+  "correction": {
+    "what": "第一遍冷缓存复跑三案红（jilong 0.44／us_cn_ai 0.33／kh_th 0.43，READY=NO）",
+    "cause": "主仓缺 gitignored 的 .kg_lab_vault 摘要缓存与对齐的向量缓存；向量缓存按 para_id 复用不校验文本",
+    "fix": "缓存字节对齐到枝上 YES 跑次后复跑＝逐位一致；代码与量尺零改动",
+    "kept": "无摘要版向量缓存改名 kg-index-nosummary-keep 留档；冷缓存第一遍存档 /tmp/c125/cold_run_red.md"
+  },
+  "artifacts": [
+    "artifacts/C125_merge.md",
+    "artifacts/C125_merge.json",
+    "artifacts/c125/C125_six_case_gate.md",
+    "artifacts/c125/C125_six_case_gate.json"
+  ]
+}
