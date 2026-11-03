@@ -1,0 +1,24 @@
+{
+ "ticket": "C-135-merge",
+ "merge": "qoder/c135-expand-accounting → main（--ff-only，零冲突）",
+ "range": "e6349e0..8b168c3",
+ "main_tip_after": "8b168c3",
+ "push": "origin/main e6349e0..8b168c3 成功（无 force）",
+ "carried": {
+  "c135": "生产：accounting.kg_test_tree.expand（enabled/terms_n/paraphrase_n，只记计数；窄面／pack 零泄漏）＋tests/test_c135_expand_accounting.py 4 格＋C135 交账件",
+  "c134": "探针 scripts/probe_c134_two_case_gate.py（4e88b58 整票随枝入库）"
+ },
+ "pre_check": "main=e6349e0 符合；枝祖先含 4e88b58（C-134）与 e6349e0；枝领先 main 恰 2 票",
+ "post_checks": {
+  "tip": "main=8b168c3＝枝 tip",
+  "push": "成功",
+  "expand_key_no_env": "抽一题（夹具 3 信源×10 段）：expand={'enabled': True, 'terms_n': 1, 'paraphrase_n': 1}，键集精确相等",
+  "density_bridge_grep": "grep app/ ensure_kg_submit_from_density|kg_density_bridge ＝ 0",
+  "artifacts": "C135_expand_accounting.{md,json}＋C134_two_case_gate.{md,json} 可读",
+  "forbidden_branches": "c113/c121/c122/c123/c124 分支名不存在（C-133 已删）；r28/r41 不在 main 祖先；在库枝扫描无越界",
+  "env": "合并与旁证全程零 VERITAS_ 环境变量"
+ },
+ "baseline_note": "整套测试已在同内容树上量过（commit 前）＝7 failed/1235 passed，7 红与改前同名同位；合并零内容变化，未重复跑",
+ "not_merged": "C-113/121/122/123/124 未合；旁路默认零开启；dens/k/一筛二筛系数零改动",
+ "docs_commit": "本合并交账件随后续 docs 票入 main（范围只含 C135_merge 两件）"
+}
