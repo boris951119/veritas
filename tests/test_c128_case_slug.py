@@ -167,6 +167,18 @@ def test_d2_pipeline_call_site_needs_no_slug_arg():
     assert "ensure_test_tree_submit(dossier)" in pl  # 零实参即经解析拿实名
 
 
+def test_d4_probe_case_marks_direction():
+    """刀后补：探针 CASE_MARKS 必须是 slug→mark（反序会被门控当场咬）。"""
+    root = Path(__file__).resolve().parents[1]
+    spec = importlib.util.spec_from_file_location(
+        "probe_c125_six_case_gate",
+        root / "scripts" / "probe_c125_six_case_gate.py")
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    assert mod.CASE_MARKS == {s: m for m, s in CASE_MARK_PAIRS}
+    assert mod.CASE_MARKS["liuxiang"] == "刘翔"
+
+
 def test_d3_factory_default_off_untouched(monkeypatch):
     monkeypatch.delenv("VERITAS_TEST_TREE_LINE", raising=False)
     assert Settings().test_tree_line is False

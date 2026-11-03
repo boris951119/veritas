@@ -73,7 +73,7 @@ DROP_EPS = 0.02
 
 CASE_MARKS = {
     # C-128：slug→mark 与生产 ``resolve_case_slug`` 同源（加案只改一处）
-    slug: mark for slug, mark in _CASE_MARK_PAIRS
+    s: m for m, s in _CASE_MARK_PAIRS  # 对序＝(mark, slug)，勿反
 }
 
 

@@ -1,8 +1,8 @@
 {
  "ticket": "C-125-six-case-gate",
- "tip": "9881dbb",
+ "tip": "c2306e7",
  "branch": "qoder/c125-test-tree-port",
- "wall_s": 276.7,
+ "wall_s": 278.7,
  "coeff_names_n": 35,
  "forbidden_keys_n": 13,
  "gate": {
@@ -153,8 +153,8 @@
    "gate_ok": true
   },
   {
-   "slug": "jilong",
-   "gold_total": 13,
+   "slug": "wanghong",
+   "gold_total": 19,
    "cut_hits": {
     "4": 6,
     "5": 6,
@@ -163,10 +163,10 @@
    "density_rows": [
     {
      "qid": "q_001",
-     "route": "adjudicate",
-     "k": 3,
-     "n_gold": 2,
-     "gold_density": 0.6667,
+     "route": "fact_check",
+     "k": 1,
+     "n_gold": 1,
+     "gold_density": 1.0,
      "density_cut": true
     },
     {
@@ -181,22 +181,22 @@
      "qid": "q_003",
      "route": "adjudicate",
      "k": 3,
-     "n_gold": 2,
-     "gold_density": 0.6667,
+     "n_gold": 3,
+     "gold_density": 1.0,
      "density_cut": true
     }
    ],
-   "avg_gold_density": 0.6667,
-   "micro_gold_density": 0.6667,
+   "avg_gold_density": 0.8889,
+   "micro_gold_density": 0.8571,
    "sum_gold_in_boxes": 6,
-   "sum_k": 9,
-   "wall_s": 24.0,
+   "sum_k": 7,
+   "wall_s": 16.7,
    "plan_rows": [
     {
      "qid": "q_001",
-     "k": 3,
-     "n_gold": 2,
-     "gold_density": 0.6667,
+     "k": 1,
+     "n_gold": 1,
+     "gold_density": 1.0,
      "gold_in_box_to_close": 1.0,
      "n_pairs": 0
     },
@@ -211,8 +211,8 @@
     {
      "qid": "q_003",
      "k": 3,
-     "n_gold": 2,
-     "gold_density": 0.6667,
+     "n_gold": 3,
+     "gold_density": 1.0,
      "gold_in_box_to_close": 1.0,
      "n_pairs": 0
     }
@@ -226,10 +226,10 @@
     "rows": [
      {
       "qid": "q_001",
-      "k": 3,
-      "n_gold": 2,
-      "gold_density": 0.6667,
-      "route": "adjudicate",
+      "k": 1,
+      "n_gold": 1,
+      "gold_density": 1.0,
+      "route": "fact_check",
       "embed": "ok",
       "n_pairs": 0
      },
@@ -245,14 +245,14 @@
      {
       "qid": "q_003",
       "k": 3,
-      "n_gold": 2,
-      "gold_density": 0.6667,
+      "n_gold": 3,
+      "gold_density": 1.0,
       "route": "adjudicate",
       "embed": "ok",
       "n_pairs": 0
      }
     ],
-    "micro_gold_density": 0.6667
+    "micro_gold_density": 0.8571
    },
    "gate_ok": true
   },
@@ -361,16 +361,24 @@
    "gate_ok": true
   },
   {
-   "slug": "wanghong",
-   "gold_total": 19,
+   "slug": "ai171",
+   "gold_total": 24,
    "cut_hits": {
-    "4": 6,
-    "5": 6,
-    "7": 6
+    "4": 5,
+    "5": 5,
+    "7": 5
    },
    "density_rows": [
     {
      "qid": "q_001",
+     "route": "adjudicate",
+     "k": 3,
+     "n_gold": 2,
+     "gold_density": 0.6667,
+     "density_cut": true
+    },
+    {
+     "qid": "q_002",
      "route": "fact_check",
      "k": 1,
      "n_gold": 1,
@@ -378,30 +386,30 @@
      "density_cut": true
     },
     {
-     "qid": "q_002",
-     "route": "adjudicate",
-     "k": 3,
-     "n_gold": 2,
-     "gold_density": 0.6667,
-     "density_cut": true
-    },
-    {
      "qid": "q_003",
      "route": "adjudicate",
-     "k": 3,
-     "n_gold": 3,
+     "k": 1,
+     "n_gold": 1,
      "gold_density": 1.0,
      "density_cut": true
     }
    ],
    "avg_gold_density": 0.8889,
-   "micro_gold_density": 0.8571,
-   "sum_gold_in_boxes": 6,
-   "sum_k": 7,
-   "wall_s": 16.7,
+   "micro_gold_density": 0.8,
+   "sum_gold_in_boxes": 4,
+   "sum_k": 5,
+   "wall_s": 19.8,
    "plan_rows": [
     {
      "qid": "q_001",
+     "k": 3,
+     "n_gold": 2,
+     "gold_density": 0.6667,
+     "gold_in_box_to_close": 1.0,
+     "n_pairs": 0
+    },
+    {
+     "qid": "q_002",
      "k": 1,
      "n_gold": 1,
      "gold_density": 1.0,
@@ -409,17 +417,9 @@
      "n_pairs": 0
     },
     {
-     "qid": "q_002",
-     "k": 3,
-     "n_gold": 2,
-     "gold_density": 0.6667,
-     "gold_in_box_to_close": 1.0,
-     "n_pairs": 0
-    },
-    {
      "qid": "q_003",
-     "k": 3,
-     "n_gold": 3,
+     "k": 1,
+     "n_gold": 1,
      "gold_density": 1.0,
      "gold_in_box_to_close": 1.0,
      "n_pairs": 0
@@ -434,15 +434,6 @@
     "rows": [
      {
       "qid": "q_001",
-      "k": 1,
-      "n_gold": 1,
-      "gold_density": 1.0,
-      "route": "fact_check",
-      "embed": "ok",
-      "n_pairs": 0
-     },
-     {
-      "qid": "q_002",
       "k": 3,
       "n_gold": 2,
       "gold_density": 0.6667,
@@ -451,16 +442,25 @@
       "n_pairs": 0
      },
      {
+      "qid": "q_002",
+      "k": 1,
+      "n_gold": 1,
+      "gold_density": 1.0,
+      "route": "fact_check",
+      "embed": "ok",
+      "n_pairs": 0
+     },
+     {
       "qid": "q_003",
-      "k": 3,
-      "n_gold": 3,
+      "k": 1,
+      "n_gold": 1,
       "gold_density": 1.0,
       "route": "adjudicate",
       "embed": "ok",
       "n_pairs": 0
      }
     ],
-    "micro_gold_density": 0.8571
+    "micro_gold_density": 0.8
    },
    "gate_ok": true
   },
@@ -502,7 +502,7 @@
    "micro_gold_density": 0.8,
    "sum_gold_in_boxes": 4,
    "sum_k": 5,
-   "wall_s": 10.4,
+   "wall_s": 10.6,
    "plan_rows": [
     {
      "qid": "q_001",
@@ -569,12 +569,12 @@
    "gate_ok": true
   },
   {
-   "slug": "ai171",
-   "gold_total": 24,
+   "slug": "jilong",
+   "gold_total": 13,
    "cut_hits": {
-    "4": 5,
-    "5": 5,
-    "7": 5
+    "4": 6,
+    "5": 6,
+    "7": 6
    },
    "density_rows": [
     {
@@ -587,26 +587,26 @@
     },
     {
      "qid": "q_002",
-     "route": "fact_check",
-     "k": 1,
-     "n_gold": 1,
-     "gold_density": 1.0,
+     "route": "adjudicate",
+     "k": 3,
+     "n_gold": 2,
+     "gold_density": 0.6667,
      "density_cut": true
     },
     {
      "qid": "q_003",
      "route": "adjudicate",
-     "k": 1,
-     "n_gold": 1,
-     "gold_density": 1.0,
+     "k": 3,
+     "n_gold": 2,
+     "gold_density": 0.6667,
      "density_cut": true
     }
    ],
-   "avg_gold_density": 0.8889,
-   "micro_gold_density": 0.8,
-   "sum_gold_in_boxes": 4,
-   "sum_k": 5,
-   "wall_s": 19.7,
+   "avg_gold_density": 0.6667,
+   "micro_gold_density": 0.6667,
+   "sum_gold_in_boxes": 6,
+   "sum_k": 9,
+   "wall_s": 24.8,
    "plan_rows": [
     {
      "qid": "q_001",
@@ -618,17 +618,17 @@
     },
     {
      "qid": "q_002",
-     "k": 1,
-     "n_gold": 1,
-     "gold_density": 1.0,
+     "k": 3,
+     "n_gold": 2,
+     "gold_density": 0.6667,
      "gold_in_box_to_close": 1.0,
      "n_pairs": 0
     },
     {
      "qid": "q_003",
-     "k": 1,
-     "n_gold": 1,
-     "gold_density": 1.0,
+     "k": 3,
+     "n_gold": 2,
+     "gold_density": 0.6667,
      "gold_in_box_to_close": 1.0,
      "n_pairs": 0
     }
@@ -651,24 +651,24 @@
      },
      {
       "qid": "q_002",
-      "k": 1,
-      "n_gold": 1,
-      "gold_density": 1.0,
-      "route": "fact_check",
+      "k": 3,
+      "n_gold": 2,
+      "gold_density": 0.6667,
+      "route": "adjudicate",
       "embed": "ok",
       "n_pairs": 0
      },
      {
       "qid": "q_003",
-      "k": 1,
-      "n_gold": 1,
-      "gold_density": 1.0,
+      "k": 3,
+      "n_gold": 2,
+      "gold_density": 0.6667,
       "route": "adjudicate",
       "embed": "ok",
       "n_pairs": 0
      }
     ],
-    "micro_gold_density": 0.8
+    "micro_gold_density": 0.6667
    },
    "gate_ok": true
   }
