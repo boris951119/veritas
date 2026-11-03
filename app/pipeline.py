@@ -608,6 +608,11 @@ def run_case(spec: RunSpec | None = None,
                 apply_kg_submit_surface(dossier, enabled=True)
                 _kg_pack_kw = pack_kwargs_for_kg(dossier)
                 assert_clean_pack_kwargs(_kg_pack_kw)
+                # C-140：交卷硬 Top-7＋冲突成对保位（只重写分析师焦点面；
+                # 盒／tree17／dens／pack kwargs／续盒核心不动）。关旗＝零行为。
+                if bool(getattr(settings, "submit_top7", True)):
+                    from app.core.submit_top7 import apply_submit_top7
+                    apply_submit_top7(dossier, enabled=True)
             else:
                 acc = getattr(dossier, "accounting", None)
                 if acc is None:
@@ -993,7 +998,7 @@ def run_case(spec: RunSpec | None = None,
                      "kg_priority_segment_ids", "tree17_cite",
                      "kg_density", "kg_cap_segments", "kg_stage1",
                      "kg_rehydrate", "kg_test_tree",
-                     "kg_submit_skipped")}
+                     "kg_submit_skipped", "submit_top7")}
     dossier.accounting = {
         **kept,
         "elapsed_s": round(time.monotonic() - t0, 1),
