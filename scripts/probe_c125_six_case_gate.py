@@ -30,6 +30,7 @@ if str(ROOT) not in sys.path:
 
 from app.core.evidence import Dossier  # noqa: E402
 from app.core.kg_test_tree_line import (  # noqa: E402
+    CASE_MARK_PAIRS as _CASE_MARK_PAIRS,  # C-128 同表
     build_test_tree_surface, test_tree_coeff,
 )
 from app.core.material import pack_material  # noqa: E402
@@ -71,8 +72,8 @@ GATE_DENS = 2.0 / 3.0
 DROP_EPS = 0.02
 
 CASE_MARKS = {
-    "liuxiang": "刘翔", "jilong": "吉隆", "us_cn_ai": "中美AI",
-    "wanghong": "王虹", "kh_th": "柬泰", "ai171": "印度航空",
+    # C-128：slug→mark 与生产 ``resolve_case_slug`` 同源（加案只改一处）
+    slug: mark for slug, mark in _CASE_MARK_PAIRS
 }
 
 

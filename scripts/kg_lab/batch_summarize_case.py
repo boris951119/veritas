@@ -26,20 +26,15 @@ ROOT = Path(__file__).resolve().parents[2]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
+from app.core.kg_test_tree_line import CASE_MARK_PAIRS  # noqa: E402 — C-128 同表
 from app.core.material import pack_material  # noqa: E402
 from app.ingest.official_case import load_official_case  # noqa: E402
 from app.kg_lab.summarize import summarize_paras, summary_path  # noqa: E402
 
 
 def _slug(name: str) -> str:
-    for a, b in [
-        ("刘翔", "liuxiang"),
-        ("王虹", "wanghong"),
-        ("中美AI", "us_cn_ai"),
-        ("印度航空", "ai171"),
-        ("柬泰", "kh_th"),
-        ("吉隆", "jilong"),
-    ]:
+    # C-128：标记映射与生产 ``resolve_case_slug`` 同源（加案只改 kg_test_tree_line）
+    for a, b in CASE_MARK_PAIRS:
         if a in name:
             return b
     return "case"

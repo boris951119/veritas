@@ -1,0 +1,58 @@
+{
+  "ticket": "C-128-part2-case-slug-wiring",
+  "date": "2026-11-03",
+  "baseline_main": "115772355efef5020f9e87a4a485bfeca05c5259",
+  "branch": "qoder/c128-case-slug-wiring",
+  "verdict": "YES",
+  "diff_face": [
+    "app/core/kg_test_tree_line.py (+40/-2: CASE_MARK_PAIRS 公共表 + resolve_case_slug + ensure 接线/披露)",
+    "scripts/kg_lab/batch_summarize_case.py (_slug 改从公共表取对)",
+    "scripts/probe_c125_six_case_gate.py (CASE_MARKS 改从公共表反推)",
+    "tests/test_c128_case_slug.py (新: 7 格)"
+  ],
+  "resolver": {
+    "location": "app/core/kg_test_tree_line.resolve_case_slug",
+    "input": "dossier.title（official/case_loader 两入口都写案名）",
+    "table": "CASE_MARK_PAIRS 六对（刘翔/王虹/中美AI/印度航空/柬泰/吉隆）",
+    "fallback": "case",
+    "same_table": ["scripts/kg_lab/batch_summarize_case._slug", "scripts/probe_c125_six_case_gate.CASE_MARKS"]
+  },
+  "disclosure_keys": {
+    "path": "accounting['kg_test_tree']['case_slug'] + ['case_slug_fallback']",
+    "note": "嵌在既有白名单键内＝零新顶层键；过禁键审计；build_test_tree_surface 返回也带 case_slug"
+  },
+  "pipeline_change": "零改动：ensure_test_tree_submit(dossier) 无实参即经解析拿实名",
+  "live_evidence": {
+    "real_liuxiang_via_ensure": {"case_slug": "liuxiang", "case_slug_fallback": false, "vault_dir_present": true, "n_rows": 372, "n_with_summary": 362, "summary_missing": false, "affected": [], "degraded_continue": false},
+    "no_mark_title": {"case_slug": "case", "case_slug_fallback": true}
+  },
+  "guards": {
+    "new_cells": 7,
+    "knives": [
+      {"id": "K1", "mutation": "解析恒返回 case", "result": "暖臂刘翔格红"},
+      {"id": "K2", "mutation": "摘披露键", "result": "暖臂格 KeyError 红"}
+    ],
+    "self_correction": "第一版注释含建库脚本模块名，被 C-127 生产面零建库引用守卫咬红（守卫判据正确）；改措辞、守卫未动"
+  },
+  "tests": {"failed": 7, "passed": 1231, "skipped": 1, "note": "主仓同 commit 基线 7 红逐名不变＋本单 7 格绿"},
+  "evidence": {
+    "off_face_sha16": {"surface": "c6ff9d478007b287", "sel": "be657d8db1e7dbde", "sel_n": 362, "kw": {}},
+    "full_gate_rerun": "免跑（off-face 字节同＝工单允许）；@7/holdout 沿用 C-127 合后基线 12/86%80%80%，未重跑",
+    "gate_legC_unaffected": "腿C 显式传 slug、不经 ensure 解析路径"
+  },
+  "forbidden_check": {
+    "test_tree_line_default": false,
+    "merged_forbidden_branches": [],
+    "default_on_and_six_case_rerun": false,
+    "para_id_reuse_semantics_changed": false,
+    "hop_arm_touched": false,
+    "hot_path_auto_summarize": false,
+    "official_corpus_text_in_artifacts": false,
+    "markdown_tables_in_artifacts": false
+  },
+  "artifacts": [
+    "artifacts/C128_case_slug_wiring.md",
+    "artifacts/C128_case_slug_wiring.json",
+    "artifacts/C128_case_slug_gap_measure.md (主仓工作树, 未 commit)"
+  ]
+}

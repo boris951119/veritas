@@ -44,6 +44,31 @@ _COEFF_EXTRA: tuple[str, ...] = (
     "role_party_relay",
 )
 
+# C-128：六案标记→slug 公共表（摘要建库脚本的 ``_slug`` 与
+# 探针 ``CASE_MARKS`` 同源同义；加案只改这一处）。
+CASE_MARK_PAIRS: tuple[tuple[str, str], ...] = (
+    ("刘翔", "liuxiang"),
+    ("王虹", "wanghong"),
+    ("中美AI", "us_cn_ai"),
+    ("印度航空", "ai171"),
+    ("柬泰", "kh_th"),
+    ("吉隆", "jilong"),
+)
+_CASE_FALLBACK = "case"
+
+
+def resolve_case_slug(dossier: Any) -> str:
+    """dossier.title（official／case_loader 都写案名）→ 六案 slug。
+
+    未命中＝回落 ``"case"``（不臆造新案名）。生产开旗路径经
+    ``ensure_test_tree_submit`` 自动解析；显式 ``case_slug=`` 可覆盖。
+    """
+    title = str(getattr(dossier, "title", "") or "")
+    for mark, slug in CASE_MARK_PAIRS:
+        if mark in title:
+            return slug
+    return _CASE_FALLBACK
+
 
 def test_tree_line_enabled(settings: Any | None = None) -> bool:
     """默认关。settings 优先；env 兜底（判绿前先看 env 面）。"""
@@ -285,6 +310,7 @@ def build_test_tree_surface(
         "route": getattr(route, "route", ""),
         "embed": embed_meta,
         "cache": cache_state,
+        "case_slug": case_slug,
         "pool_n": len(pool_ranked),
         "universe_n": len(universe),
         "rows_n": len(rows),
@@ -294,9 +320,18 @@ def build_test_tree_surface(
     }
 
 
-def ensure_test_tree_submit(dossier: Any, *, force: bool = False) -> dict | None:
+def ensure_test_tree_submit(
+    dossier: Any,
+    *,
+    force: bool = False,
+    case_slug: str | None = None,
+) -> dict | None:
     """旗开时在 pipeline 内整线跑一遍并写 accounting（与 C-108 桥同槽位）。
 
+    C-128：``case_slug`` 缺省时从 ``dossier.title`` 解析六案实名
+    （``resolve_case_slug``；未命中回落 ``"case"``）；显式实参可覆盖。
+    实际使用的 slug 与是否回落写进 ``kg_test_tree.case_slug``／
+    ``case_slug_fallback``（嵌在既有白名单键内，过禁键审计）。
     已有 kg_submit 且 force=False → 不覆盖（与密度桥同语义）。
     accounting 键沿用 kept 白名单既有键（kg_submit/kg_density/kg_stage1），
     新增披露键 ``kg_test_tree``（白名单同步登记）。
@@ -307,7 +342,8 @@ def ensure_test_tree_submit(dossier: Any, *, force: bool = False) -> dict | None
         acc = dossier.accounting
     if not force and isinstance(acc.get("kg_submit"), dict) and acc.get("kg_submit"):
         return None
-    out = build_test_tree_surface(dossier)
+    slug = str(case_slug) if case_slug else resolve_case_slug(dossier)
+    out = build_test_tree_surface(dossier, case_slug=slug)
     surface = out["surface"]
     acc["kg_submit"] = surface
     dens = out["density"]
@@ -326,6 +362,8 @@ def ensure_test_tree_submit(dossier: Any, *, force: bool = False) -> dict | None
         "line": "test_tree_full",
         "embed": out["embed"],
         "cache": dict(out.get("cache") or {}),
+        "case_slug": slug,
+        "case_slug_fallback": slug == _CASE_FALLBACK,
         "route": out["route"],
         "k": out["k"],
         "pool_n": out["pool_n"],
