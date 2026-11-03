@@ -1,0 +1,50 @@
+{
+  "ticket": "C-127-merge",
+  "date": "2026-11-03",
+  "baseline_main": "57e768782e21d31871959ed3b44cfbff5a020895",
+  "branch": "qoder/c127-cache-disclose-summarize",
+  "branch_tip": "9881dbb5485eb1241c27b6d42b6505049d4edc90",
+  "post_merge_main": "9881dbb5485eb1241c27b6d42b6505049d4edc90",
+  "merge_mode": "fast-forward",
+  "conflicts": 0,
+  "merge_diff": {"files": 8, "insertions": 493, "deletions": 7},
+  "push": {"ok": true, "range": "57e7687..9881dbb main -> main", "forced": false},
+  "excluded_branches": ["C-123", "C-113", "C-121", "C-122", "C-124"],
+  "flag_default": {
+    "name": "VERITAS_TEST_TREE_LINE",
+    "dataclass_default": false,
+    "from_env_default": false,
+    "off_face_surface_sha16": "c6ff9d478007b287",
+    "off_face_sel_sha16": "be657d8db1e7dbde",
+    "off_face_sel_n": 362,
+    "note": "关旗行为＝预算＋BM25，与合前逐位同"
+  },
+  "post_merge_face": {
+    "cache_disclosure_key_in_main": true,
+    "batch_summarize_script_in_main": true,
+    "case_slug_default_untouched": true
+  },
+  "tests_on_branch_same_commit": {"failed": 7, "passed": 1224, "skipped": 1},
+  "evidence": {
+    "run": "合后 main 六案门控复跑（暖缓存）",
+    "liuxiang_at7": 12,
+    "liuxiang_micro": 0.5714,
+    "holdout_micro": {"wanghong": 0.8571, "kh_th": 0.8, "ai171": 0.8},
+    "gold_to_close_all": 1.0,
+    "leaks": 0,
+    "gate1": true,
+    "gate2": true,
+    "gate3": true,
+    "ready": true,
+    "anomalies": [],
+    "verbatim_vs_branch_run": true,
+    "wall_s": 276.7
+  },
+  "artifacts": [
+    "artifacts/C127_merge.md",
+    "artifacts/C127_merge.json",
+    "artifacts/C127_cache_disclose_summarize.md",
+    "artifacts/C127_cache_disclose_summarize.json",
+    "artifacts/c125/C125_six_case_gate.md"
+  ]
+}
