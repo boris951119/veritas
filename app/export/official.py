@@ -876,15 +876,30 @@ def export_official(runs: list[tuple[dict, Dossier]], out_dir: Path) -> dict[str
                         item["question_id"] = str(
                             (question or {}).get("question_id") or "")
                         merged.append(item)
+        # C-143：借 C-123 窄修②——旗开必写回放面（空态也写＋原因句）。
+        # 「本次未检出」不等于「资料无冲突」；零对撞静默＝两态在产物面上同形。
+        detail = ("C-115 三类冲突＋处置留痕回放面；"
+                  "conflict_class∈{same_window,cross_day,unknown_time,"
+                  "unclassified}；disposition∈{keep,dissent,undecided}")
+        paths["conflict_trace"] = out_dir / "conflict_trace.json"
         if merged:
-            paths["conflict_trace"] = out_dir / "conflict_trace.json"
             paths["conflict_trace"].write_text(
                 json.dumps({
                     "records": merged,
                     "summary": summarize_trace(merged),
-                    "detail": "C-115 三类冲突＋处置留痕回放面；"
-                              "conflict_class∈{same_window,cross_day,unknown_time,"
-                              "unclassified}；disposition∈{keep,dissent,undecided}",
+                    "detail": detail,
+                }, ensure_ascii=False, indent=2),
+                encoding="utf-8",
+            )
+        else:
+            n_q = len(runs)
+            paths["conflict_trace"].write_text(
+                json.dumps({
+                    "records": [],
+                    "summary": summarize_trace([]),
+                    "empty_state": True,
+                    "detail": detail + f" 本次 {n_q} 题均未检出冲突对或事实对撞"
+                              "（未检出＝本次研判没有碰到，不等于资料无冲突）。",
                 }, ensure_ascii=False, indent=2),
                 encoding="utf-8",
             )

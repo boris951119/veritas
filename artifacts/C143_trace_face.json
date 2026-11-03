@@ -1,0 +1,218 @@
+{
+  "verdict": {
+    "verdict": "YES",
+    "gates": {
+      "g1_关旗与改前一致": true,
+      "g2_开旗出口在场_零调用": true,
+      "g3_旁证不掉": true,
+      "g4_旗默认仍关": true,
+      "g5_真跑出口在场": true
+    }
+  },
+  "face_compare": {
+    "off_face_byte_identical": true,
+    "off_files": [
+      "chain.jsonl",
+      "official/causal_evidence.json",
+      "official/conclusions.json",
+      "official/confidence.json",
+      "official/conflict_resolution.json",
+      "official/evidence.json",
+      "official/字段说明.md",
+      "progress.json",
+      "report.json",
+      "report.md"
+    ],
+    "base_hole_g1_trace_stripped": true,
+    "branch_g1_closed": true,
+    "base_hole_g2_empty_silent": true,
+    "branch_g2_closed": true,
+    "branch_row0": {
+      "conflict_class": "unknown_time",
+      "disposition": "undecided",
+      "disposition_cn": "未决"
+    },
+    "flag_default_off_both": true
+  },
+  "replica": {
+    "arms": {
+      "off": {
+        "liuxiang": {
+          "slug": "liuxiang",
+          "gold_total": 14,
+          "cut_hits": {
+            "4": 9,
+            "5": 11,
+            "7": 12
+          },
+          "micro_gold_density": 0.5714,
+          "avg_gold_density": 0.5714,
+          "mean_gold_box_to_close": 1.0,
+          "n_leaks": 0,
+          "n_submit_ok": 3
+        },
+        "wanghong": {
+          "slug": "wanghong",
+          "gold_total": 19,
+          "cut_hits": {
+            "4": 6,
+            "5": 6,
+            "7": 6
+          },
+          "micro_gold_density": 0.8571,
+          "avg_gold_density": 0.8889,
+          "mean_gold_box_to_close": 1.0,
+          "n_leaks": 0,
+          "n_submit_ok": 3
+        }
+      },
+      "on": {
+        "liuxiang": {
+          "slug": "liuxiang",
+          "gold_total": 14,
+          "cut_hits": {
+            "4": 9,
+            "5": 11,
+            "7": 12
+          },
+          "micro_gold_density": 0.5714,
+          "avg_gold_density": 0.5714,
+          "mean_gold_box_to_close": 1.0,
+          "n_leaks": 0,
+          "n_submit_ok": 3
+        },
+        "wanghong": {
+          "slug": "wanghong",
+          "gold_total": 19,
+          "cut_hits": {
+            "4": 6,
+            "5": 6,
+            "7": 6
+          },
+          "micro_gold_density": 0.8571,
+          "avg_gold_density": 0.8889,
+          "mean_gold_box_to_close": 1.0,
+          "n_leaks": 0,
+          "n_submit_ok": 3
+        }
+      }
+    },
+    "compare": {
+      "liuxiang": {
+        "arm_off_vs_on": true,
+        "vs_c134": true,
+        "off": {
+          "cut_hits": {
+            "4": 9,
+            "5": 11,
+            "7": 12
+          },
+          "micro_gold_density": 0.5714,
+          "avg_gold_density": 0.5714,
+          "mean_gold_box_to_close": 1.0,
+          "n_leaks": 0,
+          "gold_total": 14
+        },
+        "on": {
+          "cut_hits": {
+            "4": 9,
+            "5": 11,
+            "7": 12
+          },
+          "micro_gold_density": 0.5714,
+          "avg_gold_density": 0.5714,
+          "mean_gold_box_to_close": 1.0,
+          "n_leaks": 0,
+          "gold_total": 14
+        },
+        "c134": {
+          "cut_hits": {
+            "4": 9,
+            "5": 11,
+            "7": 12
+          },
+          "micro_gold_density": 0.5714,
+          "avg_gold_density": 0.5714,
+          "mean_gold_box_to_close": 1.0,
+          "n_leaks": 0,
+          "gold_total": 14
+        }
+      },
+      "wanghong": {
+        "arm_off_vs_on": true,
+        "vs_c134": true,
+        "off": {
+          "cut_hits": {
+            "4": 6,
+            "5": 6,
+            "7": 6
+          },
+          "micro_gold_density": 0.8571,
+          "avg_gold_density": 0.8889,
+          "mean_gold_box_to_close": 1.0,
+          "n_leaks": 0,
+          "gold_total": 19
+        },
+        "on": {
+          "cut_hits": {
+            "4": 6,
+            "5": 6,
+            "7": 6
+          },
+          "micro_gold_density": 0.8571,
+          "avg_gold_density": 0.8889,
+          "mean_gold_box_to_close": 1.0,
+          "n_leaks": 0,
+          "gold_total": 19
+        },
+        "c134": {
+          "cut_hits": {
+            "4": 6,
+            "5": 6,
+            "7": 6
+          },
+          "micro_gold_density": 0.8571,
+          "avg_gold_density": 0.8889,
+          "mean_gold_box_to_close": 1.0,
+          "n_leaks": 0,
+          "gold_total": 19
+        }
+      }
+    }
+  },
+  "real": {
+    "slug": "liuxiang",
+    "qid": "q_003",
+    "wall_s": 399.0,
+    "n_calls": 12,
+    "acc_key_live": true,
+    "trace_file": true,
+    "summary_n": 5,
+    "by_class": {
+      "unknown_time": 3,
+      "same_window": 0,
+      "cross_day": 0,
+      "unclassified": 2
+    },
+    "by_disposition": {
+      "keep": 0,
+      "undecided": 3,
+      "dissent": 2
+    },
+    "coverage_rate": 0.6,
+    "n_conclusions": 16,
+    "detail_present": true,
+    "model": "openai/veritas-qwen3-14b",
+    "env_group": {
+      "VERITAS_KG_SUBMIT_SURFACE": "1",
+      "VERITAS_KG_STAGE1": "1",
+      "VERITAS_KG_REHYDRATE_BOX": "1",
+      "VERITAS_MULTI_BOX": "0",
+      "VERITAS_SECOND_PASS": "0",
+      "VERITAS_REVIEW_BOOST": "0"
+    },
+    "conflict_trace_flag": "1",
+    "n_ledger_rows": 3,
+    "n_pair_rows": 2
+  }
+}
