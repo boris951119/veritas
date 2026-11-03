@@ -1,0 +1,50 @@
+{
+  "ticket": "C-133 合入 main（Boyu 执行单，2026-11-03，模型 glm5.3flash）",
+  "date": "2026-11-03",
+  "branch": "qoder/c133-purge-legacy",
+  "branch_tip": "c119da4",
+  "main_before": "444a91f",
+  "main_after": "c119da4",
+  "precheck": {
+    "origin_main_at_start": "444a91f",
+    "ancestor_70fd7f9_in_main": true,
+    "ff_possible": true
+  },
+  "merge": {
+    "mode": "ff-only",
+    "range": "444a91f..c119da4",
+    "conflict": false,
+    "files": 20,
+    "insertions": 72,
+    "deletions": 3611
+  },
+  "pushed": true,
+  "push_range": "444a91f..c119da4 main -> main",
+  "post_merge_checks": {
+    "grep_ensure_kg_submit_from_density_app_py": 0,
+    "no_env_test_tree_line": true,
+    "import_smoke": "app.pipeline OK",
+    "deliverable_readable": "artifacts/C133_purge_legacy.md + .json",
+    "forbidden_branches_not_merged": {
+      "c123_commits_checked": ["e1526a4", "148c140"],
+      "both_not_in_main": true,
+      "cursor_c113_local": 0,
+      "cursor_c113_remote": 0
+    },
+    "r28_r41_preserved": {
+      "cursor/r28-tree17-cite-8338": "kept（枝 commit 不在 main 祖先链；内容经 C-125 端口进 main）",
+      "cursor/r41-tree17-cite-8338": "kept（同上）",
+      "note": "按本单范围保留待拍"
+    }
+  },
+  "baseline_after_merge": {
+    "failed": 7,
+    "passed": 1231,
+    "skipped": 1,
+    "failed_names": "c19 test_m／c37 except_pass／c38／c37 zero_ref／c37 knife8／c37 knife9／c73 knife（与合前逐名一致）",
+    "passed_delta": "1240→1231＝−9＝被删格真账（c108 6＋c109 2＋c111 1）",
+    "c37_zero_ref_missing_set": "10→6（probe_c108~c111 随删退出；余 c86/c87c/c88/c92/c95/c107）"
+  },
+  "docs_commit": "见 git log（本件随合账提交，不写自身 sha）",
+  "backups": ["/tmp/c133/"]
+}

@@ -1,0 +1,71 @@
+{
+  "ticket": "C-133 删旧修／清幻觉（Boyu 执行单，2026-11-03，模型 glm5.3flash）",
+  "date": "2026-11-03",
+  "branch": "qoder/c133-purge-legacy",
+  "base_tip": "444a91f",
+  "branch_tip": "c119da4",
+  "merged_to_main": false,
+  "pushed": false,
+  "deleted_files": [
+    "app/core/kg_density_bridge.py",
+    "tests/test_c108_density_submit.py",
+    "scripts/probe_c108_density_default.py",
+    "scripts/probe_c109_stage1_pool.py",
+    "scripts/probe_c110_stage1_vs_r44.py",
+    "scripts/probe_c111_rehydrate_box.py",
+    "scripts/probe_c114_anchor_stable.py",
+    "scripts/probe_c115_conflict_trace.py",
+    "scripts/probe_c116_conf_calib.py",
+    "scripts/probe_c117_tree15_depress.py",
+    "scripts/probe_c118_batch_merge.py"
+  ],
+  "deleted_lines": 3539,
+  "commit_stat": "20 files changed, 72 insertions(+), 3611 deletions(-)",
+  "migrated_or_rewritten": {
+    "tests/test_c109_stage1_pool.py": "去桥 import；删 2 格桥行为；pack 格迁测试树共用面",
+    "tests/test_c111_rehydrate_box.py": "去桥 import；删 1 格桥行为；pack 格迁移并改名 test_c111_pack_kwargs_no_coeff_tree_surface",
+    "tests/test_c132_default_on.py": "b2 炸点桩 → import 必 ModuleNotFoundError（C-133 收紧）",
+    "app/core/kg_stage1_pool.py": "docstring 定位改适配层＋C-133 注",
+    "app/core/kg_rehydrate.py": "docstring 加 C-133 注",
+    "app/core/kg_test_tree_line.py": "旧句「关旗默认走 C-108 密度桥」改为 C-132/133 现实；L333 注释同步",
+    "app/config.py": "kg_stage1 注释去「仅密度桥 BM25」",
+    "tests/test_c125_test_tree_line.py": "L212 注释同步",
+    "docs/HANDOFF.md": "C-132 节＋两处历史条目加「已随 C-133 删除」标记"
+  },
+  "kept_pending_decision": {
+    "modules": ["app/core/kg_stage1_pool.py", "app/core/kg_rehydrate.py", "app/core/kg_rehydrate_seeds.json"],
+    "flags": ["kg_stage1 (True)", "kg_rehydrate_box (True)"],
+    "reason": "票面「不删一筛二筛」字样在；但生产消费方已随桥消失＝生产孤岛，建议下一票拍去留"
+  },
+  "branches": {
+    "deleted_local": [{"name": "cursor/c113-tree17-focus-cite", "tip": "1e14cfc"}],
+    "deleted_remote": [{"name": "cursor/c113-tree17-focus-cite", "tip": "1e14cfce"}],
+    "remote_pending_deletion": [],
+    "edge_not_deleted_pending_boyu": [
+      {"name": "cursor/r28-tree17-cite-8338", "tip": "9fe8bd6", "note": "旧 tree17 刀但属 R-series 实验线（cursor/*），已由 C-125 收编进 main"},
+      {"name": "cursor/r41-tree17-cite-8338", "tip": "904c337", "note": "同上"}
+    ],
+    "not_found_anywhere": ["c121", "c122", "c123", "c124", "cite-check-stable（本地与 origin 均无；C-121/123/124 枝只在仓外克隆）"]
+  },
+  "forbidden_knife_residue_in_main": {
+    "TREE17_FOCUS_CITE": 0,
+    "TREE17_LIST_PRECISION": 0,
+    "CITE_CHECK_STABLE": 0,
+    "note": "app/ 零出现（仅 artifacts/ 档案提及）；kept 白名单无 C-123/124 键"
+  },
+  "acceptance": {
+    "grep_ensure_kg_submit_from_density_app_py": 0,
+    "grep_kg_density_bridge_app_py": 0,
+    "no_env_test_tree_line": true,
+    "import_smoke": "app.pipeline / kg_stage1_pool / kg_rehydrate OK",
+    "targeted_tests": "39 passed（c132 8＋c109 3＋c111 5＋c125/c127/c128）",
+    "full_suite": {"failed": 7, "passed": 1231, "skipped": 1, "wall_s": 53.26},
+    "failed_names": "c19 test_m／c37 except_pass／c38／c37 zero_ref／c37 knife8／c37 knife9／c73 knife",
+    "baseline_name_compare": "在 444a91f 临时 worktree 重跑同三文件＝同 7 名，零新增零消失",
+    "passed_delta": "1240→1231＝−9＝被删格真账（c108 6＋c109 2＋c111 1；c108 格数经 git show 核得）",
+    "c37_zero_ref_note": "红保持同名；live 缺失集 10→6（probe_c108~c111 退出；余 c86/c87c/c88/c92/c95/c107）",
+    "forbidden_branches_not_merged": true,
+    "caches_committed": false
+  },
+  "backups": ["/tmp/c133/"]
+}
