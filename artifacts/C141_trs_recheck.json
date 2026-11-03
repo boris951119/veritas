@@ -1,0 +1,291 @@
+{
+ "ticket": "C-141-trs-recheck",
+ "tip": "e2ff20e",
+ "branch": "qoder/c141-trs-recheck",
+ "q4_anchor": {
+  "rows": [
+   {
+    "slug": "liuxiang",
+    "stress": "bom",
+    "0": {
+     "consistency": 0.0,
+     "gold_resolvable": 12,
+     "gold_total": 12,
+     "err": ""
+    },
+    "1": {
+     "consistency": 1.0,
+     "gold_resolvable": 12,
+     "gold_total": 12,
+     "err": ""
+    }
+   },
+   {
+    "slug": "liuxiang",
+    "stress": "crlf",
+    "0": {
+     "consistency": 0.01881720430107527,
+     "gold_resolvable": 12,
+     "gold_total": 12,
+     "err": ""
+    },
+    "1": {
+     "consistency": 1.0,
+     "gold_resolvable": 12,
+     "gold_total": 12,
+     "err": ""
+    }
+   },
+   {
+    "slug": "liuxiang",
+    "stress": "bom_env",
+    "0": {
+     "consistency": null,
+     "gold_resolvable": 0,
+     "gold_total": 12,
+     "err": "ValueError"
+    },
+    "1": {
+     "consistency": 1.0,
+     "gold_resolvable": 12,
+     "gold_total": 12,
+     "err": ""
+    }
+   },
+   {
+    "slug": "wanghong",
+    "stress": "bom",
+    "0": {
+     "consistency": 0.0,
+     "gold_resolvable": 19,
+     "gold_total": 19,
+     "err": ""
+    },
+    "1": {
+     "consistency": 1.0,
+     "gold_resolvable": 19,
+     "gold_total": 19,
+     "err": ""
+    }
+   },
+   {
+    "slug": "wanghong",
+    "stress": "crlf",
+    "0": {
+     "consistency": 0.035830618892508145,
+     "gold_resolvable": 19,
+     "gold_total": 19,
+     "err": ""
+    },
+    "1": {
+     "consistency": 1.0,
+     "gold_resolvable": 19,
+     "gold_total": 19,
+     "err": ""
+    }
+   },
+   {
+    "slug": "wanghong",
+    "stress": "bom_env",
+    "0": {
+     "consistency": null,
+     "gold_resolvable": 0,
+     "gold_total": 19,
+     "err": "ValueError"
+    },
+    "1": {
+     "consistency": 1.0,
+     "gold_resolvable": 19,
+     "gold_total": 19,
+     "err": ""
+    }
+   },
+   {
+    "slug": "kh_th",
+    "stress": "bom",
+    "0": {
+     "consistency": 0.0,
+     "gold_resolvable": 14,
+     "gold_total": 14,
+     "err": ""
+    },
+    "1": {
+     "consistency": 1.0,
+     "gold_resolvable": 14,
+     "gold_total": 14,
+     "err": ""
+    }
+   },
+   {
+    "slug": "kh_th",
+    "stress": "crlf",
+    "0": {
+     "consistency": 0.024128686327077747,
+     "gold_resolvable": 14,
+     "gold_total": 14,
+     "err": ""
+    },
+    "1": {
+     "consistency": 1.0,
+     "gold_resolvable": 14,
+     "gold_total": 14,
+     "err": ""
+    }
+   },
+   {
+    "slug": "kh_th",
+    "stress": "bom_env",
+    "0": {
+     "consistency": null,
+     "gold_resolvable": 0,
+     "gold_total": 14,
+     "err": "ValueError"
+    },
+    "1": {
+     "consistency": 1.0,
+     "gold_resolvable": 14,
+     "gold_total": 14,
+     "err": ""
+    }
+   },
+   {
+    "slug": "ai171",
+    "stress": "bom",
+    "0": {
+     "consistency": 0.0,
+     "gold_resolvable": 22,
+     "gold_total": 22,
+     "err": ""
+    },
+    "1": {
+     "consistency": 1.0,
+     "gold_resolvable": 22,
+     "gold_total": 22,
+     "err": ""
+    }
+   },
+   {
+    "slug": "ai171",
+    "stress": "crlf",
+    "0": {
+     "consistency": 0.0280437756497948,
+     "gold_resolvable": 22,
+     "gold_total": 22,
+     "err": ""
+    },
+    "1": {
+     "consistency": 1.0,
+     "gold_resolvable": 22,
+     "gold_total": 22,
+     "err": ""
+    }
+   },
+   {
+    "slug": "ai171",
+    "stress": "bom_env",
+    "0": {
+     "consistency": null,
+     "gold_resolvable": 0,
+     "gold_total": 22,
+     "err": "ValueError"
+    },
+    "1": {
+     "consistency": 1.0,
+     "gold_resolvable": 22,
+     "gold_total": 22,
+     "err": ""
+    }
+   }
+  ]
+ },
+ "q5_conflict": {
+  "rows": [
+   {
+    "slug": "liuxiang",
+    "n_collisions": 3,
+    "off_writes_accounting": false,
+    "on_coverage": 1.0,
+    "on_unclassified": 0,
+    "on_trace_complete": 1.0
+   },
+   {
+    "slug": "wanghong",
+    "n_collisions": 5,
+    "off_writes_accounting": false,
+    "on_coverage": 1.0,
+    "on_unclassified": 0,
+    "on_trace_complete": 1.0
+   },
+   {
+    "slug": "kh_th",
+    "n_collisions": 15,
+    "off_writes_accounting": false,
+    "on_coverage": 1.0,
+    "on_unclassified": 0,
+    "on_trace_complete": 1.0
+   },
+   {
+    "slug": "ai171",
+    "n_collisions": 12,
+    "off_writes_accounting": false,
+    "on_coverage": 1.0,
+    "on_unclassified": 0,
+    "on_trace_complete": 1.0
+   }
+  ],
+  "total": 35
+ },
+ "q6_conf": {
+  "n_rows": 226,
+  "off_high_precision": {
+   "n_high": 29,
+   "n_hit": 6,
+   "precision": 0.20689655172413793,
+   "accuracy": 0.5172413793103449,
+   "strict": true
+  },
+  "on_high_precision": {
+   "n_high": 11,
+   "n_hit": 3,
+   "precision": 0.2727272727272727,
+   "accuracy": 0.6363636363636364,
+   "strict": true
+  },
+  "off_ece_3band_proxy": 0.186726,
+  "on_ece_3band_proxy": 0.146018,
+  "n_demoted": 18
+ },
+ "c123_usable": {
+  "module_fn_present": true,
+  "consumers_outside_tree17_cite": [
+   "app/kg_lab/__pycache__/tree17_cite.cpython-312.pyc"
+  ],
+  "wired": false
+ },
+ "two_arm_gate_evidence": {
+  "method": "C-134 确定性面（腿0+腿1 零 LLM）旗关/三旗开两臂；缓存对齐 .kgcache＋.kg_lab_vault 后",
+  "flags_off": {
+   "G1": true,
+   "G2": true,
+   "G3": true,
+   "ring2": true,
+   "anomalies": [],
+   "wall_s": 114.4
+  },
+  "flags_on": {
+   "flags": [
+    "VERITAS_ANCHOR_STABLE=1",
+    "VERITAS_CONFLICT_TRACE=1",
+    "VERITAS_CONF_CALIB=1"
+   ],
+   "G1": true,
+   "G2": true,
+   "G3": true,
+   "ring2": true,
+   "anomalies": [],
+   "wall_s": 117.4
+  },
+  "archive_ref": "artifacts/C134_two_case_gate.json（微密度 0.5714/0.8571、@7=12、金标→close 1.0、泄漏 0）",
+  "correction": "第一遍三旗读数（0.5238/11）＝worktree 缺 .kg_lab_vault 摘要缓存所致，与旗无关；补链后两臂复现存档"
+ }
+}
