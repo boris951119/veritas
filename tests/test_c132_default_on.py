@@ -5,7 +5,7 @@ Boyu 2026-11-03 硬令：删旧路、测试树作唯一主线、总旗出厂默�
   a. 无 env／config.json 缺键 → Settings.test_tree_line 三处读点全 True；
      显式 0/false/off/no → False（紧急停用开关保留）；
   b. 主路径不回密度桥：pipeline.py 源码不含 ``ensure_kg_submit_from_density``
-     调用（静态），且把密度桥入口打成炸点后默认跑选料块不炸（动态）；
+     调用（静态）；且模块本体已删＝import 必失败（动态，C-133 收紧）；
   c. 默认跑选料块：kg_submit_active／kg_submit（layer=submit）／kg_test_tree
      三键入账、case_slug 回落 "case" 有披露、禁键审计 0；
   d. 显式关＝跳过交卷面：无 kg_submit_active、accounting['kg_submit_skipped']
@@ -111,15 +111,14 @@ def test_b_no_density_bridge_on_main_path():
     assert "ensure_kg_submit_from_density" not in PIPELINE_SRC
 
 
-def test_b2_dynamic_no_bridge_call(monkeypatch):
+def test_b2_bridge_module_gone(monkeypatch):
+    """C-133：旧密度桥模块本体已删——import 必须失败（比炸点更硬的钉）。"""
+    import importlib
+
     monkeypatch.delenv("VERITAS_TEST_TREE_LINE", raising=False)
     _fake_embeddings(monkeypatch)
-    import app.core.kg_density_bridge as bridge
-
-    def _boom(*a, **k):  # 打成炸点：被调即红
-        raise AssertionError("旧密度桥在主路径被调用（C-132 禁）")
-
-    monkeypatch.setattr(bridge, "ensure_kg_submit_from_density", _boom)
+    with pytest.raises(ModuleNotFoundError):
+        importlib.import_module("app.core.kg_density_bridge")
     d = _dossier()
     kw = _run_selection_block(d, Settings())
     acc = d.accounting

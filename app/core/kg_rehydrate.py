@@ -6,6 +6,9 @@
 
 有上游短盒（≤K_MAX）仍优先。``VERITAS_KG_REHYDRATE_BOX=0`` 回退 C-109。
 系数／R9／R21／DEFAULT_WEIGHTS 不出模块、不进 pack。
+
+C-133：旧密度桥（唯一生产消费方）已删；本模块现为 C-111 适配层，
+由测试格直测（种子文件 ``kg_rehydrate_seeds.json`` 一并保留）。
 """
 
 from __future__ import annotations

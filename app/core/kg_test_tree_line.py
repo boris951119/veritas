@@ -26,7 +26,8 @@
 摘要／vault 缓存缺席同样显式披露（C-127：``kg_test_tree.cache``＝
 缺席布尔／影响面 summary|vault|embed／降级继续），不静默当暖缓存跑。
 
-关旗（默认）＝本模块一个字节不执行，生产走 C-108 密度桥路径。
+C-132 起本模块出厂开＝唯一主线（C-133：旧密度桥已删；显式
+``VERITAS_TEST_TREE_LINE=0``＝跳过交卷面，不回旧路）。
 """
 
 from __future__ import annotations
@@ -330,7 +331,7 @@ def ensure_test_tree_submit(
     （``resolve_case_slug``；未命中回落 ``"case"``）；显式实参可覆盖。
     实际使用的 slug 与是否回落写进 ``kg_test_tree.case_slug``／
     ``case_slug_fallback``（嵌在既有白名单键内，过禁键审计）。
-    已有 kg_submit 且 force=False → 不覆盖（与密度桥同语义）。
+    已有 kg_submit 且 force=False → 不覆盖（沿旧桥语义；桥本体已删＝C-133）。
     accounting 键沿用 kept 白名单既有键（kg_submit/kg_density/kg_stage1），
     新增披露键 ``kg_test_tree``（白名单同步登记）。
     """

@@ -2,7 +2,7 @@
 ## 〔C-132〕测试树默认开＋删旧路（Boyu 2026-11-03 硬令；枝未合 main）
 
 - **枝**：`qoder/c132-test-tree-default-on`（自 `9481f9e`；**未**合 main，等贴合入指令）。
-- **改**：`test_tree_line` 出厂 **True**；pipeline 主路径**只**走 `ensure_test_tree_submit`，`ensure_kg_submit_from_density` 旧密度桥主路径分支已删（模块保留给直连测试与探针）；显式 `VERITAS_TEST_TREE_LINE=0`＝紧急停用交卷面（跳过＋账面披露 `kg_submit_skipped`，绝不回密度桥）；kept 白名单登记该键。
+- **改**：`test_tree_line` 出厂 **True**；pipeline 主路径**只**走 `ensure_test_tree_submit`，`ensure_kg_submit_from_density` 旧密度桥主路径分支已删（C-133：模块与旧线测试／探针已全删）；显式 `VERITAS_TEST_TREE_LINE=0`＝紧急停用交卷面（跳过＋账面披露 `kg_submit_skipped`，绝不回密度桥——旧路已不存在）；kept 白名单登记该键。
 - **验收**：全套 `7 failed, 1240 passed, 1 skipped`＝基线同名红零新增（+8＝`tests/test_c132_default_on.py`）；无 env 双读点 True；两案零 LLM 烟测＝测试树面＋case_slug 实名＋泄漏 0。默认开全套墙钟 62.3s（对照 env=0 跳过路径 36.0s＝+26s 嵌入/出面税，有 ollama 机器付、缓存逐轮吸收；无 ollama 快速降级词面）。
 - **注意**：c19 `test_m_production_messages_bite` 对选料面形状敏感（env=0 跳过路径下转绿、默认开下红）——它仍是基线同名红，未盲修。
 
@@ -104,7 +104,7 @@
 ## 〔C-108〕已合 main（C-107 窄面＋密度桥）
 
 - **状态**：`cursor/c108-density-submit-default` 已快进合入本地／远端 `main`（见本笔 tip）。
-- **含什么**：C-107 交卷窄面（`kg_submit_surface`）＋C-108 `density_submit` 薄迁与 `kg_density_bridge`。**不含** R9／R21／DEFAULT_WEIGHTS 进 `pack_material`。
+- **含什么**：C-107 交卷窄面（`kg_submit_surface`）＋C-108 `density_submit` 薄迁与 `kg_density_bridge`。**不含** R9／R21／DEFAULT_WEIGHTS 进 `pack_material`。（历史条目：`kg_density_bridge` 与旧线探针已随 C-133 删除，测试树为唯一主线。）
 - **旗语义**：
   - `VERITAS_KG_SUBMIT_SURFACE`：**默认开**（密度盒序优先→窄面）。`=0`／`false`／`off`＝回退旧 BM25 预算装满。
   - `VERITAS_KG_CAP_SEGMENTS`：**默认关**。`=1` 才硬顶 `max_segments=k`。
@@ -116,7 +116,7 @@
 <!-- C-108-STEP1 -->
 ## 〔C-108〕二筛密度交卷＋窄面默认开（第1步，不合一筛系数）
 
-- **迁了什么**：`app/kg_lab/density_submit.py` 及 intent_routes／event_frame／question_intent／source_role／case_lexicon（桩 config／tag_schema）；桥 `app/core/kg_density_bridge.py`（BM25 池或上游短盒 → 洗净 kg_submit）。
+- **迁了什么**：`app/kg_lab/density_submit.py` 及 intent_routes／event_frame／question_intent／source_role／case_lexicon（桩 config／tag_schema）；桥 `app/core/kg_density_bridge.py`（BM25 池或上游短盒 → 洗净 kg_submit）。（历史条目：桥已随 C-133 删除。）
 - **没迁**：R9／R21 多维系数、DEFAULT_WEIGHTS、portable 权威拟合；一筛仍 BM25 池或 R44 盒输入。
 - **旗**：`VERITAS_KG_SUBMIT_SURFACE` **默认开**；`=0` 回退旧装满。硬顶段数另旗 `VERITAS_KG_CAP_SEGMENTS`（默认关＝盒序优先＋预算尾可填）。
 - **验收读数**（artifacts/C108_density_default_measure）：刘翔@7=12；holdout L2 25→29；微密度贴 R44；泄漏0。过线→可开 PR；是否合 main 另裁。

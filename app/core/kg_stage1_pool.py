@@ -1,10 +1,13 @@
-"""C-109：主线一筛进池——系数只活在模块内，出口仅 pool_ids／pool_ranked。
+"""C-109：一筛进池适配层——系数只活在模块内，出口仅 pool_ids／pool_ranked。
 
 薄适配分析师 ``stage1_pool.fuse_r19`` 进池形：经典 BM25 ⊕ 裁决／证据视图
 ⊕ 邻块 ⊕ 权威臂 RRF；**不**把 R9／R21／DEFAULT_WEIGHTS 放出模块，
 更不进 ``pack_material`` kwargs。
 
 无 embedding／KgIndex 硬依赖（禁百炼；本机 embed 可选，默认关）。
+
+C-133：旧密度桥（唯一生产消费方）已删；本模块现为适配层，由测试格直测。
+测试树一筛走 ``app/kg_lab/stage1_pool.py``，与本模块是两套。
 """
 
 from __future__ import annotations
@@ -30,7 +33,7 @@ _OLLAMA = os.environ.get("OLLAMA_HOST", "http://127.0.0.1:11434").rstrip("/")
 
 
 def kg_stage1_enabled(settings: Any | None = None) -> bool:
-    """默认开。``VERITAS_KG_STAGE1=0`` 回退无池（仅密度桥／旧 BM25）。"""
+    """默认开。``VERITAS_KG_STAGE1=0`` 回退无池。（旧密度桥已删＝C-133。）"""
     if settings is not None and hasattr(settings, "kg_stage1"):
         return bool(getattr(settings, "kg_stage1"))
     v = (os.environ.get("VERITAS_KG_STAGE1") or "").strip().lower()

@@ -1,4 +1,10 @@
-"""C-109：一筛进池出口只 pool_ids；系数不进 pack；旗回退。"""
+"""C-109：一筛进池出口只 pool_ids；系数不进 pack；旗回退。
+
+C-133：旧密度桥已删。本文件只直测适配层 ``app.core.kg_stage1_pool``
+（旗读点＋出口禁系数）；「系数不进 pack」改走测试树共用面
+（ensure_test_tree_submit → apply → pack），不再借旧桥造面。
+桥行为格（stage1 关→BM25 回退、上游短盒信任）随桥一并删除。
+"""
 
 from __future__ import annotations
 
@@ -12,7 +18,6 @@ def _c109_no_embed(monkeypatch):
     """单测不烧本机 embed；测量脚本默认开。"""
     monkeypatch.setenv("VERITAS_KG_STAGE1_EMBED", "0")
 from app.core.evidence import Dossier, Segment, Source, SourceType
-from app.core.kg_density_bridge import density_submit_surface
 from app.core.kg_stage1_pool import kg_stage1_enabled, stage1_pool_from_dossier
 from app.core.kg_submit_surface import (
     FORBIDDEN_PACK_KEYS,
@@ -36,6 +41,18 @@ def _dossier() -> Dossier:
         src.segments.append(Segment(id=f"{sid}#s1", source_id=sid, text=text))
         d.add_source(src)
     return d
+
+
+def _fake_embeddings(monkeypatch) -> None:
+    from app.kg_lab.index_build import KgIndex
+
+    def _ensure(self, *, force: bool = False, refresh_ids=None):
+        self.embeddings = {
+            str(r["para_id"]): [0.1, 0.2, 0.3] for r in self.rows
+        }
+        return {"stubbed": True}
+
+    monkeypatch.setattr(KgIndex, "ensure_embeddings", _ensure)
 
 
 def test_c109_stage1_default_on_env_off(monkeypatch):
@@ -63,32 +80,14 @@ def test_c109_export_only_pool_ids_no_coeff():
 
 
 def test_c109_pack_kwargs_never_take_stage1_coeffs(monkeypatch):
+    """C-133 迁移：改走测试树共用面造面，不借旧桥。"""
+    from app.core.kg_test_tree_line import ensure_test_tree_submit
+
     monkeypatch.delenv("VERITAS_KG_CAP_SEGMENTS", raising=False)
-    # C-111 默认回灌会按问句 sha 命中冻结盒、跳过一筛；本格专测 stage1 出口
-    monkeypatch.setenv("VERITAS_KG_REHYDRATE_BOX", "0")
+    _fake_embeddings(monkeypatch)
     d = _dossier()
-    bridge = density_submit_surface(d, top_n=20, use_stage1=True)
-    assert bridge.get("stage1") is not None
-    d.accounting["kg_submit"] = bridge["surface"]
-    d.accounting["kg_cap_segments"] = False
+    ensure_test_tree_submit(d)
     apply_kg_submit_surface(d, enabled=True)
     kw = pack_kwargs_for_kg(d)
     assert "coeff" not in kw and "weights" not in kw and "feats" not in kw
     assert audit_forbidden_keys(kw) == []
-
-
-def test_c109_stage1_off_falls_back_bm25_pool(monkeypatch):
-    monkeypatch.setenv("VERITAS_KG_STAGE1", "0")
-    d = _dossier()
-    out = density_submit_surface(d, top_n=20, use_stage1=False)
-    assert out.get("stage1") is None
-    assert out["surface"]["rank_order"]
-
-
-def test_c109_short_box_still_preferred(monkeypatch):
-    monkeypatch.setenv("VERITAS_KG_REHYDRATE_BOX", "0")
-    d = _dossier()
-    short = ["SRC1#s1", "SRC2#s1", "SRC4#s1"]
-    out = density_submit_surface(d, order=short, use_stage1=True)
-    # 短盒信任：submission＝短盒
-    assert list(out["density"]["submission"]) == short

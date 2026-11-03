@@ -1,4 +1,10 @@
-"""C-111：短盒回灌；禁系数进 pack；旗回退 C-109。"""
+"""C-111：短盒回灌；禁系数进 pack；旗回退。
+
+C-133：旧密度桥已删。本文件只直测 ``app.core.kg_rehydrate``
+（旗读点＋垫盒＋种子命中）；「系数不进 pack」改走测试树共用面
+（ensure_test_tree_submit → apply → pack），不再借旧桥造面。
+桥行为格（上游短盒信任）随桥一并删除。
+"""
 
 from __future__ import annotations
 
@@ -6,7 +12,6 @@ import pytest
 
 from app.config import Settings
 from app.core.evidence import Dossier, Segment, Source, SourceType
-from app.core.kg_density_bridge import density_submit_surface
 from app.core.kg_rehydrate import (
     apply_rehydrate_to_density,
     kg_rehydrate_enabled,
@@ -39,6 +44,18 @@ def _dossier(q: str = "测试议题甲乙对立口径？") -> Dossier:
     return d
 
 
+def _fake_embeddings(monkeypatch) -> None:
+    from app.kg_lab.index_build import KgIndex
+
+    def _ensure(self, *, force: bool = False, refresh_ids=None):
+        self.embeddings = {
+            str(r["para_id"]): [0.1, 0.2, 0.3] for r in self.rows
+        }
+        return {"stubbed": True}
+
+    monkeypatch.setattr(KgIndex, "ensure_embeddings", _ensure)
+
+
 def test_c111_rehydrate_default_on_env_off(monkeypatch):
     monkeypatch.delenv("VERITAS_KG_REHYDRATE_BOX", raising=False)
     assert Settings().kg_rehydrate_box is True
@@ -65,13 +82,15 @@ def test_c111_pad_forces_k_near_7():
     assert out["rehydrate_kind"] == "pad_to_k"
 
 
-def test_c111_pack_kwargs_no_coeff_with_rehydrate(monkeypatch):
+def test_c111_pack_kwargs_no_coeff_tree_surface(monkeypatch):
+    """C-133 迁移：改走测试树共用面造面（原格借旧桥，桥已删）。"""
+    from app.core.kg_test_tree_line import ensure_test_tree_submit
+
     monkeypatch.delenv("VERITAS_KG_CAP_SEGMENTS", raising=False)
     monkeypatch.delenv("VERITAS_KG_REHYDRATE_BOX", raising=False)
+    _fake_embeddings(monkeypatch)
     d = _dossier()
-    bridge = density_submit_surface(d, top_n=20, use_stage1=True)
-    d.accounting["kg_submit"] = bridge["surface"]
-    d.accounting["kg_cap_segments"] = False
+    ensure_test_tree_submit(d)
     apply_kg_submit_surface(d, enabled=True)
     kw = pack_kwargs_for_kg(d)
     assert audit_forbidden_keys(kw) == []
@@ -84,16 +103,6 @@ def test_c111_flag_off_no_seed_lookup(monkeypatch):
     monkeypatch.setenv("VERITAS_KG_REHYDRATE_BOX", "0")
     # 即便问句能命中种子，关旗也不回灌
     assert lookup_seed_box("anything") is None
-
-
-def test_c111_upstream_short_still_preferred(monkeypatch):
-    monkeypatch.delenv("VERITAS_KG_REHYDRATE_BOX", raising=False)
-    d = _dossier()
-    short = ["A#s1", "B#s1", "D#s1"]
-    out = density_submit_surface(d, order=short, use_stage1=True)
-    assert list(out["density"]["submission"]) == short
-    # 有上游盒时不走种子
-    assert not (out.get("rehydrate") or {}).get("seed_hit")
 
 
 def test_c111_seed_hit_by_query_sha(monkeypatch):

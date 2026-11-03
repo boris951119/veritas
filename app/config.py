@@ -545,7 +545,7 @@ class Settings:
     kg_submit_surface: bool = True
 
     # C-109：一筛进池（只出口 pool_ids）。默认 True；关＝VERITAS_KG_STAGE1=0
-    # 回退「无池／仅密度桥 BM25」。系数不进 pack。
+    # 回退「无池」（旧密度桥已删＝C-133；本旗现仅适配层／测试消费）。系数不进 pack。
     # env VERITAS_KG_STAGE1；config.json kg_stage1。
     kg_stage1: bool = True
 

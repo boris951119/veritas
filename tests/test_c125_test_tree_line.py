@@ -209,7 +209,7 @@ def test_f_ensure_writes_accounting(monkeypatch):
     from app.kg_lab.layer_boundary import audit_forbidden_keys
 
     assert audit_forbidden_keys(acc["kg_test_tree"]) == []
-    # 二次调用＝不覆盖（与密度桥同语义）
+    # 二次调用＝不覆盖（沿旧桥语义；桥本体已删＝C-133）
     acc["kg_submit"]["k"] = 999
     assert ensure_test_tree_submit(d) is None
     assert acc["kg_submit"]["k"] == 999
