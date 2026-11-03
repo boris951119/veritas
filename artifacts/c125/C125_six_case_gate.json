@@ -1,0 +1,676 @@
+{
+ "ticket": "C-125-six-case-gate",
+ "tip": "a7b8bcf",
+ "branch": "qoder/c125-test-tree-port",
+ "wall_s": 387.6,
+ "coeff_names_n": 35,
+ "forbidden_keys_n": 13,
+ "gate": {
+  "gate1": true,
+  "gate2": true,
+  "gate3": true,
+  "n_leaks": 0,
+  "all_submit_ok": true,
+  "ready": true
+ },
+ "expect": {
+  "liuxiang": {
+   "role": "regression",
+   "micro_min": 0.5714,
+   "at7": 12
+  },
+  "jilong": {
+   "role": "smoke",
+   "micro_min": 0.6667,
+   "at7": 6
+  },
+  "us_cn_ai": {
+   "role": "smoke",
+   "micro_min": 0.6667,
+   "at7": 6
+  },
+  "wanghong": {
+   "role": "holdout",
+   "micro_min": 0.8571,
+   "at7": 6,
+   "q002_min": 0.6667
+  },
+  "kh_th": {
+   "role": "holdout",
+   "micro_min": 0.8,
+   "at7": 4
+  },
+  "ai171": {
+   "role": "holdout",
+   "micro_min": 0.8,
+   "at7": 5
+  }
+ },
+ "anomalies": [],
+ "cases": [
+  {
+   "slug": "liuxiang",
+   "gold_total": 14,
+   "cut_hits": {
+    "4": 9,
+    "5": 11,
+    "7": 12
+   },
+   "density_rows": [
+    {
+     "qid": "q_001",
+     "route": "adjudicate",
+     "k": 7,
+     "n_gold": 4,
+     "gold_density": 0.5714,
+     "density_cut": false
+    },
+    {
+     "qid": "q_002",
+     "route": "adjudicate",
+     "k": 7,
+     "n_gold": 4,
+     "gold_density": 0.5714,
+     "density_cut": false
+    },
+    {
+     "qid": "q_003",
+     "route": "adjudicate",
+     "k": 7,
+     "n_gold": 4,
+     "gold_density": 0.5714,
+     "density_cut": false
+    }
+   ],
+   "avg_gold_density": 0.5714,
+   "micro_gold_density": 0.5714,
+   "sum_gold_in_boxes": 12,
+   "sum_k": 21,
+   "wall_s": 6.6,
+   "plan_rows": [
+    {
+     "qid": "q_001",
+     "k": 7,
+     "n_gold": 4,
+     "gold_density": 0.5714,
+     "gold_in_box_to_close": 1.0,
+     "n_pairs": 8
+    },
+    {
+     "qid": "q_002",
+     "k": 7,
+     "n_gold": 4,
+     "gold_density": 0.5714,
+     "gold_in_box_to_close": 1.0,
+     "n_pairs": 0
+    },
+    {
+     "qid": "q_003",
+     "k": 7,
+     "n_gold": 4,
+     "gold_density": 0.5714,
+     "gold_in_box_to_close": 1.0,
+     "n_pairs": 0
+    }
+   ],
+   "mean_gold_box_to_close": 1.0,
+   "n_leaks": 0,
+   "leak_sample": [],
+   "n_submit_ok": 3,
+   "n_questions": 3,
+   "prod_leg": {
+    "rows": [
+     {
+      "qid": "q_001",
+      "k": 3,
+      "n_gold": 1,
+      "gold_density": 0.3333,
+      "route": "adjudicate",
+      "embed": "ok",
+      "n_pairs": 8
+     },
+     {
+      "qid": "q_002",
+      "k": 3,
+      "n_gold": 1,
+      "gold_density": 0.3333,
+      "route": "adjudicate",
+      "embed": "ok",
+      "n_pairs": 0
+     },
+     {
+      "qid": "q_003",
+      "k": 3,
+      "n_gold": 2,
+      "gold_density": 0.6667,
+      "route": "adjudicate",
+      "embed": "ok",
+      "n_pairs": 0
+     }
+    ],
+    "micro_gold_density": 0.4444
+   },
+   "gate_ok": true
+  },
+  {
+   "slug": "jilong",
+   "gold_total": 13,
+   "cut_hits": {
+    "4": 6,
+    "5": 6,
+    "7": 6
+   },
+   "density_rows": [
+    {
+     "qid": "q_001",
+     "route": "adjudicate",
+     "k": 3,
+     "n_gold": 2,
+     "gold_density": 0.6667,
+     "density_cut": true
+    },
+    {
+     "qid": "q_002",
+     "route": "adjudicate",
+     "k": 3,
+     "n_gold": 2,
+     "gold_density": 0.6667,
+     "density_cut": true
+    },
+    {
+     "qid": "q_003",
+     "route": "adjudicate",
+     "k": 3,
+     "n_gold": 2,
+     "gold_density": 0.6667,
+     "density_cut": true
+    }
+   ],
+   "avg_gold_density": 0.6667,
+   "micro_gold_density": 0.6667,
+   "sum_gold_in_boxes": 6,
+   "sum_k": 9,
+   "wall_s": 23.9,
+   "plan_rows": [
+    {
+     "qid": "q_001",
+     "k": 3,
+     "n_gold": 2,
+     "gold_density": 0.6667,
+     "gold_in_box_to_close": 1.0,
+     "n_pairs": 0
+    },
+    {
+     "qid": "q_002",
+     "k": 3,
+     "n_gold": 2,
+     "gold_density": 0.6667,
+     "gold_in_box_to_close": 1.0,
+     "n_pairs": 0
+    },
+    {
+     "qid": "q_003",
+     "k": 3,
+     "n_gold": 2,
+     "gold_density": 0.6667,
+     "gold_in_box_to_close": 1.0,
+     "n_pairs": 0
+    }
+   ],
+   "mean_gold_box_to_close": 1.0,
+   "n_leaks": 0,
+   "leak_sample": [],
+   "n_submit_ok": 3,
+   "n_questions": 3,
+   "prod_leg": {
+    "rows": [
+     {
+      "qid": "q_001",
+      "k": 3,
+      "n_gold": 2,
+      "gold_density": 0.6667,
+      "route": "adjudicate",
+      "embed": "ok",
+      "n_pairs": 0
+     },
+     {
+      "qid": "q_002",
+      "k": 3,
+      "n_gold": 2,
+      "gold_density": 0.6667,
+      "route": "adjudicate",
+      "embed": "ok",
+      "n_pairs": 0
+     },
+     {
+      "qid": "q_003",
+      "k": 3,
+      "n_gold": 2,
+      "gold_density": 0.6667,
+      "route": "adjudicate",
+      "embed": "ok",
+      "n_pairs": 0
+     }
+    ],
+    "micro_gold_density": 0.6667
+   },
+   "gate_ok": true
+  },
+  {
+   "slug": "us_cn_ai",
+   "gold_total": 13,
+   "cut_hits": {
+    "4": 6,
+    "5": 6,
+    "7": 6
+   },
+   "density_rows": [
+    {
+     "qid": "q_001",
+     "route": "adjudicate",
+     "k": 3,
+     "n_gold": 2,
+     "gold_density": 0.6667,
+     "density_cut": true
+    },
+    {
+     "qid": "q_002",
+     "route": "adjudicate",
+     "k": 3,
+     "n_gold": 2,
+     "gold_density": 0.6667,
+     "density_cut": true
+    },
+    {
+     "qid": "q_003",
+     "route": "adjudicate",
+     "k": 3,
+     "n_gold": 2,
+     "gold_density": 0.6667,
+     "density_cut": true
+    }
+   ],
+   "avg_gold_density": 0.6667,
+   "micro_gold_density": 0.6667,
+   "sum_gold_in_boxes": 6,
+   "sum_k": 9,
+   "wall_s": 15.1,
+   "plan_rows": [
+    {
+     "qid": "q_001",
+     "k": 3,
+     "n_gold": 2,
+     "gold_density": 0.6667,
+     "gold_in_box_to_close": 1.0,
+     "n_pairs": 0
+    },
+    {
+     "qid": "q_002",
+     "k": 3,
+     "n_gold": 2,
+     "gold_density": 0.6667,
+     "gold_in_box_to_close": 1.0,
+     "n_pairs": 0
+    },
+    {
+     "qid": "q_003",
+     "k": 3,
+     "n_gold": 2,
+     "gold_density": 0.6667,
+     "gold_in_box_to_close": 1.0,
+     "n_pairs": 0
+    }
+   ],
+   "mean_gold_box_to_close": 1.0,
+   "n_leaks": 0,
+   "leak_sample": [],
+   "n_submit_ok": 3,
+   "n_questions": 3,
+   "prod_leg": {
+    "rows": [
+     {
+      "qid": "q_001",
+      "k": 3,
+      "n_gold": 2,
+      "gold_density": 0.6667,
+      "route": "adjudicate",
+      "embed": "ok",
+      "n_pairs": 0
+     },
+     {
+      "qid": "q_002",
+      "k": 3,
+      "n_gold": 2,
+      "gold_density": 0.6667,
+      "route": "adjudicate",
+      "embed": "ok",
+      "n_pairs": 0
+     },
+     {
+      "qid": "q_003",
+      "k": 3,
+      "n_gold": 2,
+      "gold_density": 0.6667,
+      "route": "adjudicate",
+      "embed": "ok",
+      "n_pairs": 0
+     }
+    ],
+    "micro_gold_density": 0.6667
+   },
+   "gate_ok": true
+  },
+  {
+   "slug": "wanghong",
+   "gold_total": 19,
+   "cut_hits": {
+    "4": 6,
+    "5": 6,
+    "7": 6
+   },
+   "density_rows": [
+    {
+     "qid": "q_001",
+     "route": "fact_check",
+     "k": 1,
+     "n_gold": 1,
+     "gold_density": 1.0,
+     "density_cut": true
+    },
+    {
+     "qid": "q_002",
+     "route": "adjudicate",
+     "k": 3,
+     "n_gold": 2,
+     "gold_density": 0.6667,
+     "density_cut": true
+    },
+    {
+     "qid": "q_003",
+     "route": "adjudicate",
+     "k": 3,
+     "n_gold": 3,
+     "gold_density": 1.0,
+     "density_cut": true
+    }
+   ],
+   "avg_gold_density": 0.8889,
+   "micro_gold_density": 0.8571,
+   "sum_gold_in_boxes": 6,
+   "sum_k": 7,
+   "wall_s": 17.2,
+   "plan_rows": [
+    {
+     "qid": "q_001",
+     "k": 1,
+     "n_gold": 1,
+     "gold_density": 1.0,
+     "gold_in_box_to_close": 1.0,
+     "n_pairs": 0
+    },
+    {
+     "qid": "q_002",
+     "k": 3,
+     "n_gold": 2,
+     "gold_density": 0.6667,
+     "gold_in_box_to_close": 1.0,
+     "n_pairs": 0
+    },
+    {
+     "qid": "q_003",
+     "k": 3,
+     "n_gold": 3,
+     "gold_density": 1.0,
+     "gold_in_box_to_close": 1.0,
+     "n_pairs": 0
+    }
+   ],
+   "mean_gold_box_to_close": 1.0,
+   "n_leaks": 0,
+   "leak_sample": [],
+   "n_submit_ok": 3,
+   "n_questions": 3,
+   "prod_leg": {
+    "rows": [
+     {
+      "qid": "q_001",
+      "k": 1,
+      "n_gold": 1,
+      "gold_density": 1.0,
+      "route": "fact_check",
+      "embed": "ok",
+      "n_pairs": 0
+     },
+     {
+      "qid": "q_002",
+      "k": 3,
+      "n_gold": 2,
+      "gold_density": 0.6667,
+      "route": "adjudicate",
+      "embed": "ok",
+      "n_pairs": 0
+     },
+     {
+      "qid": "q_003",
+      "k": 3,
+      "n_gold": 3,
+      "gold_density": 1.0,
+      "route": "adjudicate",
+      "embed": "ok",
+      "n_pairs": 0
+     }
+    ],
+    "micro_gold_density": 0.8571
+   },
+   "gate_ok": true
+  },
+  {
+   "slug": "kh_th",
+   "gold_total": 11,
+   "cut_hits": {
+    "4": 4,
+    "5": 4,
+    "7": 4
+   },
+   "density_rows": [
+    {
+     "qid": "q_001",
+     "route": "fact_check",
+     "k": 1,
+     "n_gold": 1,
+     "gold_density": 1.0,
+     "density_cut": true
+    },
+    {
+     "qid": "q_002",
+     "route": "fact_check",
+     "k": 3,
+     "n_gold": 2,
+     "gold_density": 0.6667,
+     "density_cut": true
+    },
+    {
+     "qid": "q_003",
+     "route": "fact_check",
+     "k": 1,
+     "n_gold": 1,
+     "gold_density": 1.0,
+     "density_cut": true
+    }
+   ],
+   "avg_gold_density": 0.8889,
+   "micro_gold_density": 0.8,
+   "sum_gold_in_boxes": 4,
+   "sum_k": 5,
+   "wall_s": 10.8,
+   "plan_rows": [
+    {
+     "qid": "q_001",
+     "k": 1,
+     "n_gold": 1,
+     "gold_density": 1.0,
+     "gold_in_box_to_close": 1.0,
+     "n_pairs": 0
+    },
+    {
+     "qid": "q_002",
+     "k": 3,
+     "n_gold": 2,
+     "gold_density": 0.6667,
+     "gold_in_box_to_close": 1.0,
+     "n_pairs": 0
+    },
+    {
+     "qid": "q_003",
+     "k": 1,
+     "n_gold": 1,
+     "gold_density": 1.0,
+     "gold_in_box_to_close": 1.0,
+     "n_pairs": 0
+    }
+   ],
+   "mean_gold_box_to_close": 1.0,
+   "n_leaks": 0,
+   "leak_sample": [],
+   "n_submit_ok": 3,
+   "n_questions": 3,
+   "prod_leg": {
+    "rows": [
+     {
+      "qid": "q_001",
+      "k": 1,
+      "n_gold": 1,
+      "gold_density": 1.0,
+      "route": "fact_check",
+      "embed": "ok",
+      "n_pairs": 0
+     },
+     {
+      "qid": "q_002",
+      "k": 3,
+      "n_gold": 2,
+      "gold_density": 0.6667,
+      "route": "fact_check",
+      "embed": "ok",
+      "n_pairs": 0
+     },
+     {
+      "qid": "q_003",
+      "k": 1,
+      "n_gold": 1,
+      "gold_density": 1.0,
+      "route": "fact_check",
+      "embed": "ok",
+      "n_pairs": 0
+     }
+    ],
+    "micro_gold_density": 0.8
+   },
+   "gate_ok": true
+  },
+  {
+   "slug": "ai171",
+   "gold_total": 24,
+   "cut_hits": {
+    "4": 5,
+    "5": 5,
+    "7": 5
+   },
+   "density_rows": [
+    {
+     "qid": "q_001",
+     "route": "adjudicate",
+     "k": 3,
+     "n_gold": 2,
+     "gold_density": 0.6667,
+     "density_cut": true
+    },
+    {
+     "qid": "q_002",
+     "route": "fact_check",
+     "k": 1,
+     "n_gold": 1,
+     "gold_density": 1.0,
+     "density_cut": true
+    },
+    {
+     "qid": "q_003",
+     "route": "adjudicate",
+     "k": 1,
+     "n_gold": 1,
+     "gold_density": 1.0,
+     "density_cut": true
+    }
+   ],
+   "avg_gold_density": 0.8889,
+   "micro_gold_density": 0.8,
+   "sum_gold_in_boxes": 4,
+   "sum_k": 5,
+   "wall_s": 20.2,
+   "plan_rows": [
+    {
+     "qid": "q_001",
+     "k": 3,
+     "n_gold": 2,
+     "gold_density": 0.6667,
+     "gold_in_box_to_close": 1.0,
+     "n_pairs": 0
+    },
+    {
+     "qid": "q_002",
+     "k": 1,
+     "n_gold": 1,
+     "gold_density": 1.0,
+     "gold_in_box_to_close": 1.0,
+     "n_pairs": 0
+    },
+    {
+     "qid": "q_003",
+     "k": 1,
+     "n_gold": 1,
+     "gold_density": 1.0,
+     "gold_in_box_to_close": 1.0,
+     "n_pairs": 0
+    }
+   ],
+   "mean_gold_box_to_close": 1.0,
+   "n_leaks": 0,
+   "leak_sample": [],
+   "n_submit_ok": 3,
+   "n_questions": 3,
+   "prod_leg": {
+    "rows": [
+     {
+      "qid": "q_001",
+      "k": 3,
+      "n_gold": 2,
+      "gold_density": 0.6667,
+      "route": "adjudicate",
+      "embed": "ok",
+      "n_pairs": 0
+     },
+     {
+      "qid": "q_002",
+      "k": 1,
+      "n_gold": 1,
+      "gold_density": 1.0,
+      "route": "fact_check",
+      "embed": "ok",
+      "n_pairs": 0
+     },
+     {
+      "qid": "q_003",
+      "k": 1,
+      "n_gold": 1,
+      "gold_density": 1.0,
+      "route": "adjudicate",
+      "embed": "ok",
+      "n_pairs": 0
+     }
+    ],
+    "micro_gold_density": 0.8
+   },
+   "gate_ok": true
+  }
+ ]
+}

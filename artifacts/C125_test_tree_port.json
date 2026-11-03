@@ -1,0 +1,64 @@
+{
+  "schema_version": "c125.test_tree_port.v1",
+  "date": "2026-11-03",
+  "ticket": "C-125 测试树整线端口（veritas-obsidian-kg-exp app/kg_lab → 主仓产品线）",
+  "baseline_check": {"expected_tip": "0e957faa0952e6260c4f981d048d8ca785ec189a", "actual_tip": "0e957faa0952e6260c4f981d048d8ca785ec189a", "pass": true},
+  "branch": "qoder/c125-test-tree-port",
+  "branch_commits": ["a7b8bcf"],
+  "base_tip": "0e957fa",
+  "flag": {"env": "VERITAS_TEST_TREE_LINE", "default": false, "config_key": "test_tree_line", "scope": "pipeline C-108 块内分流：开＝整棵测试树线，关＝C-108 密度桥路径零变"},
+  "verdict": "YES",
+  "verdict_reason_codes": [
+    "G1_RUNNING：开旗整线可跑（KG→一筛多维→二筛密度盒→窄面→tree17），六案门控三门槛全过",
+    "G2_FIDELITY：R44 同尺复刻腿六案逐字复现（密度 57/67/67/86/80/80、@7=12/6/6/6/4/5、金标→细读全 1.0）",
+    "G3_ZERO_LEAK：交卷窄面泄漏=0（13 禁键审计，stage1/stage2/hints 三层）",
+    "G4_OFFFACE_INVARIANT：关旗跨树字节等证（tip 0e957fa vs 枝，off_surface_sha=c6ff9d478007b287、off_sel_sha=be657d8db1e7dbde 逐位同）",
+    "G5_NO_GOLD_IN_PROMPT：生产链零金标（authority_rerank/tree17 gold 位显式 None；评测侧答案文件读数函数不进 app 层）"
+  ],
+  "port_inventory": {
+    "main_repo_had": ["app/core/kg_submit_surface.py（C-107 窄面契约）", "app/core/kg_density_bridge.py（C-108/109/111 密度桥后半段）", "app/core/kg_stage1_pool.py（C-109 BM25 池）", "app/core/kg_rehydrate.py（C-111 短盒回灌）", "app/kg_lab 8 模块 vendored（density_submit 等）"],
+    "ported_missing_27": ["graph", "index_build", "ollama_client", "recall_arms", "inbox_rerank", "stage1_pool", "r8_fit", "r9_buckets", "r21_coeff", "multidim_weight", "stage1_claim_holes", "stage2_authority", "box_filter", "slice_dims", "slices", "query_expand", "query_views", "portable_tags", "channel_tier", "opposition_patch", "r14_stages", "r15_stage2", "summarize", "summary_slots", "eval_metrics", "layer_boundary", "tree17_cite"],
+    "aligned_to_exp_head": ["config.py（仅根路径订正＝.kg_lab_vault／.kgcache gitignore 运行时缓存）", "tag_schema.py（空壳桩→真实特征表 38/15）"],
+    "coeff_data": "app/kg_lab/r9_coeff.json（R9 拟合 27 键＋R21 微移；只进一筛打分，35 名全名集）",
+    "eval_side_relocated": "questions_from_conclusions／write_slice／ingest_case_slices／union_pack_ids 不进 app 层（金标隔离闸不为端口开口），随 scripts/probe_c125_six_case_gate.py 住评测侧"
+  },
+  "offface_proof": {"tip_tree": "/tmp/c124/tip @ 0e957fa", "branch_tree": "/tmp/c125/tree", "off_surface_sha16": "c6ff9d478007b287", "off_sel_sha16": "be657d8db1e7dbde", "sel_n": 362, "note": "同案同题关旗跑 C-108 密度桥→pack，两树逐位同"},
+  "tests": {"full_suite": "7 failed / 1219 passed / 1 skipped", "baseline_reds": "与基线同 7 红（c19/c37×4/c38/c73）", "new_cells": 10, "new_file": "tests/test_c125_test_tree_line.py"},
+  "six_case_gate": {
+    "probe": "scripts/probe_c125_six_case_gate.py（三腿：A 密度复刻／B 计划层＋泄漏／C 生产链现场零金标）",
+    "llm_calls": 0, "embed": "本机 bge-m3（ollama，暖缓存；一次性补嵌全库段约 2000 向量）", "wall_s": 387.6,
+    "gate1_holdout_ge_2_3_and_no_drop_and_liuxiang_at7_12": true,
+    "gate2_gold_box_to_close_all_1_0": true,
+    "gate3_zero_leak": true,
+    "ready": true,
+    "r44_reference": {"path_md": "veritas-obsidian-kg-exp/artifacts/R44_six_case_gate.md", "sha8_md": "f940b00f", "sha8_json": "a40e26f8", "expect_source": "R44 EXPECT 表（漂移零）"},
+    "cases": [
+      {"slug": "liuxiang", "role": "regression", "micro_density": "4/7=0.5714", "expect": "≥0.5714", "at7": 12, "at7_expect": 12, "gold_box_to_close": 1.0, "leaks": 0, "prod_leg_micro": "4/9=0.4444"},
+      {"slug": "jilong", "role": "smoke", "micro_density": "0.6667", "expect": "≥0.6667", "at7": 6, "at7_expect": 6, "gold_box_to_close": 1.0, "leaks": 0, "prod_leg_micro": "0.6667"},
+      {"slug": "us_cn_ai", "role": "smoke", "micro_density": "0.6667", "expect": "≥0.6667", "at7": 6, "at7_expect": 6, "gold_box_to_close": 1.0, "leaks": 0, "prod_leg_micro": "0.6667"},
+      {"slug": "wanghong", "role": "holdout", "micro_density": "0.8571", "expect": "≥0.8571", "at7": 6, "at7_expect": 6, "gold_box_to_close": 1.0, "leaks": 0, "prod_leg_micro": "0.8571"},
+      {"slug": "kh_th", "role": "holdout", "micro_density": "0.8", "expect": "≥0.80", "at7": 4, "at7_expect": 4, "gold_box_to_close": 1.0, "leaks": 0, "prod_leg_micro": "0.8"},
+      {"slug": "ai171", "role": "holdout", "micro_density": "0.8", "expect": "≥0.80", "at7": 5, "at7_expect": 5, "gold_box_to_close": 1.0, "leaks": 0, "prod_leg_micro": "0.8"}
+    ]
+  },
+  "density_ruler": {
+    "eval_arms_micro_density": "Σ盒内金标 / Σk（R44 同尺；回归臂固定 k=7、其余臂 density_cut=True）",
+    "holdout_micro": "86%／80%／80%（全部 ≥2/3）",
+    "prod_chain_live_density": "分子/分母＝30/44=0.6818（微均）；案均=0.7058——开旗生产链（零金标、density_cut=True）案均 ≥2/3 达标",
+    "prod_chain_drift_note": "liuxiang 生产链现场 4/9=44% 单案未达（k=3 小盒），复刻腿同案 57%（固定 k=7）——如实记录，不凑尺"
+  },
+  "side_rulers": {
+    "liuxiang_at7_B": 12,
+    "holdout_L2_29": "口径未定位：R40–R44 工件中无该键（读数没量过）；本票以 R44 三门槛＋逐字复现为旁证尺；holdout 宇宙内金标（可定位 L2 上界）＝19+11+24=54",
+    "leak": 0
+  },
+  "layer_boundaries_kept": [
+    "一筛出口仅 pool 序（coeff/feats/weights 不过窄面）",
+    "二筛出口 box_ids/k/洗净 conflict_pairs（权威浮点不过面）",
+    "pack 只接 priority/focus/max_segments（pipeline 侧 assert_clean_pack_kwargs 复核）",
+    "FORBIDDEN_PACK_KEYS 13 键三道审计（stage2_box_export／submit_surface／pack_hints）全过"
+  ],
+  "c124_lesson_absorbed": "C-124 证明 annotate-only 失败（焦点面无盒内 top3）；本票整线换盒＝KG 融合召回→多维一筛→密度二筛，盒本身少而密（k∈[3,7]、密度条≥2/3），焦点面长在高分段上（金标→细读 1.0）",
+  "hygiene": "全部产物零官方原文（只 id／计数／sha8）；金标只进量尺面；运行时缓存 .kg_lab_vault／.kgcache 已 gitignore；本文件不写自身 commit sha",
+  "merge_decision": "未合 main（工单：测完停在本枝，交账即可）；11-4 中午可跑门控已达成（开旗整链可跑＋关旗不变）"
+}
