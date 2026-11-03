@@ -1,0 +1,64 @@
+{
+  "ticket": "C-127-part2-cache-disclose-summarize",
+  "date": "2026-11-03",
+  "baseline_main": "57e768782e21d31871959ed3b44cfbff5a020895",
+  "branch": "qoder/c127-cache-disclose-summarize",
+  "verdict": "YES",
+  "diff_face": [
+    "app/core/kg_test_tree_line.py (+30: cache_state 计算/返回/accounting + docstring)",
+    "scripts/kg_lab/batch_summarize_case.py (新: 端口+--dry-run+scripts 侧自含 universe)",
+    "tests/test_c127_cache_disclose.py (新: 5 格)",
+    "tests/test_c37_engineering_gates.py (+1: skip 位点登记)"
+  ],
+  "disclosure_key": {
+    "path": "accounting['kg_test_tree']['cache']",
+    "fields": ["vault_dir_present", "n_rows", "n_with_summary", "summary_missing", "affected(summary|vault|embed)", "degraded_continue"],
+    "note": "嵌在既有白名单键内＝零新顶层键；账面过禁键审计",
+    "live_warm_real_slug": {"vault_dir_present": true, "n_rows": 372, "n_with_summary": 362, "summary_missing": false, "affected": [], "degraded_continue": false},
+    "live_default_slug_case": {"summary_missing": true, "affected": ["summary", "vault"], "note": "pipeline 入口默认 slug='case' 的缺席本就存在，披露键把它点亮"}
+  },
+  "builder": {
+    "recipe_choice": "工单①仅 CLI 菜谱（未加新 env）",
+    "dry_run_evidence": "DRY_RUN slug=liuxiang universe=362 pending=0（零 LLM）",
+    "hot_path_auto_build": false,
+    "caches_committed": false
+  },
+  "guards": {
+    "new_cells": 5,
+    "knives": [
+      {"id": "K1", "mutation": "摘 return 的 cache 键", "result": "2 红"},
+      {"id": "K2", "mutation": "summary_missing 恒 False", "result": "冷臂 1 红"},
+      {"id": "K3", "mutation": "热路径调 summarize_paras", "result": "热路径格 1 红"}
+    ],
+    "knife_restore": "字节还原（git diff 只剩本单改动）",
+    "c37_gate_bite": "未登记 skip 位点被双向闸咬红 3 格，登记后清零"
+  },
+  "tests": {"failed": 7, "passed": 1224, "skipped": 1, "note": "主仓同 commit 基线 7 红逐名不变＋本单 5 格绿"},
+  "evidence": {
+    "off_face_sha16": {"surface": "c6ff9d478007b287", "sel": "be657d8db1e7dbde", "sel_n": 362, "kw": {}},
+    "gate_rerun_branch": {
+      "liuxiang_at7": 12, "liuxiang_micro": 0.5714,
+      "smoke": {"jilong": 0.6667, "us_cn_ai": 0.6667},
+      "holdout": {"wanghong": 0.8571, "kh_th": 0.8, "ai171": 0.8},
+      "gold_to_close_all": 1.0, "leaks": 0, "ready": true, "wall_s": 277.1,
+      "verbatim_vs_main_baseline": true
+    }
+  },
+  "findings_not_fixed": [
+    "pipeline 入口默认 case_slug='case'：生产开旗热路径摘要/缓存键天然挂 'case' 案名、缺席本就存在（现被披露键点亮）；真实案名接线属新票"
+  ],
+  "forbidden_check": {
+    "test_tree_line_default": false,
+    "merged_forbidden_branches": [],
+    "para_id_reuse_semantics_changed": false,
+    "hop_arm_touched": false,
+    "official_corpus_text_in_artifacts": false,
+    "markdown_tables_in_artifacts": false
+  },
+  "artifacts": [
+    "artifacts/C127_cache_disclose_summarize.md",
+    "artifacts/C127_cache_disclose_summarize.json",
+    "artifacts/C127_cache_gap_measure.md (主仓工作树, 未 commit)",
+    "artifacts/c125/C125_six_case_gate.md (枝上复跑版)"
+  ]
+}

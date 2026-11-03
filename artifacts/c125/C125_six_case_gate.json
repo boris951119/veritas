@@ -1,8 +1,8 @@
 {
  "ticket": "C-125-six-case-gate",
- "tip": "349156e",
+ "tip": "57e7687",
  "branch": "qoder/c125-test-tree-port",
- "wall_s": 279.4,
+ "wall_s": 277.1,
  "coeff_names_n": 35,
  "forbidden_keys_n": 13,
  "gate": {
@@ -86,7 +86,7 @@
    "micro_gold_density": 0.5714,
    "sum_gold_in_boxes": 12,
    "sum_k": 21,
-   "wall_s": 7.1,
+   "wall_s": 6.4,
    "plan_rows": [
     {
      "qid": "q_001",
@@ -190,7 +190,7 @@
    "micro_gold_density": 0.6667,
    "sum_gold_in_boxes": 6,
    "sum_k": 9,
-   "wall_s": 24.4,
+   "wall_s": 24.3,
    "plan_rows": [
     {
      "qid": "q_001",
@@ -294,7 +294,7 @@
    "micro_gold_density": 0.6667,
    "sum_gold_in_boxes": 6,
    "sum_k": 9,
-   "wall_s": 15.2,
+   "wall_s": 14.9,
    "plan_rows": [
     {
      "qid": "q_001",
@@ -606,7 +606,7 @@
    "micro_gold_density": 0.8,
    "sum_gold_in_boxes": 4,
    "sum_k": 5,
-   "wall_s": 20.1,
+   "wall_s": 19.8,
    "plan_rows": [
     {
      "qid": "q_001",

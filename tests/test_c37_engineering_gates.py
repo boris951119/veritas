@@ -40,6 +40,7 @@ REGISTERED_SKIP_SITES = frozenset({
     "tests/test_c38_assist_label.py:test_g_booked_labels_are_consistent_with_candidates",
     "tests/test_c38_assist_label.py:test_h_receipt_matches_booked_labels_and_discloses_provenance",
     "tests/test_server_human.py:test_http_override_conflict",
+    "tests/test_c127_cache_disclose.py:test_e_builder_dry_run_zero_llm",
 })
 
 REGISTERED_EXCEPT_PASS_SITES = frozenset({

@@ -23,6 +23,8 @@
 
 嵌入不可达（本机 Ollama 掉线）＝显式降级词面并披露
 （``kg_test_tree.embed.status="fallback_lexical"``），不静默、不崩管线。
+摘要／vault 缓存缺席同样显式披露（C-127：``kg_test_tree.cache``＝
+缺席布尔／影响面 summary|vault|embed／降级继续），不静默当暖缓存跑。
 
 关旗（默认）＝本模块一个字节不执行，生产走 C-108 密度桥路径。
 """
@@ -148,6 +150,32 @@ def build_test_tree_surface(
         }
     embed_meta["n_vec"] = len(index.embeddings)
 
+    # C-127：缓存缺席披露——缺席必须「可读／可判」，不许静默当暖缓存跑。
+    # 影响面：summary（rows 无摘要文本）／vault（SUMMARIES_DIR/<slug> 缺）／
+    # embed（嵌入降级）。缺席只降读数质量、线继续跑（degraded_continue）。
+    from app.kg_lab.summarize import SUMMARIES_DIR
+
+    vault_present = bool((SUMMARIES_DIR / case_slug).is_dir())
+    n_with_summary = sum(
+        1 for r in rows if str(r.get("summary_text") or "").strip()
+    )
+    cache_state: dict[str, Any] = {
+        "vault_dir_present": vault_present,
+        "n_rows": len(rows),
+        "n_with_summary": n_with_summary,
+        "summary_missing": n_with_summary == 0,
+        "affected": [
+            face for face, bad in (
+                ("summary", n_with_summary == 0),
+                ("vault", not vault_present),
+                ("embed", embed_dead),
+            ) if bad
+        ],
+        "degraded_continue": bool(
+            n_with_summary == 0 or not vault_present or embed_dead
+        ),
+    }
+
     universe = pack_selected_for_question(dossier, question)
     sub_rows = [r for r in rows if r["para_id"] in universe]
     sub = KgIndex(case_slug, sub_rows)
@@ -256,6 +284,7 @@ def build_test_tree_surface(
         },
         "route": getattr(route, "route", ""),
         "embed": embed_meta,
+        "cache": cache_state,
         "pool_n": len(pool_ranked),
         "universe_n": len(universe),
         "rows_n": len(rows),
@@ -296,6 +325,7 @@ def ensure_test_tree_submit(dossier: Any, *, force: bool = False) -> dict | None
     acc["kg_test_tree"] = {
         "line": "test_tree_full",
         "embed": out["embed"],
+        "cache": dict(out.get("cache") or {}),
         "route": out["route"],
         "k": out["k"],
         "pool_n": out["pool_n"],
