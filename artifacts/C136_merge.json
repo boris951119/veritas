@@ -1,0 +1,17 @@
+{
+ "ticket": "C-136-merge",
+ "merge": "qoder/c136-arch-tree-sync → main（--ff-only，零冲突）",
+ "range": "c833ee2..a760882",
+ "main_tip_after": "a760882",
+ "push": "origin/main c833ee2..a760882 成功（无 force）",
+ "carried": "架构树 HTML 实况翻新＋C136_arch_tree_sync.md（含 Boyu 未入库树10/22 边界文案随票入库，已在工单交账披露）",
+ "pre_check": "main=c833ee2 符合；枝领先恰 1 票；app/tests 零 diff（c833ee2..a760882）",
+ "post_checks": {
+  "tree17_red_label": "data-pop=\"s17\"＝「引用条数偏少」",
+  "default_on": "「出厂默认开（无 env 即走）」在 legend 与主线步骤在文",
+  "density_bridge": "全文仅 1 处＝历史句「密度桥本体已删＝C-133」",
+  "stale_terms": "双路／出厂默认关／未授权整套替换 grep＝0",
+  "forbidden_branches": "c833ee2..a760882 无 C-113/121/122/123/124 内容；禁枝仍不合"
+ },
+ "docs_commit": "本合并交账件随后续 docs 票入 main（只含 C136_merge 两件）"
+}
