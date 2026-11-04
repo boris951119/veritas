@@ -728,6 +728,9 @@ def apply_conflict_trace(
     from app.core.merge_gate import fold_into_trace_payload
     fold_into_trace_payload(
         payload, getattr(dossier, "accounting", None))
+    # C-147：多轮质证留痕随面走（独立节，不冒充第四类冲突）
+    from app.core.rebuttal_rounds import fold_into_trace_payload as _fold_rebuttal
+    _fold_rebuttal(payload, getattr(dossier, "accounting", None))
     bad = audit_forbidden_keys(payload)
     if bad:
         raise ValueError(f"conflict_trace hits forbidden: {bad}")

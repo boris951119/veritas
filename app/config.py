@@ -575,6 +575,13 @@ class Settings:
     # 关＝VERITAS_CONFLICT_TRACE=0）。三档＝same_window／cross_day／
     # unknown_time；不改 BM25／不往 pack 塞系数。env／config.json conflict_trace。
     conflict_trace: bool = True
+    # C-147：多轮质证（真对立＋同主体跨表述进 2..N 轮对打，逐轮过闸＋打回）。
+    # 默认 True＝比赛需要；关＝VERITAS_MULTI_REBUTTAL=0（config.json
+    # rebuttal_multiround）＝旧单轮逐字节同形（accounting 无 rebuttal 键）。
+    # 轮数 rebuttal_rounds 默认 2、夹在 [2,6]；env VERITAS_REBUTTAL_ROUNDS。
+    # 仲裁公式／证据强度一行不动（冲突数值线 STOP）。
+    rebuttal_multiround: bool = True
+    rebuttal_rounds: int = 2
 
     # C-116：置信档校准闸（Q6）。默认 False；开＝VERITAS_CONF_CALIB=1。
     # 高档可解释门槛→可降档；不改合式分数／不往 pack 塞系数。
@@ -883,6 +890,14 @@ class Settings:
             s.conflict_trace = False
         elif ctr in ("1", "true", "on", "yes"):
             s.conflict_trace = True
+        mreb = (os.environ.get("VERITAS_MULTI_REBUTTAL") or "").strip().lower()
+        if mreb in ("0", "false", "off", "no"):
+            s.rebuttal_multiround = False
+        elif mreb in ("1", "true", "on", "yes"):
+            s.rebuttal_multiround = True
+        mrr = (os.environ.get("VERITAS_REBUTTAL_ROUNDS") or "").strip()
+        if mrr.isdigit() and int(mrr) >= 1:
+            s.rebuttal_rounds = int(mrr)
         cc = (os.environ.get("VERITAS_CONF_CALIB") or "").strip().lower()
         if cc in ("0", "false", "off", "no"):
             s.conf_calib = False
@@ -1082,6 +1097,19 @@ class Settings:
             elif isinstance(raw_ctr, (int, str)):
                 s.conflict_trace = str(raw_ctr).strip().lower() not in (
                     "0", "false", "off", "no", "")
+        if "rebuttal_multiround" in data:
+            raw_mr = data.get("rebuttal_multiround")
+            if isinstance(raw_mr, bool):
+                s.rebuttal_multiround = raw_mr
+            elif isinstance(raw_mr, (int, str)):
+                s.rebuttal_multiround = str(raw_mr).strip().lower() not in (
+                    "0", "false", "off", "no", "")
+        if "rebuttal_rounds" in data:
+            raw_mrr = data.get("rebuttal_rounds")
+            if isinstance(raw_mrr, int) and not isinstance(raw_mrr, bool):
+                s.rebuttal_rounds = raw_mrr
+            elif isinstance(raw_mrr, str) and raw_mrr.strip().isdigit():
+                s.rebuttal_rounds = int(raw_mrr.strip())
         if "conf_calib" in data:
             raw_cc = data.get("conf_calib")
             if isinstance(raw_cc, bool):

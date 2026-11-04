@@ -867,6 +867,7 @@ def export_official(runs: list[tuple[dict, Dossier]], out_dir: Path) -> dict[str
     if conflict_trace_enabled():
         merged: list[dict] = []
         gate_sections: list[dict] = []
+        rebuttal_sections: list[dict] = []
         for question, dossier in runs:
             bucket = (getattr(dossier, "accounting", None) or {}).get(
                 "conflict_trace")
@@ -884,6 +885,13 @@ def export_official(runs: list[tuple[dict, Dossier]], out_dir: Path) -> dict[str
                 item["question_id"] = str(
                     (question or {}).get("question_id") or "")
                 gate_sections.append(item)
+            # C-147：多轮质证留痕随面走（每题一节）
+            rb = (getattr(dossier, "accounting", None) or {}).get("rebuttal")
+            if isinstance(rb, dict):
+                item = dict(rb)
+                item["question_id"] = str(
+                    (question or {}).get("question_id") or "")
+                rebuttal_sections.append(item)
         # C-143：借 C-123 窄修②——旗开必写回放面（空态也写＋原因句）。
         # 「本次未检出」不等于「资料无冲突」；零对撞静默＝两态在产物面上同形。
         from app.core.conflict_trace import TRIAGE_CLASSES
@@ -899,6 +907,32 @@ def export_official(runs: list[tuple[dict, Dossier]], out_dir: Path) -> dict[str
         if n_gate_blocked:
             detail = detail + "；merge_gate＝C-145 归并硬约束闸否决事件" \
                               "（缺主体／缺指标／不可核验／极性对立不放行为「已一致」）"
+
+        def _fold_rebuttal(target: dict) -> None:
+            # C-147：多轮质证留痕随面走（顶层独立节；多题聚合求和）
+            if not rebuttal_sections:
+                return
+            if len(rebuttal_sections) == 1:
+                target["rebuttal"] = rebuttal_sections[0]
+                return
+            esc_rows = [
+                dict(p, question_id=s.get("question_id", ""))
+                for s in rebuttal_sections
+                for p in (s.get("pairs") or [])]
+            target["rebuttal"] = {
+                "n_questions": len(rebuttal_sections),
+                "rounds_requested": max(
+                    int(s.get("rounds_requested") or 0)
+                    for s in rebuttal_sections),
+                "n_pairs": sum(int(s.get("n_pairs") or 0)
+                               for s in rebuttal_sections),
+                "n_escalated": sum(int(s.get("n_escalated") or 0)
+                                   for s in rebuttal_sections),
+                "pairs": esc_rows,
+                "empty_state": all(bool(s.get("empty_state"))
+                                   for s in rebuttal_sections),
+            }
+
         if merged:
             payload: dict = {
                 "records": merged,
@@ -919,6 +953,7 @@ def export_official(runs: list[tuple[dict, Dossier]], out_dir: Path) -> dict[str
                               dict(b, question_id=g.get("question_id", ""))
                               for g in gate_sections
                               for b in (g.get("blocked") or [])]})
+            _fold_rebuttal(payload)
             paths["conflict_trace"].write_text(
                 json.dumps(payload, ensure_ascii=False, indent=2),
                 encoding="utf-8",
@@ -946,6 +981,7 @@ def export_official(runs: list[tuple[dict, Dossier]], out_dir: Path) -> dict[str
                               dict(b, question_id=g.get("question_id", ""))
                               for g in gate_sections
                               for b in (g.get("blocked") or [])]})
+            _fold_rebuttal(empty_payload)
             paths["conflict_trace"].write_text(
                 json.dumps(empty_payload, ensure_ascii=False, indent=2),
                 encoding="utf-8",

@@ -65,6 +65,34 @@ def _check_refs(dossier: Dossier, text: str, ctx: RefContext) -> list[dict]:
     return flags
 
 
+def rebuttal_text_flags(
+    dossier: Dossier, text: str, *, conflict_id: str, side: str,
+    segments: list[str] | None = None,
+) -> list[dict]:
+    """质证文本两道闸（引文逐字＋引用存在性）——C-147 逐轮用。
+
+    与 audit_discourse 事后黄旗同一实现同一文案：生成时逐轮先过一遍，
+    未过 → 打回一稿；事后黄旗照旧（同一文本两次读数必须一致）。
+    """
+    all_segments = (
+        [seg.text for src in dossier.sources for seg in src.segments]
+        if segments is None else segments)
+    flags: list[dict] = []
+    for m in _QUOTE_SPAN.finditer(text):
+        quote = m.group(1)
+        if not any(check_quote(quote, seg).ok for seg in all_segments):
+            flags.append({
+                "kind": "rebut_quote", "severity": "medium",
+                "conflict_id": conflict_id, "side": side,
+                "value": quote[:50],
+                "detail": f"{side}方质证中的引文「{quote[:40]}…」"
+                          "未在任何来源段落中逐字命中（疑似歪曲对方）",
+            })
+    flags.extend(_check_refs(dossier, text, RefContext(
+        "rebut_ref", conflict_id, str(side))))
+    return flags
+
+
 def audit_discourse(dossier: Dossier) -> list[dict]:
     """全部已消解冲突的质证引文/引用闸 + 仲裁理由引用闸。"""
     flags: list[dict] = []
@@ -75,19 +103,9 @@ def audit_discourse(dossier: Dossier) -> list[dict]:
             continue
         conflict_id = str(raw.get("id") or "")
         for side, text in (resolution.get("rebuts") or {}).items():
-            text = str(text or "")
-            for m in _QUOTE_SPAN.finditer(text):
-                quote = m.group(1)
-                if not any(check_quote(quote, seg).ok for seg in all_segments):
-                    flags.append({
-                        "kind": "rebut_quote", "severity": "medium",
-                        "conflict_id": conflict_id, "side": side,
-                        "value": quote[:50],
-                        "detail": f"{side}方质证中的引文「{quote[:40]}…」"
-                                  "未在任何来源段落中逐字命中（疑似歪曲对方）",
-                    })
-            flags.extend(_check_refs(dossier, text, RefContext(
-                "rebut_ref", conflict_id, str(side))))
+            flags.extend(rebuttal_text_flags(
+                dossier, str(text or ""), conflict_id=conflict_id,
+                side=str(side), segments=all_segments))
         rationale = str(resolution.get("rationale") or "")
         flags.extend(_check_refs(dossier, rationale, RefContext(
             "arbiter_ref", conflict_id, "arbiter")))

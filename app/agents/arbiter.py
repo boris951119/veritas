@@ -15,6 +15,7 @@ from app.agents.prompts import (
     CONFLICT_JUDGE_SYSTEM,
     CONFLICT_SYSTEM,
     MERGE_SYSTEM,
+    REBUTTAL_REPLY_TEMPLATE,
     REBUTTAL_TEMPLATE,
     render_conclusions_block,
 )
@@ -329,7 +330,7 @@ class Coordinator:
             drops, n_candidates=len(candidates), n_accepted=len(pairs))
         return pairs
 
-    # -- 辩论（质证一轮，轮数护栏=1）---------------------------------------
+    # -- 辩论（质证一轮，轮数护栏=1；C-147 多轮路见 run_rebuttals_multiround）
 
     def run_rebuttals(self, dossier: Dossier, pair: ConflictPair) -> dict:
         """双方各一轮书面质证；单侧失败降级为空（另一侧仍可质证）。"""
@@ -358,6 +359,99 @@ class Coordinator:
             except Exception:
                 continue  # 单侧质证失败降级
         return rebuts
+
+    def run_rebuttals_multiround(
+        self, dossier: Dossier, pair: ConflictPair, *, rounds: int,
+    ) -> tuple[dict, list[dict]]:
+        """C-147：2..N 轮书面质证（甲→乙→甲→乙…）；逐轮过闸＋一轮打回。
+
+        第 1 轮沿用 REBUTTAL_TEMPLATE（与旧单轮同一提示词）；第 r≥2 轮用
+        REBUTTAL_REPLY_TEMPLATE（看得到对方上一轮）。闸＝引文逐字＋引用
+        存在性（与事后 audit_discourse 同一实现、同一文案）；未过 → 打回
+        一稿，仍不过＝收下但逐轮披露。单侧失败降级空（与旧单轮同口径）；
+        双方整轮无产出＝提前收对打。返回 (Resolution.rebuts 形状, 逐轮行)。
+        """
+        from app.core.discourse_check import rebuttal_text_flags
+        from app.core.rebuttal_rounds import joined_rebuts
+
+        def _system_for(side: str, cid: str, rnd: int) -> str:
+            con = dossier.conclusion(cid)
+            opponent_id = pair.b_id if side == "a" else pair.a_id
+            opponent = dossier.conclusion(opponent_id)
+            persona = self.personas.get(con.author, "独立分析师")
+            opponent_evs = dossier.evidences_of(opponent_id)
+            opponent_evidence = "；".join(
+                f"『{e.quote[:60]}』({e.level.value})"
+                for e in opponent_evs) or "（对方未挂证据）"
+            if rnd == 1:
+                return REBUTTAL_TEMPLATE.format(
+                    persona=persona, statement=con.statement,
+                    conclusion_id=cid,
+                    opponent_statement=opponent.statement,
+                    opponent_id=opponent_id,
+                    opponent_evidence=opponent_evidence)
+            opponent_side = "b" if side == "a" else "a"
+            return REBUTTAL_REPLY_TEMPLATE.format(
+                persona=persona, statement=con.statement,
+                conclusion_id=cid, round_no=rnd,
+                opponent_statement=opponent.statement,
+                opponent_id=opponent_id,
+                opponent_evidence=opponent_evidence,
+                opponent_rebuttal=last.get(opponent_side) or "（对方暂无质证）")
+
+        last: dict[str, str] = {}
+        rows: list[dict] = []
+        for rnd in range(1, max(2, int(rounds)) + 1):
+            produced = 0
+            for side, cid in (("a", pair.a_id), ("b", pair.b_id)):
+                if dossier.conclusion(cid) is None:
+                    continue
+                text = ""
+                gate_ok, repaired = True, False
+                quote_n, ref_n = 0, 0
+                try:
+                    system = _system_for(side, cid, rnd)
+                    text = self.client.chat(self.model, [
+                        {"role": "system", "content": system},
+                    ]).content.strip()[:600]  # 质证长度护栏（与旧单轮同值）
+                    if text:
+                        flags = rebuttal_text_flags(
+                            dossier, text, conflict_id=pair.id, side=side)
+                        if flags:
+                            # 打回一稿：把未过的旗原文递回去
+                            repair = system + "\n\n上一稿未过机械闸：" \
+                                + "；".join(str(f.get("detail") or "")
+                                           for f in flags[:3]) \
+                                + "。请重新输出一稿。"
+                            text2 = self.client.chat(self.model, [
+                                {"role": "system", "content": repair},
+                            ]).content.strip()[:600]
+                            flags2 = rebuttal_text_flags(
+                                dossier, text2, conflict_id=pair.id,
+                                side=side) if text2 else []
+                            if text2:
+                                text, flags, repaired = text2, flags2, True
+                        quote_n = sum(
+                            1 for f in flags
+                            if f.get("kind") == "rebut_quote")
+                        ref_n = sum(
+                            1 for f in flags
+                            if f.get("kind") == "rebut_ref")
+                        gate_ok = not flags
+                except Exception:
+                    text = ""  # 单侧质证失败降级
+                if text:
+                    last[side] = text
+                    rows.append({
+                        "round": rnd, "side": side, "conclusion_id": cid,
+                        "text": text, "chars": len(text),
+                        "gate_ok": gate_ok, "repaired": repaired,
+                        "quote_flags": quote_n, "ref_flags": ref_n,
+                    })
+                    produced += 1
+            if produced == 0:
+                break  # 双方本轮都无产出＝对打提前收
+        return joined_rebuts(rows), rows
 
     # -- 仲裁 ---------------------------------------------------------------
 

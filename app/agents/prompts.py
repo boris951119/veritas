@@ -190,6 +190,20 @@ REBUTTAL_TEMPLATE = """你原本以「{persona}」立场参与研判，得出了
 
 请用不超过 150 字，针对对方结论与证据中最薄弱的一点提出质证（事实与逻辑层面，不要客套）。直接输出质证文字，不要 JSON。"""
 
+# C-147：第 2..N 轮对打（看得到对方上一轮质证）。第 1 轮仍用上面的
+# REBUTTAL_TEMPLATE（与旧单轮同一提示词，逐字不动）。
+REBUTTAL_REPLY_TEMPLATE = """你原本以「{persona}」立场参与研判，得出了结论：
+
+  「{statement}」（编号 {conclusion_id}）
+
+现在处于质证第 {round_no} 轮。对方结论是：
+
+  「{opponent_statement}」（编号 {opponent_id}）
+其证据：{opponent_evidence}
+对方上一轮质证：{opponent_rebuttal}
+
+请回应对方上一轮质证中最有力的一点，指出其事实或逻辑缺陷（不要客套、不要复述己方结论）。直接输出质证文字，不要 JSON，不超过 150 字。"""
+
 ARBITER_SYSTEM = """你是仲裁者。两个结论对同一问题给出对立判断，双方已各出一轮质证。请依据证据裁决。
 
 裁决依据（按优先级）：

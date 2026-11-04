@@ -1,0 +1,58 @@
+{
+  "ticket": "C-147",
+  "verdict": "YES",
+  "base_tip": "f9509a2",
+  "gates": {
+    "g1_多轮在场_默认开": true,
+    "g2_真对立强制进": true,
+    "g3_逐轮闸在场": true,
+    "g4_语义吃other": true,
+    "g5_关旗与改前同形": true,
+    "g6_pytest红不扩": true
+  },
+  "delta": {
+    "on": {
+      "chain_ok": true,
+      "acc_rebuttal_present": true,
+      "n_pairs": 1,
+      "n_escalated": 1,
+      "empty_state": null,
+      "escalation": "multi_round",
+      "escalation_reason": "true_oppose_forced",
+      "rounds_requested": 2,
+      "rounds_used": 2,
+      "n_round_rows": 4,
+      "all_gate_ok": true,
+      "gate_fields_present": true,
+      "lean_resolved": true,
+      "rebuts_multiround_shape": true
+    },
+    "off": {
+      "chain_ok": true,
+      "acc_rebuttal_present": false,
+      "n_pairs": null,
+      "n_escalated": null,
+      "empty_state": null
+    },
+    "base": {
+      "chain_ok": true,
+      "acc_rebuttal_present": false,
+      "n_pairs": null,
+      "n_escalated": null,
+      "empty_state": null
+    },
+    "off_vs_base": {
+      "files_compared": 3,
+      "diff_files": [],
+      "both_nonempty": true,
+      "same_keyset": true
+    },
+    "escalation_legs": {
+      "true_oppose_forced": true,
+      "oral_misread_not_in": true,
+      "other_same_subject_eaten": true,
+      "other_no_subject_kept_out": true
+    },
+    "pytest_tail": "7 failed, 1303 passed, 1 skipped in 57.56s"
+  }
+}

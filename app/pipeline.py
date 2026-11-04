@@ -452,7 +452,9 @@ def run_case(spec: RunSpec | None = None,
                          # 早退路径无 LLM 留痕，登记只为两处清单不漂移）
                          "conflict_trace",
                          # C-145：归并硬约束闸账本键（同上＝清单不漂移登记）
-                         "merge_gate")}
+                         "merge_gate",
+                         # C-147：多轮质证账本键（同上＝清单不漂移登记）
+                         "rebuttal")}
         dossier.accounting = {
             **kept,
             "elapsed_s": round(time.monotonic() - t0, 1),
@@ -1008,7 +1010,9 @@ def run_case(spec: RunSpec | None = None,
                      # C-143：C-115 冲突留痕键活到产物（旗关不写键＝无差异）
                      "conflict_trace",
                      # C-145：归并硬约束闸账本键活到产物（旗关不写键＝无差异）
-                     "merge_gate")}
+                     "merge_gate",
+                     # C-147：多轮质证账本键活到产物（旗关不写键＝无差异）
+                     "rebuttal")}
     dossier.accounting = {
         **kept,
         "elapsed_s": round(time.monotonic() - t0, 1),
@@ -1119,11 +1123,39 @@ def _run_collaboration(dossier: Dossier, ctx: CollabCtx) -> None:
         "conflict_drops_note": drops_acc.get("note") or "",
     })
 
+    # C-147：多轮质证路由。旗关＝旧单轮逐字节同形（不调分流、不写账本、
+    # 仲裁输入不变）；旗开＝true_oppose 强制＋other 同主体跨表述吃进多轮，
+    # oral_misread／date_offset 轻标不进（单轮旧路照旧）。仲裁公式不动。
+    from app.core.rebuttal_rounds import (
+        escalation_for, multiround_enabled, pair_row, rounds_requested,
+        write_accounting,
+    )
+    multi_on = multiround_enabled()
+    rr, rr_note = (rounds_requested() if multi_on else (1, ""))
+    rb_rows: list[dict] = []
+
     for pair in pairs:
-        rebuts = coordinator.run_rebuttals(dossier, pair)      # 内部单侧降级
+        esc = escalation_for(pair, dossier) if multi_on else None
+        if esc is not None and esc.get("escalate"):
+            rebuts, round_rows = coordinator.run_rebuttals_multiround(
+                dossier, pair, rounds=rr)
+            rb_rows.append(pair_row(
+                pair, esc, rounds=rr, round_rows=round_rows))
+        else:
+            rebuts = coordinator.run_rebuttals(dossier, pair)  # 内部单侧降级
+            if esc is not None:
+                rb_rows.append(pair_row(
+                    pair, esc, rounds=rr, round_rows=None))
         pair.resolution = coordinator.arbitrate(dossier, pair, rebuts)
         problems = apply_resolution(pair, dossier)
         dossier.conflicts.append(pair.to_dict())
+        if esc is not None and esc.get("escalate") and rb_rows:
+            res = pair.resolution
+            rb_rows[-1]["lean"] = {
+                "resolved": bool(res),
+                "winner_id": str(getattr(res, "winner_id", "") or "") if res else "",
+                "method": str(getattr(res, "method", "") or "") if res else "",
+            }
         if pair.resolution is None or problems:
             chain.append("conflict_unresolved", "coordinator", {
                 "pair": pair.to_dict(), "problems": problems or {"reason": "仲裁失败"}})
@@ -1133,6 +1165,9 @@ def _run_collaboration(dossier: Dossier, ctx: CollabCtx) -> None:
                 "winner": pair.resolution.winner_id,
                 "method": pair.resolution.method,
             })
+    if multi_on:
+        write_accounting(dossier, rows=rb_rows, n_pairs=len(pairs),
+                         rounds=rr, rounds_note=rr_note)
     # C-115：仲裁后刷新留痕（并入 conflict_pair；旗关不写）
     from app.core.conflict_trace import apply_conflict_trace, conflict_trace_enabled
     if conflict_trace_enabled():
