@@ -1,0 +1,1751 @@
+{
+ "ticket": "C-151",
+ "roots": {
+  "on": "/tmp/c151runs/time-20261104-202620,/tmp/c151runs/time-20261104-215005",
+  "off": "/tmp/c151runs/time-20261104-224907",
+  "ref": "/tmp/s4runs/time-20261104-135401"
+ },
+ "n_by_arm": {
+  "on": 6,
+  "off": 6,
+  "ref": 6
+ },
+ "case_root": "/Users/liuboyu/Desktop/veritas-testcases/样例集-拓尔思-20261012",
+ "judge_constants": {
+  "JIA_REGRESS_RATIO": 0.2,
+  "NOISE_L3_SPAN": 2
+ },
+ "arm_classification": [
+  {
+   "root": "/tmp/c151runs/time-20261104-202620",
+   "n_reports": 3,
+   "n_with_cite_accept": 3,
+   "n_without_cite_accept": 0,
+   "arm": "on"
+  },
+  {
+   "root": "/tmp/c151runs/time-20261104-215005",
+   "n_reports": 3,
+   "n_with_cite_accept": 3,
+   "n_without_cite_accept": 0,
+   "arm": "on"
+  },
+  {
+   "root": "/tmp/c151runs/time-20261104-224907",
+   "n_reports": 3,
+   "n_with_cite_accept": 0,
+   "n_without_cite_accept": 3,
+   "arm": "off"
+  }
+ ],
+ "n_on_roots": 2,
+ "n_off_roots": 1,
+ "ref_root_used": "/tmp/s4runs/time-20261104-135401",
+ "verdict": "NO",
+ "why": [
+  "甲面冲突键数掉超 20%（冲突旁观记红）"
+ ],
+ "agg_on": {
+  "n_ok": 6,
+  "oob_total": 0,
+  "oob_box_total": 34,
+  "evidences_total": 72,
+  "ev_with_fail_total": 0,
+  "rejected_total": 30,
+  "attempted_total": 102,
+  "citation_fail_rate_pooled": 0.2941,
+  "reject_buckets_pooled": {
+   "empty_quote": 0,
+   "seg_missing": 0,
+   "verbatim_miss": 28,
+   "adjacent_only": 2,
+   "other": 0
+  },
+  "fail_rate_pooled": 0.0,
+  "buckets_pooled": {
+   "empty_quote": 0,
+   "seg_missing": 0,
+   "verbatim_miss": 0,
+   "adjacent_only": 0,
+   "other": 0
+  },
+  "cited_n_mean": 7.8333,
+  "l3_mean": 1.6667,
+  "l3_total": 10,
+  "at7_total": 10,
+  "at7_box7_total": 7,
+  "supporting_total": 9,
+  "jia_rows_total": 7,
+  "jia_keys_total": 7,
+  "jia_hit_total": 0,
+  "ct_rows_total": 55,
+  "wall_mean_s": 1420.05,
+  "calls_mean": 52.1667,
+  "cite_accept_questions": 6,
+  "attempts_vals": [
+   3,
+   3,
+   3,
+   3,
+   3,
+   3,
+   3,
+   3,
+   3,
+   3,
+   3,
+   3,
+   2,
+   2,
+   3,
+   2,
+   3,
+   3
+  ],
+  "maxed_out_any": true,
+  "codes_final_seen": [
+   "out_of_box",
+   "unverifiable"
+  ],
+  "pruned_dropped_evidence_total": 5,
+  "pruned_dropped_conclusions_total": 4,
+  "unenforceable_pairs_vals": [
+   4,
+   4,
+   4,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ "agg_off": {
+  "n_ok": 3,
+  "oob_total": 0,
+  "oob_box_total": 25,
+  "evidences_total": 46,
+  "ev_with_fail_total": 0,
+  "rejected_total": 32,
+  "attempted_total": 78,
+  "citation_fail_rate_pooled": 0.4103,
+  "reject_buckets_pooled": {
+   "empty_quote": 0,
+   "seg_missing": 0,
+   "verbatim_miss": 30,
+   "adjacent_only": 2,
+   "other": 0
+  },
+  "fail_rate_pooled": 0.0,
+  "buckets_pooled": {
+   "empty_quote": 0,
+   "seg_missing": 0,
+   "verbatim_miss": 0,
+   "adjacent_only": 0,
+   "other": 0
+  },
+  "cited_n_mean": 10.0,
+  "l3_mean": 1.3333,
+  "l3_total": 4,
+  "at7_total": 4,
+  "at7_box7_total": 2,
+  "supporting_total": 3,
+  "jia_rows_total": 12,
+  "jia_keys_total": 12,
+  "jia_hit_total": 0,
+  "ct_rows_total": 36,
+  "wall_mean_s": 1971.4,
+  "calls_mean": 58.0,
+  "cite_accept_questions": 0,
+  "attempts_vals": [],
+  "maxed_out_any": false,
+  "codes_final_seen": [],
+  "pruned_dropped_evidence_total": 0,
+  "pruned_dropped_conclusions_total": 0,
+  "unenforceable_pairs_vals": []
+ },
+ "agg_ref_two_cases": {
+  "n_ok": 6,
+  "oob_total": 0,
+  "oob_box_total": 54,
+  "evidences_total": 102,
+  "ev_with_fail_total": 0,
+  "rejected_total": 37,
+  "attempted_total": 139,
+  "citation_fail_rate_pooled": 0.2662,
+  "reject_buckets_pooled": {
+   "empty_quote": 0,
+   "seg_missing": 0,
+   "verbatim_miss": 36,
+   "adjacent_only": 1,
+   "other": 0
+  },
+  "fail_rate_pooled": 0.0,
+  "buckets_pooled": {
+   "empty_quote": 0,
+   "seg_missing": 0,
+   "verbatim_miss": 0,
+   "adjacent_only": 0,
+   "other": 0
+  },
+  "cited_n_mean": 10.5,
+  "l3_mean": 2.5,
+  "l3_total": 15,
+  "at7_total": 14,
+  "at7_box7_total": 7,
+  "supporting_total": 7,
+  "jia_rows_total": 10,
+  "jia_keys_total": 10,
+  "jia_hit_total": 0,
+  "ct_rows_total": 73,
+  "wall_mean_s": 1016.3167,
+  "calls_mean": 55.5,
+  "cite_accept_questions": 0,
+  "attempts_vals": [],
+  "maxed_out_any": false,
+  "codes_final_seen": [],
+  "pruned_dropped_evidence_total": 0,
+  "pruned_dropped_conclusions_total": 0,
+  "unenforceable_pairs_vals": []
+ },
+ "agg_on_paired": {
+  "n_ok": 3,
+  "oob_total": 0,
+  "oob_box_total": 17,
+  "evidences_total": 39,
+  "ev_with_fail_total": 0,
+  "rejected_total": 22,
+  "attempted_total": 61,
+  "citation_fail_rate_pooled": 0.3607,
+  "reject_buckets_pooled": {
+   "empty_quote": 0,
+   "seg_missing": 0,
+   "verbatim_miss": 20,
+   "adjacent_only": 2,
+   "other": 0
+  },
+  "fail_rate_pooled": 0.0,
+  "buckets_pooled": {
+   "empty_quote": 0,
+   "seg_missing": 0,
+   "verbatim_miss": 0,
+   "adjacent_only": 0,
+   "other": 0
+  },
+  "cited_n_mean": 8.0,
+  "l3_mean": 1.3333,
+  "l3_total": 4,
+  "at7_total": 4,
+  "at7_box7_total": 2,
+  "supporting_total": 4,
+  "jia_rows_total": 5,
+  "jia_keys_total": 5,
+  "jia_hit_total": 0,
+  "ct_rows_total": 33,
+  "wall_mean_s": 1669.3667,
+  "calls_mean": 61.6667,
+  "cite_accept_questions": 3,
+  "attempts_vals": [
+   3,
+   3,
+   3,
+   3,
+   3,
+   3,
+   3,
+   3,
+   3
+  ],
+  "maxed_out_any": true,
+  "codes_final_seen": [
+   "out_of_box",
+   "unverifiable"
+  ],
+  "pruned_dropped_evidence_total": 1,
+  "pruned_dropped_conclusions_total": 1,
+  "unenforceable_pairs_vals": [
+   4,
+   4,
+   4,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ "agg_off_paired": {
+  "n_ok": 3,
+  "oob_total": 0,
+  "oob_box_total": 25,
+  "evidences_total": 46,
+  "ev_with_fail_total": 0,
+  "rejected_total": 32,
+  "attempted_total": 78,
+  "citation_fail_rate_pooled": 0.4103,
+  "reject_buckets_pooled": {
+   "empty_quote": 0,
+   "seg_missing": 0,
+   "verbatim_miss": 30,
+   "adjacent_only": 2,
+   "other": 0
+  },
+  "fail_rate_pooled": 0.0,
+  "buckets_pooled": {
+   "empty_quote": 0,
+   "seg_missing": 0,
+   "verbatim_miss": 0,
+   "adjacent_only": 0,
+   "other": 0
+  },
+  "cited_n_mean": 10.0,
+  "l3_mean": 1.3333,
+  "l3_total": 4,
+  "at7_total": 4,
+  "at7_box7_total": 2,
+  "supporting_total": 3,
+  "jia_rows_total": 12,
+  "jia_keys_total": 12,
+  "jia_hit_total": 0,
+  "ct_rows_total": 36,
+  "wall_mean_s": 1971.4,
+  "calls_mean": 58.0,
+  "cite_accept_questions": 0,
+  "attempts_vals": [],
+  "maxed_out_any": false,
+  "codes_final_seen": [],
+  "pruned_dropped_evidence_total": 0,
+  "pruned_dropped_conclusions_total": 0,
+  "unenforceable_pairs_vals": []
+ },
+ "n_paired": 3,
+ "paired": [
+  {
+   "case": "liuxiang",
+   "qid": "q_001",
+   "l3": [
+    1,
+    2
+   ],
+   "at7": [
+    2,
+    2
+   ],
+   "cited_n": [
+    6,
+    13
+   ],
+   "evidences": [
+    11,
+    20
+   ],
+   "rejected": [
+    6,
+    5
+   ],
+   "fail_rate": [
+    0.3529,
+    0.2
+   ],
+   "supporting": [
+    2,
+    1
+   ],
+   "jia_keys": [
+    2,
+    7
+   ]
+  },
+  {
+   "case": "liuxiang",
+   "qid": "q_002",
+   "l3": [
+    1,
+    1
+   ],
+   "at7": [
+    0,
+    0
+   ],
+   "cited_n": [
+    11,
+    12
+   ],
+   "evidences": [
+    17,
+    19
+   ],
+   "rejected": [
+    7,
+    6
+   ],
+   "fail_rate": [
+    0.2917,
+    0.24
+   ],
+   "supporting": [
+    1,
+    1
+   ],
+   "jia_keys": [
+    1,
+    5
+   ]
+  },
+  {
+   "case": "liuxiang",
+   "qid": "q_003",
+   "l3": [
+    2,
+    1
+   ],
+   "at7": [
+    2,
+    2
+   ],
+   "cited_n": [
+    7,
+    5
+   ],
+   "evidences": [
+    11,
+    7
+   ],
+   "rejected": [
+    9,
+    21
+   ],
+   "fail_rate": [
+    0.45,
+    0.75
+   ],
+   "supporting": [
+    1,
+    1
+   ],
+   "jia_keys": [
+    2,
+    0
+   ]
+  }
+ ],
+ "paired_keys": [
+  [
+   "liuxiang",
+   "q_001"
+  ],
+  [
+   "liuxiang",
+   "q_002"
+  ],
+  [
+   "liuxiang",
+   "q_003"
+  ]
+ ],
+ "missing_in_off": [
+  [
+   "wanghong",
+   "q_001"
+  ],
+  [
+   "wanghong",
+   "q_002"
+  ],
+  [
+   "wanghong",
+   "q_003"
+  ]
+ ],
+ "missing_in_on": [],
+ "deltas": {
+  "l3_total": {
+   "on": 4,
+   "off": 4,
+   "delta": 0,
+   "n_paired": 3
+  },
+  "at7_total": {
+   "on": 4,
+   "off": 4,
+   "delta": 0,
+   "n_paired": 3
+  },
+  "supporting_total": {
+   "on": 4,
+   "off": 3,
+   "delta": 1,
+   "n_paired": 3
+  },
+  "cited_n_mean": {
+   "on": 8.0,
+   "off": 10.0,
+   "delta": -2.0,
+   "n_paired": 3
+  },
+  "jia_rows_total": {
+   "on": 5,
+   "off": 12,
+   "delta": -7,
+   "n_paired": 3
+  },
+  "jia_keys_total": {
+   "on": 5,
+   "off": 12,
+   "delta": -7,
+   "n_paired": 3
+  },
+  "jia_hit_total": {
+   "on": 0,
+   "off": 0,
+   "delta": 0,
+   "n_paired": 3
+  },
+  "citation_fail_rate_pooled": {
+   "on": 0.3607,
+   "off": 0.4103,
+   "delta": -0.0496,
+   "n_paired": 3
+  },
+  "rejected_total": {
+   "on": 22,
+   "off": 32,
+   "delta": -10,
+   "n_paired": 3
+  },
+  "attempted_total": {
+   "on": 61,
+   "off": 78,
+   "delta": -17,
+   "n_paired": 3
+  }
+ },
+ "l3_within_noise": true,
+ "jia_regress": true,
+ "gates": {
+  "oob_zero": true,
+  "fail_not_worse": true,
+  "jia_not_regressed": false,
+  "paired_set_nonempty": true
+ },
+ "per_question_on": [
+  {
+   "case": "liuxiang",
+   "qid": "q_001",
+   "n_evidences": 11,
+   "n_ev_with_fail": 0,
+   "n_rejected": 6,
+   "n_attempted_evidences": 17,
+   "citation_fail_rate": 0.3529,
+   "buckets": {
+    "empty_quote": 0,
+    "seg_missing": 0,
+    "verbatim_miss": 0,
+    "adjacent_only": 0,
+    "other": 0
+   },
+   "reject_buckets": {
+    "empty_quote": 0,
+    "seg_missing": 0,
+    "verbatim_miss": 6,
+    "adjacent_only": 0,
+    "other": 0
+   },
+   "cited_n": 6,
+   "out_of_band_n": 0,
+   "out_of_band_ids": [],
+   "out_of_box_n": 4,
+   "packed_n": 212,
+   "l3": 1,
+   "gold_n": 4,
+   "hit_para": 1,
+   "hit_quote": 1,
+   "box_n": 3,
+   "focus_n": 9,
+   "@7_gold_in_top7": 2,
+   "@7_gold_in_submit_box7": 1,
+   "supporting_facts_n": 2,
+   "cite_accept": {
+    "technologist": {
+     "attempts": 3,
+     "attempts_cap": 3,
+     "maxed_out": true,
+     "final_ok": false,
+     "codes_final": [
+      "unverifiable"
+     ],
+     "codes_seen": [
+      "conflict_one_sided",
+      "out_of_box",
+      "unverifiable"
+     ],
+     "n_log": 3,
+     "log_first": {
+      "attempt": 1,
+      "codes": [
+       "out_of_box",
+       "unverifiable",
+       "conflict_one_sided"
+      ],
+      "n_cited": 6,
+      "n_conclusions": 6,
+      "n_cons_without_evidence": 0,
+      "out_of_box_n": 4,
+      "anchor_miss_n": 0,
+      "unverifiable_n": 2,
+      "one_sided_n": 4,
+      "unenforceable_pairs_n": 4
+     },
+     "pruned_dropped": {
+      "evidence": 0,
+      "conclusions": 0
+     }
+    },
+    "redteam": {
+     "attempts": 3,
+     "attempts_cap": 3,
+     "maxed_out": true,
+     "final_ok": false,
+     "codes_final": [
+      "unverifiable"
+     ],
+     "codes_seen": [
+      "conflict_one_sided",
+      "out_of_box",
+      "unverifiable"
+     ],
+     "n_log": 3,
+     "log_first": {
+      "attempt": 1,
+      "codes": [
+       "out_of_box",
+       "unverifiable",
+       "conflict_one_sided"
+      ],
+      "n_cited": 6,
+      "n_conclusions": 1,
+      "n_cons_without_evidence": 0,
+      "out_of_box_n": 4,
+      "anchor_miss_n": 0,
+      "unverifiable_n": 2,
+      "one_sided_n": 4,
+      "unenforceable_pairs_n": 4
+     },
+     "pruned_dropped": {
+      "evidence": 0,
+      "conclusions": 0
+     }
+    },
+    "mainstream": {
+     "attempts": 3,
+     "attempts_cap": 3,
+     "maxed_out": true,
+     "final_ok": false,
+     "codes_final": [
+      "unverifiable"
+     ],
+     "codes_seen": [
+      "conflict_one_sided",
+      "out_of_box",
+      "unverifiable"
+     ],
+     "n_log": 3,
+     "log_first": {
+      "attempt": 1,
+      "codes": [
+       "out_of_box",
+       "unverifiable",
+       "conflict_one_sided"
+      ],
+      "n_cited": 6,
+      "n_conclusions": 6,
+      "n_cons_without_evidence": 0,
+      "out_of_box_n": 4,
+      "anchor_miss_n": 0,
+      "unverifiable_n": 2,
+      "one_sided_n": 4,
+      "unenforceable_pairs_n": 4
+     },
+     "pruned_dropped": {
+      "evidence": 0,
+      "conclusions": 0
+     }
+    }
+   },
+   "cite_accept_present": true,
+   "conflict_trace_n": 13,
+   "conflict_trace_by_triage": {
+    "date_offset": 0,
+    "oral_misread": 3,
+    "other": 10,
+    "true_oppose": 0
+   },
+   "conflict_trace_by_class": {
+    "cross_day": 0,
+    "unknown_time": 3,
+    "same_window": 0,
+    "unclassified": 10
+   },
+   "jia_rows": 2,
+   "jia_keys": 2,
+   "jia_gold_keys_hit": 0,
+   "jia_keys_sample_n": 2,
+   "kg_density": {
+    "k": 3,
+    "n_core": 2,
+    "n_filler": 1,
+    "proxy_density": null,
+    "met_target": true,
+    "route": "adjudicate",
+    "cap_segments": false,
+    "pool_order_n": 81,
+    "line": "test_tree"
+   },
+   "n_calls": 64,
+   "elapsed_s": 1116.4,
+   "tokens": 109107
+  },
+  {
+   "case": "liuxiang",
+   "qid": "q_002",
+   "n_evidences": 17,
+   "n_ev_with_fail": 0,
+   "n_rejected": 7,
+   "n_attempted_evidences": 24,
+   "citation_fail_rate": 0.2917,
+   "buckets": {
+    "empty_quote": 0,
+    "seg_missing": 0,
+    "verbatim_miss": 0,
+    "adjacent_only": 0,
+    "other": 0
+   },
+   "reject_buckets": {
+    "empty_quote": 0,
+    "seg_missing": 0,
+    "verbatim_miss": 7,
+    "adjacent_only": 0,
+    "other": 0
+   },
+   "cited_n": 11,
+   "out_of_band_n": 0,
+   "out_of_band_ids": [],
+   "out_of_box_n": 8,
+   "packed_n": 226,
+   "l3": 1,
+   "gold_n": 5,
+   "hit_para": 0,
+   "hit_quote": 1,
+   "box_n": 3,
+   "focus_n": 7,
+   "@7_gold_in_top7": 0,
+   "@7_gold_in_submit_box7": 0,
+   "supporting_facts_n": 1,
+   "cite_accept": {
+    "technologist": {
+     "attempts": 3,
+     "attempts_cap": 3,
+     "maxed_out": false,
+     "final_ok": true,
+     "codes_final": [],
+     "codes_seen": [
+      "out_of_box"
+     ],
+     "n_log": 3,
+     "log_first": {
+      "attempt": 1,
+      "codes": [
+       "out_of_box"
+      ],
+      "n_cited": 3,
+      "n_conclusions": 3,
+      "n_cons_without_evidence": 0,
+      "out_of_box_n": 1,
+      "anchor_miss_n": 0,
+      "unverifiable_n": 0,
+      "one_sided_n": 0,
+      "unenforceable_pairs_n": 0
+     },
+     "pruned_dropped": {
+      "evidence": null,
+      "conclusions": null
+     }
+    },
+    "redteam": {
+     "attempts": 3,
+     "attempts_cap": 3,
+     "maxed_out": true,
+     "final_ok": false,
+     "codes_final": [
+      "unverifiable"
+     ],
+     "codes_seen": [
+      "out_of_box",
+      "unverifiable"
+     ],
+     "n_log": 3,
+     "log_first": {
+      "attempt": 1,
+      "codes": [
+       "out_of_box",
+       "unverifiable"
+      ],
+      "n_cited": 3,
+      "n_conclusions": 4,
+      "n_cons_without_evidence": 0,
+      "out_of_box_n": 1,
+      "anchor_miss_n": 0,
+      "unverifiable_n": 1,
+      "one_sided_n": 0,
+      "unenforceable_pairs_n": 0
+     },
+     "pruned_dropped": {
+      "evidence": 0,
+      "conclusions": 0
+     }
+    },
+    "mainstream": {
+     "attempts": 3,
+     "attempts_cap": 3,
+     "maxed_out": false,
+     "final_ok": true,
+     "codes_final": [],
+     "codes_seen": [
+      "out_of_box",
+      "unverifiable"
+     ],
+     "n_log": 3,
+     "log_first": {
+      "attempt": 1,
+      "codes": [
+       "out_of_box"
+      ],
+      "n_cited": 4,
+      "n_conclusions": 6,
+      "n_cons_without_evidence": 0,
+      "out_of_box_n": 2,
+      "anchor_miss_n": 0,
+      "unverifiable_n": 0,
+      "one_sided_n": 0,
+      "unenforceable_pairs_n": 0
+     },
+     "pruned_dropped": {
+      "evidence": null,
+      "conclusions": null
+     }
+    }
+   },
+   "cite_accept_present": true,
+   "conflict_trace_n": 8,
+   "conflict_trace_by_triage": {
+    "date_offset": 0,
+    "oral_misread": 3,
+    "other": 5,
+    "true_oppose": 0
+   },
+   "conflict_trace_by_class": {
+    "cross_day": 0,
+    "unknown_time": 3,
+    "same_window": 0,
+    "unclassified": 5
+   },
+   "jia_rows": 1,
+   "jia_keys": 1,
+   "jia_gold_keys_hit": 0,
+   "jia_keys_sample_n": 1,
+   "kg_density": {
+    "k": 3,
+    "n_core": 0,
+    "n_filler": 3,
+    "proxy_density": null,
+    "met_target": false,
+    "route": "adjudicate",
+    "cap_segments": false,
+    "pool_order_n": 81,
+    "line": "test_tree"
+   },
+   "n_calls": 54,
+   "elapsed_s": 2588.8,
+   "tokens": 143920
+  },
+  {
+   "case": "liuxiang",
+   "qid": "q_003",
+   "n_evidences": 11,
+   "n_ev_with_fail": 0,
+   "n_rejected": 9,
+   "n_attempted_evidences": 20,
+   "citation_fail_rate": 0.45,
+   "buckets": {
+    "empty_quote": 0,
+    "seg_missing": 0,
+    "verbatim_miss": 0,
+    "adjacent_only": 0,
+    "other": 0
+   },
+   "reject_buckets": {
+    "empty_quote": 0,
+    "seg_missing": 0,
+    "verbatim_miss": 7,
+    "adjacent_only": 2,
+    "other": 0
+   },
+   "cited_n": 7,
+   "out_of_band_n": 0,
+   "out_of_band_ids": [],
+   "out_of_box_n": 5,
+   "packed_n": 254,
+   "l3": 2,
+   "gold_n": 5,
+   "hit_para": 2,
+   "hit_quote": 2,
+   "box_n": 3,
+   "focus_n": 7,
+   "@7_gold_in_top7": 2,
+   "@7_gold_in_submit_box7": 1,
+   "supporting_facts_n": 1,
+   "cite_accept": {
+    "technologist": {
+     "attempts": 3,
+     "attempts_cap": 3,
+     "maxed_out": true,
+     "final_ok": false,
+     "codes_final": [
+      "unverifiable"
+     ],
+     "codes_seen": [
+      "out_of_box",
+      "unverifiable"
+     ],
+     "n_log": 3,
+     "log_first": {
+      "attempt": 1,
+      "codes": [
+       "out_of_box",
+       "unverifiable"
+      ],
+      "n_cited": 3,
+      "n_conclusions": 3,
+      "n_cons_without_evidence": 0,
+      "out_of_box_n": 2,
+      "anchor_miss_n": 0,
+      "unverifiable_n": 3,
+      "one_sided_n": 0,
+      "unenforceable_pairs_n": 0
+     },
+     "pruned_dropped": {
+      "evidence": 0,
+      "conclusions": 0
+     }
+    },
+    "redteam": {
+     "attempts": 3,
+     "attempts_cap": 3,
+     "maxed_out": true,
+     "final_ok": false,
+     "codes_final": [
+      "unverifiable"
+     ],
+     "codes_seen": [
+      "out_of_box",
+      "unverifiable"
+     ],
+     "n_log": 3,
+     "log_first": {
+      "attempt": 1,
+      "codes": [
+       "out_of_box",
+       "unverifiable"
+      ],
+      "n_cited": 3,
+      "n_conclusions": 3,
+      "n_cons_without_evidence": 0,
+      "out_of_box_n": 2,
+      "anchor_miss_n": 0,
+      "unverifiable_n": 3,
+      "one_sided_n": 0,
+      "unenforceable_pairs_n": 0
+     },
+     "pruned_dropped": {
+      "evidence": 0,
+      "conclusions": 0
+     }
+    },
+    "mainstream": {
+     "attempts": 3,
+     "attempts_cap": 3,
+     "maxed_out": true,
+     "final_ok": false,
+     "codes_final": [
+      "out_of_box"
+     ],
+     "codes_seen": [
+      "out_of_box",
+      "unverifiable"
+     ],
+     "n_log": 3,
+     "log_first": {
+      "attempt": 1,
+      "codes": [
+       "out_of_box",
+       "unverifiable"
+      ],
+      "n_cited": 3,
+      "n_conclusions": 3,
+      "n_cons_without_evidence": 0,
+      "out_of_box_n": 2,
+      "anchor_miss_n": 0,
+      "unverifiable_n": 3,
+      "one_sided_n": 0,
+      "unenforceable_pairs_n": 0
+     },
+     "pruned_dropped": {
+      "evidence": 1,
+      "conclusions": 1
+     }
+    }
+   },
+   "cite_accept_present": true,
+   "conflict_trace_n": 12,
+   "conflict_trace_by_triage": {
+    "date_offset": 0,
+    "oral_misread": 3,
+    "other": 9,
+    "true_oppose": 0
+   },
+   "conflict_trace_by_class": {
+    "cross_day": 0,
+    "unknown_time": 3,
+    "same_window": 0,
+    "unclassified": 9
+   },
+   "jia_rows": 2,
+   "jia_keys": 2,
+   "jia_gold_keys_hit": 0,
+   "jia_keys_sample_n": 2,
+   "kg_density": {
+    "k": 3,
+    "n_core": 0,
+    "n_filler": 3,
+    "proxy_density": null,
+    "met_target": false,
+    "route": "adjudicate",
+    "cap_segments": false,
+    "pool_order_n": 94,
+    "line": "test_tree"
+   },
+   "n_calls": 67,
+   "elapsed_s": 1302.9,
+   "tokens": 115353
+  },
+  {
+   "case": "wanghong",
+   "qid": "q_001",
+   "n_evidences": 5,
+   "n_ev_with_fail": 0,
+   "n_rejected": 1,
+   "n_attempted_evidences": 6,
+   "citation_fail_rate": 0.1667,
+   "buckets": {
+    "empty_quote": 0,
+    "seg_missing": 0,
+    "verbatim_miss": 0,
+    "adjacent_only": 0,
+    "other": 0
+   },
+   "reject_buckets": {
+    "empty_quote": 0,
+    "seg_missing": 0,
+    "verbatim_miss": 1,
+    "adjacent_only": 0,
+    "other": 0
+   },
+   "cited_n": 5,
+   "out_of_band_n": 0,
+   "out_of_band_ids": [],
+   "out_of_box_n": 5,
+   "packed_n": 208,
+   "l3": 1,
+   "gold_n": 5,
+   "hit_para": 1,
+   "hit_quote": 0,
+   "box_n": 1,
+   "focus_n": 7,
+   "@7_gold_in_top7": 2,
+   "@7_gold_in_submit_box7": 1,
+   "supporting_facts_n": 2,
+   "cite_accept": {
+    "redteam": {
+     "attempts": 3,
+     "attempts_cap": 3,
+     "maxed_out": true,
+     "final_ok": false,
+     "codes_final": [
+      "out_of_box"
+     ],
+     "codes_seen": [
+      "out_of_box"
+     ],
+     "n_log": 3,
+     "log_first": {
+      "attempt": 1,
+      "codes": [
+       "out_of_box"
+      ],
+      "n_cited": 1,
+      "n_conclusions": 2,
+      "n_cons_without_evidence": 0,
+      "out_of_box_n": 1,
+      "anchor_miss_n": 0,
+      "unverifiable_n": 0,
+      "one_sided_n": 0,
+      "unenforceable_pairs_n": 0
+     },
+     "pruned_dropped": {
+      "evidence": 1,
+      "conclusions": 1
+     }
+    },
+    "mainstream": {
+     "attempts": 3,
+     "attempts_cap": 3,
+     "maxed_out": true,
+     "final_ok": false,
+     "codes_final": [
+      "out_of_box"
+     ],
+     "codes_seen": [
+      "out_of_box"
+     ],
+     "n_log": 3,
+     "log_first": {
+      "attempt": 1,
+      "codes": [
+       "out_of_box"
+      ],
+      "n_cited": 1,
+      "n_conclusions": 3,
+      "n_cons_without_evidence": 0,
+      "out_of_box_n": 1,
+      "anchor_miss_n": 0,
+      "unverifiable_n": 0,
+      "one_sided_n": 0,
+      "unenforceable_pairs_n": 0
+     },
+     "pruned_dropped": {
+      "evidence": 1,
+      "conclusions": 1
+     }
+    },
+    "technologist": {
+     "attempts": 3,
+     "attempts_cap": 3,
+     "maxed_out": true,
+     "final_ok": false,
+     "codes_final": [
+      "out_of_box"
+     ],
+     "codes_seen": [
+      "out_of_box"
+     ],
+     "n_log": 3,
+     "log_first": {
+      "attempt": 1,
+      "codes": [
+       "out_of_box"
+      ],
+      "n_cited": 2,
+      "n_conclusions": 3,
+      "n_cons_without_evidence": 0,
+      "out_of_box_n": 2,
+      "anchor_miss_n": 0,
+      "unverifiable_n": 0,
+      "one_sided_n": 0,
+      "unenforceable_pairs_n": 0
+     },
+     "pruned_dropped": {
+      "evidence": 1,
+      "conclusions": 1
+     }
+    }
+   },
+   "cite_accept_present": true,
+   "conflict_trace_n": 5,
+   "conflict_trace_by_triage": {
+    "date_offset": 0,
+    "oral_misread": 3,
+    "other": 0,
+    "true_oppose": 2
+   },
+   "conflict_trace_by_class": {
+    "same_window": 0,
+    "cross_day": 0,
+    "unknown_time": 5,
+    "unclassified": 0
+   },
+   "jia_rows": 0,
+   "jia_keys": 0,
+   "jia_gold_keys_hit": 0,
+   "jia_keys_sample_n": 0,
+   "kg_density": {
+    "k": 1,
+    "n_core": 1,
+    "n_filler": 0,
+    "proxy_density": null,
+    "met_target": true,
+    "route": "fact_check",
+    "cap_segments": false,
+    "pool_order_n": 75,
+    "line": "test_tree"
+   },
+   "n_calls": 38,
+   "elapsed_s": 669.1,
+   "tokens": 89882
+  },
+  {
+   "case": "wanghong",
+   "qid": "q_002",
+   "n_evidences": 19,
+   "n_ev_with_fail": 0,
+   "n_rejected": 2,
+   "n_attempted_evidences": 21,
+   "citation_fail_rate": 0.0952,
+   "buckets": {
+    "empty_quote": 0,
+    "seg_missing": 0,
+    "verbatim_miss": 0,
+    "adjacent_only": 0,
+    "other": 0
+   },
+   "reject_buckets": {
+    "empty_quote": 0,
+    "seg_missing": 0,
+    "verbatim_miss": 2,
+    "adjacent_only": 0,
+    "other": 0
+   },
+   "cited_n": 11,
+   "out_of_band_n": 0,
+   "out_of_band_ids": [],
+   "out_of_box_n": 8,
+   "packed_n": 227,
+   "l3": 3,
+   "gold_n": 5,
+   "hit_para": 3,
+   "hit_quote": 0,
+   "box_n": 3,
+   "focus_n": 7,
+   "@7_gold_in_top7": 2,
+   "@7_gold_in_submit_box7": 2,
+   "supporting_facts_n": 1,
+   "cite_accept": {
+    "mainstream": {
+     "attempts": 2,
+     "attempts_cap": 3,
+     "maxed_out": false,
+     "final_ok": true,
+     "codes_final": [],
+     "codes_seen": [
+      "out_of_box"
+     ],
+     "n_log": 2,
+     "log_first": {
+      "attempt": 1,
+      "codes": [
+       "out_of_box"
+      ],
+      "n_cited": 4,
+      "n_conclusions": 5,
+      "n_cons_without_evidence": 0,
+      "out_of_box_n": 2,
+      "anchor_miss_n": 0,
+      "unverifiable_n": 0,
+      "one_sided_n": 0,
+      "unenforceable_pairs_n": 0
+     },
+     "pruned_dropped": {
+      "evidence": null,
+      "conclusions": null
+     }
+    },
+    "redteam": {
+     "attempts": 2,
+     "attempts_cap": 3,
+     "maxed_out": false,
+     "final_ok": true,
+     "codes_final": [],
+     "codes_seen": [
+      "out_of_box"
+     ],
+     "n_log": 2,
+     "log_first": {
+      "attempt": 1,
+      "codes": [
+       "out_of_box"
+      ],
+      "n_cited": 4,
+      "n_conclusions": 5,
+      "n_cons_without_evidence": 0,
+      "out_of_box_n": 2,
+      "anchor_miss_n": 0,
+      "unverifiable_n": 0,
+      "one_sided_n": 0,
+      "unenforceable_pairs_n": 0
+     },
+     "pruned_dropped": {
+      "evidence": null,
+      "conclusions": null
+     }
+    },
+    "technologist": {
+     "attempts": 3,
+     "attempts_cap": 3,
+     "maxed_out": false,
+     "final_ok": true,
+     "codes_final": [],
+     "codes_seen": [
+      "out_of_box"
+     ],
+     "n_log": 3,
+     "log_first": {
+      "attempt": 1,
+      "codes": [
+       "out_of_box"
+      ],
+      "n_cited": 3,
+      "n_conclusions": 4,
+      "n_cons_without_evidence": 0,
+      "out_of_box_n": 1,
+      "anchor_miss_n": 0,
+      "unverifiable_n": 0,
+      "one_sided_n": 0,
+      "unenforceable_pairs_n": 0
+     },
+     "pruned_dropped": {
+      "evidence": null,
+      "conclusions": null
+     }
+    }
+   },
+   "cite_accept_present": true,
+   "conflict_trace_n": 8,
+   "conflict_trace_by_triage": {
+    "date_offset": 0,
+    "oral_misread": 3,
+    "other": 3,
+    "true_oppose": 2
+   },
+   "conflict_trace_by_class": {
+    "same_window": 0,
+    "cross_day": 0,
+    "unknown_time": 5,
+    "unclassified": 3
+   },
+   "jia_rows": 1,
+   "jia_keys": 1,
+   "jia_gold_keys_hit": 0,
+   "jia_keys_sample_n": 1,
+   "kg_density": {
+    "k": 3,
+    "n_core": 3,
+    "n_filler": 0,
+    "proxy_density": null,
+    "met_target": true,
+    "route": "adjudicate",
+    "cap_segments": false,
+    "pool_order_n": 97,
+    "line": "test_tree"
+   },
+   "n_calls": 41,
+   "elapsed_s": 1121.3,
+   "tokens": 94506
+  },
+  {
+   "case": "wanghong",
+   "qid": "q_003",
+   "n_evidences": 9,
+   "n_ev_with_fail": 0,
+   "n_rejected": 5,
+   "n_attempted_evidences": 14,
+   "citation_fail_rate": 0.3571,
+   "buckets": {
+    "empty_quote": 0,
+    "seg_missing": 0,
+    "verbatim_miss": 0,
+    "adjacent_only": 0,
+    "other": 0
+   },
+   "reject_buckets": {
+    "empty_quote": 0,
+    "seg_missing": 0,
+    "verbatim_miss": 5,
+    "adjacent_only": 0,
+    "other": 0
+   },
+   "cited_n": 7,
+   "out_of_band_n": 0,
+   "out_of_band_ids": [],
+   "out_of_box_n": 4,
+   "packed_n": 218,
+   "l3": 2,
+   "gold_n": 9,
+   "hit_para": 2,
+   "hit_quote": 0,
+   "box_n": 3,
+   "focus_n": 7,
+   "@7_gold_in_top7": 2,
+   "@7_gold_in_submit_box7": 2,
+   "supporting_facts_n": 2,
+   "cite_accept": {
+    "technologist": {
+     "attempts": 2,
+     "attempts_cap": 3,
+     "maxed_out": false,
+     "final_ok": true,
+     "codes_final": [],
+     "codes_seen": [
+      "out_of_box"
+     ],
+     "n_log": 2,
+     "log_first": {
+      "attempt": 1,
+      "codes": [
+       "out_of_box"
+      ],
+      "n_cited": 2,
+      "n_conclusions": 1,
+      "n_cons_without_evidence": 0,
+      "out_of_box_n": 1,
+      "anchor_miss_n": 0,
+      "unverifiable_n": 0,
+      "one_sided_n": 0,
+      "unenforceable_pairs_n": 0
+     },
+     "pruned_dropped": {
+      "evidence": null,
+      "conclusions": null
+     }
+    },
+    "redteam": {
+     "attempts": 3,
+     "attempts_cap": 3,
+     "maxed_out": true,
+     "final_ok": false,
+     "codes_final": [
+      "unverifiable"
+     ],
+     "codes_seen": [
+      "out_of_box",
+      "unverifiable"
+     ],
+     "n_log": 3,
+     "log_first": {
+      "attempt": 1,
+      "codes": [
+       "out_of_box"
+      ],
+      "n_cited": 2,
+      "n_conclusions": 1,
+      "n_cons_without_evidence": 0,
+      "out_of_box_n": 1,
+      "anchor_miss_n": 0,
+      "unverifiable_n": 0,
+      "one_sided_n": 0,
+      "unenforceable_pairs_n": 0
+     },
+     "pruned_dropped": {
+      "evidence": 0,
+      "conclusions": 0
+     }
+    },
+    "mainstream": {
+     "attempts": 3,
+     "attempts_cap": 3,
+     "maxed_out": true,
+     "final_ok": false,
+     "codes_final": [
+      "out_of_box"
+     ],
+     "codes_seen": [
+      "out_of_box",
+      "unverifiable"
+     ],
+     "n_log": 3,
+     "log_first": {
+      "attempt": 1,
+      "codes": [
+       "out_of_box"
+      ],
+      "n_cited": 2,
+      "n_conclusions": 1,
+      "n_cons_without_evidence": 0,
+      "out_of_box_n": 1,
+      "anchor_miss_n": 0,
+      "unverifiable_n": 0,
+      "one_sided_n": 0,
+      "unenforceable_pairs_n": 0
+     },
+     "pruned_dropped": {
+      "evidence": 1,
+      "conclusions": 0
+     }
+    }
+   },
+   "cite_accept_present": true,
+   "conflict_trace_n": 9,
+   "conflict_trace_by_triage": {
+    "date_offset": 0,
+    "oral_misread": 3,
+    "other": 4,
+    "true_oppose": 2
+   },
+   "conflict_trace_by_class": {
+    "same_window": 0,
+    "cross_day": 0,
+    "unknown_time": 5,
+    "unclassified": 4
+   },
+   "jia_rows": 1,
+   "jia_keys": 1,
+   "jia_gold_keys_hit": 0,
+   "jia_keys_sample_n": 1,
+   "kg_density": {
+    "k": 3,
+    "n_core": 3,
+    "n_filler": 0,
+    "proxy_density": null,
+    "met_target": true,
+    "route": "adjudicate",
+    "cap_segments": false,
+    "pool_order_n": 80,
+    "line": "test_tree"
+   },
+   "n_calls": 49,
+   "elapsed_s": 1721.8,
+   "tokens": 96784
+  }
+ ],
+ "per_question_off": [
+  {
+   "case": "liuxiang",
+   "qid": "q_001",
+   "n_evidences": 20,
+   "n_ev_with_fail": 0,
+   "n_rejected": 5,
+   "n_attempted_evidences": 25,
+   "citation_fail_rate": 0.2,
+   "buckets": {
+    "empty_quote": 0,
+    "seg_missing": 0,
+    "verbatim_miss": 0,
+    "adjacent_only": 0,
+    "other": 0
+   },
+   "reject_buckets": {
+    "empty_quote": 0,
+    "seg_missing": 0,
+    "verbatim_miss": 5,
+    "adjacent_only": 0,
+    "other": 0
+   },
+   "cited_n": 13,
+   "out_of_band_n": 0,
+   "out_of_band_ids": [],
+   "out_of_box_n": 11,
+   "packed_n": 213,
+   "l3": 2,
+   "gold_n": 4,
+   "hit_para": 2,
+   "hit_quote": 1,
+   "box_n": 3,
+   "focus_n": 9,
+   "@7_gold_in_top7": 2,
+   "@7_gold_in_submit_box7": 1,
+   "supporting_facts_n": 1,
+   "cite_accept": {},
+   "cite_accept_present": false,
+   "conflict_trace_n": 12,
+   "conflict_trace_by_triage": {
+    "date_offset": 0,
+    "oral_misread": 3,
+    "other": 9,
+    "true_oppose": 0
+   },
+   "conflict_trace_by_class": {
+    "same_window": 0,
+    "unknown_time": 3,
+    "cross_day": 0,
+    "unclassified": 9
+   },
+   "jia_rows": 7,
+   "jia_keys": 7,
+   "jia_gold_keys_hit": 0,
+   "jia_keys_sample_n": 7,
+   "kg_density": {
+    "k": 3,
+    "n_core": 2,
+    "n_filler": 1,
+    "proxy_density": null,
+    "met_target": true,
+    "route": "adjudicate",
+    "cap_segments": false,
+    "pool_order_n": 83,
+    "line": "test_tree"
+   },
+   "n_calls": 55,
+   "elapsed_s": 2366.6,
+   "tokens": 93729
+  },
+  {
+   "case": "liuxiang",
+   "qid": "q_002",
+   "n_evidences": 19,
+   "n_ev_with_fail": 0,
+   "n_rejected": 6,
+   "n_attempted_evidences": 25,
+   "citation_fail_rate": 0.24,
+   "buckets": {
+    "empty_quote": 0,
+    "seg_missing": 0,
+    "verbatim_miss": 0,
+    "adjacent_only": 0,
+    "other": 0
+   },
+   "reject_buckets": {
+    "empty_quote": 0,
+    "seg_missing": 0,
+    "verbatim_miss": 5,
+    "adjacent_only": 1,
+    "other": 0
+   },
+   "cited_n": 12,
+   "out_of_band_n": 0,
+   "out_of_band_ids": [],
+   "out_of_box_n": 9,
+   "packed_n": 228,
+   "l3": 1,
+   "gold_n": 5,
+   "hit_para": 0,
+   "hit_quote": 1,
+   "box_n": 3,
+   "focus_n": 7,
+   "@7_gold_in_top7": 0,
+   "@7_gold_in_submit_box7": 0,
+   "supporting_facts_n": 1,
+   "cite_accept": {},
+   "cite_accept_present": false,
+   "conflict_trace_n": 21,
+   "conflict_trace_by_triage": {
+    "date_offset": 0,
+    "oral_misread": 3,
+    "other": 18,
+    "true_oppose": 0
+   },
+   "conflict_trace_by_class": {
+    "same_window": 0,
+    "unknown_time": 3,
+    "cross_day": 0,
+    "unclassified": 18
+   },
+   "jia_rows": 5,
+   "jia_keys": 5,
+   "jia_gold_keys_hit": 0,
+   "jia_keys_sample_n": 5,
+   "kg_density": {
+    "k": 3,
+    "n_core": 0,
+    "n_filler": 3,
+    "proxy_density": null,
+    "met_target": false,
+    "route": "adjudicate",
+    "cap_segments": false,
+    "pool_order_n": 80,
+    "line": "test_tree"
+   },
+   "n_calls": 85,
+   "elapsed_s": 1945.0,
+   "tokens": 110090
+  },
+  {
+   "case": "liuxiang",
+   "qid": "q_003",
+   "n_evidences": 7,
+   "n_ev_with_fail": 0,
+   "n_rejected": 21,
+   "n_attempted_evidences": 28,
+   "citation_fail_rate": 0.75,
+   "buckets": {
+    "empty_quote": 0,
+    "seg_missing": 0,
+    "verbatim_miss": 0,
+    "adjacent_only": 0,
+    "other": 0
+   },
+   "reject_buckets": {
+    "empty_quote": 0,
+    "seg_missing": 0,
+    "verbatim_miss": 20,
+    "adjacent_only": 1,
+    "other": 0
+   },
+   "cited_n": 5,
+   "out_of_band_n": 0,
+   "out_of_band_ids": [],
+   "out_of_box_n": 5,
+   "packed_n": 254,
+   "l3": 1,
+   "gold_n": 5,
+   "hit_para": 1,
+   "hit_quote": 1,
+   "box_n": 3,
+   "focus_n": 7,
+   "@7_gold_in_top7": 2,
+   "@7_gold_in_submit_box7": 1,
+   "supporting_facts_n": 1,
+   "cite_accept": {},
+   "cite_accept_present": false,
+   "conflict_trace_n": 3,
+   "conflict_trace_by_triage": {
+    "date_offset": 0,
+    "oral_misread": 3,
+    "other": 0,
+    "true_oppose": 0
+   },
+   "conflict_trace_by_class": {
+    "same_window": 0,
+    "unknown_time": 3,
+    "cross_day": 0,
+    "unclassified": 0
+   },
+   "jia_rows": 0,
+   "jia_keys": 0,
+   "jia_gold_keys_hit": 0,
+   "jia_keys_sample_n": 0,
+   "kg_density": {
+    "k": 3,
+    "n_core": 0,
+    "n_filler": 3,
+    "proxy_density": null,
+    "met_target": false,
+    "route": "adjudicate",
+    "cap_segments": false,
+    "pool_order_n": 95,
+    "line": "test_tree"
+   },
+   "n_calls": 34,
+   "elapsed_s": 1602.6,
+   "tokens": 81345
+  }
+ ]
+}
