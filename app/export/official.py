@@ -7,10 +7,14 @@ conflict 记录只读 Resolution.to_dict() 已有键；basis、重启条件读�
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
+from typing import Any
 
 from app.core.confidence import (
     BAND_RULE,
+    aggregate_constants,
+    band_count_dict,
     band_of,
     band_rel_of,
     band_rel_rule_of,
@@ -393,7 +397,146 @@ def _gates_fired_note(gates: dict | None) -> str:
     return ",".join(fired) if fired else "none"
 
 
+_CONF_FACE_DETAIL_ENV = "VERITAS_CONF_FACE_DETAIL"
+
+
+def conf_face_detail_enabled(settings: Any | None = None) -> bool:
+    """C-156：置信面披露旗。出厂默认开；显式 ``VERITAS_CONF_FACE_DETAIL=0``＝关。
+
+    关＝confidence.json 与字段说明逐字节回到改前形态（本票「换分＝0」那条腿走这里）；
+    开＝只往 confidence.json 加两类披露键（component_basis／recompute）＋字段说明两段
+    现量文字；score、band、band_rel、公式、合式常量一个都不动。
+    settings 为 None 时走 ``Settings.from_env()``（出厂默认＋env 叠加），
+    不在无参路径里绕开出厂默认。
+    """
+    if settings is None:
+        from app.config import Settings
+        settings = Settings.from_env()
+    if hasattr(settings, "conf_face_detail"):
+        return bool(getattr(settings, "conf_face_detail"))
+    v = (os.environ.get(_CONF_FACE_DETAIL_ENV) or "").strip().lower()
+    if v in ("0", "false", "off", "no"):
+        return False
+    if v in ("1", "true", "on", "yes"):
+        return True
+    return True
+
+
+def _printed_recompute(terms: dict, score: float) -> dict:
+    """评委只拿「印在这行上的四位数」复算这条 score——与程序内部同一式子，不另发明算法。
+
+    容差＝1e-4（第四位取整边界），这是取整误差的物理上限，不是拍的：
+    每个分量先 round4，四位小数乘权重相加后与未取整值最多差若干 1e-4，
+    再取四位，落点只可能在 ±1e-4 内。超出＝复现失败，本函数会把它如实标出来。
+    """
+    consts = aggregate_constants()
+    w = consts["weights"]
+    hg = consts["hard_gates"]
+    raw = (
+        w["b"]
+        + w["s"] * float(terms.get("strength") or 0.0)
+        + w["c"] * float(terms.get("coverage") or 0.0)
+        + w["a"] * float(terms.get("agreement_factor") or 0.0)
+        + w["h"] * float(terms.get("chain_for_aggregate") or 0.0)
+    )
+    raw = min(1.0, max(0.0, raw))
+    g = terms.get("gates") if isinstance(terms.get("gates"), dict) else {}
+    fired: list[str] = []
+    capped = raw
+    if isinstance(g.get("G2_no_evidence"), dict) and g["G2_no_evidence"].get("fired"):
+        fired.append("G2_no_evidence")
+        capped = 0.0
+    if isinstance(g.get("G1_citation"), dict) and g["G1_citation"].get("fired"):
+        fired.append("G1_citation")
+        capped = min(capped, float(hg["G1_citation"]["cap"]))
+    if isinstance(g.get("G3_premise_broken"), dict) and g["G3_premise_broken"].get("fired"):
+        fired.append("G3_premise_broken")
+        capped = min(capped, float(hg["G3_premise_broken"]["cap"]))
+    expected = round(capped, 4)
+    delta = round(abs(expected - float(score)), 4)
+    return {
+        "printed_weighted_sum": round(raw, 4),
+        "gates_fired": fired or ["none"],
+        "expected_score": expected,
+        "reported_score": round(float(score), 4),
+        "delta": delta,
+        "tolerance": 0.0001,
+        "reproducible": delta <= 0.0001,
+        "rule": consts["recompute_rule"],
+    }
+
+
+def _conf_face_lines(rows: list[dict]) -> list[str]:
+    """本次置信面现量三行（档分布／硬门触发／分量区分度）——数字当场数，不抄旧账。"""
+    scores = [float(r.get("score") or 0.0) for r in rows]
+    abs_c = band_count_dict(scores, absolute=True)
+    rel_c = band_count_dict(scores, absolute=False)
+    n = len(rows)
+    fired: dict[str, int] = {"G1_citation": 0, "G2_no_evidence": 0, "G3_premise_broken": 0}
+    for r in rows:
+        g = (r.get("terms") or {}).get("gates")
+        if not isinstance(g, dict):
+            continue
+        for k in fired:
+            if isinstance(g.get(k), dict) and g[k].get("fired"):
+                fired[k] += 1
+    # 分量区分度：该分量在各行里出现过几个不同取值（1 个＝本次不提供区分度，如实说）
+    distinct = {}
+    for k in ("strength", "coverage", "agreement", "chain"):
+        distinct[k] = len({json.dumps((r.get("terms") or {}).get(k), sort_keys=True) for r in rows})
+    multi_author = sum(
+        1 for r in rows
+        if int(((r.get("component_basis") or {}).get("n_authors")) or 0) >= 2
+    )
+    bad = sum(1 for r in rows if (r.get("recompute") or {}).get("reproducible") is False)
+    return [
+        (
+            f"置信面本次现量（confidence.json {n} 行）：绝对档 高 {abs_c['高']}／中 {abs_c['中']}／低 {abs_c['低']}；"
+            f"分位档 高 {rel_c['高']}／中 {rel_c['中']}／低 {rel_c['低']}／不可分 {rel_c.get('不可分', 0)}。"
+        ),
+        (
+            f"三道硬门本次触发行数＝G1 引文命中 {fired['G1_citation']}／G2 无证据 {fired['G2_no_evidence']}／"
+            f"G3 前提破坏 {fired['G3_premise_broken']}（交卷面只收逐字命中的证据，G1 长期不触发＝实测结果，"
+            "不是门被摘掉；阈值与封顶值在上方常量表里）。"
+        ),
+        (
+            f"分量区分度本次取值数＝信源可信度 {distinct['strength']}／覆盖 {distinct['coverage']}／"
+            f"一致性 {distinct['agreement']}／链完整性 {distinct['chain']}；"
+            f"署名≥2 的结论 {multi_author} 条；按印出数复算失败（±1e-4 外）的行 {bad} 条。"
+            "（一致性取值数＝1 表示本次没有跨分析师同组结论，该分量不贡献区分度——如实披露，不假装拉开）"
+        ),
+    ]
+
+
+def _conf_constants_block() -> str:
+    """把生产在用的合式常量表原样打到字段说明里（评委照这张表能算出同一个分）。"""
+    consts = aggregate_constants()
+    w = consts["weights"]
+    return (
+        "## 置信合式常量表（confidence.json 复算用；与程序内 `_AGG`／模块常量同一份，非手抄）\n"
+        f"raw = clip01(b {w['b']} + s {w['s']}·strength + c {w['c']}·coverage "
+        f"+ a {w['a']}·agreement_factor + h {w['h']}·chain_score)\n"
+        "分量算法：strength＝等级权×信源可信度×因果加成×人工权重 的均值；"
+        f"coverage＝{consts['component_constants']['coverage_floor']} + "
+        f"{round(1 - consts['component_constants']['coverage_floor'], 4)}·(1 − exp(−(n−1)/"
+        f"{consts['component_constants']['coverage_saturation'] - 1}))（n＝该结论证据条数，饱和于 "
+        f"{consts['component_constants']['coverage_saturation']} 条）；"
+        f"agreement_factor＝{consts['component_constants']['agreement_floor']} + "
+        f"{round(1 - consts['component_constants']['agreement_floor'], 4)}·(署名数/编队人数)；"
+        f"chain_score＝六环按适用项通过率（无从判定填 "
+        f"{consts['component_constants']['chain_unknown']}）。\n"
+        "硬门：" + json.dumps(consts["hard_gates"], ensure_ascii=False) + "\n"
+        f"呈现档阈值：" + json.dumps(consts["band_thresholds"], ensure_ascii=False) + "\n"
+        f"温度默认：" + json.dumps(consts["temperature_default"]) + "（＝不缩放；非 1.0 须显式启用，本次未启用）\n"
+        "复算规则：" + consts["recompute_rule"] + "\n"
+        "行内 `component_basis` 给的是该行的真数来源（证据条数／署名数／编队人数／证据等级／"
+        "最弱一条强度／六环 applicable 与 broken），`recompute` 是「只拿本行印出的数复算」的结果与差值。\n"
+    )
+
+
 def _confidence_rows(question_id: str, dossier: Dossier) -> list[dict]:
+    detail = conf_face_detail_enabled()  # 每案卷读一次，不在行循环里读配置
+    n_panel = len(list(dossier.panel or []))
     rows = []
     for con in dossier.conclusions:
         if con.status != "majority":
@@ -438,6 +581,21 @@ def _confidence_rows(question_id: str, dossier: Dossier) -> list[dict]:
             rows[-1]["band"] = gated["band"]
             if gated["demoted"]:
                 rows[-1]["demote_reasons"] = list(gated["demote_reasons"])
+        # C-156：披露两类键（分数面零改动）——分量真数来源＋按印出数复算
+        if detail:
+            cd = parts.get("chain_detail") if isinstance(parts.get("chain_detail"), dict) else {}
+            rows[-1]["component_basis"] = {
+                "n_evidence": int(parts.get("n_evidence") or 0),
+                "n_authors": int(parts.get("n_authors") or 0),
+                "n_panel": n_panel,
+                "n_panel_source": "dossier.panel" if n_panel else "案卷未记编队名单（不猜）",
+                "levels": sorted(parts.get("levels") or []),
+                "min_evidence_score": parts.get("min_evidence_score"),
+                "chain_rings_applicable": list(cd.get("applicable") or []),
+                "chain_rings_broken": list(cd.get("broken") or []),
+                "chain_unknown": bool(cd.get("unknown")),
+            }
+            rows[-1]["recompute"] = _printed_recompute(terms, score)
     return rows
 
 
@@ -1021,9 +1179,15 @@ def export_official(runs: list[tuple[dict, Dossier]], out_dir: Path) -> dict[str
                 json.dumps(empty_payload, ensure_ascii=False, indent=2),
                 encoding="utf-8",
             )
+    detail_block = ""
+    conf_lines: list[str] = []
+    if conf_face_detail_enabled():
+        detail_block = "\n" + _conf_constants_block()
+        conf_lines = _conf_face_lines(confidence)
+    notes_tail = "".join(line + "\n" for line in conf_lines)
     paths["notes"].write_text(
-        _FIELD_NOTES + "\n## 本次导出\n" + gate_line + "\n"
+        _FIELD_NOTES + detail_block + "\n## 本次导出\n" + gate_line + "\n"
         + slot_line + "\n" + dedup_line + "\n" + face_line + "\n"
-        + diverge_line + "\n" + conflict_skip_line + "\n",
+        + diverge_line + "\n" + conflict_skip_line + "\n" + notes_tail,
         encoding="utf-8")
     return paths

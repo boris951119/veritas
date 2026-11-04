@@ -292,6 +292,50 @@ def row_score_of(parts: dict | None) -> float:
     return row_score_detail(parts)[0]
 
 
+def aggregate_constants() -> dict:
+    """对外披露用的合式常量只读快照＝`aggregate`／`apply_hard_gates` 当场用的同一份数。
+
+    这函数不做任何判定、不改任何分数：导出层把它写进提交 JSON，是为了让评委
+    「按式能算出同分」——印出去的权重与程序里乘的权重来自同一个对象，
+    不存在第二份抄本可以漂移。温度＝生产默认（不缩放）；非 1.0 须显式启用，
+    本快照如实反映当前默认。
+    """
+    return {
+        "weights": {
+            "b": _AGG["b"], "s": _AGG["s"], "c": _AGG["c"],
+            "a": _AGG["a"], "h": _AGG["h"],
+        },
+        "hard_gates": {
+            "G1_citation": {
+                "hit_rate_min": _AGG["g1_hit_rate_min"], "cap": _AGG["g1_cap"],
+                "rule": "hit_rate < hit_rate_min => conf = min(conf, cap)",
+            },
+            "G2_no_evidence": {
+                "cap": 0.0, "rule": "n_evidence <= 0 => conf = 0",
+            },
+            "G3_premise_broken": {
+                "cap": _AGG["g3_cap"],
+                "rule": "premise_broken 非空 => conf = min(conf, cap)",
+            },
+        },
+        "component_constants": {
+            "coverage_floor": _COVERAGE_FLOOR,
+            "coverage_saturation": _COVERAGE_SATURATION,
+            "agreement_floor": _AGREEMENT_FLOOR,
+            "chain_unknown": _CHAIN_UNKNOWN,
+            "causation_bonus": _CAUSATION_BONUS,
+        },
+        "band_thresholds": {"high": _BAND_HIGH, "mid": _BAND_MID},
+        "temperature_default": _DEFAULT_TEMPERATURE,
+        "recompute_rule": (
+            "分量各先 round4 → raw = clip01(b + s*strength + c*coverage "
+            "+ a*agreement_factor + h*chain_score) → 依序过 G2/G1/G3 封顶 "
+            "→ score = round(conf, 4)；用印出的四位数手算允许落在 ±1e-4 "
+            "（第四位取整边界），超出＝复现失败"
+        ),
+    }
+
+
 def band_count_dict(scores: Sequence[float], *, absolute: bool) -> dict[str, int]:
     """档条数（含 0）。绝对面 3 键；相对面 4 键（含「不可分」）。"""
     xs = list(scores)
