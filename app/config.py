@@ -591,6 +591,13 @@ class Settings:
     # （冲突数值线 STOP）。
     arb_context: bool = True
 
+    # C-155：消解类型时效性回填（冲 3.3.2「其他」占比）。默认 True＝比赛需要；
+    # 只补标签：双方均保留（tie／轻裁）且两侧信源时点都可解且不同 ⇒ 类型落
+    # 「时效性」＋basis 记两侧 day key。winner／method／rationale／证据强度／
+    # 仲裁公式一行不动（冲突数值线 STOP）。关＝VERITAS_RESOLUTION_TYPE_TIME=0
+    # （config.json resolution_type_time）＝与改前逐字同形（不写 sides_dates）。
+    resolution_type_time: bool = True
+
     # C-116：置信档校准闸（Q6）。默认 False；开＝VERITAS_CONF_CALIB=1。
     # 高档可解释门槛→可降档；不改合式分数／不往 pack 塞系数。
     # env VERITAS_CONF_CALIB；config.json conf_calib。
@@ -911,6 +918,12 @@ class Settings:
             s.arb_context = False
         elif ac in ("1", "true", "on", "yes"):
             s.arb_context = True
+        rt = (os.environ.get("VERITAS_RESOLUTION_TYPE_TIME")
+              or "").strip().lower()
+        if rt in ("0", "false", "off", "no"):
+            s.resolution_type_time = False
+        elif rt in ("1", "true", "on", "yes"):
+            s.resolution_type_time = True
         cc = (os.environ.get("VERITAS_CONF_CALIB") or "").strip().lower()
         if cc in ("0", "false", "off", "no"):
             s.conf_calib = False
@@ -1129,6 +1142,13 @@ class Settings:
                 s.arb_context = raw_ac
             elif isinstance(raw_ac, (int, str)):
                 s.arb_context = str(raw_ac).strip().lower() not in (
+                    "0", "false", "off", "no", "")
+        if "resolution_type_time" in data:
+            raw_rt = data.get("resolution_type_time")
+            if isinstance(raw_rt, bool):
+                s.resolution_type_time = raw_rt
+            elif isinstance(raw_rt, (int, str)):
+                s.resolution_type_time = str(raw_rt).strip().lower() not in (
                     "0", "false", "off", "no", "")
         if "conf_calib" in data:
             raw_cc = data.get("conf_calib")

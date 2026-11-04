@@ -20,6 +20,7 @@ from dataclasses import dataclass, field
 from app.core.confidence import evidence_strength_of
 from app.core.dup_check import duplicate_map, near_dup_pairs
 from app.core.evidence import Conclusion, Dossier
+from app.core.resolution_time_type import apply_tie_time_rule
 
 
 def _new_id() -> str:
@@ -311,6 +312,9 @@ def _stamp(resolution: Resolution, pair: ConflictPair, dossier: Dossier,
     resolution.decision_path = decision_path
     resolution.resolution_type = METHOD_TO_RESOLUTION_TYPE[decision_path]
     resolution.omissions = omissions
+    # C-155：双方均保留＋两侧信源时点可核且不同 ⇒ 类型回填「时效性」（只补标签，
+    # 不改 winner／method／rationale／强度；关旗＝一行都不做）。
+    apply_tie_time_rule(resolution, pair, dossier)
 
 
 def _break_tie_by_sources(resolution: Resolution, pair: ConflictPair,

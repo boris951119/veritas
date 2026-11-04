@@ -257,6 +257,9 @@ def run_case(spec: RunSpec | None = None,
     from app.core.precedent import set_evolve_value_change
     from app.core.relevance import set_relevance_soft_gate
     set_source_time_unified(bool(getattr(settings, "source_time_unified", True)))
+    # C-155：消解类型时效性回填（默认开；关＝逐字同改前）
+    from app.core.resolution_time_type import set_enabled as set_res_type_time
+    set_res_type_time(bool(getattr(settings, "resolution_type_time", True)))
     set_ledger_time_class(bool(getattr(settings, "ledger_time_class", True)))
     # C-78：对撞行派生标签（默认开；只影响报告渲染，不进提示词）
     set_ledger_outlier_tag(bool(getattr(settings, "ledger_outlier_tag", True)))
@@ -2136,6 +2139,9 @@ def run_official_case(case_dir: Path, questions: list[dict], out_dir: Path,
     # 须在 load_official_case 前落地（件③ 三态 detail 读旗）
     _settings = settings or Settings.from_env()
     set_source_time_unified(bool(getattr(_settings, "source_time_unified", True)))
+    # C-155：消解类型时效性回填（默认开；关＝逐字同改前）
+    from app.core.resolution_time_type import set_enabled as set_res_type_time
+    set_res_type_time(bool(getattr(_settings, "resolution_type_time", True)))
     set_ledger_time_class(bool(getattr(_settings, "ledger_time_class", True)))
     set_ledger_outlier_tag(bool(getattr(_settings, "ledger_outlier_tag", True)))
     set_metric_canon(bool(getattr(_settings, "metric_canon", True)))

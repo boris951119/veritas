@@ -856,7 +856,12 @@ def export_official(runs: list[tuple[dict, Dossier]], out_dir: Path) -> dict[str
                 + [slot_line]
             ),
             "detail": "basis 与重启条件在 Resolution.to_dict() 中不存在，已留空；"
-                      "resolution_type 仅由 method 映射表得到，未另算证据强度",
+                      "resolution_type 由 method／decision_path 映射表得到，"
+                      "未另算证据强度；唯一例外＝C-155 时效性回填：双方均保留"
+                      "（tie／轻裁）且两侧信源时点都可解且不同 ⇒ 类型落「时效性」"
+                      "并在 basis.sides_dates 记两侧日键（判据现场可核，"
+                      "winner／method／rationale／强度一行不动；"
+                      "VERITAS_RESOLUTION_TYPE_TIME=0 全关＝逐字同改前）",
         }, ensure_ascii=False, indent=2),
         encoding="utf-8")
     paths["causal_evidence"].write_text(

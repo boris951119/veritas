@@ -184,6 +184,7 @@ def arbitrate_light(pair: Any, dossier: Any, rebuts: dict | None,
         METHOD_TO_RESOLUTION_TYPE, Resolution, _stamp, _source_fold,
         compute_evidence_weight,
     )
+    from app.core.resolution_time_type import apply_tie_time_rule
 
     weight = compute_evidence_weight(pair, dossier)
     res = Resolution(
@@ -223,6 +224,8 @@ def arbitrate_light(pair: Any, dossier: Any, rebuts: dict | None,
         f"独立信源 {na} 与 {nb}（程序口径，只对比不裁决）")
     res.basis["loser_excluded"] = "双方均未排除（轻裁＝不判谁错）"
     res.resolution_type = METHOD_TO_RESOLUTION_TYPE["tie"]
+    # C-155：轻裁同为「双方均保留」，与 _stamp 共用同一条时效性回填（不另起判据）
+    apply_tie_time_rule(res, pair, dossier)
     return res
 
 

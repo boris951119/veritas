@@ -2443,3 +2443,16 @@ LLM 语义归并只按语义判，跨主体／缺指标／缺证据的组会被�
 ## 〔C-148〕2026-11-04 · 树22 仲裁上下文接线＋轻裁（对标市场优质做法）
 盘点（基 tip bf65d23）：仲裁输入＝程序侧证据强度（compute_evidence_weight 纯程序可复算，对标点已在场）＋信源时点（仅并列打破引导语，未写进裁决规则）＋双方质证＋冲突说明；公式＝prefer_stronger_side（强度差>0.20 否决票数、≤0.20 信源数破平）；少数意见保留已在场（apply_resolution 败方 dissent）。缺口＝C-146 分流与仲裁零接线（误读/跨日也全量 LLM 仲裁）、C-147 轮次与 C-145 否决史不进上下文、理由无结构化留痕。实现：app/core/arbitration_face.py（Settings.arb_context 默认开、env VERITAS_ARB_CONTEXT；arb_route 复用 triage_conflict_pair 同一函数同一输入口径——oral_misread/date_offset 轻裁、true_oppose/other 带 LLM；build_context 程序侧片段＝分流判定＋归并闸否决史＋质证轮次/闸旗摘要，零 LLM 确定性、不塞系数不读金标；arbitrate_light＝tie 形态轻裁、不叫模型、双方保 majority，basis 文案按真数重写不借 _stamp 的「≤margin」句式＝假不等式不进留痕）；Coordinator.arbitrate 加 context 关键字（None＝提示词逐字节同改前）；accounting["arbitration"]（逐对 route/llm_called/context_included/merge_veto_groups/终局；空态披露）折进 conflict_trace.json 顶层节＋官方导出 _fold_arbitration；两处 kept 白名单登记。仲裁公式/证据强度一行不动（冲突数值线 STOP）。
 真引用：`scripts/probe_c148_arb_face.py`（--stage arm|all；两案合成三臂（默认开/关旗/基树 bf65d23）＋路由轻裁单元腿＋关旗两树字节等证＋pytest 全套）。仪器备注（本票新增两条）：①字典键也可能是裸 uuid（basis/evidence_weight 按 CON-id 建 dict）——字节面只替换字符串值会漏键级，映射须同时走键；②面板三线程汇入序跨臂不定＋uuid 逐跑随机＝首现序匿名化被带偏，改内容锚定映射（CON 按 statement、EV 按引文＋结论角色、CFL 按议题＋双方角色）＋稳定面列表整项排序；同强度并列结论还会让 headline 顶替吃调度噪声，夹具两侧证据等级错开（A/B）去并列。pytest 改前 7 failed/1303 passed → 改后 7 failed/1315 passed（同名链，+12 全为本刀）。四把变异刀全有牙（K1 默认翻 1 红、K2 basis 塞「≤0.20」假不等式 2 红、K3 清空轻裁档 2 红、K4 摘白名单登记 1 红）。卫生扫描：本票 10 文件 233,080 个 25 字窗对官方六案 raw_documents 全文＝0 命中。
+
+
+## 〔C-155〕2026-11-05 · 主观 3.3 消解面：收「其他」＋补时效性判据
+
+Boyu 交卷要冲 3.3（10 分＝记录完整 5／依据可核 3／少数意见 2）。基 tip `3227200`，独立 worktree，零 LLM／零网络。
+
+先量不改（`scripts/probe_c155_resolution_face.py` compose 腿，对 `/tmp/s4runs/time-20261104-135401` 六案 18 题现抄）：3.3.1 三要素在场 175/175（另 1 对无裁决）、3.3.3 重启条件非空 175/175——**这两条本主线已达标，缺的只有 3.3.2**。3.3.2 类型分布＝语义可信度 56／多数投票 29／其他 90／时效性 0／来源优先级 0 ⇒ 「其他」占 90/175＝0.5143（旧批 HANDOFF 记 15/17＝0.882，分母不同只作参照）。整桶归因（当场数，不是猜）：90 条**全是 `decision_path=tie`**（机械无胜负、双方均保留 85＋轻裁口语误读 5），有胜方的记录一条不落。
+
+改法＝只补标签、不动判定（`app/core/resolution_time_type.py` 单函数 `apply_tie_time_rule`，两个挂点共用：`conflicts._stamp` tie 分支末尾＋`arbitration_face.arbitrate_light` 末尾，后者原本硬写 `其他`）。判据＝tie／轻裁（双方均保留）且**两侧信源时点都可解且集合不同** ⇒ 类型落官方「时效性」＋`basis.sides_dates` 记两侧首个日键＋`type_applies` 追一句短尾判据；`winner／method／rationale／证据强度／仲裁公式` 一行不动（数值冲突 STOP 不变）。诚实边界写进模块 docstring：有胜方不接管；只支持「胜方时点更新」的机械破平档现主线不存在，本刀不开。开关 `Settings.resolution_type_time` 默认 True，`VERITAS_RESOLUTION_TYPE_TIME=0`（config.json 同名键）＝一字段不改、不写新键。
+
+真 export 两臂对照（after 腿，同 18 题只差旗位）：记录 176/176；「其他」关旗 0.517 → 开旗 0.4318（Δ−0.0852，15 条 其他→时效性，例：吉隆 q_001 CFL-03cc02c17c 两侧 20260826↔20260829）；改动 15 条＝12 条只动 type／basis＋3 条**两臂本就触 800 字尺寸闸**、本次 rationale 少裁 15 字（119→104）；新掉字段／新 omission＝0。关旗同形三点取数（不空比空）：关旗臂 records sha8＝`9a3b90a5`＝基 tip 3227200 同 18 题导出 sha8 ⇒ 逐字节同改前，开旗臂 sha8＝`68f1dc10` 不同＝旗真在动面。裁决＝**PARTIAL**：同批 0.4318 未过目标线 0.40，跨批参照线 0.441 过；剩余 75 条「其他」的诚实原因现抄＝一侧或两侧信源无时点 49／两侧时点相同 26／「该改没改」0。天花板也现抄：这批产物信源 1458 份里可解时点 825 份＝**0.5658**，时效性能长多大由信源元数据决定，不由标签决定。
+
+已知代价与下一步（不在本刀做）：要把 0.4318 压进 0.40，剩两条路＝① 给信源补 published_at（数据面，非算法），② 开「时点更新者胜」的机械破平档（改判定，本票禁面，须另出单＋配对真跑）。pytest 7 failed／1332 passed／1 skipped＝基线同名不扩，＋16 全来自 `tests/test_c155_resolution_type_time.py`（含足迹上限格：追加文案 ≤80 字，防止为 3.3.2 的标签把 3.3.1 的清单／rationale 挤掉）。真引用：`scripts/probe_c155_resolution_face.py`（compose｜after｜assemble）。

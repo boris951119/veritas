@@ -1,0 +1,138 @@
+{
+ "ticket": "C-155",
+ "official_anchor": "3.3.1／3.3.2／3.3.3",
+ "gates_pre_written": {
+  "other_share_target": 0.4,
+  "half_of_old": 0.441,
+  "old_batch": {
+   "n_records": 17,
+   "other": 15,
+   "share": 0.882,
+   "source": "docs/HANDOFF.md:777（同探针旧批读数）"
+  }
+ },
+ "rule_source": "app.core.resolution_time_type.apply_tie_time_rule",
+ "root": "/tmp/s4runs/time-20261104-135401",
+ "source_date_coverage": {
+  "n_sources": 1458,
+  "n_with_resolvable_date": 825,
+  "coverage": 0.5658
+ },
+ "before": {
+  "n_pairs_total": 176,
+  "n_no_resolution": 1,
+  "n": 175,
+  "type_current": {
+   "多数投票": 29,
+   "来源优先级": 0,
+   "时效性": 0,
+   "语义可信度": 56,
+   "其他": 90
+  },
+  "out_of_five_current": {},
+  "other_share_current": 0.5143,
+  "elements_current": {
+   "清单": 175,
+   "结果": 175,
+   "理由": 175,
+   "三要素齐": 175,
+   "重启条件非空": 175,
+   "重启条件缺键": 0
+  },
+  "other_composition": {
+   "('tie', 'tie', '-', '-')": 85,
+   "('tie', 'tie', 'light_program', 'oral_misread')": 5
+  },
+  "type_after_rule": {
+   "多数投票": 29,
+   "来源优先级": 0,
+   "时效性": 15,
+   "语义可信度": 56,
+   "其他": 75
+  },
+  "other_share_after_rule": 0.4286,
+  "rule_moves": {
+   "其他→时效性": 15
+  },
+  "rule_errors": {},
+  "n_rule_applied": 15,
+  "invariant_applied_plus_untouched_eq_n": true,
+  "remaining_other": {
+   "n": 75,
+   "一侧或两侧信源无时点": 49,
+   "两侧有时刻但集合相同": 26,
+   "两侧时点可解且不同（不该出现＝规则漏）": 0,
+   "其中双方均保留": 75,
+   "其中有明确胜方": 0
+  }
+ },
+ "before_gate": {
+  "gate_other_share_target": 0.4,
+  "gate_half_of_old": 0.441,
+  "measured_share": 0.4286,
+  "meets_target": false,
+  "meets_half_of_old": true,
+  "old_batch": {
+   "n_records": 17,
+   "other": 15,
+   "share": 0.882,
+   "source": "docs/HANDOFF.md:777（同探针旧批读数）"
+  }
+ },
+ "after_export": {
+  "stage": "after",
+  "root": "/tmp/s4runs/time-20261104-135401",
+  "n_records_by_arm": {
+   "off": 176,
+   "on": 176
+  },
+  "records_sha8_by_arm": {
+   "off": "9a3b90a5",
+   "on": "68f1dc10"
+  },
+  "base_tip_records_sha8": "9a3b90a5",
+  "flag_off_equals_base_tip_records": true,
+  "type_by_arm": {
+   "off": {
+    "多数投票": 29,
+    "语义可信度": 56,
+    "其他": 91
+   },
+   "on": {
+    "多数投票": 29,
+    "语义可信度": 56,
+    "时效性": 15,
+    "其他": 76
+   }
+  },
+  "other_share_by_arm": {
+   "off": 0.517,
+   "on": 0.4318
+  },
+  "changed_records": 15,
+  "changed_only_type_or_basis": 12,
+  "already_truncated_trimmed_deeper": 3,
+  "new_field_loss_or_new_omission": 0,
+  "regression_detail": [],
+  "no_regression": true,
+  "three_elements_on": {
+   "清单": 176,
+   "结果": 176,
+   "理由": 175,
+   "重启条件": 175
+  }
+ },
+ "verdict": {
+  "verdict": "PARTIAL",
+  "why": [
+   "同批配对：关旗 0.517 → 开旗 0.4318（Δ-0.0852）",
+   "目标线≤0.4＝不过；跨批参照线≤0.441＝过（旧批 17 条≠现批 176 条，只作参照）",
+   "无字段丢失／无新增 omission"
+  ],
+  "measured_share": 0.4318,
+  "same_batch": {
+   "off": 0.517,
+   "on": 0.4318
+  }
+ }
+}
