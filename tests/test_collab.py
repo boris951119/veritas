@@ -164,8 +164,12 @@ def test_run_case_all_analysts_fail_raises(tmp_path):
 
 def test_merge_merges_synonyms_and_keeps_provenance():
     d = _dossier_with_two_conclusions()
-    # 第三条同义结论（乙的翻版，另一分析师）
-    con = Conclusion.create("结论乙的另一种说法", author="a2", id="CON-2")
+    # 第三条同义结论（乙的翻版，另一分析师）。
+    # C-145：LLM 归并组要过硬约束闸（同主体×同指标），故组内两条文案带
+    # 客户标签＋窄议题维（本测试锁的是溯源／去重机制，不是闸本身）；
+    # CON-1 文案只在本格内改写，不动共享夹具（仲裁格钉着「结论乙」）。
+    d.conclusion("CON-1").statement = "客户B存在回款风险"
+    con = Conclusion.create("客户B的回款存在困难", author="a2", id="CON-2")
     d.conclusions.append(con)
     d.add_evidence(EvidenceNode.create("CON-2", "全固态电芯的中试良率尚不足百分之四十",
                                        ["SRC1#s1"], id="EV-2"))

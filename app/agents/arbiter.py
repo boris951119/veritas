@@ -55,6 +55,9 @@ class Coordinator:
         一致性分量被单署名压死。多人组物化：新建组结论继承成员全部证据
         （证据转挂、同引文去重）与全体署名，成员标 status="merged" 保留溯源。
         LLM 段失败只降级掉①，②照常。
+        C-145：①的每个 ≥2 人组先过归并硬约束闸（同主体×同指标×可核验，
+        随 VERITAS_CONFLICT_TRACE；否决组成员保持独立并留痕），
+        ②的分组键本来就含这三条，不重复过闸。
         """
         active = [i for i in conclusion_ids if self._is_active(dossier, i)]
         if len(active) < 2:
@@ -64,6 +67,11 @@ class Coordinator:
                 "n_cross_author_groups": 0,
                 "note": f"活跃结论仅 {len(active)} 条，未进入归并环节",
             }
+            # C-145：旗开留「闸在场」账（无组可查＝核查 0 组）
+            from app.core.merge_gate import write_accounting
+            write_accounting(
+                dossier, n_checked=0, blocked=[],
+                note=f"活跃结论仅 {len(active)} 条，未进入归并环节")
             return active
         groups: list = []
         try:
@@ -80,6 +88,13 @@ class Coordinator:
         merged_ids: list[str] = []
         llm_group_ids: list[str] = []
         seen: set[str] = set()
+        # C-145：归并硬约束闸（随 VERITAS_CONFLICT_TRACE；旗关＝改前行为）
+        from app.core.merge_gate import (
+            block_row, check_group, gate_active, write_accounting,
+        )
+        gate_on = gate_active()
+        n_checked = 0
+        blocked_rows: list[dict] = []
         for group in groups:
             member_ids = [str(m) for m in group.get("member_ids") or []
                           if str(m) in active and str(m) not in seen]
@@ -89,6 +104,17 @@ class Coordinator:
             if len(member_ids) == 1:
                 merged_ids.append(member_ids[0])  # 单人组：原结论即代表
                 continue
+            n_checked += 1
+            if gate_on:
+                check = check_group(dossier, member_ids)
+                if not check["ok"]:
+                    # 整组否决：成员保持独立（宁可留重复，不可错并），
+                    # 正反判断随后由冲突配对接住（同主体极性对立→强制候选）
+                    blocked_rows.append(
+                        block_row(member_ids, check,
+                                  index=len(blocked_rows) + 1))
+                    merged_ids.extend(member_ids)
+                    continue
             members = [dossier.conclusion(m) for m in member_ids]
             statement = str(group.get("statement") or "").strip() \
                 or members[0].statement
@@ -97,6 +123,9 @@ class Coordinator:
             llm_group_ids.append(group_con.id)
         # LLM 漏掉的结论兜底收回（不允许任何结论无组丢失）
         merged_ids.extend(i for i in active if i not in seen)
+        if gate_on:
+            write_accounting(dossier, n_checked=n_checked,
+                             blocked=blocked_rows)
         return self._mechanical_pass(dossier, merged_ids, llm_group_ids)
 
     @staticmethod

@@ -338,6 +338,10 @@ def apply_conflict_trace(
         "classes": sorted(CONFLICT_CLASSES),
         "dispositions": sorted(DISPOSITIONS),
     }
+    # C-145：归并硬约束闸否决事件随面走（独立节，不冒充第四类冲突）
+    from app.core.merge_gate import fold_into_trace_payload
+    fold_into_trace_payload(
+        payload, getattr(dossier, "accounting", None))
     bad = audit_forbidden_keys(payload)
     if bad:
         raise ValueError(f"conflict_trace hits forbidden: {bad}")

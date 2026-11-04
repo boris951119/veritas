@@ -2428,3 +2428,7 @@ C-115 旗开算得出、出口被剥：conflict_trace 键不在两处 kept 白�
 ## 〔C-145a〕2026-11-04 · VERITAS_CONFLICT_TRACE 出厂默认开
 
 Boyu 拍板路演可见：默认 True（关＝env=0）。只翻默认＋文档／图面表述＋守护翻向；附带真修＝conflict_trace_enabled() 无参回退改走 Settings.from_env()（原回退 env 未设恒 False，翻默认后仲裁／导出挂点会静默不走，新格当场咬住）。真引用：`scripts/probe_c145a_default_on.py`（--stage export|assemble；base/branch 双树同形等证＋demo 冒烟＋C-134 同尺保险腿）。
+
+## 〔C-145〕2026-11-04 · 归并硬约束闸（同主体×同指标×可核验才合）
+
+LLM 语义归并只按语义判，跨主体／缺指标／缺证据的组会被并成「已一致」并灌水一致性分量。闸只看 LLM 段 ≥2 人组（机械归并键已含三腿，不重复过闸）：extract_subject 全员相等＋narrow_topic 全员同维＋极性不反＋证据在场，任一不过＝整组否决成员保独立（宁可留重复不可错并），事件入 accounting["merge_gate"] 并折进 conflict_trace.json 顶层 merge_gate 节（不冒充第四类冲突）。闸随 VERITAS_CONFLICT_TRACE（C-145a 起默认开；env=0 全关＝改前归并行为逐字节一致）。判定／打分／选段零改动（冲突数值线 STOP）。真引用：`scripts/probe_c145_merge_gate.py`（--stage faces|assemble；直驱三组＋一案冒烟＋两树关旗字节等证；字节面把 uuid 生成 id 按各文件首现序匿名化——物化归并组跨进程本就字节不可比，预存在行为）。

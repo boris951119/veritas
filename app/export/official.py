@@ -866,6 +866,7 @@ def export_official(runs: list[tuple[dict, Dossier]], out_dir: Path) -> dict[str
     from app.core.conflict_trace import conflict_trace_enabled, summarize_trace
     if conflict_trace_enabled():
         merged: list[dict] = []
+        gate_sections: list[dict] = []
         for question, dossier in runs:
             bucket = (getattr(dossier, "accounting", None) or {}).get(
                 "conflict_trace")
@@ -876,31 +877,73 @@ def export_official(runs: list[tuple[dict, Dossier]], out_dir: Path) -> dict[str
                         item["question_id"] = str(
                             (question or {}).get("question_id") or "")
                         merged.append(item)
+            # C-145：归并硬约束闸否决事件随面走（每题一节）
+            mg = (getattr(dossier, "accounting", None) or {}).get("merge_gate")
+            if isinstance(mg, dict):
+                item = dict(mg)
+                item["question_id"] = str(
+                    (question or {}).get("question_id") or "")
+                gate_sections.append(item)
         # C-143：借 C-123 窄修②——旗开必写回放面（空态也写＋原因句）。
         # 「本次未检出」不等于「资料无冲突」；零对撞静默＝两态在产物面上同形。
         detail = ("C-115 三类冲突＋处置留痕回放面；"
                   "conflict_class∈{same_window,cross_day,unknown_time,"
                   "unclassified}；disposition∈{keep,dissent,undecided}")
         paths["conflict_trace"] = out_dir / "conflict_trace.json"
+        n_gate_blocked = sum(int(g.get("n_blocked") or 0)
+                             for g in gate_sections)
+        if n_gate_blocked:
+            detail = detail + "；merge_gate＝C-145 归并硬约束闸否决事件" \
+                              "（缺主体／缺指标／不可核验／极性对立不放行为「已一致」）"
         if merged:
+            payload: dict = {
+                "records": merged,
+                "summary": summarize_trace(merged),
+                "detail": detail,
+            }
+            if gate_sections:
+                payload["merge_gate"] = (
+                    gate_sections[0] if len(gate_sections) == 1
+                    else {"n_questions": len(gate_sections),
+                          "n_groups_checked": sum(
+                              int(g.get("n_groups_checked") or 0)
+                              for g in gate_sections),
+                          "n_blocked": sum(
+                              int(g.get("n_blocked") or 0)
+                              for g in gate_sections),
+                          "blocked": [
+                              dict(b, question_id=g.get("question_id", ""))
+                              for g in gate_sections
+                              for b in (g.get("blocked") or [])]})
             paths["conflict_trace"].write_text(
-                json.dumps({
-                    "records": merged,
-                    "summary": summarize_trace(merged),
-                    "detail": detail,
-                }, ensure_ascii=False, indent=2),
+                json.dumps(payload, ensure_ascii=False, indent=2),
                 encoding="utf-8",
             )
         else:
             n_q = len(runs)
+            empty_payload: dict = {
+                "records": [],
+                "summary": summarize_trace([]),
+                "empty_state": True,
+                "detail": detail + f" 本次 {n_q} 题均未检出冲突对或事实对撞"
+                          "（未检出＝本次研判没有碰到，不等于资料无冲突）。",
+            }
+            if gate_sections:
+                empty_payload["merge_gate"] = (
+                    gate_sections[0] if len(gate_sections) == 1
+                    else {"n_questions": len(gate_sections),
+                          "n_groups_checked": sum(
+                              int(g.get("n_groups_checked") or 0)
+                              for g in gate_sections),
+                          "n_blocked": sum(
+                              int(g.get("n_blocked") or 0)
+                              for g in gate_sections),
+                          "blocked": [
+                              dict(b, question_id=g.get("question_id", ""))
+                              for g in gate_sections
+                              for b in (g.get("blocked") or [])]})
             paths["conflict_trace"].write_text(
-                json.dumps({
-                    "records": [],
-                    "summary": summarize_trace([]),
-                    "empty_state": True,
-                    "detail": detail + f" 本次 {n_q} 题均未检出冲突对或事实对撞"
-                              "（未检出＝本次研判没有碰到，不等于资料无冲突）。",
-                }, ensure_ascii=False, indent=2),
+                json.dumps(empty_payload, ensure_ascii=False, indent=2),
                 encoding="utf-8",
             )
     paths["notes"].write_text(

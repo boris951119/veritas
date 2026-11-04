@@ -450,7 +450,9 @@ def run_case(spec: RunSpec | None = None,
                          "window_ledger",
                          # C-143：冲突留痕键登记（与主路径白名单保持一致；
                          # 早退路径无 LLM 留痕，登记只为两处清单不漂移）
-                         "conflict_trace")}
+                         "conflict_trace",
+                         # C-145：归并硬约束闸账本键（同上＝清单不漂移登记）
+                         "merge_gate")}
         dossier.accounting = {
             **kept,
             "elapsed_s": round(time.monotonic() - t0, 1),
@@ -1004,7 +1006,9 @@ def run_case(spec: RunSpec | None = None,
                      "kg_submit_skipped",
                      "cite_accept", "submit_top7",
                      # C-143：C-115 冲突留痕键活到产物（旗关不写键＝无差异）
-                     "conflict_trace")}
+                     "conflict_trace",
+                     # C-145：归并硬约束闸账本键活到产物（旗关不写键＝无差异）
+                     "merge_gate")}
     dossier.accounting = {
         **kept,
         "elapsed_s": round(time.monotonic() - t0, 1),

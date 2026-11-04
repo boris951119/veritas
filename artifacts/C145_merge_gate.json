@@ -1,0 +1,192 @@
+{
+  "verdict": {
+    "verdict": "YES",
+    "gates": {
+      "g1_闸在场_默认开零调用": true,
+      "g2_误并例等于0": true,
+      "g3_该合的合": true,
+      "g4_关旗与改前同形": true,
+      "g5_改前错并在场_夹具有判别力": true
+    },
+    "delta": {
+      "branch_default_vs_base_default_多并组数": 4,
+      "branch_default_n_majority": 5,
+      "base_default_n_majority": 3,
+      "branch_default_wrong_merged": [],
+      "base_default_wrong_merged": [
+        "CON-2",
+        "CON-3",
+        "CON-4",
+        "CON-5"
+      ]
+    }
+  },
+  "branch": {
+    "unit": {
+      "n_active": 5,
+      "n_groups_checked": 3,
+      "n_blocked": 2,
+      "blocked_fail_legs": [
+        [
+          "subject_mismatch"
+        ],
+        [
+          "missing_subject"
+        ]
+      ],
+      "wrong_merged_ids": [],
+      "good_group_merged": true,
+      "ok": true
+    },
+    "smoke": {
+      "case": "/var/folders/v8/1vkqg3zj6yd750ztjq9x0n_c0000gn/T/c145_smoke_q3owtc_0/case",
+      "n_groups_checked": 3,
+      "n_blocked": 1,
+      "blocked_fail_legs": [
+        [
+          "missing_subject"
+        ]
+      ],
+      "n_cross_author_groups": 2,
+      "n_merged_members": 4,
+      "wrong_merged_ids": [],
+      "n_majority": 4,
+      "report_accounting_has_key": true,
+      "trace_file": true,
+      "trace_section": true,
+      "trace_blocked": 1,
+      "ok": true
+    },
+    "arm_default": {
+      "flag": null,
+      "n_majority": 5,
+      "n_merged_members": 2,
+      "wrong_merged_ids": [],
+      "acc_merge_gate": true,
+      "acc_conflict_trace": true,
+      "trace_file": true,
+      "trace_merge_gate_section": true,
+      "trace_empty_state": true,
+      "file_hashes": {
+        "chain.jsonl": "34ba0563",
+        "official/causal_evidence.json": "4f53cda1",
+        "official/conclusions.json": "9648750b",
+        "official/confidence.json": "708f4012",
+        "official/conflict_resolution.json": "2c83bbcb",
+        "official/conflict_trace.json": "669e2bab",
+        "official/evidence.json": "ca9d2030",
+        "official/字段说明.md": "d870c8e1",
+        "progress.json": "d6c9989a",
+        "report.json": "45c549cc",
+        "report.md": "91d02f43"
+      }
+    },
+    "arm_off": {
+      "flag": "0",
+      "n_majority": 3,
+      "n_merged_members": 6,
+      "wrong_merged_ids": [
+        "CON-2",
+        "CON-3",
+        "CON-4",
+        "CON-5"
+      ],
+      "acc_merge_gate": false,
+      "acc_conflict_trace": false,
+      "trace_file": false,
+      "trace_merge_gate_section": false,
+      "trace_empty_state": null,
+      "file_hashes": {
+        "chain.jsonl": "085e4d26",
+        "official/causal_evidence.json": "4f53cda1",
+        "official/conclusions.json": "5bec86a6",
+        "official/confidence.json": "79158b87",
+        "official/conflict_resolution.json": "2c83bbcb",
+        "official/evidence.json": "ca9d2030",
+        "official/字段说明.md": "1e4fceda",
+        "progress.json": "06f27a64",
+        "report.json": "e33177c3",
+        "report.md": "cf05fd6a"
+      }
+    }
+  },
+  "base": {
+    "unit": null,
+    "unit_absent_reason": "ModuleNotFoundError: No module named 'app.core.merge_gate'",
+    "smoke": {
+      "case": "/var/folders/v8/1vkqg3zj6yd750ztjq9x0n_c0000gn/T/c145_smoke_6ijz24ds/case",
+      "n_groups_checked": null,
+      "n_blocked": null,
+      "blocked_fail_legs": [],
+      "n_cross_author_groups": 2,
+      "n_merged_members": 6,
+      "wrong_merged_ids": [
+        "CON-7ee6aa43f361",
+        "CON-e048733c6359"
+      ],
+      "n_majority": 3,
+      "report_accounting_has_key": false,
+      "trace_file": true,
+      "trace_section": false,
+      "trace_blocked": null,
+      "ok": false
+    },
+    "arm_default": {
+      "flag": null,
+      "n_majority": 3,
+      "n_merged_members": 6,
+      "wrong_merged_ids": [
+        "CON-2",
+        "CON-3",
+        "CON-4",
+        "CON-5"
+      ],
+      "acc_merge_gate": false,
+      "acc_conflict_trace": true,
+      "trace_file": true,
+      "trace_merge_gate_section": false,
+      "trace_empty_state": true,
+      "file_hashes": {
+        "chain.jsonl": "1df4d2aa",
+        "official/causal_evidence.json": "4f53cda1",
+        "official/conclusions.json": "5bec86a6",
+        "official/confidence.json": "79158b87",
+        "official/conflict_resolution.json": "2c83bbcb",
+        "official/conflict_trace.json": "51ad06a8",
+        "official/evidence.json": "ca9d2030",
+        "official/字段说明.md": "1e4fceda",
+        "progress.json": "88b4845c",
+        "report.json": "3b114f0a",
+        "report.md": "cf05fd6a"
+      }
+    },
+    "arm_off": {
+      "flag": "0",
+      "n_majority": 3,
+      "n_merged_members": 6,
+      "wrong_merged_ids": [
+        "CON-2",
+        "CON-3",
+        "CON-4",
+        "CON-5"
+      ],
+      "acc_merge_gate": false,
+      "acc_conflict_trace": false,
+      "trace_file": false,
+      "trace_merge_gate_section": false,
+      "trace_empty_state": null,
+      "file_hashes": {
+        "chain.jsonl": "fb13e526",
+        "official/causal_evidence.json": "4f53cda1",
+        "official/conclusions.json": "5bec86a6",
+        "official/confidence.json": "79158b87",
+        "official/conflict_resolution.json": "2c83bbcb",
+        "official/evidence.json": "ca9d2030",
+        "official/字段说明.md": "1e4fceda",
+        "progress.json": "a4700c8e",
+        "report.json": "e33177c3",
+        "report.md": "cf05fd6a"
+      }
+    }
+  }
+}
