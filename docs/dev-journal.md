@@ -2443,3 +2443,26 @@ LLM 语义归并只按语义判，跨主体／缺指标／缺证据的组会被�
 ## 〔C-148〕2026-11-04 · 树22 仲裁上下文接线＋轻裁（对标市场优质做法）
 盘点（基 tip bf65d23）：仲裁输入＝程序侧证据强度（compute_evidence_weight 纯程序可复算，对标点已在场）＋信源时点（仅并列打破引导语，未写进裁决规则）＋双方质证＋冲突说明；公式＝prefer_stronger_side（强度差>0.20 否决票数、≤0.20 信源数破平）；少数意见保留已在场（apply_resolution 败方 dissent）。缺口＝C-146 分流与仲裁零接线（误读/跨日也全量 LLM 仲裁）、C-147 轮次与 C-145 否决史不进上下文、理由无结构化留痕。实现：app/core/arbitration_face.py（Settings.arb_context 默认开、env VERITAS_ARB_CONTEXT；arb_route 复用 triage_conflict_pair 同一函数同一输入口径——oral_misread/date_offset 轻裁、true_oppose/other 带 LLM；build_context 程序侧片段＝分流判定＋归并闸否决史＋质证轮次/闸旗摘要，零 LLM 确定性、不塞系数不读金标；arbitrate_light＝tie 形态轻裁、不叫模型、双方保 majority，basis 文案按真数重写不借 _stamp 的「≤margin」句式＝假不等式不进留痕）；Coordinator.arbitrate 加 context 关键字（None＝提示词逐字节同改前）；accounting["arbitration"]（逐对 route/llm_called/context_included/merge_veto_groups/终局；空态披露）折进 conflict_trace.json 顶层节＋官方导出 _fold_arbitration；两处 kept 白名单登记。仲裁公式/证据强度一行不动（冲突数值线 STOP）。
 真引用：`scripts/probe_c148_arb_face.py`（--stage arm|all；两案合成三臂（默认开/关旗/基树 bf65d23）＋路由轻裁单元腿＋关旗两树字节等证＋pytest 全套）。仪器备注（本票新增两条）：①字典键也可能是裸 uuid（basis/evidence_weight 按 CON-id 建 dict）——字节面只替换字符串值会漏键级，映射须同时走键；②面板三线程汇入序跨臂不定＋uuid 逐跑随机＝首现序匿名化被带偏，改内容锚定映射（CON 按 statement、EV 按引文＋结论角色、CFL 按议题＋双方角色）＋稳定面列表整项排序；同强度并列结论还会让 headline 顶替吃调度噪声，夹具两侧证据等级错开（A/B）去并列。pytest 改前 7 failed/1303 passed → 改后 7 failed/1315 passed（同名链，+12 全为本刀）。四把变异刀全有牙（K1 默认翻 1 红、K2 basis 塞「≤0.20」假不等式 2 红、K3 清空轻裁档 2 红、K4 摘白名单登记 1 红）。卫生扫描：本票 10 文件 233,080 个 25 字窗对官方六案 raw_documents 全文＝0 命中。
+
+## 〔C-153〕2026-11-05 · 交卷 JSON／组包冒烟（盲测前夜）
+
+真引用：`scripts/probe_c153_submit_smoke.py`（`--zip LABEL=PATH --rundir LABEL=PATH --causal-zip LABEL=PATH --note LABEL=文本`，可多腿同读；出厂默认当场读 `app/config.py`，产物只落计数与 sha 面）。
+
+背景与范围：明天上午发**无金标盲测数据**，要端到端跑通并按赛方格式交 JSON。本票不冲冲突 13 分、不动 cite_accept、不改任何默认旗；问题是「生产出口在 tip 上能不能出合格交卷包」，所以只做两件事——组包＋机械核查。结论 YES（两腿都组包成功），**`app/` 与 `config.json` 零 diff**：没发现「导出层缺键导致 zip 失败」，最小适配条款没启用。
+
+腿 A（旧跑次组包）＝复用 C-149 那批六案跑次 `/tmp/s4runs/time-20261104-135401` 走 `scripts/build_submission_zip.py --run-dir … --out …`（注意旗标是 `--out`）：zip 188,325 字节／43 成员／6 专题夹／MANIFEST 48 行；包根七文件齐（01-测试报告／02-使用说明／03-技术方案／DEMO_NOTE／MANIFEST／字段说明／部署文档）。逐专题四核心条数（evidence／conclusions／confidence／conflict_resolution）＝吉隆 48／3／21／35、中美 41／3／42／45、刘翔 43／3／43／20、AI171 41／3／25／10、柬泰 39／3／33／37、王虹 28／3／32／29，每专题另带 conflict_trace.json。支撑/冲突事实形状合计 74 项＝全部只含 `{doc_id, para_id}`（缺键 0、多余键 0、类型错 0、空列表 4）。定位回溯合计＝支撑键 21＋冲突键 53，去重后 67 个键在官方卷内可定位（doc 缺 0／para 缺 0／空段 0）；引文逐字腿 178 行＝逐字命中 167／不匹配 11／段取不到 0。跑次真数（现拆 rows.jsonl）＝18 题合计 19,643.0 s、1,058 calls、1,703,777 tokens。
+
+腿 B（新鲜单案端到端）＝`S4_OUT=/tmp/c153runs … scripts/measure_s4_gates.py time --case 刘翔`，三题全跑本机 14B：跑次根 `/tmp/c153runs/time-20261104-221631`，逐题 elapsed_s 合计 8,262.0 s（2270.9／3834.3／2156.8）、233 calls、324,056 tokens、结论 13／26／22 条；再对新跑次组包＝zip 55,943 字节／13 成员／1 专题，四核心 48／3／32／47，定位 9 支撑＋11 冲突＝19 键全在卷（缺 0），引文 35 行＝逐字 34／不匹配 1。腿 B 与 veritas-c151 的王虹跑批 22:16–22:54 同机并发，墙钟被拖高＝方向保守（只会高估，不会低估）；litellm 启动期远程 cost-map 三次读取超时后回落本地备份，模型请求全部走本机 Ollama＋假密钥（安全闸由跑批脚本钉）＝**「零网络」这句话本票不写**。
+
+本票最重要的三条读数（都是仪器自纠，账记我）：
+① **定位语义**——官方 `raw_documents.json` 里段键 `para_id` 本身就是复合串「doc_001#p1」，段文本＝`content[char_start:char_end]`；第一版探针又按 `#` 切了一层，结果 178/178 全部落空、报成「段取不到」＝假红。改成直接用原始 `(doc_id, para_id)` 索引后才是 167 逐字／0 取不到。人工抽检（刘翔 q_001，doc_002 第 3 段）确认可回溯到 66 字官方段；案内匹配（doc_id 跨案不互斥，别做全局表）。
+② **空比空**——`--official-root` 传错时定位腿取到 0 个键，「全部可回溯」会以 0/0 的形式成立并判 NO 靠运气。判据改成：定位腿 0 键一律不给过，并当场披露「官方侧装载专题 N/M」，把「包是空的」和「官方根没匹配上」分开；这条用错根重跑验证过会触发＝刀有牙。禁品腿同样钉：扫描成员数为 0 或官方素材散列面为 0 文件 ⇒ 该核直接 False。
+③ **禁品口径与打包出口同尺**——`_scan_forbidden` 放过说明文档里解释键名的文字、只把 JSON 里 `"relevance_override":"非空值"` 算污染、human 痕迹只认 .json/.jsonl；本票先干扫发现包根 01-测试报告／02-使用说明确实带 `relevance_override` 字样（功能说明），若按「字面量在场即红」会误报。扩面后对**整包成员**比官方原始素材 sha256（腿 A 扫 43 个成员／对官方 20 个文件的散列面；腿 B 扫 13 个），反向刀＝往包里塞一份官方 `raw_documents.json` ⇒ 该核立刻红、总判定翻 NO。
+
+两处口径订正：墙钟——工单一处写「墙钟异常降 PARTIAL」、一处写「只记账不改算法」，官方 30 分钟线早已撤，本票忠于后者，移进 `time_notes` 只记账（单案腿才对 1,800 s 记一行；多案腿 A 不套单案线），不参与判档。支撑面窄——`app/export/official.py` 的 `_supporting_facts` 只映射「第一条 status==majority 且 evidence_ids 非空」那条结论的证据段（headline 兜底才铺全案卷），所以支撑键天生只有 21／9，冲突侧反而 53／11；这是既有出厂行为，本票禁止改默认，只记录。
+
+`--with-causal` 旁证（脚本当场数行，不抄 MANIFEST 的原因句＝防自指）：195,433 字节包里 causal_evidence.json 6 份／24 行，四要素（intervention／outcome／population／counterfactual）**任一非空 0 行、全非空 0 行**，24 行全带降级原因句＝已知 task #163 的空壳形态；所以交件默认不装因果件，装了也只是空壳。
+
+下一步（明天盲测的两条进料路，经代码核过）：`measure_s4_gates.py` 的 time 模式**依赖案目录里有 `conclusions.json`**（题面从它现拆），无金标盲测数据必须另备 `questions.json` 走生产路 `python -m app.pipeline <案目录> --out <跑次根>/<案名>`（`raw_documents.json` 在场即自动走官方适配，产出的正是 `build_submission_zip.py` 要的 questions/q_*/report.json 形状）。量级提醒：本机 14B 单案三题 8,262 s，六案十八题按此量级 ≳11 小时＝今晚只能选案跑或夜跑串行。
+
+验证与卫生：`git diff --stat -- app/` 空＝生产码零改动、`config.json` 不在库面；pytest 全套 `7 failed, 1316 passed, 1 skipped`（7 个红名与基线 `3227200` 逐字相同＝红不扩；其中 c37 那一族五颗（except-pass 登记双向＋零引用等登记面，含 knife8／knife9）是历史积欠，本票新脚本入库后重跑该文件仍是这五颗、 offender 名单没多出 `probe_c153_submit_smoke.py`）。跑批前 `env | grep -c "^VERITAS_"`＝0（出厂旗未被环境变量覆盖）。卫生扫描＝本票两份产物 36,202 个 25 字窗对官方六案 `raw_documents.json` 全文（6 份／去空白 1,308,446 字）＝**0 命中**；产物面只落 doc_id／para_id／计数／字节数／题目号，切片一律只记字符数，不含结论原文。
