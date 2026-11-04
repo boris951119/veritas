@@ -126,3 +126,58 @@ def missing_links_cn(ev: EvidenceNode) -> list[str]:
         return []
     return [MISSING_LINK_CN[x] for x in (ev.missing_links or [])
             if x in MISSING_LINK_CN]
+
+
+VERDICT_DIRECT = "直接因果"
+VERDICT_INDIRECT = "间接传导"
+VERDICT_CORRELATION = "仅相关"
+VERDICT_VALUES = (VERDICT_DIRECT, VERDICT_INDIRECT, VERDICT_CORRELATION)
+
+
+def verdict_of(ev: EvidenceNode) -> dict:
+    """官方加分 4.1.1 三档判定＝**只读已有结构化事实**的机械派生。
+
+    对齐锚点原文「对『X 导致 Y』类结论明确区分直接因果／间接传导／仅相关，
+    并说明判定理由（如是否存在中间环节缺失）」。这里不新造任何内容：
+    输入只有 ``relation／declared_relation／mechanism_completeness／
+    missing_links／causal_claim 四要素／degraded_reason``（都是生产侧已落的字段），
+    卡没填就是没填——判到「仅相关」时理由点名缺哪几项，并给出升档条件
+    （＝补齐后由 ``apply_causal_claim_gates`` 复评，通过才回到间接／直接）。
+    """
+    normalize_claim_fields(ev)
+    missing = claim_missing_keys(ev.causal_claim)
+    cn_links = missing_links_cn(ev)
+    declared_causal = (ev.declared_relation == "causation"
+                       or ev.relation == RelationKind.CAUSATION)
+    causation_kept = ev.relation == RelationKind.CAUSATION
+
+    if causation_kept and ev.mechanism_completeness == "direct" and not missing:
+        verdict = VERDICT_DIRECT
+        reason = "主张卡四要素齐＋自述无中间环节缺失，且未被降为相关"
+    elif (causation_kept and ev.mechanism_completeness == "indirect"
+            and not missing):
+        verdict = VERDICT_INDIRECT
+        reason = (f"仍按因果记，但中间环节未闭合（缺：{'、'.join(cn_links)}）"
+                  if cn_links else
+                  "仍按因果记且自述为间接，但未指明缺哪一环（missing_links 空）")
+    else:
+        verdict = VERDICT_CORRELATION
+        if ev.degraded_reason:
+            reason = f"原声明因果，已按闸降级：{ev.degraded_reason}"
+        elif not declared_causal:
+            reason = "未声明因果关系（relation=correlation），按仅相关记"
+        else:
+            reason = "因果主张卡不完整，按仅相关记"
+
+    steps: list[str] = []
+    if missing:
+        steps.append("补齐主张卡缺项：" + "、".join(missing))
+    if (ev.mechanism_completeness == "indirect"
+            and declared_causal and not cn_links):
+        steps.append("indirect 须指明缺环（mediator／temporal／contrast）")
+    if declared_causal and not causation_kept:
+        steps.append("补齐后由 apply_causal_claim_gates 复评，通过才回到间接／直接")
+    if not steps:
+        steps.append("已达标，无需升档")
+    return {"因果判定": verdict, "判定理由": reason,
+            "升档条件": "；".join(steps)}

@@ -112,6 +112,15 @@ schema 自定（附录 A 将「因果证据 JSON」列为非必须加分项；ru
 - missing_links：mediator／temporal／contrast 列表（indirect 时有意义）。
 - design_tier：rct｜quasi｜observational｜claim_only（只展示，不进分）。
 - degraded_reason：降级成因；未降级为空串。
+- 因果判定｜判定理由｜升档条件（C-158，对齐加分锚点 4.1.1「区分直接因果／间接传导／
+  仅相关并说明判定理由」）：三档由 `app/core/causal_claim.verdict_of` 从上面这些
+  **已有字段**机械派生，不新造内容、不调模型——卡没填就是没填，判到「仅相关」时
+  理由点名缺哪几项，升档条件＝补齐缺项后由 `apply_causal_claim_gates` 复评。
+- 证据等级／证据等级_官方／证据等级_本结论全部／等级参与加权（C-158，对齐 4.1.2）：
+  等级与 evidence.json 同一套取值（A｜B｜C｜D），官方口径名由
+  `level_official_of` 一个函数出（不另起映射）；「等级参与加权」一句写明
+  evidence_score = LEVEL_WEIGHT[等级] × base × 人工权重（app/core/confidence.py），
+  本件只复述口径、未另算分。
 - evidence_refs：该结论下所有「带因果主张」证据的
   {doc_id, para_id, quote} 列表（quote 为证据原引文摘要，不新造）。
 - confidence：复用该结论当前 confidence 数值（与 confidence.json 同源字段
@@ -728,6 +737,19 @@ def _causal_evidence_rows(question_id: str, dossier: Dossier) -> list[dict]:
                 })
         # confidence 复用现值：不调用 row_score_detail、不改合式
         conf_val = float(con.confidence) if con is not None else 0.0
+        # C-158：4.1.1 三档判定＋理由＝机械派生（verdict_of 只读已有结构化字段，
+        # 卡没填就是没填，判到「仅相关」时理由点名缺项）；4.1.2 等级沿用
+        # evidence 面同一套 level／level_official_of 口径，不另起一档。
+        from app.core.causal_claim import verdict_of
+
+        verdict = verdict_of(primary)
+
+        def _lvl_str(e: Any) -> str:
+            lv = getattr(e, "level", None)
+            return str(getattr(lv, "value", lv) or "")
+
+        lvl_val = _lvl_str(primary)
+        levels = sorted({_lvl_str(e) for e in evs if _lvl_str(e)})
         rows.append({
             "conclusion_id": cid,
             "question_id": question_id,
@@ -740,6 +762,15 @@ def _causal_evidence_rows(question_id: str, dossier: Dossier) -> list[dict]:
             "missing_links": list(primary.missing_links or []),
             "design_tier": primary.design_tier or "claim_only",
             "degraded_reason": primary.degraded_reason or "",
+            "因果判定": verdict["因果判定"],
+            "判定理由": verdict["判定理由"],
+            "升档条件": verdict["升档条件"],
+            "证据等级": lvl_val,
+            "证据等级_官方": level_official_of(lvl_val),
+            "证据等级_本结论全部": levels,
+            "等级参与加权": (
+                "evidence_score = LEVEL_WEIGHT[等级] × base × 人工权重"
+                "（app/core/confidence.py），本件只复述口径、未另算分"),
             "evidence_refs": refs,
             "confidence": conf_val,
         })
