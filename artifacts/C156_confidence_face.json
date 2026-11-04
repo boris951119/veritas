@@ -1,0 +1,827 @@
+{
+  "checks": {
+    "卫生命中全为同一处脚手架": true,
+    "卫生新增面零散文命中": true,
+    "基线量尺产物在场": true,
+    "字段说明关旗也在": true,
+    "字段说明开旗多两块": true,
+    "腿①三臂每案卷都取到件（空比空禁）[time-20261104-135401]": true,
+    "腿①三臂每案卷都取到件（空比空禁）[time-20261104-221631]": true,
+    "腿①比较集当场量过（改前树重复导出≥3）[time-20261104-135401]": true,
+    "腿①比较集当场量过（改前树重复导出≥3）[time-20261104-221631]": true,
+    "腿①确定件跨树逐字节等[time-20261104-135401]": true,
+    "腿①确定件跨树逐字节等[time-20261104-221631]": true,
+    "腿①飘件内容级仍等[time-20261104-135401]": true,
+    "腿①飘件内容级仍等[time-20261104-221631]": true,
+    "腿③两类键全覆盖[time-20261104-135401]": true,
+    "腿③两类键全覆盖[time-20261104-221631]": true,
+    "腿③开旗不改档分布[time-20261104-135401]": true,
+    "腿③开旗不改档分布[time-20261104-221631]": true,
+    "腿③开旗行数>0[time-20261104-135401]": true,
+    "腿③开旗行数>0[time-20261104-221631]": true,
+    "腿③开旗＝关旗同一批行[time-20261104-135401]": true,
+    "腿③开旗＝关旗同一批行[time-20261104-221631]": true,
+    "腿③档计数与行数自洽（两臂各档之和＝行数）[time-20261104-135401]": true,
+    "腿③档计数与行数自洽（两臂各档之和＝行数）[time-20261104-221631]": true,
+    "零导出失败臂": true
+  },
+  "failed_checks": [],
+  "hygiene": {
+    "control_preexisting": {
+      "tests/test_c33_submission_side.py": {
+        "hit_runs": 3,
+        "hits": 51,
+        "prose_hits": 0,
+        "prose_runs": 0,
+        "windows": 10135
+      },
+      "tests/test_official_roundtrip.py": {
+        "hit_runs": 10,
+        "hits": 98,
+        "prose_hits": 0,
+        "prose_runs": 0,
+        "windows": 28924
+      }
+    },
+    "corpus_chars_norm": 2053325,
+    "excluded": "本产物 md 自身（扫描后才写）＝不自比；官方语料正文不读进产物",
+    "face_chars_norm": 66177,
+    "faces_counted": 261,
+    "hit_runs": 1,
+    "hits": 17,
+    "official_cases": 6,
+    "official_root": "/Users/liuboyu/Desktop/veritas-testcases/样例集-拓尔思-20261012",
+    "prose_hits": 0,
+    "prose_runs": 0,
+    "root_present": true,
+    "windows": 66153
+  },
+  "notes": {
+    "primary_criterion": "腿①＝同一份输入案卷，改前树默认导出 vs 本树关旗导出：改前树自量确定的件逐字节 sha 全等，量到飘的件内容级 sha 全等＋点名披露",
+    "secondary": "腿②＝与跑次历史产物比：不等只记因（题序／旗代际），不参与判档",
+    "zero_model": "全程只读现跑次 report.json＋纯导出函数，无模型调用、无网络"
+  },
+  "roots": {
+    "/tmp/c153runs/time-20261104-221631": {
+      "arms_complete": true,
+      "band_abs_off_pooled": {
+        "中": 31,
+        "低": 1
+      },
+      "band_abs_on_pooled": {
+        "中": 31,
+        "低": 1
+      },
+      "band_face_unchanged_by_flag": true,
+      "band_rel_off_pooled": {
+        "中": 10,
+        "低": 11,
+        "高": 11
+      },
+      "band_rel_on_pooled": {
+        "中": 10,
+        "低": 11,
+        "高": 11
+      },
+      "basis_rows": 32,
+      "byte_all_equal": true,
+      "canon_all_equal": true,
+      "cases": 1,
+      "determinism_distinct_sha_per_file": {
+        "causal_evidence.json": 1,
+        "conclusions.json": 1,
+        "confidence.json": 1,
+        "conflict_resolution.json": 1,
+        "conflict_trace.json": 3,
+        "evidence.json": 1,
+        "字段说明.md": 1
+      },
+      "distinct_terms_pooled": {
+        "agreement": 1,
+        "chain": 4,
+        "coverage": 5,
+        "strength": 15
+      },
+      "export_errors": [],
+      "flag_off_rows": 32,
+      "flag_on_rows": 32,
+      "legacy_side_evidence": {
+        "刘翔编制“二选一”事件": {
+          "legacy_equal": true,
+          "stored_sha16": "5b19f91acf4e1637"
+        }
+      },
+      "max_delta": 0.0001,
+      "n_authors_ge2_rows": 0,
+      "n_panel_values": [
+        "3"
+      ],
+      "per_case_compare": {
+        "刘翔编制“二选一”事件": {
+          "byte_all_equal": true,
+          "byte_equal": {
+            "causal_evidence.json": true,
+            "conclusions.json": true,
+            "confidence.json": true,
+            "conflict_resolution.json": true,
+            "conflict_trace.json": null,
+            "evidence.json": true,
+            "字段说明.md": true
+          },
+          "canon_all_equal": true,
+          "canon_equal": {
+            "causal_evidence.json": true,
+            "conclusions.json": true,
+            "confidence.json": true,
+            "conflict_resolution.json": true,
+            "conflict_trace.json": true,
+            "evidence.json": true,
+            "字段说明.md": true
+          },
+          "excluded_as_drift": [
+            "conflict_trace.json"
+          ],
+          "files": [
+            "causal_evidence.json",
+            "conclusions.json",
+            "confidence.json",
+            "conflict_resolution.json",
+            "conflict_trace.json",
+            "evidence.json",
+            "字段说明.md"
+          ],
+          "n_byte_compared": 6
+        }
+      },
+      "per_case_off": {
+        "刘翔编制“二选一”事件": {
+          "band_abs": {
+            "中": 31,
+            "低": 1
+          },
+          "band_rel": {
+            "中": 10,
+            "低": 11,
+            "高": 11
+          },
+          "basis_rows": 0,
+          "distinct_terms": {
+            "agreement": 1,
+            "chain": 4,
+            "coverage": 5,
+            "strength": 15
+          },
+          "max_delta": null,
+          "n_authors_ge2_rows": 0,
+          "n_panel_values": [
+            "None"
+          ],
+          "n_rows": 32,
+          "recompute_rows": 0,
+          "reproducible_rows": 0
+        }
+      },
+      "per_case_on": {
+        "刘翔编制“二选一”事件": {
+          "band_abs": {
+            "中": 31,
+            "低": 1
+          },
+          "band_rel": {
+            "中": 10,
+            "低": 11,
+            "高": 11
+          },
+          "basis_rows": 32,
+          "distinct_terms": {
+            "agreement": 1,
+            "chain": 4,
+            "coverage": 5,
+            "strength": 15
+          },
+          "max_delta": 0.0001,
+          "n_authors_ge2_rows": 0,
+          "n_panel_values": [
+            "3"
+          ],
+          "n_rows": 32,
+          "recompute_rows": 32,
+          "reproducible_rows": 32
+        }
+      },
+      "questions": 3,
+      "reproducible_rows": 32
+    },
+    "/tmp/s4runs/time-20261104-135401": {
+      "arms_complete": true,
+      "band_abs_off_pooled": {
+        "中": 183,
+        "低": 10,
+        "高": 3
+      },
+      "band_abs_on_pooled": {
+        "中": 183,
+        "低": 10,
+        "高": 3
+      },
+      "band_face_unchanged_by_flag": true,
+      "band_rel_off_pooled": {
+        "中": 67,
+        "低": 60,
+        "高": 69
+      },
+      "band_rel_on_pooled": {
+        "中": 67,
+        "低": 60,
+        "高": 69
+      },
+      "basis_rows": 196,
+      "byte_all_equal": true,
+      "canon_all_equal": true,
+      "cases": 6,
+      "determinism_distinct_sha_per_file": {
+        "causal_evidence.json": 1,
+        "conclusions.json": 1,
+        "confidence.json": 1,
+        "conflict_resolution.json": 1,
+        "conflict_trace.json": 3,
+        "evidence.json": 1,
+        "字段说明.md": 1
+      },
+      "distinct_terms_pooled": {
+        "agreement": 1,
+        "chain": 6,
+        "coverage": 5,
+        "strength": 16
+      },
+      "export_errors": [],
+      "flag_off_rows": 196,
+      "flag_on_rows": 196,
+      "legacy_side_evidence": {
+        "2026·8·26 吉隆口岸泥石流灾害": {
+          "legacy_equal": true,
+          "stored_sha16": "ef76b16e7232d2c1"
+        },
+        "中美AI事故预警提议（2026.9）": {
+          "legacy_equal": true,
+          "stored_sha16": "1459b084517965d9"
+        },
+        "刘翔编制“二选一”事件": {
+          "legacy_equal": true,
+          "stored_sha16": "682720245742c3ac"
+        },
+        "印度航空 AI171 空难（2025.6–2026.5）": {
+          "legacy_equal": true,
+          "stored_sha16": "2cdb45a0917c0327"
+        },
+        "柬泰边境争端（2025.12–2026.9）": {
+          "legacy_equal": true,
+          "stored_sha16": "8637440cd3f85b75"
+        },
+        "王虹“北大discouraged”事件": {
+          "legacy_equal": true,
+          "stored_sha16": "ddf7db2940a9d9eb"
+        }
+      },
+      "max_delta": 0.0001,
+      "n_authors_ge2_rows": 0,
+      "n_panel_values": [
+        "3"
+      ],
+      "per_case_compare": {
+        "2026·8·26 吉隆口岸泥石流灾害": {
+          "byte_all_equal": true,
+          "byte_equal": {
+            "causal_evidence.json": true,
+            "conclusions.json": true,
+            "confidence.json": true,
+            "conflict_resolution.json": true,
+            "conflict_trace.json": null,
+            "evidence.json": true,
+            "字段说明.md": true
+          },
+          "canon_all_equal": true,
+          "canon_equal": {
+            "causal_evidence.json": true,
+            "conclusions.json": true,
+            "confidence.json": true,
+            "conflict_resolution.json": true,
+            "conflict_trace.json": true,
+            "evidence.json": true,
+            "字段说明.md": true
+          },
+          "excluded_as_drift": [
+            "conflict_trace.json"
+          ],
+          "files": [
+            "causal_evidence.json",
+            "conclusions.json",
+            "confidence.json",
+            "conflict_resolution.json",
+            "conflict_trace.json",
+            "evidence.json",
+            "字段说明.md"
+          ],
+          "n_byte_compared": 6
+        },
+        "中美AI事故预警提议（2026.9）": {
+          "byte_all_equal": true,
+          "byte_equal": {
+            "causal_evidence.json": true,
+            "conclusions.json": true,
+            "confidence.json": true,
+            "conflict_resolution.json": true,
+            "conflict_trace.json": null,
+            "evidence.json": true,
+            "字段说明.md": true
+          },
+          "canon_all_equal": true,
+          "canon_equal": {
+            "causal_evidence.json": true,
+            "conclusions.json": true,
+            "confidence.json": true,
+            "conflict_resolution.json": true,
+            "conflict_trace.json": true,
+            "evidence.json": true,
+            "字段说明.md": true
+          },
+          "excluded_as_drift": [
+            "conflict_trace.json"
+          ],
+          "files": [
+            "causal_evidence.json",
+            "conclusions.json",
+            "confidence.json",
+            "conflict_resolution.json",
+            "conflict_trace.json",
+            "evidence.json",
+            "字段说明.md"
+          ],
+          "n_byte_compared": 6
+        },
+        "刘翔编制“二选一”事件": {
+          "byte_all_equal": true,
+          "byte_equal": {
+            "causal_evidence.json": true,
+            "conclusions.json": true,
+            "confidence.json": true,
+            "conflict_resolution.json": true,
+            "conflict_trace.json": null,
+            "evidence.json": true,
+            "字段说明.md": true
+          },
+          "canon_all_equal": true,
+          "canon_equal": {
+            "causal_evidence.json": true,
+            "conclusions.json": true,
+            "confidence.json": true,
+            "conflict_resolution.json": true,
+            "conflict_trace.json": true,
+            "evidence.json": true,
+            "字段说明.md": true
+          },
+          "excluded_as_drift": [
+            "conflict_trace.json"
+          ],
+          "files": [
+            "causal_evidence.json",
+            "conclusions.json",
+            "confidence.json",
+            "conflict_resolution.json",
+            "conflict_trace.json",
+            "evidence.json",
+            "字段说明.md"
+          ],
+          "n_byte_compared": 6
+        },
+        "印度航空 AI171 空难（2025.6–2026.5）": {
+          "byte_all_equal": true,
+          "byte_equal": {
+            "causal_evidence.json": true,
+            "conclusions.json": true,
+            "confidence.json": true,
+            "conflict_resolution.json": true,
+            "conflict_trace.json": null,
+            "evidence.json": true,
+            "字段说明.md": true
+          },
+          "canon_all_equal": true,
+          "canon_equal": {
+            "causal_evidence.json": true,
+            "conclusions.json": true,
+            "confidence.json": true,
+            "conflict_resolution.json": true,
+            "conflict_trace.json": true,
+            "evidence.json": true,
+            "字段说明.md": true
+          },
+          "excluded_as_drift": [
+            "conflict_trace.json"
+          ],
+          "files": [
+            "causal_evidence.json",
+            "conclusions.json",
+            "confidence.json",
+            "conflict_resolution.json",
+            "conflict_trace.json",
+            "evidence.json",
+            "字段说明.md"
+          ],
+          "n_byte_compared": 6
+        },
+        "柬泰边境争端（2025.12–2026.9）": {
+          "byte_all_equal": true,
+          "byte_equal": {
+            "causal_evidence.json": true,
+            "conclusions.json": true,
+            "confidence.json": true,
+            "conflict_resolution.json": true,
+            "conflict_trace.json": null,
+            "evidence.json": true,
+            "字段说明.md": true
+          },
+          "canon_all_equal": true,
+          "canon_equal": {
+            "causal_evidence.json": true,
+            "conclusions.json": true,
+            "confidence.json": true,
+            "conflict_resolution.json": true,
+            "conflict_trace.json": true,
+            "evidence.json": true,
+            "字段说明.md": true
+          },
+          "excluded_as_drift": [
+            "conflict_trace.json"
+          ],
+          "files": [
+            "causal_evidence.json",
+            "conclusions.json",
+            "confidence.json",
+            "conflict_resolution.json",
+            "conflict_trace.json",
+            "evidence.json",
+            "字段说明.md"
+          ],
+          "n_byte_compared": 6
+        },
+        "王虹“北大discouraged”事件": {
+          "byte_all_equal": true,
+          "byte_equal": {
+            "causal_evidence.json": true,
+            "conclusions.json": true,
+            "confidence.json": true,
+            "conflict_resolution.json": true,
+            "conflict_trace.json": null,
+            "evidence.json": true,
+            "字段说明.md": true
+          },
+          "canon_all_equal": true,
+          "canon_equal": {
+            "causal_evidence.json": true,
+            "conclusions.json": true,
+            "confidence.json": true,
+            "conflict_resolution.json": true,
+            "conflict_trace.json": true,
+            "evidence.json": true,
+            "字段说明.md": true
+          },
+          "excluded_as_drift": [
+            "conflict_trace.json"
+          ],
+          "files": [
+            "causal_evidence.json",
+            "conclusions.json",
+            "confidence.json",
+            "conflict_resolution.json",
+            "conflict_trace.json",
+            "evidence.json",
+            "字段说明.md"
+          ],
+          "n_byte_compared": 6
+        }
+      },
+      "per_case_off": {
+        "2026·8·26 吉隆口岸泥石流灾害": {
+          "band_abs": {
+            "中": 19,
+            "低": 2
+          },
+          "band_rel": {
+            "中": 7,
+            "低": 7,
+            "高": 7
+          },
+          "basis_rows": 0,
+          "distinct_terms": {
+            "agreement": 1,
+            "chain": 4,
+            "coverage": 3,
+            "strength": 13
+          },
+          "max_delta": null,
+          "n_authors_ge2_rows": 0,
+          "n_panel_values": [
+            "None"
+          ],
+          "n_rows": 21,
+          "recompute_rows": 0,
+          "reproducible_rows": 0
+        },
+        "中美AI事故预警提议（2026.9）": {
+          "band_abs": {
+            "中": 39,
+            "低": 1,
+            "高": 2
+          },
+          "band_rel": {
+            "中": 14,
+            "低": 11,
+            "高": 17
+          },
+          "basis_rows": 0,
+          "distinct_terms": {
+            "agreement": 1,
+            "chain": 5,
+            "coverage": 1,
+            "strength": 10
+          },
+          "max_delta": null,
+          "n_authors_ge2_rows": 0,
+          "n_panel_values": [
+            "None"
+          ],
+          "n_rows": 42,
+          "recompute_rows": 0,
+          "reproducible_rows": 0
+        },
+        "刘翔编制“二选一”事件": {
+          "band_abs": {
+            "中": 41,
+            "低": 2
+          },
+          "band_rel": {
+            "中": 13,
+            "低": 15,
+            "高": 15
+          },
+          "basis_rows": 0,
+          "distinct_terms": {
+            "agreement": 1,
+            "chain": 6,
+            "coverage": 3,
+            "strength": 11
+          },
+          "max_delta": null,
+          "n_authors_ge2_rows": 0,
+          "n_panel_values": [
+            "None"
+          ],
+          "n_rows": 43,
+          "recompute_rows": 0,
+          "reproducible_rows": 0
+        },
+        "印度航空 AI171 空难（2025.6–2026.5）": {
+          "band_abs": {
+            "中": 22,
+            "低": 3
+          },
+          "band_rel": {
+            "中": 9,
+            "低": 8,
+            "高": 8
+          },
+          "basis_rows": 0,
+          "distinct_terms": {
+            "agreement": 1,
+            "chain": 5,
+            "coverage": 5,
+            "strength": 16
+          },
+          "max_delta": null,
+          "n_authors_ge2_rows": 0,
+          "n_panel_values": [
+            "None"
+          ],
+          "n_rows": 25,
+          "recompute_rows": 0,
+          "reproducible_rows": 0
+        },
+        "柬泰边境争端（2025.12–2026.9）": {
+          "band_abs": {
+            "中": 31,
+            "低": 2
+          },
+          "band_rel": {
+            "中": 11,
+            "低": 11,
+            "高": 11
+          },
+          "basis_rows": 0,
+          "distinct_terms": {
+            "agreement": 1,
+            "chain": 5,
+            "coverage": 3,
+            "strength": 13
+          },
+          "max_delta": null,
+          "n_authors_ge2_rows": 0,
+          "n_panel_values": [
+            "None"
+          ],
+          "n_rows": 33,
+          "recompute_rows": 0,
+          "reproducible_rows": 0
+        },
+        "王虹“北大discouraged”事件": {
+          "band_abs": {
+            "中": 31,
+            "高": 1
+          },
+          "band_rel": {
+            "中": 13,
+            "低": 8,
+            "高": 11
+          },
+          "basis_rows": 0,
+          "distinct_terms": {
+            "agreement": 1,
+            "chain": 2,
+            "coverage": 3,
+            "strength": 9
+          },
+          "max_delta": null,
+          "n_authors_ge2_rows": 0,
+          "n_panel_values": [
+            "None"
+          ],
+          "n_rows": 32,
+          "recompute_rows": 0,
+          "reproducible_rows": 0
+        }
+      },
+      "per_case_on": {
+        "2026·8·26 吉隆口岸泥石流灾害": {
+          "band_abs": {
+            "中": 19,
+            "低": 2
+          },
+          "band_rel": {
+            "中": 7,
+            "低": 7,
+            "高": 7
+          },
+          "basis_rows": 21,
+          "distinct_terms": {
+            "agreement": 1,
+            "chain": 4,
+            "coverage": 3,
+            "strength": 13
+          },
+          "max_delta": 0.0001,
+          "n_authors_ge2_rows": 0,
+          "n_panel_values": [
+            "3"
+          ],
+          "n_rows": 21,
+          "recompute_rows": 21,
+          "reproducible_rows": 21
+        },
+        "中美AI事故预警提议（2026.9）": {
+          "band_abs": {
+            "中": 39,
+            "低": 1,
+            "高": 2
+          },
+          "band_rel": {
+            "中": 14,
+            "低": 11,
+            "高": 17
+          },
+          "basis_rows": 42,
+          "distinct_terms": {
+            "agreement": 1,
+            "chain": 5,
+            "coverage": 1,
+            "strength": 10
+          },
+          "max_delta": 0.0001,
+          "n_authors_ge2_rows": 0,
+          "n_panel_values": [
+            "3"
+          ],
+          "n_rows": 42,
+          "recompute_rows": 42,
+          "reproducible_rows": 42
+        },
+        "刘翔编制“二选一”事件": {
+          "band_abs": {
+            "中": 41,
+            "低": 2
+          },
+          "band_rel": {
+            "中": 13,
+            "低": 15,
+            "高": 15
+          },
+          "basis_rows": 43,
+          "distinct_terms": {
+            "agreement": 1,
+            "chain": 6,
+            "coverage": 3,
+            "strength": 11
+          },
+          "max_delta": 0.0001,
+          "n_authors_ge2_rows": 0,
+          "n_panel_values": [
+            "3"
+          ],
+          "n_rows": 43,
+          "recompute_rows": 43,
+          "reproducible_rows": 43
+        },
+        "印度航空 AI171 空难（2025.6–2026.5）": {
+          "band_abs": {
+            "中": 22,
+            "低": 3
+          },
+          "band_rel": {
+            "中": 9,
+            "低": 8,
+            "高": 8
+          },
+          "basis_rows": 25,
+          "distinct_terms": {
+            "agreement": 1,
+            "chain": 5,
+            "coverage": 5,
+            "strength": 16
+          },
+          "max_delta": 0.0001,
+          "n_authors_ge2_rows": 0,
+          "n_panel_values": [
+            "3"
+          ],
+          "n_rows": 25,
+          "recompute_rows": 25,
+          "reproducible_rows": 25
+        },
+        "柬泰边境争端（2025.12–2026.9）": {
+          "band_abs": {
+            "中": 31,
+            "低": 2
+          },
+          "band_rel": {
+            "中": 11,
+            "低": 11,
+            "高": 11
+          },
+          "basis_rows": 33,
+          "distinct_terms": {
+            "agreement": 1,
+            "chain": 5,
+            "coverage": 3,
+            "strength": 13
+          },
+          "max_delta": 0.0001,
+          "n_authors_ge2_rows": 0,
+          "n_panel_values": [
+            "3"
+          ],
+          "n_rows": 33,
+          "recompute_rows": 33,
+          "reproducible_rows": 33
+        },
+        "王虹“北大discouraged”事件": {
+          "band_abs": {
+            "中": 31,
+            "高": 1
+          },
+          "band_rel": {
+            "中": 13,
+            "低": 8,
+            "高": 11
+          },
+          "basis_rows": 32,
+          "distinct_terms": {
+            "agreement": 1,
+            "chain": 2,
+            "coverage": 3,
+            "strength": 9
+          },
+          "max_delta": 0.0001,
+          "n_authors_ge2_rows": 0,
+          "n_panel_values": [
+            "3"
+          ],
+          "n_rows": 32,
+          "recompute_rows": 32,
+          "reproducible_rows": 32
+        }
+      },
+      "questions": 18,
+      "reproducible_rows": 196
+    }
+  },
+  "ticket": "C-156",
+  "verdict": "YES"
+}
