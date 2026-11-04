@@ -731,6 +731,11 @@ def apply_conflict_trace(
     # C-147：多轮质证留痕随面走（独立节，不冒充第四类冲突）
     from app.core.rebuttal_rounds import fold_into_trace_payload as _fold_rebuttal
     _fold_rebuttal(payload, getattr(dossier, "accounting", None))
+    # C-148：仲裁路由／轻裁留痕随面走（顶层独立节；旗关无键＝零差异）
+    from app.core.arbitration_face import (
+        fold_into_trace_payload as _fold_arbitration,
+    )
+    _fold_arbitration(payload, getattr(dossier, "accounting", None))
     bad = audit_forbidden_keys(payload)
     if bad:
         raise ValueError(f"conflict_trace hits forbidden: {bad}")

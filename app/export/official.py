@@ -868,6 +868,7 @@ def export_official(runs: list[tuple[dict, Dossier]], out_dir: Path) -> dict[str
         merged: list[dict] = []
         gate_sections: list[dict] = []
         rebuttal_sections: list[dict] = []
+        arbitration_sections: list[dict] = []
         for question, dossier in runs:
             bucket = (getattr(dossier, "accounting", None) or {}).get(
                 "conflict_trace")
@@ -892,6 +893,14 @@ def export_official(runs: list[tuple[dict, Dossier]], out_dir: Path) -> dict[str
                 item["question_id"] = str(
                     (question or {}).get("question_id") or "")
                 rebuttal_sections.append(item)
+            # C-148：仲裁路由／轻裁留痕随面走（每题一节）
+            arb = (getattr(dossier, "accounting", None) or {}).get(
+                "arbitration")
+            if isinstance(arb, dict):
+                item = dict(arb)
+                item["question_id"] = str(
+                    (question or {}).get("question_id") or "")
+                arbitration_sections.append(item)
         # C-143：借 C-123 窄修②——旗开必写回放面（空态也写＋原因句）。
         # 「本次未检出」不等于「资料无冲突」；零对撞静默＝两态在产物面上同形。
         from app.core.conflict_trace import TRIAGE_CLASSES
@@ -933,6 +942,30 @@ def export_official(runs: list[tuple[dict, Dossier]], out_dir: Path) -> dict[str
                                    for s in rebuttal_sections),
             }
 
+        def _fold_arbitration(target: dict) -> None:
+            # C-148：仲裁路由／轻裁留痕随面走（顶层独立节；多题聚合求和）
+            if not arbitration_sections:
+                return
+            if len(arbitration_sections) == 1:
+                target["arbitration"] = arbitration_sections[0]
+                return
+            arb_rows = [
+                dict(p, question_id=s.get("question_id", ""))
+                for s in arbitration_sections
+                for p in (s.get("pairs") or [])]
+            target["arbitration"] = {
+                "n_questions": len(arbitration_sections),
+                "n_pairs": sum(int(s.get("n_pairs") or 0)
+                               for s in arbitration_sections),
+                "n_light": sum(int(s.get("n_light") or 0)
+                               for s in arbitration_sections),
+                "n_llm": sum(int(s.get("n_llm") or 0)
+                             for s in arbitration_sections),
+                "pairs": arb_rows,
+                "empty_state": all(bool(s.get("empty_state"))
+                                   for s in arbitration_sections),
+            }
+
         if merged:
             payload: dict = {
                 "records": merged,
@@ -954,6 +987,7 @@ def export_official(runs: list[tuple[dict, Dossier]], out_dir: Path) -> dict[str
                               for g in gate_sections
                               for b in (g.get("blocked") or [])]})
             _fold_rebuttal(payload)
+            _fold_arbitration(payload)
             paths["conflict_trace"].write_text(
                 json.dumps(payload, ensure_ascii=False, indent=2),
                 encoding="utf-8",
@@ -982,6 +1016,7 @@ def export_official(runs: list[tuple[dict, Dossier]], out_dir: Path) -> dict[str
                               for g in gate_sections
                               for b in (g.get("blocked") or [])]})
             _fold_rebuttal(empty_payload)
+            _fold_arbitration(empty_payload)
             paths["conflict_trace"].write_text(
                 json.dumps(empty_payload, ensure_ascii=False, indent=2),
                 encoding="utf-8",

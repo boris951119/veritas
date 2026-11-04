@@ -456,8 +456,14 @@ class Coordinator:
     # -- 仲裁 ---------------------------------------------------------------
 
     def arbitrate(self, dossier: Dossier, pair: ConflictPair,
-                  rebuts: dict | None = None) -> Resolution | None:
-        """程序证据加权 + LLM 说理 → 裁决；失败返回 None（冲突未消解）。"""
+                  rebuts: dict | None = None,
+                  context: str | None = None) -> Resolution | None:
+        """程序证据加权 + LLM 说理 → 裁决；失败返回 None（冲突未消解）。
+
+        C-148：``context``＝程序侧上下文片段（分流判定／归并闸否决史／
+        质证留痕），非空时追加在 user 提示词尾部；None（旗关）＝与改前
+        逐字节同形。裁决规则与证据强度公式一行不动（冲突数值线 STOP）。
+        """
         weight = compute_evidence_weight(pair, dossier)
 
         def _dates_of(cid: str) -> str:
@@ -497,6 +503,8 @@ class Coordinator:
                 f"{wrap_agent_output((rebuts or {}).get('b') or '（未质证）')}\n\n"
                 f"冲突说明：{pair.description or pair.topic or '结论对立'}"
             )
+            if context:
+                user = f"{user}\n\n{context}"
             data = extract_json(self.client.chat(self.model, [
                 {"role": "system", "content": ARBITER_SYSTEM},
                 {"role": "user", "content": user},

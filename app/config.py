@@ -583,6 +583,14 @@ class Settings:
     rebuttal_multiround: bool = True
     rebuttal_rounds: int = 2
 
+    # C-148：仲裁上下文接线＋轻裁（对标市场做法：可解释裁决、程序可复算输入、
+    # 轻案不升仲裁、少数意见保留）。默认 True＝比赛需要；关＝
+    # VERITAS_ARB_CONTEXT=0（config.json arb_context）＝逐字节同改前
+    # （oral_misread／date_offset 仍走 LLM 仲裁、无上下文片段、
+    # accounting 无 arbitration 键）。仲裁公式／证据强度一行不动
+    # （冲突数值线 STOP）。
+    arb_context: bool = True
+
     # C-116：置信档校准闸（Q6）。默认 False；开＝VERITAS_CONF_CALIB=1。
     # 高档可解释门槛→可降档；不改合式分数／不往 pack 塞系数。
     # env VERITAS_CONF_CALIB；config.json conf_calib。
@@ -898,6 +906,11 @@ class Settings:
         mrr = (os.environ.get("VERITAS_REBUTTAL_ROUNDS") or "").strip()
         if mrr.isdigit() and int(mrr) >= 1:
             s.rebuttal_rounds = int(mrr)
+        ac = (os.environ.get("VERITAS_ARB_CONTEXT") or "").strip().lower()
+        if ac in ("0", "false", "off", "no"):
+            s.arb_context = False
+        elif ac in ("1", "true", "on", "yes"):
+            s.arb_context = True
         cc = (os.environ.get("VERITAS_CONF_CALIB") or "").strip().lower()
         if cc in ("0", "false", "off", "no"):
             s.conf_calib = False
@@ -1110,6 +1123,13 @@ class Settings:
                 s.rebuttal_rounds = raw_mrr
             elif isinstance(raw_mrr, str) and raw_mrr.strip().isdigit():
                 s.rebuttal_rounds = int(raw_mrr.strip())
+        if "arb_context" in data:
+            raw_ac = data.get("arb_context")
+            if isinstance(raw_ac, bool):
+                s.arb_context = raw_ac
+            elif isinstance(raw_ac, (int, str)):
+                s.arb_context = str(raw_ac).strip().lower() not in (
+                    "0", "false", "off", "no", "")
         if "conf_calib" in data:
             raw_cc = data.get("conf_calib")
             if isinstance(raw_cc, bool):

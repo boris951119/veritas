@@ -454,7 +454,9 @@ def run_case(spec: RunSpec | None = None,
                          # C-145：归并硬约束闸账本键（同上＝清单不漂移登记）
                          "merge_gate",
                          # C-147：多轮质证账本键（同上＝清单不漂移登记）
-                         "rebuttal")}
+                         "rebuttal",
+                         # C-148：仲裁路由／轻裁账本键（同上＝清单不漂移登记）
+                         "arbitration")}
         dossier.accounting = {
             **kept,
             "elapsed_s": round(time.monotonic() - t0, 1),
@@ -1012,7 +1014,9 @@ def run_case(spec: RunSpec | None = None,
                      # C-145：归并硬约束闸账本键活到产物（旗关不写键＝无差异）
                      "merge_gate",
                      # C-147：多轮质证账本键活到产物（旗关不写键＝无差异）
-                     "rebuttal")}
+                     "rebuttal",
+                     # C-148：仲裁路由／轻裁账本键活到产物（旗关不写键＝无差异）
+                     "arbitration")}
     dossier.accounting = {
         **kept,
         "elapsed_s": round(time.monotonic() - t0, 1),
@@ -1134,6 +1138,18 @@ def _run_collaboration(dossier: Dossier, ctx: CollabCtx) -> None:
     rr, rr_note = (rounds_requested() if multi_on else (1, ""))
     rb_rows: list[dict] = []
 
+    # C-148：仲裁路由＋程序上下文。旗关（VERITAS_ARB_CONTEXT=0）＝与改前
+    # 逐字节同形（不调分流、不拼片段、误读／跨日照旧走 LLM 仲裁、
+    # accounting 无 arbitration 键）。仲裁公式一行不动（冲突数值线 STOP）。
+    from app.core.arbitration_face import (
+        ROUTE_LLM, ROUTE_LIGHT, arb_enabled, arb_route, arbitrate_light,
+        build_context, merge_veto_face,
+        pair_row as arb_pair_row,
+        write_accounting as arb_write_accounting,
+    )
+    arb_on = arb_enabled()
+    arb_rows: list[dict] = []
+
     for pair in pairs:
         esc = escalation_for(pair, dossier) if multi_on else None
         if esc is not None and esc.get("escalate"):
@@ -1146,7 +1162,23 @@ def _run_collaboration(dossier: Dossier, ctx: CollabCtx) -> None:
             if esc is not None:
                 rb_rows.append(pair_row(
                     pair, esc, rounds=rr, round_rows=None))
-        pair.resolution = coordinator.arbitrate(dossier, pair, rebuts)
+        arb_ctx = None
+        if arb_on:
+            route_row = arb_route(pair, dossier)
+            if route_row["route"] == ROUTE_LIGHT:
+                pair.resolution = arbitrate_light(pair, dossier, rebuts,
+                                                  route_row)
+            else:
+                arb_ctx = build_context(pair, dossier, route_row, rb_rows)
+                pair.resolution = coordinator.arbitrate(
+                    dossier, pair, rebuts, context=arb_ctx)
+            arb_rows.append(arb_pair_row(
+                pair, route_row, pair.resolution,
+                context_included=bool(arb_ctx),
+                llm_called=route_row["route"] == ROUTE_LLM,
+                veto=merge_veto_face(dossier, [pair.a_id, pair.b_id])))
+        else:
+            pair.resolution = coordinator.arbitrate(dossier, pair, rebuts)
         problems = apply_resolution(pair, dossier)
         dossier.conflicts.append(pair.to_dict())
         if esc is not None and esc.get("escalate") and rb_rows:
@@ -1168,6 +1200,8 @@ def _run_collaboration(dossier: Dossier, ctx: CollabCtx) -> None:
     if multi_on:
         write_accounting(dossier, rows=rb_rows, n_pairs=len(pairs),
                          rounds=rr, rounds_note=rr_note)
+    if arb_on:
+        arb_write_accounting(dossier, rows=arb_rows, n_pairs=len(pairs))
     # C-115：仲裁后刷新留痕（并入 conflict_pair；旗关不写）
     from app.core.conflict_trace import apply_conflict_trace, conflict_trace_enabled
     if conflict_trace_enabled():
