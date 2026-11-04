@@ -1,0 +1,1845 @@
+{
+ "ticket": "C-153",
+ "official_root": "/Users/liuboyu/Desktop/veritas-testcases/样例集-拓尔思-20261012",
+ "legs": [
+  {
+   "leg": "A",
+   "zip": "/tmp/c153_submit_from_c149/veritas-交件-c153腿A.zip",
+   "zip_bytes": 188325,
+   "run_dir": "/tmp/s4runs/time-20261104-135401",
+   "n_members": 43,
+   "n_topics": 6,
+   "root_files": [
+    "01-测试报告.md",
+    "02-使用说明.md",
+    "03-技术方案.md",
+    "DEMO_NOTE.txt",
+    "MANIFEST.txt",
+    "字段说明.md",
+    "部署文档.md"
+   ],
+   "manifest_lines": 48,
+   "per_topic": [
+    {
+     "topic": "2026·8·26 吉隆口岸泥石流灾害",
+     "slug": "jilong",
+     "official_loaded": true,
+     "official_docs": 137,
+     "files": [
+      "conclusions.json",
+      "confidence.json",
+      "conflict_resolution.json",
+      "conflict_trace.json",
+      "evidence.json",
+      "字段说明.md"
+     ],
+     "bytes": {
+      "evidence.json": 29660,
+      "conclusions.json": 3236,
+      "confidence.json": 30270,
+      "conflict_resolution.json": 54254,
+      "conflict_trace.json": 366307
+     },
+     "n_files_字段说明": 1,
+     "records": {
+      "evidence": 48,
+      "conclusions": 3,
+      "confidence": 21,
+      "conflict_resolution": 35
+     },
+     "facts_shape": {
+      "n_items": 27,
+      "n_bad_type": 0,
+      "n_missing_key": 0,
+      "n_extra_key": 0,
+      "n_empty_list": 0,
+      "n_key_only": 27
+     },
+     "locate": {
+      "n_conclusions": 3,
+      "n_support_keys": 3,
+      "n_conflict_keys": 24,
+      "in_volume": 22,
+      "no_doc": 0,
+      "no_para": 0,
+      "empty_slice": 0,
+      "quote_rows": 35,
+      "quote_verbatim": 32,
+      "quote_mismatch": 3,
+      "quote_no_key": 0,
+      "samples": [
+       {
+        "question_id": "q_001",
+        "key": "doc_019#p22",
+        "slice_chars": 106,
+        "quote_chars": 42,
+        "verbatim": true
+       },
+       {
+        "question_id": "q_002",
+        "key": "doc_229#p14",
+        "slice_chars": 118,
+        "quote_chars": 118,
+        "verbatim": true
+       },
+       {
+        "question_id": "q_003",
+        "key": "doc_031#p6",
+        "slice_chars": 91,
+        "quote_chars": 91,
+        "verbatim": true
+       }
+      ]
+     }
+    },
+    {
+     "topic": "中美AI事故预警提议（2026.9）",
+     "slug": "us_cn_ai",
+     "official_loaded": true,
+     "official_docs": 66,
+     "files": [
+      "conclusions.json",
+      "confidence.json",
+      "conflict_resolution.json",
+      "conflict_trace.json",
+      "evidence.json",
+      "字段说明.md"
+     ],
+     "bytes": {
+      "evidence.json": 22158,
+      "conclusions.json": 1806,
+      "confidence.json": 59954,
+      "conflict_resolution.json": 68625,
+      "conflict_trace.json": 97754
+     },
+     "n_files_字段说明": 1,
+     "records": {
+      "evidence": 41,
+      "conclusions": 3,
+      "confidence": 42,
+      "conflict_resolution": 45
+     },
+     "facts_shape": {
+      "n_items": 9,
+      "n_bad_type": 0,
+      "n_missing_key": 0,
+      "n_extra_key": 0,
+      "n_empty_list": 0,
+      "n_key_only": 9
+     },
+     "locate": {
+      "n_conclusions": 3,
+      "n_support_keys": 3,
+      "n_conflict_keys": 6,
+      "in_volume": 9,
+      "no_doc": 0,
+      "no_para": 0,
+      "empty_slice": 0,
+      "quote_rows": 26,
+      "quote_verbatim": 22,
+      "quote_mismatch": 4,
+      "quote_no_key": 0,
+      "samples": [
+       {
+        "question_id": "q_001",
+        "key": "doc_047#p1",
+        "slice_chars": 153,
+        "quote_chars": 26,
+        "verbatim": true
+       },
+       {
+        "question_id": "q_002",
+        "key": "doc_023#p12",
+        "slice_chars": 1120,
+        "quote_chars": 89,
+        "verbatim": false
+       },
+       {
+        "question_id": "q_003",
+        "key": "doc_022#p9",
+        "slice_chars": 169,
+        "quote_chars": 105,
+        "verbatim": true
+       }
+      ]
+     }
+    },
+    {
+     "topic": "刘翔编制“二选一”事件",
+     "slug": "liuxiang",
+     "official_loaded": true,
+     "official_docs": 53,
+     "files": [
+      "conclusions.json",
+      "confidence.json",
+      "conflict_resolution.json",
+      "conflict_trace.json",
+      "evidence.json",
+      "字段说明.md"
+     ],
+     "bytes": {
+      "evidence.json": 23862,
+      "conclusions.json": 1709,
+      "confidence.json": 61739,
+      "conflict_resolution.json": 30102,
+      "conflict_trace.json": 56972
+     },
+     "n_files_字段说明": 1,
+     "records": {
+      "evidence": 43,
+      "conclusions": 3,
+      "confidence": 43,
+      "conflict_resolution": 20
+     },
+     "facts_shape": {
+      "n_items": 8,
+      "n_bad_type": 0,
+      "n_missing_key": 0,
+      "n_extra_key": 0,
+      "n_empty_list": 0,
+      "n_key_only": 8
+     },
+     "locate": {
+      "n_conclusions": 3,
+      "n_support_keys": 3,
+      "n_conflict_keys": 5,
+      "in_volume": 7,
+      "no_doc": 0,
+      "no_para": 0,
+      "empty_slice": 0,
+      "quote_rows": 34,
+      "quote_verbatim": 33,
+      "quote_mismatch": 1,
+      "quote_no_key": 0,
+      "samples": [
+       {
+        "question_id": "q_001",
+        "key": "doc_002#p3",
+        "slice_chars": 66,
+        "quote_chars": 35,
+        "verbatim": true
+       },
+       {
+        "question_id": "q_002",
+        "key": "doc_005#p3",
+        "slice_chars": 188,
+        "quote_chars": 86,
+        "verbatim": true
+       },
+       {
+        "question_id": "q_003",
+        "key": "doc_012#p5",
+        "slice_chars": 114,
+        "quote_chars": 75,
+        "verbatim": true
+       }
+      ]
+     }
+    },
+    {
+     "topic": "印度航空 AI171 空难（2025.6–2026.5）",
+     "slug": "ai171",
+     "official_loaded": true,
+     "official_docs": 52,
+     "files": [
+      "conclusions.json",
+      "confidence.json",
+      "conflict_resolution.json",
+      "conflict_trace.json",
+      "evidence.json",
+      "字段说明.md"
+     ],
+     "bytes": {
+      "evidence.json": 23008,
+      "conclusions.json": 1707,
+      "confidence.json": 36239,
+      "conflict_resolution.json": 15112,
+      "conflict_trace.json": 81258
+     },
+     "n_files_字段说明": 1,
+     "records": {
+      "evidence": 41,
+      "conclusions": 3,
+      "confidence": 25,
+      "conflict_resolution": 10
+     },
+     "facts_shape": {
+      "n_items": 7,
+      "n_bad_type": 0,
+      "n_missing_key": 0,
+      "n_extra_key": 0,
+      "n_empty_list": 2,
+      "n_key_only": 7
+     },
+     "locate": {
+      "n_conclusions": 3,
+      "n_support_keys": 3,
+      "n_conflict_keys": 4,
+      "in_volume": 7,
+      "no_doc": 0,
+      "no_para": 0,
+      "empty_slice": 0,
+      "quote_rows": 29,
+      "quote_verbatim": 27,
+      "quote_mismatch": 2,
+      "quote_no_key": 0,
+      "samples": [
+       {
+        "question_id": "q_001",
+        "key": "doc_003#p1",
+        "slice_chars": 205,
+        "quote_chars": 25,
+        "verbatim": true
+       },
+       {
+        "question_id": "q_002",
+        "key": "doc_012#p8",
+        "slice_chars": 757,
+        "quote_chars": 78,
+        "verbatim": true
+       },
+       {
+        "question_id": "q_003",
+        "key": "doc_004#p3",
+        "slice_chars": 36,
+        "quote_chars": 14,
+        "verbatim": true
+       }
+      ]
+     }
+    },
+    {
+     "topic": "柬泰边境争端（2025.12–2026.9）",
+     "slug": "kh_th",
+     "official_loaded": true,
+     "official_docs": 105,
+     "files": [
+      "conclusions.json",
+      "confidence.json",
+      "conflict_resolution.json",
+      "conflict_trace.json",
+      "evidence.json",
+      "字段说明.md"
+     ],
+     "bytes": {
+      "evidence.json": 20788,
+      "conclusions.json": 2155,
+      "confidence.json": 47395,
+      "conflict_resolution.json": 56394,
+      "conflict_trace.json": 145040
+     },
+     "n_files_字段说明": 1,
+     "records": {
+      "evidence": 39,
+      "conclusions": 3,
+      "confidence": 33,
+      "conflict_resolution": 37
+     },
+     "facts_shape": {
+      "n_items": 14,
+      "n_bad_type": 0,
+      "n_missing_key": 0,
+      "n_extra_key": 0,
+      "n_empty_list": 1,
+      "n_key_only": 14
+     },
+     "locate": {
+      "n_conclusions": 3,
+      "n_support_keys": 5,
+      "n_conflict_keys": 9,
+      "in_volume": 14,
+      "no_doc": 0,
+      "no_para": 0,
+      "empty_slice": 0,
+      "quote_rows": 31,
+      "quote_verbatim": 30,
+      "quote_mismatch": 1,
+      "quote_no_key": 0,
+      "samples": [
+       {
+        "question_id": "q_001",
+        "key": "doc_053#p1",
+        "slice_chars": 132,
+        "quote_chars": 51,
+        "verbatim": true
+       },
+       {
+        "question_id": "q_001",
+        "key": "doc_089#p9",
+        "slice_chars": 164,
+        "quote_chars": 143,
+        "verbatim": true
+       },
+       {
+        "question_id": "q_001",
+        "key": "doc_065#p10",
+        "slice_chars": 173,
+        "quote_chars": 47,
+        "verbatim": true
+       }
+      ]
+     }
+    },
+    {
+     "topic": "王虹“北大discouraged”事件",
+     "slug": "wanghong",
+     "official_loaded": true,
+     "official_docs": 73,
+     "files": [
+      "conclusions.json",
+      "confidence.json",
+      "conflict_resolution.json",
+      "conflict_trace.json",
+      "evidence.json",
+      "字段说明.md"
+     ],
+     "bytes": {
+      "evidence.json": 14742,
+      "conclusions.json": 1659,
+      "confidence.json": 45765,
+      "conflict_resolution.json": 44107,
+      "conflict_trace.json": 89048
+     },
+     "n_files_字段说明": 1,
+     "records": {
+      "evidence": 28,
+      "conclusions": 3,
+      "confidence": 32,
+      "conflict_resolution": 29
+     },
+     "facts_shape": {
+      "n_items": 9,
+      "n_bad_type": 0,
+      "n_missing_key": 0,
+      "n_extra_key": 0,
+      "n_empty_list": 1,
+      "n_key_only": 9
+     },
+     "locate": {
+      "n_conclusions": 3,
+      "n_support_keys": 4,
+      "n_conflict_keys": 5,
+      "in_volume": 8,
+      "no_doc": 0,
+      "no_para": 0,
+      "empty_slice": 0,
+      "quote_rows": 23,
+      "quote_verbatim": 23,
+      "quote_mismatch": 0,
+      "quote_no_key": 0,
+      "samples": [
+       {
+        "question_id": "q_001",
+        "key": "doc_003#p5",
+        "slice_chars": 118,
+        "quote_chars": 51,
+        "verbatim": true
+       },
+       {
+        "question_id": "q_002",
+        "key": "doc_010#p7",
+        "slice_chars": 149,
+        "quote_chars": 60,
+        "verbatim": true
+       },
+       {
+        "question_id": "q_003",
+        "key": "doc_007#p1",
+        "slice_chars": 142,
+        "quote_chars": 51,
+        "verbatim": true
+       }
+      ]
+     }
+    }
+   ],
+   "parse_bad": [],
+   "forbidden_hits": [],
+   "forbidden_scanned_members": 43,
+   "official_material_files": 20,
+   "facts_shape_total": {
+    "n_bad_type": 0,
+    "n_empty_list": 4,
+    "n_extra_key": 0,
+    "n_items": 74,
+    "n_key_only": 74,
+    "n_missing_key": 0
+   },
+   "locate_total": {
+    "n_support_keys": 21,
+    "n_conflict_keys": 53,
+    "in_volume": 67,
+    "no_doc": 0,
+    "no_para": 0,
+    "empty_slice": 0,
+    "quote_rows": 178,
+    "quote_verbatim": 167,
+    "quote_mismatch": 11,
+    "quote_no_key": 0
+   },
+   "zip_ok": true,
+   "run_stats": {
+    "present": true,
+    "rows": [
+     {
+      "case": "2026·8·26 吉隆",
+      "qid": "q_001",
+      "elapsed_s": 1340.2,
+      "n_calls": 71,
+      "tokens": 112936,
+      "wall_q_s": 1349.0,
+      "n_conclusions": 9
+     },
+     {
+      "case": "2026·8·26 吉隆",
+      "qid": "q_002",
+      "elapsed_s": 1094.4,
+      "n_calls": 52,
+      "tokens": 89236,
+      "wall_q_s": 1102.9,
+      "n_conclusions": 21
+     },
+     {
+      "case": "2026·8·26 吉隆",
+      "qid": "q_003",
+      "elapsed_s": 1271.6,
+      "n_calls": 71,
+      "tokens": 110478,
+      "wall_q_s": 1280.4,
+      "n_conclusions": 11
+     },
+     {
+      "case": "中美AI事故预警提议（2",
+      "qid": "q_001",
+      "elapsed_s": 1075.7,
+      "n_calls": 59,
+      "tokens": 96042,
+      "wall_q_s": 1078.8,
+      "n_conclusions": 19
+     },
+     {
+      "case": "中美AI事故预警提议（2",
+      "qid": "q_002",
+      "elapsed_s": 1708.6,
+      "n_calls": 112,
+      "tokens": 128321,
+      "wall_q_s": 1712.0,
+      "n_conclusions": 24
+     },
+     {
+      "case": "中美AI事故预警提议（2",
+      "qid": "q_003",
+      "elapsed_s": 1204.6,
+      "n_calls": 49,
+      "tokens": 79796,
+      "wall_q_s": 1207.7,
+      "n_conclusions": 26
+     },
+     {
+      "case": "刘翔编制“二选一”事件",
+      "qid": "q_001",
+      "elapsed_s": 969.8,
+      "n_calls": 52,
+      "tokens": 90492,
+      "wall_q_s": 970.9,
+      "n_conclusions": 17
+     },
+     {
+      "case": "刘翔编制“二选一”事件",
+      "qid": "q_002",
+      "elapsed_s": 970.2,
+      "n_calls": 46,
+      "tokens": 86693,
+      "wall_q_s": 971.3,
+      "n_conclusions": 23
+     },
+     {
+      "case": "刘翔编制“二选一”事件",
+      "qid": "q_003",
+      "elapsed_s": 1242.6,
+      "n_calls": 56,
+      "tokens": 102069,
+      "wall_q_s": 1243.7,
+      "n_conclusions": 24
+     },
+     {
+      "case": "印度航空 AI171 空",
+      "qid": "q_001",
+      "elapsed_s": 791.7,
+      "n_calls": 40,
+      "tokens": 75951,
+      "wall_q_s": 793.2,
+      "n_conclusions": 9
+     },
+     {
+      "case": "印度航空 AI171 空",
+      "qid": "q_002",
+      "elapsed_s": 947.2,
+      "n_calls": 28,
+      "tokens": 74559,
+      "wall_q_s": 948.6,
+      "n_conclusions": 15
+     },
+     {
+      "case": "印度航空 AI171 空",
+      "qid": "q_003",
+      "elapsed_s": 769.9,
+      "n_calls": 46,
+      "tokens": 73462,
+      "wall_q_s": 771.2,
+      "n_conclusions": 12
+     },
+     {
+      "case": "柬泰边境争端（2025.",
+      "qid": "q_001",
+      "elapsed_s": 1206.2,
+      "n_calls": 85,
+      "tokens": 109380,
+      "wall_q_s": 1207.3,
+      "n_conclusions": 15
+     },
+     {
+      "case": "柬泰边境争端（2025.",
+      "qid": "q_002",
+      "elapsed_s": 1117.4,
+      "n_calls": 84,
+      "tokens": 109597,
+      "wall_q_s": 1118.5,
+      "n_conclusions": 13
+     },
+     {
+      "case": "柬泰边境争端（2025.",
+      "qid": "q_003",
+      "elapsed_s": 1017.6,
+      "n_calls": 28,
+      "tokens": 80921,
+      "wall_q_s": 1018.6,
+      "n_conclusions": 18
+     },
+     {
+      "case": "王虹“北大discour",
+      "qid": "q_001",
+      "elapsed_s": 743.8,
+      "n_calls": 32,
+      "tokens": 79982,
+      "wall_q_s": 746.4,
+      "n_conclusions": 13
+     },
+     {
+      "case": "王虹“北大discour",
+      "qid": "q_002",
+      "elapsed_s": 1511.5,
+      "n_calls": 100,
+      "tokens": 120447,
+      "wall_q_s": 1514.2,
+      "n_conclusions": 27
+     },
+     {
+      "case": "王虹“北大discour",
+      "qid": "q_003",
+      "elapsed_s": 660.0,
+      "n_calls": 47,
+      "tokens": 83415,
+      "wall_q_s": 662.3,
+      "n_conclusions": 6
+     }
+    ],
+    "elapsed_s_sum": 19643.0,
+    "n_calls_sum": 1058,
+    "tokens_sum": 1703777,
+    "summary.json": {
+     "label": "time",
+     "run_dir": "/tmp/s4runs/time-20261104-135401",
+     "align": true,
+     "ref_budget": 19000,
+     "fixed_budget": null,
+     "window_tokens": 16384,
+     "zh_chars_per_token": 1.45,
+     "llm_timeout_seconds": 900,
+     "timeout_overridden": true,
+     "time_gate_s": 1800,
+     "time_gate_label": "参考线（2026-10-28 起官方已撤，只作事实描述）",
+     "roster": null,
+     "total_wall_s": 19802.4,
+     "rows": [
+      {
+       "case": "2026·8·26 吉隆口岸泥石流灾害",
+       "qid": "q_001",
+       "budget_used": 8953,
+       "wall_q_s": 1349.0,
+       "elapsed_s": 1340.2,
+       "n_calls": 71,
+       "tokens": 112936,
+       "fit_prompt_chars": 22491,
+       "fit_est_tokens": 15511,
+       "fit_overflow_tokens": 0,
+       "prod_prompt_chars": null,
+       "prod_est_tokens": null,
+       "prod_overflow_tokens": null,
+       "align_iters": 2,
+       "n_conclusions": 9,
+       "steps": {
+        "query_rewrite": 10.43,
+        "hygiene": 2.54,
+        "probe": 6.75,
+        "material": 332.11,
+        "panel": 222.63,
+        "citation": 0.02,
+        "multi_box": 200.48,
+        "second_pass": 40.24,
+        "collab": 425.54,
+        "dependency": 50.78,
+        "finalize": 2.51,
+        "chair": 46.02
+       },
+       "tok_per_s": 83.7,
+       "env_before": {
+        "swap_used_mb": 2532.25,
+        "swap_total_mb": 4096.0,
+        "mem_free_pct": 29
+       },
+       "env_after": {
+        "swap_used_mb": 8467.69,
+        "swap_total_mb": 9216.0,
+        "mem_free_pct": 20
+       },
+       "wall_case_s": 3782.7
+      },
+      {
+       "case": "2026·8·26 吉隆口岸泥石流灾害",
+       "qid": "q_002",
+       "budget_used": 8144,
+       "wall_q_s": 1102.9,
+       "elapsed_s": 1094.4,
+       "n_calls": 52,
+       "tokens": 89236,
+       "fit_prompt_chars": 23151,
+       "fit_est_tokens": 15966,
+       "fit_overflow_tokens": 0,
+       "prod_prompt_chars": null,
+       "prod_est_tokens": null,
+       "prod_overflow_tokens": null,
+       "align_iters": 2,
+       "n_conclusions": 21,
+       "steps": {
+        "query_rewrite": 8.14,
+        "hygiene": 2.68,
+        "probe": 7.11,
+        "material": 231.49,
+        "panel": 193.01,
+        "citation": 0.01,
+        "multi_box": 247.79,
+        "second_pass": 31.88,
+        "collab": 226.53,
+        "dependency": 66.32,
+        "finalize": 2.38,
+        "chair": 77.01
+       },
+       "tok_per_s": 80.9,
+       "env_before": {
+        "swap_used_mb": 8467.69,
+        "swap_total_mb": 9216.0,
+        "mem_free_pct": 20
+       },
+       "env_after": {
+        "swap_used_mb": 9210.25,
+        "swap_total_mb": 10240.0,
+        "mem_free_pct": 19
+       },
+       "wall_case_s": 3782.7
+      },
+      {
+       "case": "2026·8·26 吉隆口岸泥石流灾害",
+       "qid": "q_003",
+       "budget_used": 10862,
+       "wall_q_s": 1280.4,
+       "elapsed_s": 1271.6,
+       "n_calls": 71,
+       "tokens": 110478,
+       "fit_prompt_chars": 22353,
+       "fit_est_tokens": 15415,
+       "fit_overflow_tokens": 0,
+       "prod_prompt_chars": null,
+       "prod_est_tokens": null,
+       "prod_overflow_tokens": null,
+       "align_iters": 1,
+       "n_conclusions": 11,
+       "steps": {
+        "query_rewrite": 7.82,
+        "hygiene": 2.65,
+        "probe": 6.67,
+        "material": 222.83,
+        "panel": 245.86,
+        "citation": 0.01,
+        "multi_box": 262.17,
+        "second_pass": 59.0,
+        "collab": 384.29,
+        "dependency": 37.26,
+        "finalize": 2.48,
+        "chair": 40.41
+       },
+       "tok_per_s": 86.3,
+       "env_before": {
+        "swap_used_mb": 9415.94,
+        "swap_total_mb": 10240.0,
+        "mem_free_pct": 19
+       },
+       "env_after": {
+        "swap_used_mb": 9343.06,
+        "swap_total_mb": 10240.0,
+        "mem_free_pct": 18
+       },
+       "wall_case_s": 3782.7
+      },
+      {
+       "case": "中美AI事故预警提议（2026.9）",
+       "qid": "q_001",
+       "budget_used": 14097,
+       "wall_q_s": 1078.8,
+       "elapsed_s": 1075.7,
+       "n_calls": 59,
+       "tokens": 96042,
+       "fit_prompt_chars": 21694,
+       "fit_est_tokens": 14961,
+       "fit_overflow_tokens": 0,
+       "prod_prompt_chars": 24544,
+       "prod_est_tokens": 16926,
+       "prod_overflow_tokens": 542,
+       "align_iters": 1,
+       "n_conclusions": 19,
+       "steps": {
+        "query_rewrite": 7.58,
+        "hygiene": 0.96,
+        "probe": 6.77,
+        "material": 210.44,
+        "panel": 118.98,
+        "citation": 0.0,
+        "multi_box": 240.59,
+        "second_pass": 22.67,
+        "repair": 9.63,
+        "collab": 291.78,
+        "dependency": 104.9,
+        "finalize": 0.92,
+        "chair": 60.32
+       },
+       "tok_per_s": 89.0,
+       "env_before": {
+        "swap_used_mb": 9343.06,
+        "swap_total_mb": 10240.0,
+        "mem_free_pct": 18
+       },
+       "env_after": {
+        "swap_used_mb": 9314.06,
+        "swap_total_mb": 10240.0,
+        "mem_free_pct": 19
+       },
+       "wall_case_s": 4014.3
+      },
+      {
+       "case": "中美AI事故预警提议（2026.9）",
+       "qid": "q_002",
+       "budget_used": 14609,
+       "wall_q_s": 1712.0,
+       "elapsed_s": 1708.6,
+       "n_calls": 112,
+       "tokens": 128321,
+       "fit_prompt_chars": 21402,
+       "fit_est_tokens": 14760,
+       "fit_overflow_tokens": 0,
+       "prod_prompt_chars": 24490,
+       "prod_est_tokens": 16889,
+       "prod_overflow_tokens": 505,
+       "align_iters": 1,
+       "n_conclusions": 24,
+       "steps": {
+        "query_rewrite": 5.39,
+        "hygiene": 0.96,
+        "probe": 6.68,
+        "material": 190.48,
+        "panel": 187.33,
+        "citation": 0.01,
+        "multi_box": 242.37,
+        "second_pass": 30.82,
+        "collab": 775.72,
+        "dependency": 176.4,
+        "finalize": 1.16,
+        "chair": 90.95
+       },
+       "tok_per_s": 75.0,
+       "env_before": {
+        "swap_used_mb": 9314.44,
+        "swap_total_mb": 10240.0,
+        "mem_free_pct": 19
+       },
+       "env_after": {
+        "swap_used_mb": 9217.06,
+        "swap_total_mb": 10240.0,
+        "mem_free_pct": 19
+       },
+       "wall_case_s": 4014.3
+      },
+      {
+       "case": "中美AI事故预警提议（2026.9）",
+       "qid": "q_003",
+       "budget_used": 14703,
+       "wall_q_s": 1207.7,
+       "elapsed_s": 1204.6,
+       "n_calls": 49,
+       "tokens": 79796,
+       "fit_prompt_chars": 21066,
+       "fit_est_tokens": 14528,
+       "fit_overflow_tokens": 0,
+       "prod_prompt_chars": null,
+       "prod_est_tokens": null,
+       "prod_overflow_tokens": null,
+       "align_iters": 1,
+       "n_conclusions": 26,
+       "steps": {
+        "query_rewrite": 7.81,
+        "hygiene": 0.98,
+        "probe": 6.81,
+        "material": 186.72,
+        "panel": 198.45,
+        "citation": 0.01,
+        "multi_box": 193.85,
+        "second_pass": 47.11,
+        "collab": 218.39,
+        "dependency": 291.0,
+        "finalize": 0.92,
+        "chair": 52.45
+       },
+       "tok_per_s": 66.1,
+       "env_before": {
+        "swap_used_mb": 9236.81,
+        "swap_total_mb": 10240.0,
+        "mem_free_pct": 19
+       },
+       "env_after": {
+        "swap_used_mb": 10827.75,
+        "swap_total_mb": 11264.0,
+        "mem_free_pct": 19
+       },
+       "wall_case_s": 4014.3
+      },
+      {
+       "case": "刘翔编制“二选一”事件",
+       "qid": "q_001",
+       "budget_used": 12375,
+       "wall_q_s": 970.9,
+       "elapsed_s": 969.8,
+       "n_calls": 52,
+       "tokens": 90492,
+       "fit_prompt_chars": 23204,
+       "fit_est_tokens": 16002,
+       "fit_overflow_tokens": 0,
+       "prod_prompt_chars": null,
+       "prod_est_tokens": null,
+       "prod_overflow_tokens": null,
+       "align_iters": 1,
+       "n_conclusions": 17,
+       "steps": {
+        "query_rewrite": 7.28,
+        "hygiene": 0.35,
+        "probe": 8.88,
+        "material": 185.56,
+        "panel": 176.22,
+        "citation": 0.01,
+        "multi_box": 197.77,
+        "second_pass": 25.97,
+        "collab": 237.55,
+        "dependency": 77.7,
+        "finalize": 0.33,
+        "chair": 52.18
+       },
+       "tok_per_s": 93.2,
+       "env_before": {
+        "swap_used_mb": 10829.44,
+        "swap_total_mb": 11264.0,
+        "mem_free_pct": 19
+       },
+       "env_after": {
+        "swap_used_mb": 8786.62,
+        "swap_total_mb": 9216.0,
+        "mem_free_pct": 19
+       },
+       "wall_case_s": 3191.8
+      },
+      {
+       "case": "刘翔编制“二选一”事件",
+       "qid": "q_002",
+       "budget_used": 12111,
+       "wall_q_s": 971.3,
+       "elapsed_s": 970.2,
+       "n_calls": 46,
+       "tokens": 86693,
+       "fit_prompt_chars": 23600,
+       "fit_est_tokens": 16275,
+       "fit_overflow_tokens": 0,
+       "prod_prompt_chars": null,
+       "prod_est_tokens": null,
+       "prod_overflow_tokens": null,
+       "align_iters": 1,
+       "n_conclusions": 23,
+       "steps": {
+        "query_rewrite": 6.97,
+        "hygiene": 0.36,
+        "probe": 20.55,
+        "material": 187.7,
+        "panel": 143.65,
+        "citation": 0.0,
+        "multi_box": 232.63,
+        "second_pass": 42.51,
+        "repair": 17.98,
+        "collab": 180.35,
+        "dependency": 61.08,
+        "finalize": 0.33,
+        "chair": 76.05
+       },
+       "tok_per_s": 89.3,
+       "env_before": {
+        "swap_used_mb": 8778.62,
+        "swap_total_mb": 9216.0,
+        "mem_free_pct": 19
+       },
+       "env_after": {
+        "swap_used_mb": 8841.5,
+        "swap_total_mb": 9216.0,
+        "mem_free_pct": 19
+       },
+       "wall_case_s": 3191.8
+      },
+      {
+       "case": "刘翔编制“二选一”事件",
+       "qid": "q_003",
+       "budget_used": 12746,
+       "wall_q_s": 1243.7,
+       "elapsed_s": 1242.6,
+       "n_calls": 56,
+       "tokens": 102069,
+       "fit_prompt_chars": 22991,
+       "fit_est_tokens": 15855,
+       "fit_overflow_tokens": 0,
+       "prod_prompt_chars": 23846,
+       "prod_est_tokens": 16445,
+       "prod_overflow_tokens": 61,
+       "align_iters": 1,
+       "n_conclusions": 24,
+       "steps": {
+        "query_rewrite": 6.82,
+        "hygiene": 0.35,
+        "probe": 9.95,
+        "material": 246.28,
+        "panel": 182.55,
+        "citation": 0.01,
+        "multi_box": 239.73,
+        "second_pass": 44.99,
+        "repair": 22.44,
+        "collab": 282.52,
+        "dependency": 111.65,
+        "finalize": 0.33,
+        "chair": 94.86
+       },
+       "tok_per_s": 82.1,
+       "env_before": {
+        "swap_used_mb": 8841.5,
+        "swap_total_mb": 9216.0,
+        "mem_free_pct": 19
+       },
+       "env_after": {
+        "swap_used_mb": 8470.44,
+        "swap_total_mb": 9216.0,
+        "mem_free_pct": 19
+       },
+       "wall_case_s": 3191.8
+      },
+      {
+       "case": "印度航空 AI171 空难（2025.6–2026.5）",
+       "qid": "q_001",
+       "budget_used": 9067,
+       "wall_q_s": 793.2,
+       "elapsed_s": 791.7,
+       "n_calls": 40,
+       "tokens": 75951,
+       "fit_prompt_chars": 22363,
+       "fit_est_tokens": 15422,
+       "fit_overflow_tokens": 0,
+       "prod_prompt_chars": null,
+       "prod_est_tokens": null,
+       "prod_overflow_tokens": null,
+       "align_iters": 2,
+       "n_conclusions": 9,
+       "steps": {
+        "query_rewrite": 9.43,
+        "hygiene": 0.43,
+        "probe": 6.49,
+        "material": 205.81,
+        "panel": 138.3,
+        "citation": 0.01,
+        "multi_box": 169.44,
+        "second_pass": 38.82,
+        "collab": 126.69,
+        "dependency": 52.43,
+        "finalize": 0.37,
+        "chair": 43.43
+       },
+       "tok_per_s": 95.8,
+       "env_before": {
+        "swap_used_mb": 8426.0,
+        "swap_total_mb": 9216.0,
+        "mem_free_pct": 19
+       },
+       "env_after": {
+        "swap_used_mb": 9456.69,
+        "swap_total_mb": 10240.0,
+        "mem_free_pct": 19
+       },
+       "wall_case_s": 2523.2
+      },
+      {
+       "case": "印度航空 AI171 空难（2025.6–2026.5）",
+       "qid": "q_002",
+       "budget_used": 11011,
+       "wall_q_s": 948.6,
+       "elapsed_s": 947.2,
+       "n_calls": 28,
+       "tokens": 74559,
+       "fit_prompt_chars": 23012,
+       "fit_est_tokens": 15870,
+       "fit_overflow_tokens": 0,
+       "prod_prompt_chars": null,
+       "prod_est_tokens": null,
+       "prod_overflow_tokens": null,
+       "align_iters": 1,
+       "n_conclusions": 15,
+       "steps": {
+        "query_rewrite": 6.4,
+        "hygiene": 0.43,
+        "probe": 9.61,
+        "material": 169.44,
+        "panel": 164.76,
+        "citation": 0.01,
+        "multi_box": 224.42,
+        "second_pass": 30.58,
+        "collab": 46.76,
+        "dependency": 243.98,
+        "finalize": 0.36,
+        "chair": 50.42
+       },
+       "tok_per_s": 78.6,
+       "env_before": {
+        "swap_used_mb": 9456.69,
+        "swap_total_mb": 10240.0,
+        "mem_free_pct": 19
+       },
+       "env_after": {
+        "swap_used_mb": 8334.62,
+        "swap_total_mb": 9216.0,
+        "mem_free_pct": 19
+       },
+       "wall_case_s": 2523.2
+      },
+      {
+       "case": "印度航空 AI171 空难（2025.6–2026.5）",
+       "qid": "q_003",
+       "budget_used": 9097,
+       "wall_q_s": 771.2,
+       "elapsed_s": 769.9,
+       "n_calls": 46,
+       "tokens": 73462,
+       "fit_prompt_chars": 22611,
+       "fit_est_tokens": 15593,
+       "fit_overflow_tokens": 0,
+       "prod_prompt_chars": null,
+       "prod_est_tokens": null,
+       "prod_overflow_tokens": null,
+       "align_iters": 2,
+       "n_conclusions": 12,
+       "steps": {
+        "query_rewrite": 6.32,
+        "hygiene": 0.43,
+        "probe": 6.81,
+        "material": 173.48,
+        "panel": 91.1,
+        "citation": 0.0,
+        "multi_box": 192.32,
+        "second_pass": 33.02,
+        "collab": 145.69,
+        "dependency": 81.87,
+        "finalize": 0.35,
+        "chair": 38.47
+       },
+       "tok_per_s": 95.3,
+       "env_before": {
+        "swap_used_mb": 8334.62,
+        "swap_total_mb": 9216.0,
+        "mem_free_pct": 19
+       },
+       "env_after": {
+        "swap_used_mb": 9028.31,
+        "swap_total_mb": 10240.0,
+        "mem_free_pct": 19
+       },
+       "wall_case_s": 2523.2
+      },
+      {
+       "case": "柬泰边境争端（2025.12–2026.9）",
+       "qid": "q_001",
+       "budget_used": 11210,
+       "wall_q_s": 1207.3,
+       "elapsed_s": 1206.2,
+       "n_calls": 85,
+       "tokens": 109380,
+       "fit_prompt_chars": 22776,
+       "fit_est_tokens": 15707,
+       "fit_overflow_tokens": 0,
+       "prod_prompt_chars": null,
+       "prod_est_tokens": null,
+       "prod_overflow_tokens": null,
+       "align_iters": 1,
+       "n_conclusions": 15,
+       "steps": {
+        "query_rewrite": 7.97,
+        "hygiene": 0.33,
+        "probe": 8.32,
+        "material": 194.99,
+        "panel": 141.76,
+        "citation": 0.01,
+        "multi_box": 193.16,
+        "second_pass": 34.11,
+        "collab": 471.21,
+        "dependency": 92.69,
+        "finalize": 0.29,
+        "chair": 61.25
+       },
+       "tok_per_s": 90.6,
+       "env_before": {
+        "swap_used_mb": 9028.31,
+        "swap_total_mb": 10240.0,
+        "mem_free_pct": 19
+       },
+       "env_after": {
+        "swap_used_mb": 9431.69,
+        "swap_total_mb": 10240.0,
+        "mem_free_pct": 19
+       },
+       "wall_case_s": 3353.5
+      },
+      {
+       "case": "柬泰边境争端（2025.12–2026.9）",
+       "qid": "q_002",
+       "budget_used": 10553,
+       "wall_q_s": 1118.5,
+       "elapsed_s": 1117.4,
+       "n_calls": 84,
+       "tokens": 109597,
+       "fit_prompt_chars": 21975,
+       "fit_est_tokens": 15155,
+       "fit_overflow_tokens": 0,
+       "prod_prompt_chars": 23960,
+       "prod_est_tokens": 16524,
+       "prod_overflow_tokens": 140,
+       "align_iters": 1,
+       "n_conclusions": 13,
+       "steps": {
+        "query_rewrite": 6.06,
+        "hygiene": 0.33,
+        "probe": 6.72,
+        "material": 199.62,
+        "panel": 143.91,
+        "citation": 0.01,
+        "multi_box": 158.79,
+        "second_pass": 40.17,
+        "repair": 12.71,
+        "collab": 451.85,
+        "dependency": 38.44,
+        "finalize": 0.31,
+        "chair": 58.38
+       },
+       "tok_per_s": 98.0,
+       "env_before": {
+        "swap_used_mb": 9472.06,
+        "swap_total_mb": 10240.0,
+        "mem_free_pct": 19
+       },
+       "env_after": {
+        "swap_used_mb": 8741.75,
+        "swap_total_mb": 9216.0,
+        "mem_free_pct": 19
+       },
+       "wall_case_s": 3353.5
+      },
+      {
+       "case": "柬泰边境争端（2025.12–2026.9）",
+       "qid": "q_003",
+       "budget_used": 11349,
+       "wall_q_s": 1018.6,
+       "elapsed_s": 1017.6,
+       "n_calls": 28,
+       "tokens": 80921,
+       "fit_prompt_chars": 23175,
+       "fit_est_tokens": 15982,
+       "fit_overflow_tokens": 0,
+       "prod_prompt_chars": 23882,
+       "prod_est_tokens": 16470,
+       "prod_overflow_tokens": 86,
+       "align_iters": 1,
+       "n_conclusions": 18,
+       "steps": {
+        "query_rewrite": 5.71,
+        "hygiene": 0.32,
+        "probe": 9.13,
+        "material": 183.85,
+        "panel": 143.11,
+        "citation": 0.0,
+        "multi_box": 244.12,
+        "second_pass": 34.04,
+        "collab": 35.3,
+        "dependency": 304.49,
+        "finalize": 0.25,
+        "chair": 57.25
+       },
+       "tok_per_s": 79.4,
+       "env_before": {
+        "swap_used_mb": 8741.75,
+        "swap_total_mb": 9216.0,
+        "mem_free_pct": 19
+       },
+       "env_after": {
+        "swap_used_mb": 9259.44,
+        "swap_total_mb": 10240.0,
+        "mem_free_pct": 19
+       },
+       "wall_case_s": 3353.5
+      },
+      {
+       "case": "王虹“北大discouraged”事件",
+       "qid": "q_001",
+       "budget_used": 12467,
+       "wall_q_s": 746.4,
+       "elapsed_s": 743.8,
+       "n_calls": 32,
+       "tokens": 79982,
+       "fit_prompt_chars": 22478,
+       "fit_est_tokens": 15502,
+       "fit_overflow_tokens": 0,
+       "prod_prompt_chars": 24162,
+       "prod_est_tokens": 16663,
+       "prod_overflow_tokens": 279,
+       "align_iters": 1,
+       "n_conclusions": 13,
+       "steps": {
+        "query_rewrite": 5.06,
+        "hygiene": 0.74,
+        "probe": 6.52,
+        "material": 237.58,
+        "panel": 126.15,
+        "citation": 0.0,
+        "multi_box": 143.26,
+        "second_pass": 41.93,
+        "collab": 28.69,
+        "dependency": 90.38,
+        "finalize": 0.63,
+        "chair": 62.87
+       },
+       "tok_per_s": 107.2,
+       "env_before": {
+        "swap_used_mb": 9259.44,
+        "swap_total_mb": 10240.0,
+        "mem_free_pct": 19
+       },
+       "env_after": {
+        "swap_used_mb": 7036.0,
+        "swap_total_mb": 8192.0,
+        "mem_free_pct": 19
+       },
+       "wall_case_s": 2936.9
+      },
+      {
+       "case": "王虹“北大discouraged”事件",
+       "qid": "q_002",
+       "budget_used": 12712,
+       "wall_q_s": 1514.2,
+       "elapsed_s": 1511.5,
+       "n_calls": 100,
+       "tokens": 120447,
+       "fit_prompt_chars": 22737,
+       "fit_est_tokens": 15680,
+       "fit_overflow_tokens": 0,
+       "prod_prompt_chars": null,
+       "prod_est_tokens": null,
+       "prod_overflow_tokens": null,
+       "align_iters": 1,
+       "n_conclusions": 27,
+       "steps": {
+        "query_rewrite": 6.52,
+        "hygiene": 0.73,
+        "probe": 19.83,
+        "material": 187.29,
+        "panel": 167.77,
+        "citation": 0.01,
+        "multi_box": 287.5,
+        "second_pass": 77.99,
+        "collab": 594.43,
+        "dependency": 77.76,
+        "finalize": 0.98,
+        "chair": 90.26
+       },
+       "tok_per_s": 79.5,
+       "env_before": {
+        "swap_used_mb": 7036.0,
+        "swap_total_mb": 8192.0,
+        "mem_free_pct": 19
+       },
+       "env_after": {
+        "swap_used_mb": 9765.69,
+        "swap_total_mb": 10240.0,
+        "mem_free_pct": 19
+       },
+       "wall_case_s": 2936.9
+      },
+      {
+       "case": "王虹“北大discouraged”事件",
+       "qid": "q_003",
+       "budget_used": 12723,
+       "wall_q_s": 662.3,
+       "elapsed_s": 660.0,
+       "n_calls": 47,
+       "tokens": 83415,
+       "fit_prompt_chars": 22086,
+       "fit_est_tokens": 15231,
+       "fit_overflow_tokens": 0,
+       "prod_prompt_chars": null,
+       "prod_est_tokens": null,
+       "prod_overflow_tokens": null,
+       "align_iters": 1,
+       "n_conclusions": 6,
+       "steps": {
+        "query_rewrite": 3.72,
+        "hygiene": 0.72,
+        "probe": 7.12,
+        "material": 224.48,
+        "panel": 58.37,
+        "citation": 0.0,
+        "multi_box": 190.04,
+        "second_pass": 16.62,
+        "collab": 131.82,
+        "dependency": 1.76,
+        "finalize": 0.64,
+        "chair": 24.66
+       },
+       "tok_per_s": 125.9,
+       "env_before": {
+        "swap_used_mb": 9765.69,
+        "swap_total_mb": 10240.0,
+        "mem_free_pct": 19
+       },
+       "env_after": {
+        "swap_used_mb": 9397.5,
+        "swap_total_mb": 10240.0,
+        "mem_free_pct": 19
+       },
+       "wall_case_s": 2936.9
+      }
+     ],
+     "case_wall_s": {
+      "2026·8·26 吉隆口岸泥石流灾害": 3782.7,
+      "中美AI事故预警提议（2026.9）": 4014.3,
+      "刘翔编制“二选一”事件": 3191.8,
+      "印度航空 AI171 空难（2025.6–2026.5）": 2523.2,
+      "柬泰边境争端（2025.12–2026.9）": 3353.5,
+      "王虹“北大discouraged”事件": 2936.9
+     },
+     "interrupted_cases": [],
+     "case_sum_elapsed_s": {
+      "2026·8·26 吉隆口岸泥石流灾害": 3706.2,
+      "中美AI事故预警提议（2026.9）": 3988.9,
+      "刘翔编制“二选一”事件": 3182.6,
+      "印度航空 AI171 空难（2025.6–2026.5）": 2508.8,
+      "柬泰边境争端（2025.12–2026.9）": 3341.2,
+      "王虹“北大discouraged”事件": 2915.3
+     },
+     "over_gate": {
+      "2026·8·26 吉隆口岸泥石流灾害": [
+       3782.7,
+       true
+      ],
+      "中美AI事故预警提议（2026.9）": [
+       4014.3,
+       true
+      ],
+      "刘翔编制“二选一”事件": [
+       3191.8,
+       true
+      ],
+      "印度航空 AI171 空难（2025.6–2026.5）": [
+       2523.2,
+       true
+      ],
+      "柬泰边境争端（2025.12–2026.9）": [
+       3353.5,
+       true
+      ],
+      "王虹“北大discouraged”事件": [
+       2936.9,
+       true
+      ]
+     }
+    }
+   },
+   "causal_face": {
+    "present": true,
+    "n_files": 6,
+    "n_rows": 24,
+    "n_rows_any_factor": 0,
+    "n_rows_all_factors": 0,
+    "n_rows_degraded": 24,
+    "zip_bytes": 195433
+   },
+   "notes": [
+    "复用 C-149 那批六案跑次产物（旧批），本腿只读组包＋核查，不重跑模型"
+   ]
+  },
+  {
+   "leg": "B",
+   "zip": "/tmp/c153_submit_fresh_liuxiang/veritas-交件-c153腿B.zip",
+   "zip_bytes": 55943,
+   "run_dir": "/tmp/c153runs/time-20261104-221631",
+   "n_members": 13,
+   "n_topics": 1,
+   "root_files": [
+    "01-测试报告.md",
+    "02-使用说明.md",
+    "03-技术方案.md",
+    "DEMO_NOTE.txt",
+    "MANIFEST.txt",
+    "字段说明.md",
+    "部署文档.md"
+   ],
+   "manifest_lines": 18,
+   "per_topic": [
+    {
+     "topic": "刘翔编制“二选一”事件",
+     "slug": "liuxiang",
+     "official_loaded": true,
+     "official_docs": 53,
+     "files": [
+      "conclusions.json",
+      "confidence.json",
+      "conflict_resolution.json",
+      "conflict_trace.json",
+      "evidence.json",
+      "字段说明.md"
+     ],
+     "bytes": {
+      "evidence.json": 25241,
+      "conclusions.json": 2535,
+      "confidence.json": 46048,
+      "conflict_resolution.json": 72032,
+      "conflict_trace.json": 120229
+     },
+     "n_files_字段说明": 1,
+     "records": {
+      "evidence": 48,
+      "conclusions": 3,
+      "confidence": 32,
+      "conflict_resolution": 47
+     },
+     "facts_shape": {
+      "n_items": 20,
+      "n_bad_type": 0,
+      "n_missing_key": 0,
+      "n_extra_key": 0,
+      "n_empty_list": 0,
+      "n_key_only": 20
+     },
+     "locate": {
+      "n_conclusions": 3,
+      "n_support_keys": 9,
+      "n_conflict_keys": 11,
+      "in_volume": 19,
+      "no_doc": 0,
+      "no_para": 0,
+      "empty_slice": 0,
+      "quote_rows": 35,
+      "quote_verbatim": 34,
+      "quote_mismatch": 1,
+      "quote_no_key": 0,
+      "samples": [
+       {
+        "question_id": "q_001",
+        "key": "doc_002#p3",
+        "slice_chars": 66,
+        "quote_chars": 66,
+        "verbatim": true
+       },
+       {
+        "question_id": "q_001",
+        "key": "doc_012#p2",
+        "slice_chars": 131,
+        "quote_chars": 66,
+        "verbatim": true
+       },
+       {
+        "question_id": "q_001",
+        "key": "doc_037#p2",
+        "slice_chars": 152,
+        "quote_chars": 66,
+        "verbatim": true
+       }
+      ]
+     }
+    }
+   ],
+   "parse_bad": [],
+   "forbidden_hits": [],
+   "forbidden_scanned_members": 13,
+   "official_material_files": 20,
+   "facts_shape_total": {
+    "n_bad_type": 0,
+    "n_empty_list": 0,
+    "n_extra_key": 0,
+    "n_items": 20,
+    "n_key_only": 20,
+    "n_missing_key": 0
+   },
+   "locate_total": {
+    "n_support_keys": 9,
+    "n_conflict_keys": 11,
+    "in_volume": 19,
+    "no_doc": 0,
+    "no_para": 0,
+    "empty_slice": 0,
+    "quote_rows": 35,
+    "quote_verbatim": 34,
+    "quote_mismatch": 1,
+    "quote_no_key": 0
+   },
+   "zip_ok": true,
+   "run_stats": {
+    "present": true,
+    "rows": [
+     {
+      "case": "刘翔编制“二选一”事件",
+      "qid": "q_001",
+      "elapsed_s": 2270.9,
+      "n_calls": 64,
+      "tokens": 95348,
+      "wall_q_s": 2272.0,
+      "n_conclusions": 13
+     },
+     {
+      "case": "刘翔编制“二选一”事件",
+      "qid": "q_002",
+      "elapsed_s": 3834.3,
+      "n_calls": 120,
+      "tokens": 135574,
+      "wall_q_s": 3835.9,
+      "n_conclusions": 26
+     },
+     {
+      "case": "刘翔编制“二选一”事件",
+      "qid": "q_003",
+      "elapsed_s": 2156.8,
+      "n_calls": 49,
+      "tokens": 93134,
+      "wall_q_s": 2157.9,
+      "n_conclusions": 22
+     }
+    ],
+    "elapsed_s_sum": 8262.0,
+    "n_calls_sum": 233,
+    "tokens_sum": 324056,
+    "summary.json": {
+     "label": "time",
+     "run_dir": "/tmp/c153runs/time-20261104-221631",
+     "align": true,
+     "ref_budget": 19000,
+     "fixed_budget": null,
+     "window_tokens": 16384,
+     "zh_chars_per_token": 1.45,
+     "llm_timeout_seconds": 900,
+     "timeout_overridden": true,
+     "time_gate_s": 1800,
+     "time_gate_label": "参考线（2026-10-28 起官方已撤，只作事实描述）",
+     "roster": null,
+     "total_wall_s": 8272.0,
+     "rows": [
+      {
+       "case": "刘翔编制“二选一”事件",
+       "qid": "q_001",
+       "budget_used": 12375,
+       "wall_q_s": 2272.0,
+       "elapsed_s": 2270.9,
+       "n_calls": 64,
+       "tokens": 95348,
+       "fit_prompt_chars": 23204,
+       "fit_est_tokens": 16002,
+       "fit_overflow_tokens": 0,
+       "prod_prompt_chars": null,
+       "prod_est_tokens": null,
+       "prod_overflow_tokens": null,
+       "align_iters": 1,
+       "n_conclusions": 13,
+       "steps": {
+        "query_rewrite": 136.36,
+        "hygiene": 0.36,
+        "probe": 82.77,
+        "material": 404.21,
+        "panel": 150.29,
+        "citation": 0.01,
+        "multi_box": 248.13,
+        "second_pass": 34.22,
+        "collab": 1096.21,
+        "dependency": 67.96,
+        "finalize": 0.33,
+        "chair": 49.97
+       },
+       "tok_per_s": 42.0,
+       "env_before": {
+        "swap_used_mb": 8257.38,
+        "swap_total_mb": 9216.0,
+        "mem_free_pct": 17
+       },
+       "env_after": {
+        "swap_used_mb": 9879.5,
+        "swap_total_mb": 10240.0,
+        "mem_free_pct": 16
+       },
+       "wall_case_s": 8272.0
+      },
+      {
+       "case": "刘翔编制“二选一”事件",
+       "qid": "q_002",
+       "budget_used": 12111,
+       "wall_q_s": 3835.9,
+       "elapsed_s": 3834.3,
+       "n_calls": 120,
+       "tokens": 135574,
+       "fit_prompt_chars": 23600,
+       "fit_est_tokens": 16275,
+       "fit_overflow_tokens": 0,
+       "prod_prompt_chars": null,
+       "prod_est_tokens": null,
+       "prod_overflow_tokens": null,
+       "align_iters": 1,
+       "n_conclusions": 26,
+       "steps": {
+        "query_rewrite": 14.52,
+        "hygiene": 0.37,
+        "probe": 22.5,
+        "material": 816.9,
+        "panel": 138.08,
+        "citation": 0.01,
+        "multi_box": 309.17,
+        "second_pass": 43.93,
+        "repair": 16.31,
+        "collab": 2210.2,
+        "dependency": 191.83,
+        "finalize": 0.4,
+        "chair": 69.9
+       },
+       "tok_per_s": 35.3,
+       "env_before": {
+        "swap_used_mb": 9966.88,
+        "swap_total_mb": 10240.0,
+        "mem_free_pct": 16
+       },
+       "env_after": {
+        "swap_used_mb": 10541.06,
+        "swap_total_mb": 11264.0,
+        "mem_free_pct": 18
+       },
+       "wall_case_s": 8272.0
+      },
+      {
+       "case": "刘翔编制“二选一”事件",
+       "qid": "q_003",
+       "budget_used": 12746,
+       "wall_q_s": 2157.9,
+       "elapsed_s": 2156.8,
+       "n_calls": 49,
+       "tokens": 93134,
+       "fit_prompt_chars": 22991,
+       "fit_est_tokens": 15855,
+       "fit_overflow_tokens": 0,
+       "prod_prompt_chars": 23789,
+       "prod_est_tokens": 16406,
+       "prod_overflow_tokens": 22,
+       "align_iters": 1,
+       "n_conclusions": 22,
+       "steps": {
+        "query_rewrite": 7.84,
+        "hygiene": 0.37,
+        "probe": 11.87,
+        "material": 542.61,
+        "panel": 171.52,
+        "citation": 0.02,
+        "multi_box": 263.18,
+        "second_pass": 38.81,
+        "repair": 312.15,
+        "collab": 470.77,
+        "dependency": 278.58,
+        "finalize": 0.33,
+        "chair": 58.67
+       },
+       "tok_per_s": 43.2,
+       "env_before": {
+        "swap_used_mb": 10558.19,
+        "swap_total_mb": 11264.0,
+        "mem_free_pct": 18
+       },
+       "env_after": {
+        "swap_used_mb": 10193.88,
+        "swap_total_mb": 11264.0,
+        "mem_free_pct": 17
+       },
+       "wall_case_s": 8272.0
+      }
+     ],
+     "case_wall_s": {
+      "刘翔编制“二选一”事件": 8272.0
+     },
+     "interrupted_cases": [],
+     "case_sum_elapsed_s": {
+      "刘翔编制“二选一”事件": 8262.0
+     },
+     "over_gate": {
+      "刘翔编制“二选一”事件": [
+       8272.0,
+       true
+      ]
+     }
+    }
+   },
+   "causal_face": {
+    "present": false
+   },
+   "notes": [
+    "本机 14B 新鲜单案端到端（三题全跑）；22:16–22:54 与 veritas-c151 的王虹跑批同机并发，墙钟被拖高＝方向保守（只会高估），空闲内存与 swap 的当场打印见跑批日志",
+    "litellm 启动期远程 cost-map 三次读取超时后回落本地备份；模型请求全部走本机 Ollama＋假密钥（安全闸由跑批脚本钉），无付费外呼"
+   ]
+  }
+ ],
+ "verdict": {
+  "overall": "YES",
+  "legs_built": [
+   "A",
+   "B"
+  ],
+  "checks": {
+   "四核心文件齐": true,
+   "JSON 可解析": true,
+   "形状合规": true,
+   "无禁品泄漏": true,
+   "定位可回溯": true
+  },
+  "why": "五条结构核全过",
+  "soft": "无",
+  "time_notes": "腿 A：6 案 × 18 题合计 19643.0 s＝多案批次，不对单案参考线判定；腿 B（单案）：逐题 elapsed_s 合计 8262.0 s｜参考线 1800 s（官方已撤，只记账不改算法）",
+  "both_legs": true,
+  "time_gate_s": 1800
+ },
+ "memo_feed": "喂案＝盲测案整夹放仓库外一个只读根目录，每案目录必须有 raw_documents.json（官方形态）；跑批根用 OFFICIAL_CASES=<该根> 指过去（不给＝默认桌面样例集路径）。⚠ measure_s4_gates 是从该案 conclusions.json 里抽 question_id／question 的——盲测数据若不带结论样例，就另存一份 questions.json（只含 question_id 与 question）放案目录里，走下面第二条路",
+ "memo_run": "跑（二选一，都不花钱：①测量路＝仓库根 `S4_OUT=/tmp/blindruns PYTHONPATH=. .venv/bin/python -X utf8 -u scripts/measure_s4_gates.py time --case <专题关键词> --timeout-seconds 900`（安全闸自锁 Ollama＋假密钥、钉单模型链；不加 --case＝全跑）；②生产路＝`PYTHONPATH=. .venv/bin/python -m app.pipeline <案目录> --out <跑次根>/<案名>`，案目录里有 raw_documents.json 即自动走官方适配，题面取 <案目录>/questions.json 或 --questions 指定）",
+ "memo_ship": "交＝`PYTHONPATH=. .venv/bin/python scripts/build_submission_zip.py --run-dir <跑次根> --out <zip 路径>`；--run-dir 要指到「跑次根」，其下每个专题夹得有 questions/q_*/report.json（生产路把 --out 写成 <跑次根>/<案名> 正好落成这个形状）；邮件附件＝这一个 zip，包内每专题四核心 JSON＋字段说明＋MANIFEST；causal_evidence 默认不装（四要素非空率不达标时 MANIFEST 里带当场原因句）"
+}
