@@ -2428,3 +2428,8 @@ C-115 旗开算得出、出口被剥：conflict_trace 键不在两处 kept 白�
 ## 〔C-145a〕2026-11-04 · VERITAS_CONFLICT_TRACE 出厂默认开
 
 Boyu 拍板路演可见：默认 True（关＝env=0）。只翻默认＋文档／图面表述＋守护翻向；附带真修＝conflict_trace_enabled() 无参回退改走 Settings.from_env()（原回退 env 未设恒 False，翻默认后仲裁／导出挂点会静默不走，新格当场咬住）。真引用：`scripts/probe_c145a_default_on.py`（--stage export|assemble；base/branch 双树同形等证＋demo 冒烟＋C-134 同尺保险腿）。
+
+
+## 〔C-146〕2026-11-04 · 树22 冲突分流（口语误读／日期档／真打架）
+
+冲突审查后把「像冲突」分可讲档。分流＝第二根正交轴（triage_class∈{oral_misread,date_offset,true_oppose,other}），写在 conflict_trace 行的 triage_* 五键＋summary.by_triage 上；C-115 三档硬枚举与 disposition 表一字未动（塞进 conflict_class 会当场咬红三颗既有格），数值冲突线仍 STOP。阶梯全机械：日期差默认落时间档并披露理由；约数词（段文本现取，极差≤0.25）／10 的整数倍率同数字串／C-80 量名闸判「不是量名」／同段两数→口语误读；同窗或时点不明的异值→真对立（仍按 C-115 落处置）；判不出→other 不硬塞。齐全率两套分开钉（TRIAGE_REQUIRED_KEYS 独立，旧行只算未分流）。真引用：`scripts/probe_c146_triage_face.py`（--stage export|demo|crossface|assemble；反事实＝改前 tip 码与改后码跑同一批夹具，剥 triage 五键后差异 0 行，快照 tests/c146_pre_triage_snapshot.json 入仓）。跨树：开旗 report.json 差异 53 路径全在 conflict_trace 面内、report.md 3/3 同形、chain.jsonl 摘掉分流载荷后多重集相同；关旗差异 0。pytest 改前 7 failed/1265 passed → 改后 7 failed/1281 passed（名单同，+16 全为本刀）。七把变异刀全有牙（K2 发明第四时间档咬 9 颗含 3 颗既有格；K7 把分流键并进 TRACE_REQUIRED_KEYS 咬到既有 C-115 覆盖格）。开放：官方案例才有跨日样本（demo date_offset=0）；定性结论冲突机械判不出＝other 占 3/7，实测 8 字滑窗 Jaccard 对同义改述分不开（五组改述 0.0）故未采信。

@@ -1,0 +1,299 @@
+{
+ "ticket": "C-146",
+ "base_ref": "03bfd4a",
+ "generated_by": "scripts/probe_c146_triage_face.py",
+ "stages": {
+  "export": {
+   "stage": "export",
+   "base_ref": "03bfd4a",
+   "n_fixture_rows": 14,
+   "n_rows_snapshot": 14,
+   "counterfactual_diffs": 0,
+   "diff_samples": [],
+   "triage_enum": [
+    "date_offset",
+    "oral_misread",
+    "other",
+    "true_oppose"
+   ],
+   "conflict_class_enum": [
+    "cross_day",
+    "same_window",
+    "unknown_time"
+   ],
+   "axes_orthogonal": true,
+   "triage_keys_on_rows": [
+    "triage_class",
+    "triage_class_cn",
+    "triage_reason_code",
+    "triage_reason_short",
+    "triage_evidence"
+   ],
+   "forbidden_face_hits": []
+  },
+  "demo": {
+   "stage": "demo",
+   "demo_returncode": 0,
+   "per_case": {
+    "demo-solid-state": {
+     "n": 1,
+     "by_class": {
+      "cross_day": 0,
+      "unknown_time": 0,
+      "same_window": 0,
+      "unclassified": 1
+     },
+     "by_disposition": {
+      "dissent": 1,
+      "keep": 0,
+      "undecided": 0
+     },
+     "by_triage": {
+      "date_offset": 0,
+      "oral_misread": 0,
+      "other": 1,
+      "true_oppose": 0
+     },
+     "triaged": 1,
+     "untriaged": 0,
+     "rows": [
+      {
+       "id": "CFL-22c098fc96",
+       "source": "conflict_pair",
+       "conflict_class": "unclassified",
+       "disposition": "dissent",
+       "triage_class": "other",
+       "triage_reason_code": "pair_mechanically_undetermined",
+       "metric": "2030年量产可行性"
+      }
+     ]
+    },
+    "bi-delivery-risk": {
+     "n": 5,
+     "by_class": {
+      "cross_day": 0,
+      "unknown_time": 4,
+      "same_window": 0,
+      "unclassified": 1
+     },
+     "by_disposition": {
+      "dissent": 1,
+      "keep": 0,
+      "undecided": 4
+     },
+     "by_triage": {
+      "date_offset": 0,
+      "oral_misread": 3,
+      "other": 1,
+      "true_oppose": 1
+     },
+     "triaged": 5,
+     "untriaged": 0,
+     "rows": [
+      {
+       "id": "LEDGER-0001",
+       "source": "fact_ledger",
+       "conflict_class": "unknown_time",
+       "disposition": "undecided",
+       "triage_class": "oral_misread",
+       "triage_reason_code": "metric_not_quantity",
+       "metric": "需求分析师"
+      },
+      {
+       "id": "LEDGER-0002",
+       "source": "fact_ledger",
+       "conflict_class": "unknown_time",
+       "disposition": "undecided",
+       "triage_class": "oral_misread",
+       "triage_reason_code": "single_segment_two_numbers",
+       "metric": "回款比约定时间晚"
+      },
+      {
+       "id": "LEDGER-0003",
+       "source": "fact_ledger",
+       "conflict_class": "unknown_time",
+       "disposition": "undecided",
+       "triage_class": "oral_misread",
+       "triage_reason_code": "metric_not_quantity",
+       "metric": "备份保留周期"
+      },
+      {
+       "id": "LEDGER-0004",
+       "source": "fact_ledger",
+       "conflict_class": "unknown_time",
+       "disposition": "undecided",
+       "triage_class": "true_oppose",
+       "triage_reason_code": "distinct_values_unknown_time",
+       "metric": "非结构化数据"
+      },
+      {
+       "id": "CFL-995d5ddf77",
+       "source": "conflict_pair",
+       "conflict_class": "unclassified",
+       "disposition": "dissent",
+       "triage_class": "other",
+       "triage_reason_code": "pair_mechanically_undetermined",
+       "metric": "数据中台业务线交付健康度"
+      }
+     ]
+    },
+    "rumor-vs-official": {
+     "n": 1,
+     "by_class": {
+      "cross_day": 0,
+      "unknown_time": 0,
+      "same_window": 0,
+      "unclassified": 1
+     },
+     "by_disposition": {
+      "dissent": 1,
+      "keep": 0,
+      "undecided": 0
+     },
+     "by_triage": {
+      "date_offset": 0,
+      "oral_misread": 0,
+      "other": 1,
+      "true_oppose": 0
+     },
+     "triaged": 1,
+     "untriaged": 0,
+     "rows": [
+      {
+       "id": "CFL-4da5a925c7",
+       "source": "conflict_pair",
+       "conflict_class": "unclassified",
+       "disposition": "dissent",
+       "triage_class": "other",
+       "triage_reason_code": "pair_mechanically_undetermined",
+       "metric": "是否因资金链断裂停工"
+      }
+     ]
+    }
+   },
+   "triage_total": {
+    "date_offset": 0,
+    "oral_misread": 3,
+    "other": 3,
+    "true_oppose": 1
+   },
+   "triage_total_n": 7
+  },
+  "crossface_on": {
+   "stage": "crossface",
+   "flag": "on",
+   "base_root": "/Users/liuboyu/Developer/veritas-c146-base",
+   "base_ref": "03bfd4a",
+   "files": {
+    "demo-solid-state/report.json": {
+     "n_diff_paths": 11,
+     "all_inside_conflict_trace": true
+    },
+    "demo-solid-state/report.md": {
+     "same": true
+    },
+    "demo-solid-state/chain.jsonl": {
+     "n_lines": [
+      24,
+      24
+     ],
+     "same_multiset": false,
+     "same_multiset_wo_trace_payload": true
+    },
+    "bi-delivery-risk/report.json": {
+     "n_diff_paths": 31,
+     "all_inside_conflict_trace": true
+    },
+    "bi-delivery-risk/report.md": {
+     "same": true
+    },
+    "bi-delivery-risk/chain.jsonl": {
+     "n_lines": [
+      24,
+      24
+     ],
+     "same_multiset": false,
+     "same_multiset_wo_trace_payload": true
+    },
+    "rumor-vs-official/report.json": {
+     "n_diff_paths": 11,
+     "all_inside_conflict_trace": true
+    },
+    "rumor-vs-official/report.md": {
+     "same": true
+    },
+    "rumor-vs-official/chain.jsonl": {
+     "n_lines": [
+      24,
+      24
+     ],
+     "same_multiset": false,
+     "same_multiset_wo_trace_payload": true
+    }
+   },
+   "report_md_same": 3,
+   "report_md_n": 3,
+   "diff_paths_total": 53,
+   "diff_paths_outside_conflict_trace": [],
+   "chain_diff_only_in_trace_payload_cases": 3
+  },
+  "crossface_off": {
+   "stage": "crossface",
+   "flag": "off",
+   "base_root": "/Users/liuboyu/Developer/veritas-c146-base",
+   "base_ref": "03bfd4a",
+   "files": {
+    "demo-solid-state/report.json": {
+     "n_diff_paths": 0,
+     "all_inside_conflict_trace": true
+    },
+    "demo-solid-state/report.md": {
+     "same": true
+    },
+    "demo-solid-state/chain.jsonl": {
+     "n_lines": [
+      24,
+      24
+     ],
+     "same_multiset": true,
+     "same_multiset_wo_trace_payload": true
+    },
+    "bi-delivery-risk/report.json": {
+     "n_diff_paths": 0,
+     "all_inside_conflict_trace": true
+    },
+    "bi-delivery-risk/report.md": {
+     "same": true
+    },
+    "bi-delivery-risk/chain.jsonl": {
+     "n_lines": [
+      24,
+      24
+     ],
+     "same_multiset": true,
+     "same_multiset_wo_trace_payload": true
+    },
+    "rumor-vs-official/report.json": {
+     "n_diff_paths": 0,
+     "all_inside_conflict_trace": true
+    },
+    "rumor-vs-official/report.md": {
+     "same": true
+    },
+    "rumor-vs-official/chain.jsonl": {
+     "n_lines": [
+      24,
+      24
+     ],
+     "same_multiset": true,
+     "same_multiset_wo_trace_payload": true
+    }
+   },
+   "report_md_same": 3,
+   "report_md_n": 3,
+   "diff_paths_total": 0,
+   "diff_paths_outside_conflict_trace": [],
+   "chain_diff_only_in_trace_payload_cases": 0
+  }
+ }
+}

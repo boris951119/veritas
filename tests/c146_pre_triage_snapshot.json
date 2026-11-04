@@ -1,0 +1,307 @@
+{
+ "generated_from_base": "03bfd4a",
+ "n_rows": 14,
+ "rows": [
+  {
+   "id": "LEDGER-0001",
+   "source": "fact_ledger",
+   "conflict_class": "cross_day",
+   "conflict_class_cn": "跨日时序",
+   "entry": {
+    "entity": "甲",
+    "metric": "补偿金",
+    "n_facts": 2,
+    "source_ids": [
+     "doc_002",
+     "doc_004"
+    ],
+    "seg_ids": [
+     "doc_002#p1",
+     "doc_004#p1"
+    ],
+    "cross_source": true
+   },
+   "disposition": "keep",
+   "disposition_cn": "保留",
+   "reason_code": "timeline_keep",
+   "reason_short": "跨日时序：两侧保留为演变，不判谁错"
+  },
+  {
+   "id": "LEDGER-0002",
+   "source": "fact_ledger",
+   "conflict_class": "same_window",
+   "conflict_class_cn": "同窗对撞",
+   "entry": {
+    "entity": "甲",
+    "metric": "补偿金",
+    "n_facts": 2,
+    "source_ids": [
+     "doc_001",
+     "doc_002"
+    ],
+    "seg_ids": [
+     "doc_001#p1",
+     "doc_002#p1"
+    ],
+    "cross_source": true
+   },
+   "disposition": "undecided",
+   "disposition_cn": "未决",
+   "reason_code": "pick_side",
+   "reason_short": "同窗对撞：待采信一方或声明资料不足"
+  },
+  {
+   "id": "LEDGER-0003",
+   "source": "fact_ledger",
+   "conflict_class": "same_window",
+   "conflict_class_cn": "同窗对撞",
+   "entry": {
+    "entity": "甲",
+    "metric": "补偿金",
+    "n_facts": 2,
+    "source_ids": [
+     "doc_002",
+     "doc_003"
+    ],
+    "seg_ids": [
+     "doc_002#p1",
+     "doc_003#p1"
+    ],
+    "cross_source": true
+   },
+   "disposition": "undecided",
+   "disposition_cn": "未决",
+   "reason_code": "pick_side",
+   "reason_short": "同窗对撞：待采信一方或声明资料不足"
+  },
+  {
+   "id": "LEDGER-0004",
+   "source": "fact_ledger",
+   "conflict_class": "same_window",
+   "conflict_class_cn": "同窗对撞",
+   "entry": {
+    "entity": "",
+    "metric": "需求分析师",
+    "n_facts": 2,
+    "source_ids": [
+     "doc_006",
+     "doc_007"
+    ],
+    "seg_ids": [
+     "doc_006#p1",
+     "doc_007#p1"
+    ],
+    "cross_source": true
+   },
+   "disposition": "undecided",
+   "disposition_cn": "未决",
+   "reason_code": "pick_side",
+   "reason_short": "同窗对撞：待采信一方或声明资料不足"
+  },
+  {
+   "id": "LEDGER-0005",
+   "source": "fact_ledger",
+   "conflict_class": "same_window",
+   "conflict_class_cn": "同窗对撞",
+   "entry": {
+    "entity": "丙",
+    "metric": "产能",
+    "n_facts": 2,
+    "source_ids": [
+     "doc_008"
+    ],
+    "seg_ids": [
+     "doc_008#p1",
+     "doc_008#p1"
+    ],
+    "cross_source": false
+   },
+   "disposition": "undecided",
+   "disposition_cn": "未决",
+   "reason_code": "pick_side",
+   "reason_short": "同窗对撞：待采信一方或声明资料不足"
+  },
+  {
+   "id": "LEDGER-0006",
+   "source": "fact_ledger",
+   "conflict_class": "same_window",
+   "conflict_class_cn": "同窗对撞",
+   "entry": {
+    "entity": "乙",
+    "metric": "伤亡",
+    "n_facts": 2,
+    "source_ids": [
+     "doc_004",
+     "doc_005"
+    ],
+    "seg_ids": [
+     "doc_004#p1",
+     "doc_005#p1"
+    ],
+    "cross_source": true
+   },
+   "disposition": "undecided",
+   "disposition_cn": "未决",
+   "reason_code": "pick_side",
+   "reason_short": "同窗对撞：待采信一方或声明资料不足"
+  },
+  {
+   "id": "LEDGER-0007",
+   "source": "fact_ledger",
+   "conflict_class": "unknown_time",
+   "conflict_class_cn": "时点不明",
+   "entry": {
+    "entity": "乙",
+    "metric": "伤亡",
+    "n_facts": 2,
+    "source_ids": [
+     "doc_004",
+     "doc_005"
+    ],
+    "seg_ids": [
+     "doc_004#p1",
+     "doc_005#p1"
+    ],
+    "cross_source": true
+   },
+   "disposition": "undecided",
+   "disposition_cn": "未决",
+   "reason_code": "time_unknown",
+   "reason_short": "时点不明：未据此排序，不强制采信"
+  },
+  {
+   "id": "CFL-same",
+   "source": "conflict_pair",
+   "conflict_class": "unclassified",
+   "conflict_class_cn": "未归类",
+   "entry": {
+    "pair_id": "CFL-same",
+    "a_id": "CON-A",
+    "b_id": "CON-B",
+    "topic": "CFL-same",
+    "winner_id": "CON-A",
+    "method": "evidence_weight",
+    "decision_path": ""
+   },
+   "disposition": "dissent",
+   "disposition_cn": "落败转少数",
+   "reason_code": "resolved:evidence_weight",
+   "reason_short": "胜方 CON-A；败方转少数意见保留"
+  },
+  {
+   "id": "CFL-subject",
+   "source": "conflict_pair",
+   "conflict_class": "unclassified",
+   "conflict_class_cn": "未归类",
+   "entry": {
+    "pair_id": "CFL-subject",
+    "a_id": "CON-A",
+    "b_id": "CON-B",
+    "topic": "CFL-subject",
+    "winner_id": "CON-A",
+    "method": "evidence_weight",
+    "decision_path": ""
+   },
+   "disposition": "dissent",
+   "disposition_cn": "落败转少数",
+   "reason_code": "resolved:evidence_weight",
+   "reason_short": "胜方 CON-A；败方转少数意见保留"
+  },
+  {
+   "id": "CFL-topic",
+   "source": "conflict_pair",
+   "conflict_class": "unclassified",
+   "conflict_class_cn": "未归类",
+   "entry": {
+    "pair_id": "CFL-topic",
+    "a_id": "CON-A",
+    "b_id": "CON-B",
+    "topic": "CFL-topic",
+    "winner_id": "tie",
+    "method": "tie",
+    "decision_path": ""
+   },
+   "disposition": "undecided",
+   "disposition_cn": "未决",
+   "reason_code": "tie",
+   "reason_short": "证据加权后无法裁决，双方保留 majority"
+  },
+  {
+   "id": "CFL-polar",
+   "source": "conflict_pair",
+   "conflict_class": "unclassified",
+   "conflict_class_cn": "未归类",
+   "entry": {
+    "pair_id": "CFL-polar",
+    "a_id": "CON-A",
+    "b_id": "CON-B",
+    "topic": "CFL-polar",
+    "winner_id": "",
+    "method": "",
+    "decision_path": ""
+   },
+   "disposition": "undecided",
+   "disposition_cn": "未决",
+   "reason_code": "no_resolution",
+   "reason_short": "尚未裁决或仲裁失败"
+  },
+  {
+   "id": "CFL-num",
+   "source": "conflict_pair",
+   "conflict_class": "unclassified",
+   "conflict_class_cn": "未归类",
+   "entry": {
+    "pair_id": "CFL-num",
+    "a_id": "CON-A",
+    "b_id": "CON-B",
+    "topic": "CFL-num",
+    "winner_id": "tie",
+    "method": "tie",
+    "decision_path": ""
+   },
+   "disposition": "undecided",
+   "disposition_cn": "未决",
+   "reason_code": "tie",
+   "reason_short": "证据加权后无法裁决，双方保留 majority"
+  },
+  {
+   "id": "CFL-qual",
+   "source": "conflict_pair",
+   "conflict_class": "unclassified",
+   "conflict_class_cn": "未归类",
+   "entry": {
+    "pair_id": "CFL-qual",
+    "a_id": "CON-A",
+    "b_id": "CON-B",
+    "topic": "CFL-qual",
+    "winner_id": "tie",
+    "method": "tie",
+    "decision_path": ""
+   },
+   "disposition": "undecided",
+   "disposition_cn": "未决",
+   "reason_code": "tie",
+   "reason_short": "证据加权后无法裁决，双方保留 majority"
+  },
+  {
+   "id": "CFL-orphan",
+   "source": "conflict_pair",
+   "conflict_class": "unclassified",
+   "conflict_class_cn": "未归类",
+   "entry": {
+    "pair_id": "CFL-orphan",
+    "a_id": "CON-A",
+    "b_id": "CON-B",
+    "topic": "CFL-orphan",
+    "winner_id": "tie",
+    "method": "tie",
+    "decision_path": ""
+   },
+   "disposition": "undecided",
+   "disposition_cn": "未决",
+   "reason_code": "tie",
+   "reason_short": "证据加权后无法裁决，双方保留 majority"
+  }
+ ],
+ "note": "改前 tip 码对同一批 C-146 夹具的输出；测试据此证「剥掉 triage 五键＝与改前逐字节相同」"
+}
