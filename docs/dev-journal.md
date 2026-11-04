@@ -2443,3 +2443,21 @@ LLM 语义归并只按语义判，跨主体／缺指标／缺证据的组会被�
 ## 〔C-148〕2026-11-04 · 树22 仲裁上下文接线＋轻裁（对标市场优质做法）
 盘点（基 tip bf65d23）：仲裁输入＝程序侧证据强度（compute_evidence_weight 纯程序可复算，对标点已在场）＋信源时点（仅并列打破引导语，未写进裁决规则）＋双方质证＋冲突说明；公式＝prefer_stronger_side（强度差>0.20 否决票数、≤0.20 信源数破平）；少数意见保留已在场（apply_resolution 败方 dissent）。缺口＝C-146 分流与仲裁零接线（误读/跨日也全量 LLM 仲裁）、C-147 轮次与 C-145 否决史不进上下文、理由无结构化留痕。实现：app/core/arbitration_face.py（Settings.arb_context 默认开、env VERITAS_ARB_CONTEXT；arb_route 复用 triage_conflict_pair 同一函数同一输入口径——oral_misread/date_offset 轻裁、true_oppose/other 带 LLM；build_context 程序侧片段＝分流判定＋归并闸否决史＋质证轮次/闸旗摘要，零 LLM 确定性、不塞系数不读金标；arbitrate_light＝tie 形态轻裁、不叫模型、双方保 majority，basis 文案按真数重写不借 _stamp 的「≤margin」句式＝假不等式不进留痕）；Coordinator.arbitrate 加 context 关键字（None＝提示词逐字节同改前）；accounting["arbitration"]（逐对 route/llm_called/context_included/merge_veto_groups/终局；空态披露）折进 conflict_trace.json 顶层节＋官方导出 _fold_arbitration；两处 kept 白名单登记。仲裁公式/证据强度一行不动（冲突数值线 STOP）。
 真引用：`scripts/probe_c148_arb_face.py`（--stage arm|all；两案合成三臂（默认开/关旗/基树 bf65d23）＋路由轻裁单元腿＋关旗两树字节等证＋pytest 全套）。仪器备注（本票新增两条）：①字典键也可能是裸 uuid（basis/evidence_weight 按 CON-id 建 dict）——字节面只替换字符串值会漏键级，映射须同时走键；②面板三线程汇入序跨臂不定＋uuid 逐跑随机＝首现序匿名化被带偏，改内容锚定映射（CON 按 statement、EV 按引文＋结论角色、CFL 按议题＋双方角色）＋稳定面列表整项排序；同强度并列结论还会让 headline 顶替吃调度噪声，夹具两侧证据等级错开（A/B）去并列。pytest 改前 7 failed/1303 passed → 改后 7 failed/1315 passed（同名链，+12 全为本刀）。四把变异刀全有牙（K1 默认翻 1 红、K2 basis 塞「≤0.20」假不等式 2 红、K3 清空轻裁档 2 红、K4 摘白名单登记 1 红）。卫生扫描：本票 10 文件 233,080 个 25 字窗对官方六案 raw_documents 全文＝0 命中。
+
+## 〔C-152〕2026-11-04 · 冲突漏检反事实尺（两张零模型尺，只量不改）
+
+来源＝C-149（2.5 冲突证据 Recall/Precision＝NO）＋C-150（归因尺＝PARTIAL：尺① 48 键全部断在「没进任何重点面」，尺② E4 7 键「有引用无候选」）。本刀只把两张实现票的票面靶量清楚，不改 app/、不重跑六案、零 LLM、零网络、案内匹配。
+
+尺① 重点面反事实＝现有显式全序 `accounting.kg_test_tree.rerank_order` 的前 N 面（N∈{7,15,30}）。读数（逐案相加，案内不相交）：N=7 覆盖 0／48、N=15 覆盖 2、N=30 覆盖 6，**用尽全序也只有 6**（全序面 394 段·次）＝42 键压根不在任何可用的序里，加带宽买不到；这 6 个全来自 C-150 的 A2 档、C 档（池外）0 个＝只加带宽既买不到 A2 的 33 键、也绝对买不到 C 的 15 键。并集面（`material_pack_union`，无序）2335 段·次含 33 键＝「进过材料」是真、「有序可选」是假，两件事分开写。对照现面（不反事实）：案级重点面并集 165 段，覆盖 0／48，与 C-150 尺① A1＝0 同一事实（两把尺当场各算各的，相等才继续用）。
+
+尺② 结论级配对反事实＝两把口径分开量、不许互相冒充。口径甲（现行成对规则原样复放：`build_candidate_pairs`＋`subject_mismatch_reason`＋`validate_conflict`，活动集＝majority 且有证据）：六案 18 题逐题候选对 0 条，同面现抄覆盖＝结论 302 条·次里 extract_subject 命中 **0**、extract_topics 命中 2、polarity_of 命中 16——主体词表是「客户甲/A」那套企业口径，本批语料抽不到，候选路按构造出不来；同期生产导出冲突对 176 对，说明现行系统的「配对」实际全靠 arbiter 那条「无程序候选→模型自由检出＋事后主体闸」的兜底路。口径乙（案无关机械对侧尺，工单点名的 conflict_trace／fact_ledger 口径）：当场 `find_collisions` 得对撞组 324 组·次＝产物 conflict_trace 里 source=fact_ledger 记录 324 条·次（逐题相加，两侧都取到数且相等＝重放输入面可信的对账腿）；跨源异值的「段×段」对侧配对 2184 对·次；抬到结论级（两端都得挂同题活动结论）只剩 1 对，其中过现行两道闸 1 对、被闸挡 0 对。E4 七键逐键：承载结论都在活动集（majority），但对撞组 0、台账留痕 0、kg 候选／交卷成对行／归并闸／丢弃／rejected／dissent 六面皆无＝**7/7 记「输入面无机械可检对侧」**（按工单第 3 条记账，不假装规则能造出来）。
+
+开票判据（工单预登记，跑前写死）：重点面／带宽票＝NO（cov 6＜线 24，且增量确来自 A2 但量不够）；候选生成／成对规则票＝NO（档 C 0＜线 4）。总判定 **NO**，只交读数＋下一缺口，没外推分数、没说能拿 13、没改仲裁公式、没开 cite_accept、没解禁数值冲突 STOP、没动 24／25／27、没合 C-149／C-150／C-123、没碰 C-141。
+
+下一缺口（读数指的那一处）：①宽料缺「可排的序」——并集里 33 键无序可依、二筛全序只装 394 段·次；②对侧料在卷面不缺（2184 对·次），缺的是「对侧段进同一题的活动结论面」（抬升后只剩 1 对），与①同源；③现行配对／归并两处的主体与指标口径都是企业语料词表（本批抽到主体 0/302 条·次），任何冲突票想落地都得先有案无关口径——但这只说明「现在配不出来」，不说明「配出来能拿几分」。
+
+账记我（订正，改动读数不改动判定）：本刀第一版只复放口径甲就交出「A 无对侧候选 7/7⇒票 NO」，把「规则在这批语料抽不到主体」误当成「输入面没有对侧」——两件事被一票混掉了。当场诊断（逐题甲候选 0 而生产导出对 176）后补了口径乙与复现一致腿，重新跑：档合计仍是 {"A": 7}、总判定仍是 NO，但 NO 的理由换成可核的那一条，并把甲的 0 单独披露成规则覆盖洞（gap_3）。预登记线的口径归属也跑前写清：档 C 按口径乙判，因为按构造的 0 去比 4 是把仪器读空当证据。
+
+真引用：`scripts/probe_c152_conf_counterfactual.py`（env：C152_RUN 必填＋C152_C149_JSON／C152_C150_JSON 指主仓未跟踪件；跑两次读数逐字相同＝零模型零网络）。
+仪器备注（两条，给下一把尺）：①`find_collisions` 与台账留痕都是**案级**口径，逐题各算一遍，任何「合计」都必须写清是条·次，否则会把 108 组说成 324 组；②`extract_subject`／`narrow_topic` 的命中数必须和被读的规则一起写进产物——只写「候选 0」就是一把没有自证腿的尺（本轮踩的就是这个）。
+验证：pytest 改前＝改后均 `7 failed, 1316 passed, 1 skipped`（本刀零测试格，红名单与基 tip `3227200` 同：test_c19_pack_window::test_m_production_messages_bite、test_c37_engineering_gates 五颗、test_c73_window_ledger::test_c73_knife_kept_drops_window_ledger_must_red）＝红不扩；`git diff --stat -- app/ config.json` 为空；不变式 Σ档＝分母（尺① 48、尺② 7）与档互斥全 True、定位失败 0 次、结论侧映射 269 条·次；卫生扫描＝本刀两件产物（md＋json）去空白后 35,700 个 25 字窗对官方六案 raw_documents 全文（1,559,041 字符）＝0 命中，两侧皆非空。
