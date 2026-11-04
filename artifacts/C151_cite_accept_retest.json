@@ -537,8 +537,119 @@
   "oob_zero": true,
   "fail_not_worse": true,
   "jia_not_regressed": false,
-  "paired_set_nonempty": true
+  "paired_set_nonempty": true,
+  "dens_side_unchanged_posthoc": true
  },
+ "dens_side": [
+  {
+   "case": "liuxiang",
+   "qid": "q_001",
+   "has_both": true,
+   "identical": true,
+   "fields": {
+    "k": [
+     3,
+     3
+    ],
+    "n_core": [
+     2,
+     2
+    ],
+    "n_filler": [
+     1,
+     1
+    ],
+    "met_target": [
+     true,
+     true
+    ],
+    "route": [
+     "adjudicate",
+     "adjudicate"
+    ],
+    "cap_segments": [
+     false,
+     false
+    ],
+    "focus_n": [
+     9,
+     9
+    ]
+   }
+  },
+  {
+   "case": "liuxiang",
+   "qid": "q_002",
+   "has_both": true,
+   "identical": true,
+   "fields": {
+    "k": [
+     3,
+     3
+    ],
+    "n_core": [
+     0,
+     0
+    ],
+    "n_filler": [
+     3,
+     3
+    ],
+    "met_target": [
+     false,
+     false
+    ],
+    "route": [
+     "adjudicate",
+     "adjudicate"
+    ],
+    "cap_segments": [
+     false,
+     false
+    ],
+    "focus_n": [
+     7,
+     7
+    ]
+   }
+  },
+  {
+   "case": "liuxiang",
+   "qid": "q_003",
+   "has_both": true,
+   "identical": true,
+   "fields": {
+    "k": [
+     3,
+     3
+    ],
+    "n_core": [
+     0,
+     0
+    ],
+    "n_filler": [
+     3,
+     3
+    ],
+    "met_target": [
+     false,
+     false
+    ],
+    "route": [
+     "adjudicate",
+     "adjudicate"
+    ],
+    "cap_segments": [
+     false,
+     false
+    ],
+    "focus_n": [
+     7,
+     7
+    ]
+   }
+  }
+ ],
  "per_question_on": [
   {
    "case": "liuxiang",

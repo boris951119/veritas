@@ -53,6 +53,8 @@ CASE_SLUG = {CASES[0]: "liuxiang", CASES[1]: "wanghong"}
 JIA_REGRESS_RATIO = 0.20      # 甲面掉两成＝记红
 NOISE_L3_SPAN = 2             # C-120 现量 L3 跨度：｜Δ｜≤2 视为噪声，不说涨跌
 REF_ROOT_DEFAULT = "/tmp/s4runs/time-20261104-135401"   # C-149 关旗六案 18 题存档
+# 旁证闸比的检索面字段（答题侧的变化不该出现在这里，出现＝旗动到选料）
+_DENS_KEYS = ("k", "n_core", "n_filler", "met_target", "route", "cap_segments")
 
 
 def _load_dossier(report: dict):
@@ -352,6 +354,22 @@ def stage_judge() -> dict:
         })
     missing_off = sorted(set(on_by) - set(off_by))
     missing_on = sorted(set(off_by) - set(on_by))
+
+    # 旁证闸（dens／焦点面）：逐题比两臂的检索面读数——必须两侧都取到数才算
+    # 「相同」，空比空不作数；这一条决定 Δ 是长在答题侧还是选料侧。
+    dens_pairs = []
+    for key in common:
+        o, f_ = on_by[key], off_by[key]
+        kd_o = o.get("kg_density") or {}
+        kd_f = f_.get("kg_density") or {}
+        fields = {x: (kd_o.get(x), kd_f.get(x)) for x in _DENS_KEYS}
+        fields["focus_n"] = (o.get("focus_n"), f_.get("focus_n"))
+        has_both = all(v is not None and w is not None for v, w in fields.values())
+        dens_pairs.append({
+            "case": key[0], "qid": key[1], "has_both": has_both,
+            "identical": has_both and all(v == w for v, w in fields.values()),
+            "fields": fields})
+    dens_side_identical = bool(dens_pairs) and all(p["identical"] for p in dens_pairs)
     a_on_cmp = _agg(paired_rows_on) if common else {}
     a_off_cmp = _agg(paired_rows_off) if common else {}
 
@@ -412,7 +430,11 @@ def stage_judge() -> dict:
             "gates": {"oob_zero": hard_oob_zero,
                       "fail_not_worse": not fail_worse,
                       "jia_not_regressed": not bool(jia_regress),
-                      "paired_set_nonempty": bool(common)},
+                      "paired_set_nonempty": bool(common),
+                      # ⚠ 本条＝跑后补的旁证披露，不参与本次裁决（裁决只吃跑前写死的
+                      # 三条：带外 0／失败率不升／甲面不掉两成），掉了也只作说明。
+                      "dens_side_unchanged_posthoc": dens_side_identical},
+            "dens_side": dens_pairs,
             "per_question_on": on_rows,
             "per_question_off": off_rows_all}
 
@@ -594,8 +616,18 @@ def _render_md(doc: dict) -> None:
         lines.append(f"- 关旗 {k}＝{v}")
     lines += [
         "",
+        "## 旁证闸（检索面逐题两臂对照；跑后补的披露，不参与裁决）",
+        f"- 两臂 k／n_core／n_filler／met_target／route／cap_segments／focus_n "
+        f"逐题全同＝{(doc.get('gates') or {}).get('dens_side_unchanged_posthoc')}"
+        f"（配对 {n_paired} 题，两侧都取到数才算同）",
+    ]
+    for p in doc.get("dens_side") or []:
+        lines.append(f"- {p['case']} {p['qid']}：同＝{p['identical']}｜"
+                     f"两臂有数＝{p['has_both']}")
+    lines += [
+        "",
         f"- 墙钟均值：开旗 {on.get('wall_mean_s')}s／关旗 {off.get('wall_mean_s')}s"
-        f"（打回环允许上升，不作判据）",
+        f"（打回环允许上升，不作判据；关旗只抽检一案，跨案不可直接比）",
         f"- 调用数均值：开旗 {on.get('calls_mean')}／关旗 {off.get('calls_mean')}",
         "",
         "产物卫生：本件只含 id／计数／比率，零案卷原文、零模型输出原文。",
