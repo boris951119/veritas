@@ -886,9 +886,13 @@ def export_official(runs: list[tuple[dict, Dossier]], out_dir: Path) -> dict[str
                 gate_sections.append(item)
         # C-143：借 C-123 窄修②——旗开必写回放面（空态也写＋原因句）。
         # 「本次未检出」不等于「资料无冲突」；零对撞静默＝两态在产物面上同形。
+        from app.core.conflict_trace import TRIAGE_CLASSES
         detail = ("C-115 三类冲突＋处置留痕回放面；"
                   "conflict_class∈{same_window,cross_day,unknown_time,"
-                  "unclassified}；disposition∈{keep,dissent,undecided}")
+                  "unclassified}；disposition∈{keep,dissent,undecided}；"
+                  "C-146 分流轴 triage_class∈{"
+                  + ",".join(sorted(TRIAGE_CLASSES))
+                  + "}（与 conflict_class 正交，只贴标签不改判）")
         paths["conflict_trace"] = out_dir / "conflict_trace.json"
         n_gate_blocked = sum(int(g.get("n_blocked") or 0)
                              for g in gate_sections)
