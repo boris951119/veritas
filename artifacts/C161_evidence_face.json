@@ -1,0 +1,1723 @@
+{
+  "verdict": {
+    "judgement": "YES",
+    "judgement_reason": "官方尺在全部案交卷面跑通（逐案现跑 score_submission 交叉校验一致）、件①②③④ 齐、分层与守恒不变式逐案通过",
+    "recommend_implementation": "否",
+    "recommend_basis": "pooled F1＝0.2453 距门槛 0.65 差 0.4047；主尺案 F1＝0.3896 距门槛 0.65 差 0.2604",
+    "meat_threshold": {
+      "gate_pooled_F1_ge": {
+        "gate": 0.65,
+        "value": 0.24528301886792453,
+        "pass": false
+      },
+      "gate_main_case_F1_ge": {
+        "gate": 0.65,
+        "case": "刘翔编制“二选一”事件",
+        "value": 0.38961038961038963,
+        "pass": false
+      },
+      "both_pass": false,
+      "available": true
+    }
+  },
+  "run_root": "/tmp/s4runs/time-20261104-135401",
+  "gold_root": "/Users/liuboyu/Desktop/veritas-testcases/样例集-拓尔思-20261012",
+  "ruler": "scripts/score_official.py: precision_recall + f1 + score_f1_src（第一阶段精确匹配，未含语义匹配＝下界）",
+  "constants": {
+    "adjacency_window": 1,
+    "meat_gate": 0.65,
+    "main_case_keyword": "刘翔",
+    "md_detail_rows": 40
+  },
+  "cases": [
+    {
+      "case": "2026·8·26 吉隆口岸泥石流灾害",
+      "score_official_2_2": {
+        "Precision_src": 0.125,
+        "Recall_src": 0.24,
+        "F1_src": 0.1643835616438356,
+        "score_2_2_1": 0,
+        "recall_src_ceiling": "Recall_src 上限 24/25＝96.0%",
+        "missing_questions": 0,
+        "extra_questions": 0,
+        "unresolved_fact_ids": 0,
+        "gold_evidence_keys_sample": [
+          "argument",
+          "char_end",
+          "char_start",
+          "doc_id",
+          "entities",
+          "fact_des",
+          "fact_id",
+          "para_id",
+          "quote"
+        ]
+      },
+      "counts": {
+        "submitted_evidence_rows": 48,
+        "gold_evidence_rows": 25,
+        "one_to_one_hits": 6,
+        "false_positive_residual": 42,
+        "false_negative_residual": 19,
+        "submitted_distinct_pairs": 35,
+        "gold_distinct_pairs": 19,
+        "gold_rows_without_locator": 0,
+        "submitted_rows_without_locator": 0
+      },
+      "fp_by_doc": {
+        "doc_001": 2,
+        "doc_019": 1,
+        "doc_027": 1,
+        "doc_031": 1,
+        "doc_033": 1,
+        "doc_035": 2,
+        "doc_038": 1,
+        "doc_041": 1,
+        "doc_045": 1,
+        "doc_064": 1,
+        "doc_074": 1,
+        "doc_076": 1,
+        "doc_088": 1,
+        "doc_092": 1,
+        "doc_115": 2,
+        "doc_138": 2,
+        "doc_141": 1,
+        "doc_166": 1,
+        "doc_180": 1,
+        "doc_208": 1,
+        "doc_229": 1,
+        "doc_272": 1,
+        "doc_273": 1,
+        "doc_276": 1,
+        "doc_318": 1,
+        "doc_329": 1
+      },
+      "fn_by_doc": {
+        "doc_001": 11,
+        "doc_002": 1,
+        "doc_003": 1
+      },
+      "gap_layering": {
+        "counts": {
+          "L1_cited_not_exported": 0,
+          "L2_internal_not_exported": 0,
+          "L3_boxed_not_cited": 8,
+          "L4_never_in_products": 11
+        },
+        "detail": [
+          {
+            "doc_id": "doc_001",
+            "para_id": "doc_001#p119",
+            "count": 1,
+            "layer": "L4_never_in_products",
+            "adjacent_submitted_para": false
+          },
+          {
+            "doc_id": "doc_001",
+            "para_id": "doc_001#p139",
+            "count": 1,
+            "layer": "L4_never_in_products",
+            "adjacent_submitted_para": false
+          },
+          {
+            "doc_id": "doc_001",
+            "para_id": "doc_001#p230",
+            "count": 1,
+            "layer": "L4_never_in_products",
+            "adjacent_submitted_para": false
+          },
+          {
+            "doc_id": "doc_001",
+            "para_id": "doc_001#p233",
+            "count": 1,
+            "layer": "L3_boxed_not_cited",
+            "adjacent_submitted_para": false
+          },
+          {
+            "doc_id": "doc_001",
+            "para_id": "doc_001#p235",
+            "count": 1,
+            "layer": "L3_boxed_not_cited",
+            "adjacent_submitted_para": false
+          },
+          {
+            "doc_id": "doc_001",
+            "para_id": "doc_001#p419",
+            "count": 1,
+            "layer": "L3_boxed_not_cited",
+            "adjacent_submitted_para": false
+          },
+          {
+            "doc_id": "doc_001",
+            "para_id": "doc_001#p422",
+            "count": 4,
+            "layer": "L4_never_in_products",
+            "adjacent_submitted_para": false
+          },
+          {
+            "doc_id": "doc_001",
+            "para_id": "doc_001#p424",
+            "count": 4,
+            "layer": "L3_boxed_not_cited",
+            "adjacent_submitted_para": false
+          },
+          {
+            "doc_id": "doc_001",
+            "para_id": "doc_001#p430",
+            "count": 1,
+            "layer": "L4_never_in_products",
+            "adjacent_submitted_para": true
+          },
+          {
+            "doc_id": "doc_001",
+            "para_id": "doc_001#p45",
+            "count": 1,
+            "layer": "L4_never_in_products",
+            "adjacent_submitted_para": false
+          },
+          {
+            "doc_id": "doc_001",
+            "para_id": "doc_001#p85",
+            "count": 1,
+            "layer": "L3_boxed_not_cited",
+            "adjacent_submitted_para": false
+          },
+          {
+            "doc_id": "doc_002",
+            "para_id": "doc_002#p1",
+            "count": 1,
+            "layer": "L4_never_in_products",
+            "adjacent_submitted_para": false
+          },
+          {
+            "doc_id": "doc_003",
+            "para_id": "doc_003#p1",
+            "count": 1,
+            "layer": "L4_never_in_products",
+            "adjacent_submitted_para": false
+          }
+        ],
+        "fn_total": 19,
+        "adjacency_flag": 1
+      },
+      "face_sizes": {
+        "cited_in_conclusions": 22,
+        "in_internal_evidences": 35,
+        "in_material_window": 503,
+        "n_question_dirs": 3
+      },
+      "per_question": [
+        {
+          "question_id": "q_001",
+          "gold_supporting": 3,
+          "gold_conflicting": 4,
+          "gold_total": 7,
+          "covered_by_submitted_evidence": 4,
+          "missing_for_this_question": 3,
+          "submitted_conclusions_cited_supporting": 1,
+          "submitted_conclusions_cited_conflicting": 13,
+          "unresolved_fact_ids": 0,
+          "both_sides_empty": false
+        },
+        {
+          "question_id": "q_002",
+          "gold_supporting": 9,
+          "gold_conflicting": 3,
+          "gold_total": 12,
+          "covered_by_submitted_evidence": 3,
+          "missing_for_this_question": 9,
+          "submitted_conclusions_cited_supporting": 1,
+          "submitted_conclusions_cited_conflicting": 3,
+          "unresolved_fact_ids": 0,
+          "both_sides_empty": false
+        },
+        {
+          "question_id": "q_003",
+          "gold_supporting": 6,
+          "gold_conflicting": 4,
+          "gold_total": 10,
+          "covered_by_submitted_evidence": 2,
+          "missing_for_this_question": 8,
+          "submitted_conclusions_cited_supporting": 1,
+          "submitted_conclusions_cited_conflicting": 8,
+          "unresolved_fact_ids": 0,
+          "both_sides_empty": false
+        }
+      ]
+    },
+    {
+      "case": "中美AI事故预警提议（2026.9）",
+      "score_official_2_2": {
+        "Precision_src": 0.14634146341463414,
+        "Recall_src": 0.2857142857142857,
+        "F1_src": 0.1935483870967742,
+        "score_2_2_1": 0,
+        "recall_src_ceiling": "Recall_src 上限 21/21＝100.0%",
+        "missing_questions": 0,
+        "extra_questions": 0,
+        "unresolved_fact_ids": 0,
+        "gold_evidence_keys_sample": [
+          "argument",
+          "char_end",
+          "char_start",
+          "doc_id",
+          "entities",
+          "fact_des",
+          "fact_id",
+          "para_id",
+          "quote"
+        ]
+      },
+      "counts": {
+        "submitted_evidence_rows": 41,
+        "gold_evidence_rows": 21,
+        "one_to_one_hits": 6,
+        "false_positive_residual": 35,
+        "false_negative_residual": 15,
+        "submitted_distinct_pairs": 26,
+        "gold_distinct_pairs": 21,
+        "gold_rows_without_locator": 0,
+        "submitted_rows_without_locator": 0
+      },
+      "fp_by_doc": {
+        "doc_005": 1,
+        "doc_006": 1,
+        "doc_007": 1,
+        "doc_017": 1,
+        "doc_018": 1,
+        "doc_022": 2,
+        "doc_023": 2,
+        "doc_024": 1,
+        "doc_026": 1,
+        "doc_027": 1,
+        "doc_035": 1,
+        "doc_036": 1,
+        "doc_042": 1,
+        "doc_043": 2,
+        "doc_047": 4,
+        "doc_058": 2,
+        "doc_066": 1
+      },
+      "fn_by_doc": {
+        "doc_004": 1,
+        "doc_007": 1,
+        "doc_009": 2,
+        "doc_016": 1,
+        "doc_017": 2,
+        "doc_018": 1,
+        "doc_024": 1,
+        "doc_038": 1,
+        "doc_047": 1,
+        "doc_048": 1,
+        "doc_062": 1,
+        "doc_064": 1,
+        "doc_065": 1
+      },
+      "gap_layering": {
+        "counts": {
+          "L1_cited_not_exported": 0,
+          "L2_internal_not_exported": 0,
+          "L3_boxed_not_cited": 11,
+          "L4_never_in_products": 4
+        },
+        "detail": [
+          {
+            "doc_id": "doc_004",
+            "para_id": "doc_004#p4",
+            "count": 1,
+            "layer": "L3_boxed_not_cited",
+            "adjacent_submitted_para": false
+          },
+          {
+            "doc_id": "doc_007",
+            "para_id": "doc_007#p10",
+            "count": 1,
+            "layer": "L3_boxed_not_cited",
+            "adjacent_submitted_para": false
+          },
+          {
+            "doc_id": "doc_009",
+            "para_id": "doc_009#p11",
+            "count": 1,
+            "layer": "L4_never_in_products",
+            "adjacent_submitted_para": false
+          },
+          {
+            "doc_id": "doc_009",
+            "para_id": "doc_009#p12",
+            "count": 1,
+            "layer": "L4_never_in_products",
+            "adjacent_submitted_para": false
+          },
+          {
+            "doc_id": "doc_016",
+            "para_id": "doc_016#p5",
+            "count": 1,
+            "layer": "L3_boxed_not_cited",
+            "adjacent_submitted_para": false
+          },
+          {
+            "doc_id": "doc_017",
+            "para_id": "doc_017#p12",
+            "count": 1,
+            "layer": "L3_boxed_not_cited",
+            "adjacent_submitted_para": false
+          },
+          {
+            "doc_id": "doc_017",
+            "para_id": "doc_017#p9",
+            "count": 1,
+            "layer": "L3_boxed_not_cited",
+            "adjacent_submitted_para": true
+          },
+          {
+            "doc_id": "doc_018",
+            "para_id": "doc_018#p12",
+            "count": 1,
+            "layer": "L3_boxed_not_cited",
+            "adjacent_submitted_para": false
+          },
+          {
+            "doc_id": "doc_024",
+            "para_id": "doc_024#p6",
+            "count": 1,
+            "layer": "L3_boxed_not_cited",
+            "adjacent_submitted_para": false
+          },
+          {
+            "doc_id": "doc_038",
+            "para_id": "doc_038#p1",
+            "count": 1,
+            "layer": "L3_boxed_not_cited",
+            "adjacent_submitted_para": false
+          },
+          {
+            "doc_id": "doc_047",
+            "para_id": "doc_047#p7",
+            "count": 1,
+            "layer": "L3_boxed_not_cited",
+            "adjacent_submitted_para": true
+          },
+          {
+            "doc_id": "doc_048",
+            "para_id": "doc_048#p4",
+            "count": 1,
+            "layer": "L4_never_in_products",
+            "adjacent_submitted_para": false
+          },
+          {
+            "doc_id": "doc_062",
+            "para_id": "doc_062#p11",
+            "count": 1,
+            "layer": "L4_never_in_products",
+            "adjacent_submitted_para": false
+          },
+          {
+            "doc_id": "doc_064",
+            "para_id": "doc_064#p6",
+            "count": 1,
+            "layer": "L3_boxed_not_cited",
+            "adjacent_submitted_para": false
+          },
+          {
+            "doc_id": "doc_065",
+            "para_id": "doc_065#p8",
+            "count": 1,
+            "layer": "L3_boxed_not_cited",
+            "adjacent_submitted_para": false
+          }
+        ],
+        "fn_total": 15,
+        "adjacency_flag": 2
+      },
+      "face_sizes": {
+        "cited_in_conclusions": 9,
+        "in_internal_evidences": 26,
+        "in_material_window": 397,
+        "n_question_dirs": 3
+      },
+      "per_question": [
+        {
+          "question_id": "q_001",
+          "gold_supporting": 6,
+          "gold_conflicting": 2,
+          "gold_total": 8,
+          "covered_by_submitted_evidence": 2,
+          "missing_for_this_question": 6,
+          "submitted_conclusions_cited_supporting": 1,
+          "submitted_conclusions_cited_conflicting": 1,
+          "unresolved_fact_ids": 0,
+          "both_sides_empty": false
+        },
+        {
+          "question_id": "q_002",
+          "gold_supporting": 4,
+          "gold_conflicting": 2,
+          "gold_total": 6,
+          "covered_by_submitted_evidence": 2,
+          "missing_for_this_question": 4,
+          "submitted_conclusions_cited_supporting": 1,
+          "submitted_conclusions_cited_conflicting": 1,
+          "unresolved_fact_ids": 0,
+          "both_sides_empty": false
+        },
+        {
+          "question_id": "q_003",
+          "gold_supporting": 4,
+          "gold_conflicting": 3,
+          "gold_total": 7,
+          "covered_by_submitted_evidence": 2,
+          "missing_for_this_question": 5,
+          "submitted_conclusions_cited_supporting": 1,
+          "submitted_conclusions_cited_conflicting": 4,
+          "unresolved_fact_ids": 0,
+          "both_sides_empty": false
+        }
+      ]
+    },
+    {
+      "case": "刘翔编制“二选一”事件",
+      "score_official_2_2": {
+        "Precision_src": 0.3488372093023256,
+        "Recall_src": 0.4411764705882353,
+        "F1_src": 0.38961038961038963,
+        "score_2_2_1": 0,
+        "recall_src_ceiling": "Recall_src 上限 34/34＝100.0%",
+        "missing_questions": 0,
+        "extra_questions": 0,
+        "unresolved_fact_ids": 0,
+        "gold_evidence_keys_sample": [
+          "argument",
+          "char_end",
+          "char_start",
+          "doc_id",
+          "entities",
+          "fact_des",
+          "fact_id",
+          "para_id",
+          "quote"
+        ]
+      },
+      "counts": {
+        "submitted_evidence_rows": 43,
+        "gold_evidence_rows": 34,
+        "one_to_one_hits": 15,
+        "false_positive_residual": 28,
+        "false_negative_residual": 19,
+        "submitted_distinct_pairs": 34,
+        "gold_distinct_pairs": 34,
+        "gold_rows_without_locator": 0,
+        "submitted_rows_without_locator": 0
+      },
+      "fp_by_doc": {
+        "doc_002": 1,
+        "doc_005": 1,
+        "doc_007": 1,
+        "doc_009": 1,
+        "doc_012": 2,
+        "doc_014": 1,
+        "doc_025": 1,
+        "doc_029": 1,
+        "doc_030": 3,
+        "doc_033": 1,
+        "doc_035": 2,
+        "doc_037": 1,
+        "doc_038": 1,
+        "doc_041": 1,
+        "doc_043": 1,
+        "doc_049": 1,
+        "doc_050": 1,
+        "doc_051": 1
+      },
+      "fn_by_doc": {
+        "doc_006": 1,
+        "doc_009": 1,
+        "doc_014": 1,
+        "doc_025": 2,
+        "doc_026": 3,
+        "doc_027": 1,
+        "doc_028": 2,
+        "doc_029": 1,
+        "doc_033": 1,
+        "doc_045": 1,
+        "doc_051": 2,
+        "doc_052": 1,
+        "doc_053": 2
+      },
+      "gap_layering": {
+        "counts": {
+          "L1_cited_not_exported": 0,
+          "L2_internal_not_exported": 0,
+          "L3_boxed_not_cited": 19,
+          "L4_never_in_products": 0
+        },
+        "detail": [
+          {
+            "doc_id": "doc_006",
+            "para_id": "doc_006#p2",
+            "count": 1,
+            "layer": "L3_boxed_not_cited",
+            "adjacent_submitted_para": true
+          },
+          {
+            "doc_id": "doc_009",
+            "para_id": "doc_009#p5",
+            "count": 1,
+            "layer": "L3_boxed_not_cited",
+            "adjacent_submitted_para": true
+          },
+          {
+            "doc_id": "doc_014",
+            "para_id": "doc_014#p1",
+            "count": 1,
+            "layer": "L3_boxed_not_cited",
+            "adjacent_submitted_para": false
+          },
+          {
+            "doc_id": "doc_025",
+            "para_id": "doc_025#p4",
+            "count": 1,
+            "layer": "L3_boxed_not_cited",
+            "adjacent_submitted_para": false
+          },
+          {
+            "doc_id": "doc_025",
+            "para_id": "doc_025#p6",
+            "count": 1,
+            "layer": "L3_boxed_not_cited",
+            "adjacent_submitted_para": false
+          },
+          {
+            "doc_id": "doc_026",
+            "para_id": "doc_026#p5",
+            "count": 1,
+            "layer": "L3_boxed_not_cited",
+            "adjacent_submitted_para": false
+          },
+          {
+            "doc_id": "doc_026",
+            "para_id": "doc_026#p6",
+            "count": 1,
+            "layer": "L3_boxed_not_cited",
+            "adjacent_submitted_para": false
+          },
+          {
+            "doc_id": "doc_026",
+            "para_id": "doc_026#p7",
+            "count": 1,
+            "layer": "L3_boxed_not_cited",
+            "adjacent_submitted_para": false
+          },
+          {
+            "doc_id": "doc_027",
+            "para_id": "doc_027#p3",
+            "count": 1,
+            "layer": "L3_boxed_not_cited",
+            "adjacent_submitted_para": true
+          },
+          {
+            "doc_id": "doc_028",
+            "para_id": "doc_028#p1",
+            "count": 1,
+            "layer": "L3_boxed_not_cited",
+            "adjacent_submitted_para": false
+          },
+          {
+            "doc_id": "doc_028",
+            "para_id": "doc_028#p3",
+            "count": 1,
+            "layer": "L3_boxed_not_cited",
+            "adjacent_submitted_para": false
+          },
+          {
+            "doc_id": "doc_029",
+            "para_id": "doc_029#p7",
+            "count": 1,
+            "layer": "L3_boxed_not_cited",
+            "adjacent_submitted_para": false
+          },
+          {
+            "doc_id": "doc_033",
+            "para_id": "doc_033#p5",
+            "count": 1,
+            "layer": "L3_boxed_not_cited",
+            "adjacent_submitted_para": true
+          },
+          {
+            "doc_id": "doc_045",
+            "para_id": "doc_045#p6",
+            "count": 1,
+            "layer": "L3_boxed_not_cited",
+            "adjacent_submitted_para": false
+          },
+          {
+            "doc_id": "doc_051",
+            "para_id": "doc_051#p1",
+            "count": 1,
+            "layer": "L3_boxed_not_cited",
+            "adjacent_submitted_para": false
+          },
+          {
+            "doc_id": "doc_051",
+            "para_id": "doc_051#p3",
+            "count": 1,
+            "layer": "L3_boxed_not_cited",
+            "adjacent_submitted_para": true
+          },
+          {
+            "doc_id": "doc_052",
+            "para_id": "doc_052#p1",
+            "count": 1,
+            "layer": "L3_boxed_not_cited",
+            "adjacent_submitted_para": false
+          },
+          {
+            "doc_id": "doc_053",
+            "para_id": "doc_053#p2",
+            "count": 1,
+            "layer": "L3_boxed_not_cited",
+            "adjacent_submitted_para": false
+          },
+          {
+            "doc_id": "doc_053",
+            "para_id": "doc_053#p4",
+            "count": 1,
+            "layer": "L3_boxed_not_cited",
+            "adjacent_submitted_para": false
+          }
+        ],
+        "fn_total": 19,
+        "adjacency_flag": 5
+      },
+      "face_sizes": {
+        "cited_in_conclusions": 7,
+        "in_internal_evidences": 34,
+        "in_material_window": 276,
+        "n_question_dirs": 3
+      },
+      "per_question": [
+        {
+          "question_id": "q_001",
+          "gold_supporting": 4,
+          "gold_conflicting": 7,
+          "gold_total": 11,
+          "covered_by_submitted_evidence": 5,
+          "missing_for_this_question": 6,
+          "submitted_conclusions_cited_supporting": 1,
+          "submitted_conclusions_cited_conflicting": 2,
+          "unresolved_fact_ids": 0,
+          "both_sides_empty": false
+        },
+        {
+          "question_id": "q_002",
+          "gold_supporting": 5,
+          "gold_conflicting": 7,
+          "gold_total": 12,
+          "covered_by_submitted_evidence": 3,
+          "missing_for_this_question": 9,
+          "submitted_conclusions_cited_supporting": 1,
+          "submitted_conclusions_cited_conflicting": 2,
+          "unresolved_fact_ids": 0,
+          "both_sides_empty": false
+        },
+        {
+          "question_id": "q_003",
+          "gold_supporting": 5,
+          "gold_conflicting": 8,
+          "gold_total": 13,
+          "covered_by_submitted_evidence": 9,
+          "missing_for_this_question": 4,
+          "submitted_conclusions_cited_supporting": 1,
+          "submitted_conclusions_cited_conflicting": 1,
+          "unresolved_fact_ids": 0,
+          "both_sides_empty": false
+        }
+      ]
+    },
+    {
+      "case": "印度航空 AI171 空难（2025.6–2026.5）",
+      "score_official_2_2": {
+        "Precision_src": 0.17073170731707318,
+        "Recall_src": 0.16666666666666666,
+        "F1_src": 0.16867469879518074,
+        "score_2_2_1": 0,
+        "recall_src_ceiling": "Recall_src 上限 42/42＝100.0%",
+        "missing_questions": 0,
+        "extra_questions": 0,
+        "unresolved_fact_ids": 0,
+        "gold_evidence_keys_sample": [
+          "argument",
+          "char_end",
+          "char_start",
+          "doc_id",
+          "entities",
+          "fact_des",
+          "fact_id",
+          "para_id",
+          "quote"
+        ]
+      },
+      "counts": {
+        "submitted_evidence_rows": 41,
+        "gold_evidence_rows": 42,
+        "one_to_one_hits": 7,
+        "false_positive_residual": 34,
+        "false_negative_residual": 35,
+        "submitted_distinct_pairs": 29,
+        "gold_distinct_pairs": 41,
+        "gold_rows_without_locator": 0,
+        "submitted_rows_without_locator": 0
+      },
+      "fp_by_doc": {
+        "doc_002": 4,
+        "doc_003": 1,
+        "doc_004": 1,
+        "doc_007": 1,
+        "doc_012": 2,
+        "doc_020": 4,
+        "doc_028": 1,
+        "doc_034": 1,
+        "doc_035": 4,
+        "doc_036": 2,
+        "doc_043": 2,
+        "doc_046": 1,
+        "doc_047": 2,
+        "doc_053": 1
+      },
+      "fn_by_doc": {
+        "doc_002": 1,
+        "doc_004": 3,
+        "doc_005": 3,
+        "doc_006": 1,
+        "doc_007": 1,
+        "doc_009": 1,
+        "doc_010": 1,
+        "doc_011": 1,
+        "doc_013": 2,
+        "doc_014": 2,
+        "doc_015": 3,
+        "doc_016": 2,
+        "doc_017": 1,
+        "doc_018": 1,
+        "doc_020": 1,
+        "doc_025": 1,
+        "doc_031": 1,
+        "doc_036": 1,
+        "doc_040": 1,
+        "doc_044": 2,
+        "doc_049": 1,
+        "doc_055": 1,
+        "doc_057": 2
+      },
+      "gap_layering": {
+        "counts": {
+          "L1_cited_not_exported": 0,
+          "L2_internal_not_exported": 0,
+          "L3_boxed_not_cited": 23,
+          "L4_never_in_products": 12
+        },
+        "detail": [
+          {
+            "doc_id": "doc_002",
+            "para_id": "doc_002#p8",
+            "count": 1,
+            "layer": "L3_boxed_not_cited",
+            "adjacent_submitted_para": false
+          },
+          {
+            "doc_id": "doc_004",
+            "para_id": "doc_004#p6",
+            "count": 1,
+            "layer": "L3_boxed_not_cited",
+            "adjacent_submitted_para": true
+          },
+          {
+            "doc_id": "doc_004",
+            "para_id": "doc_004#p8",
+            "count": 1,
+            "layer": "L3_boxed_not_cited",
+            "adjacent_submitted_para": false
+          },
+          {
+            "doc_id": "doc_004",
+            "para_id": "doc_004#p9",
+            "count": 1,
+            "layer": "L3_boxed_not_cited",
+            "adjacent_submitted_para": false
+          },
+          {
+            "doc_id": "doc_005",
+            "para_id": "doc_005#p3",
+            "count": 1,
+            "layer": "L3_boxed_not_cited",
+            "adjacent_submitted_para": false
+          },
+          {
+            "doc_id": "doc_005",
+            "para_id": "doc_005#p4",
+            "count": 1,
+            "layer": "L3_boxed_not_cited",
+            "adjacent_submitted_para": false
+          },
+          {
+            "doc_id": "doc_005",
+            "para_id": "doc_005#p7",
+            "count": 1,
+            "layer": "L4_never_in_products",
+            "adjacent_submitted_para": false
+          },
+          {
+            "doc_id": "doc_006",
+            "para_id": "doc_006#p3",
+            "count": 1,
+            "layer": "L3_boxed_not_cited",
+            "adjacent_submitted_para": false
+          },
+          {
+            "doc_id": "doc_007",
+            "para_id": "doc_007#p3",
+            "count": 1,
+            "layer": "L3_boxed_not_cited",
+            "adjacent_submitted_para": true
+          },
+          {
+            "doc_id": "doc_009",
+            "para_id": "doc_009#p14",
+            "count": 1,
+            "layer": "L4_never_in_products",
+            "adjacent_submitted_para": false
+          },
+          {
+            "doc_id": "doc_010",
+            "para_id": "doc_010#p9",
+            "count": 1,
+            "layer": "L3_boxed_not_cited",
+            "adjacent_submitted_para": false
+          },
+          {
+            "doc_id": "doc_011",
+            "para_id": "doc_011#p2",
+            "count": 1,
+            "layer": "L3_boxed_not_cited",
+            "adjacent_submitted_para": false
+          },
+          {
+            "doc_id": "doc_013",
+            "para_id": "doc_013#p3",
+            "count": 1,
+            "layer": "L4_never_in_products",
+            "adjacent_submitted_para": false
+          },
+          {
+            "doc_id": "doc_013",
+            "para_id": "doc_013#p8",
+            "count": 1,
+            "layer": "L4_never_in_products",
+            "adjacent_submitted_para": false
+          },
+          {
+            "doc_id": "doc_014",
+            "para_id": "doc_014#p1",
+            "count": 1,
+            "layer": "L4_never_in_products",
+            "adjacent_submitted_para": false
+          },
+          {
+            "doc_id": "doc_014",
+            "para_id": "doc_014#p2",
+            "count": 1,
+            "layer": "L4_never_in_products",
+            "adjacent_submitted_para": false
+          },
+          {
+            "doc_id": "doc_015",
+            "para_id": "doc_015#p1",
+            "count": 1,
+            "layer": "L4_never_in_products",
+            "adjacent_submitted_para": false
+          },
+          {
+            "doc_id": "doc_015",
+            "para_id": "doc_015#p5",
+            "count": 1,
+            "layer": "L4_never_in_products",
+            "adjacent_submitted_para": false
+          },
+          {
+            "doc_id": "doc_015",
+            "para_id": "doc_015#p6",
+            "count": 1,
+            "layer": "L4_never_in_products",
+            "adjacent_submitted_para": false
+          },
+          {
+            "doc_id": "doc_016",
+            "para_id": "doc_016#p19",
+            "count": 1,
+            "layer": "L3_boxed_not_cited",
+            "adjacent_submitted_para": false
+          },
+          {
+            "doc_id": "doc_016",
+            "para_id": "doc_016#p20",
+            "count": 1,
+            "layer": "L3_boxed_not_cited",
+            "adjacent_submitted_para": false
+          },
+          {
+            "doc_id": "doc_017",
+            "para_id": "doc_017#p5",
+            "count": 1,
+            "layer": "L3_boxed_not_cited",
+            "adjacent_submitted_para": false
+          },
+          {
+            "doc_id": "doc_018",
+            "para_id": "doc_018#p21",
+            "count": 1,
+            "layer": "L3_boxed_not_cited",
+            "adjacent_submitted_para": false
+          },
+          {
+            "doc_id": "doc_020",
+            "para_id": "doc_020#p30",
+            "count": 1,
+            "layer": "L3_boxed_not_cited",
+            "adjacent_submitted_para": false
+          },
+          {
+            "doc_id": "doc_025",
+            "para_id": "doc_025#p9",
+            "count": 1,
+            "layer": "L4_never_in_products",
+            "adjacent_submitted_para": false
+          },
+          {
+            "doc_id": "doc_031",
+            "para_id": "doc_031#p6",
+            "count": 1,
+            "layer": "L3_boxed_not_cited",
+            "adjacent_submitted_para": false
+          },
+          {
+            "doc_id": "doc_036",
+            "para_id": "doc_036#p16",
+            "count": 1,
+            "layer": "L3_boxed_not_cited",
+            "adjacent_submitted_para": false
+          },
+          {
+            "doc_id": "doc_040",
+            "para_id": "doc_040#p1",
+            "count": 1,
+            "layer": "L3_boxed_not_cited",
+            "adjacent_submitted_para": false
+          },
+          {
+            "doc_id": "doc_044",
+            "para_id": "doc_044#p16",
+            "count": 1,
+            "layer": "L3_boxed_not_cited",
+            "adjacent_submitted_para": false
+          },
+          {
+            "doc_id": "doc_044",
+            "para_id": "doc_044#p18",
+            "count": 1,
+            "layer": "L3_boxed_not_cited",
+            "adjacent_submitted_para": false
+          },
+          {
+            "doc_id": "doc_049",
+            "para_id": "doc_049#p1",
+            "count": 2,
+            "layer": "L3_boxed_not_cited",
+            "adjacent_submitted_para": false
+          },
+          {
+            "doc_id": "doc_055",
+            "para_id": "doc_055#p18",
+            "count": 1,
+            "layer": "L3_boxed_not_cited",
+            "adjacent_submitted_para": false
+          },
+          {
+            "doc_id": "doc_057",
+            "para_id": "doc_057#p4",
+            "count": 1,
+            "layer": "L4_never_in_products",
+            "adjacent_submitted_para": false
+          },
+          {
+            "doc_id": "doc_057",
+            "para_id": "doc_057#p5",
+            "count": 1,
+            "layer": "L4_never_in_products",
+            "adjacent_submitted_para": false
+          }
+        ],
+        "fn_total": 35,
+        "adjacency_flag": 2
+      },
+      "face_sizes": {
+        "cited_in_conclusions": 7,
+        "in_internal_evidences": 29,
+        "in_material_window": 502,
+        "n_question_dirs": 3
+      },
+      "per_question": [
+        {
+          "question_id": "q_001",
+          "gold_supporting": 7,
+          "gold_conflicting": 5,
+          "gold_total": 12,
+          "covered_by_submitted_evidence": 4,
+          "missing_for_this_question": 8,
+          "submitted_conclusions_cited_supporting": 1,
+          "submitted_conclusions_cited_conflicting": 4,
+          "unresolved_fact_ids": 0,
+          "both_sides_empty": false
+        },
+        {
+          "question_id": "q_002",
+          "gold_supporting": 11,
+          "gold_conflicting": 11,
+          "gold_total": 22,
+          "covered_by_submitted_evidence": 2,
+          "missing_for_this_question": 20,
+          "submitted_conclusions_cited_supporting": 1,
+          "submitted_conclusions_cited_conflicting": 0,
+          "unresolved_fact_ids": 0,
+          "both_sides_empty": false
+        },
+        {
+          "question_id": "q_003",
+          "gold_supporting": 6,
+          "gold_conflicting": 4,
+          "gold_total": 10,
+          "covered_by_submitted_evidence": 2,
+          "missing_for_this_question": 8,
+          "submitted_conclusions_cited_supporting": 1,
+          "submitted_conclusions_cited_conflicting": 0,
+          "unresolved_fact_ids": 0,
+          "both_sides_empty": false
+        }
+      ]
+    },
+    {
+      "case": "柬泰边境争端（2025.12–2026.9）",
+      "score_official_2_2": {
+        "Precision_src": 0.10256410256410256,
+        "Recall_src": 0.16,
+        "F1_src": 0.125,
+        "score_2_2_1": 0,
+        "recall_src_ceiling": "Recall_src 上限 25/25＝100.0%",
+        "missing_questions": 0,
+        "extra_questions": 0,
+        "unresolved_fact_ids": 0,
+        "gold_evidence_keys_sample": [
+          "argument",
+          "char_end",
+          "char_start",
+          "doc_id",
+          "entities",
+          "fact_des",
+          "fact_id",
+          "para_id",
+          "quote"
+        ]
+      },
+      "counts": {
+        "submitted_evidence_rows": 39,
+        "gold_evidence_rows": 25,
+        "one_to_one_hits": 4,
+        "false_positive_residual": 35,
+        "false_negative_residual": 21,
+        "submitted_distinct_pairs": 31,
+        "gold_distinct_pairs": 17,
+        "gold_rows_without_locator": 0,
+        "submitted_rows_without_locator": 0
+      },
+      "fp_by_doc": {
+        "doc_007": 1,
+        "doc_011": 1,
+        "doc_012": 1,
+        "doc_013": 1,
+        "doc_023": 1,
+        "doc_024": 1,
+        "doc_029": 1,
+        "doc_047": 1,
+        "doc_053": 1,
+        "doc_054": 1,
+        "doc_061": 1,
+        "doc_065": 1,
+        "doc_068": 1,
+        "doc_072": 2,
+        "doc_074": 1,
+        "doc_076": 1,
+        "doc_085": 1,
+        "doc_087": 1,
+        "doc_088": 2,
+        "doc_089": 2,
+        "doc_090": 1,
+        "doc_096": 1,
+        "doc_098": 1,
+        "doc_103": 2
+      },
+      "fn_by_doc": {
+        "doc_006": 2,
+        "doc_007": 1,
+        "doc_008": 2,
+        "doc_009": 3,
+        "doc_014": 1,
+        "doc_017": 1,
+        "doc_020": 1,
+        "doc_021": 1,
+        "doc_023": 2,
+        "doc_024": 1,
+        "doc_027": 1
+      },
+      "gap_layering": {
+        "counts": {
+          "L1_cited_not_exported": 0,
+          "L2_internal_not_exported": 4,
+          "L3_boxed_not_cited": 7,
+          "L4_never_in_products": 10
+        },
+        "detail": [
+          {
+            "doc_id": "doc_006",
+            "para_id": "doc_006#p4",
+            "count": 2,
+            "layer": "L3_boxed_not_cited",
+            "adjacent_submitted_para": false
+          },
+          {
+            "doc_id": "doc_006",
+            "para_id": "doc_006#p8",
+            "count": 1,
+            "layer": "L4_never_in_products",
+            "adjacent_submitted_para": false
+          },
+          {
+            "doc_id": "doc_007",
+            "para_id": "doc_007#p7",
+            "count": 1,
+            "layer": "L3_boxed_not_cited",
+            "adjacent_submitted_para": true
+          },
+          {
+            "doc_id": "doc_008",
+            "para_id": "doc_008#p11",
+            "count": 1,
+            "layer": "L4_never_in_products",
+            "adjacent_submitted_para": false
+          },
+          {
+            "doc_id": "doc_008",
+            "para_id": "doc_008#p2",
+            "count": 2,
+            "layer": "L4_never_in_products",
+            "adjacent_submitted_para": false
+          },
+          {
+            "doc_id": "doc_009",
+            "para_id": "doc_009#p10",
+            "count": 1,
+            "layer": "L4_never_in_products",
+            "adjacent_submitted_para": false
+          },
+          {
+            "doc_id": "doc_009",
+            "para_id": "doc_009#p11",
+            "count": 1,
+            "layer": "L4_never_in_products",
+            "adjacent_submitted_para": false
+          },
+          {
+            "doc_id": "doc_009",
+            "para_id": "doc_009#p12",
+            "count": 2,
+            "layer": "L4_never_in_products",
+            "adjacent_submitted_para": false
+          },
+          {
+            "doc_id": "doc_014",
+            "para_id": "doc_014#p3",
+            "count": 1,
+            "layer": "L4_never_in_products",
+            "adjacent_submitted_para": false
+          },
+          {
+            "doc_id": "doc_017",
+            "para_id": "doc_017#p4",
+            "count": 1,
+            "layer": "L4_never_in_products",
+            "adjacent_submitted_para": false
+          },
+          {
+            "doc_id": "doc_020",
+            "para_id": "doc_020#p1",
+            "count": 2,
+            "layer": "L2_internal_not_exported",
+            "adjacent_submitted_para": true
+          },
+          {
+            "doc_id": "doc_021",
+            "para_id": "doc_021#p2",
+            "count": 2,
+            "layer": "L3_boxed_not_cited",
+            "adjacent_submitted_para": false
+          },
+          {
+            "doc_id": "doc_023",
+            "para_id": "doc_023#p2",
+            "count": 1,
+            "layer": "L2_internal_not_exported",
+            "adjacent_submitted_para": true
+          },
+          {
+            "doc_id": "doc_023",
+            "para_id": "doc_023#p4",
+            "count": 1,
+            "layer": "L3_boxed_not_cited",
+            "adjacent_submitted_para": false
+          },
+          {
+            "doc_id": "doc_024",
+            "para_id": "doc_024#p2",
+            "count": 1,
+            "layer": "L3_boxed_not_cited",
+            "adjacent_submitted_para": true
+          },
+          {
+            "doc_id": "doc_027",
+            "para_id": "doc_027#p2",
+            "count": 1,
+            "layer": "L2_internal_not_exported",
+            "adjacent_submitted_para": true
+          }
+        ],
+        "fn_total": 21,
+        "adjacency_flag": 5
+      },
+      "face_sizes": {
+        "cited_in_conclusions": 14,
+        "in_internal_evidences": 31,
+        "in_material_window": 349,
+        "n_question_dirs": 3
+      },
+      "per_question": [
+        {
+          "question_id": "q_001",
+          "gold_supporting": 5,
+          "gold_conflicting": 4,
+          "gold_total": 9,
+          "covered_by_submitted_evidence": 1,
+          "missing_for_this_question": 8,
+          "submitted_conclusions_cited_supporting": 3,
+          "submitted_conclusions_cited_conflicting": 7,
+          "unresolved_fact_ids": 0,
+          "both_sides_empty": false
+        },
+        {
+          "question_id": "q_002",
+          "gold_supporting": 6,
+          "gold_conflicting": 4,
+          "gold_total": 10,
+          "covered_by_submitted_evidence": 0,
+          "missing_for_this_question": 10,
+          "submitted_conclusions_cited_supporting": 1,
+          "submitted_conclusions_cited_conflicting": 2,
+          "unresolved_fact_ids": 0,
+          "both_sides_empty": false
+        },
+        {
+          "question_id": "q_003",
+          "gold_supporting": 5,
+          "gold_conflicting": 4,
+          "gold_total": 9,
+          "covered_by_submitted_evidence": 3,
+          "missing_for_this_question": 6,
+          "submitted_conclusions_cited_supporting": 1,
+          "submitted_conclusions_cited_conflicting": 0,
+          "unresolved_fact_ids": 0,
+          "both_sides_empty": false
+        }
+      ]
+    },
+    {
+      "case": "王虹“北大discouraged”事件",
+      "score_official_2_2": {
+        "Precision_src": 0.5,
+        "Recall_src": 0.3783783783783784,
+        "F1_src": 0.4307692307692308,
+        "score_2_2_1": 0,
+        "recall_src_ceiling": "Recall_src 上限 37/37＝100.0%",
+        "missing_questions": 0,
+        "extra_questions": 0,
+        "unresolved_fact_ids": 0,
+        "gold_evidence_keys_sample": [
+          "argument",
+          "char_end",
+          "char_start",
+          "doc_id",
+          "entities",
+          "fact_des",
+          "fact_id",
+          "para_id",
+          "quote"
+        ]
+      },
+      "counts": {
+        "submitted_evidence_rows": 28,
+        "gold_evidence_rows": 37,
+        "one_to_one_hits": 14,
+        "false_positive_residual": 14,
+        "false_negative_residual": 23,
+        "submitted_distinct_pairs": 23,
+        "gold_distinct_pairs": 37,
+        "gold_rows_without_locator": 0,
+        "submitted_rows_without_locator": 0
+      },
+      "fp_by_doc": {
+        "doc_010": 2,
+        "doc_012": 1,
+        "doc_015": 1,
+        "doc_026": 1,
+        "doc_030": 2,
+        "doc_035": 1,
+        "doc_037": 1,
+        "doc_042": 1,
+        "doc_063": 1,
+        "doc_073": 1
+      },
+      "fn_by_doc": {
+        "doc_001": 1,
+        "doc_003": 3,
+        "doc_004": 3,
+        "doc_007": 2,
+        "doc_008": 1,
+        "doc_010": 2,
+        "doc_011": 1,
+        "doc_012": 1,
+        "doc_015": 1,
+        "doc_029": 1,
+        "doc_034": 1,
+        "doc_046": 1,
+        "doc_051": 1,
+        "doc_056": 1,
+        "doc_063": 1,
+        "doc_071": 1,
+        "doc_073": 1
+      },
+      "gap_layering": {
+        "counts": {
+          "L1_cited_not_exported": 0,
+          "L2_internal_not_exported": 0,
+          "L3_boxed_not_cited": 19,
+          "L4_never_in_products": 4
+        },
+        "detail": [
+          {
+            "doc_id": "doc_001",
+            "para_id": "doc_001#p1",
+            "count": 1,
+            "layer": "L3_boxed_not_cited",
+            "adjacent_submitted_para": false
+          },
+          {
+            "doc_id": "doc_003",
+            "para_id": "doc_003#p3",
+            "count": 1,
+            "layer": "L3_boxed_not_cited",
+            "adjacent_submitted_para": false
+          },
+          {
+            "doc_id": "doc_003",
+            "para_id": "doc_003#p4",
+            "count": 1,
+            "layer": "L3_boxed_not_cited",
+            "adjacent_submitted_para": true
+          },
+          {
+            "doc_id": "doc_003",
+            "para_id": "doc_003#p7",
+            "count": 1,
+            "layer": "L3_boxed_not_cited",
+            "adjacent_submitted_para": false
+          },
+          {
+            "doc_id": "doc_004",
+            "para_id": "doc_004#p4",
+            "count": 1,
+            "layer": "L4_never_in_products",
+            "adjacent_submitted_para": false
+          },
+          {
+            "doc_id": "doc_004",
+            "para_id": "doc_004#p5",
+            "count": 1,
+            "layer": "L3_boxed_not_cited",
+            "adjacent_submitted_para": false
+          },
+          {
+            "doc_id": "doc_004",
+            "para_id": "doc_004#p7",
+            "count": 1,
+            "layer": "L3_boxed_not_cited",
+            "adjacent_submitted_para": false
+          },
+          {
+            "doc_id": "doc_007",
+            "para_id": "doc_007#p2",
+            "count": 1,
+            "layer": "L3_boxed_not_cited",
+            "adjacent_submitted_para": true
+          },
+          {
+            "doc_id": "doc_007",
+            "para_id": "doc_007#p3",
+            "count": 1,
+            "layer": "L3_boxed_not_cited",
+            "adjacent_submitted_para": false
+          },
+          {
+            "doc_id": "doc_008",
+            "para_id": "doc_008#p12",
+            "count": 1,
+            "layer": "L4_never_in_products",
+            "adjacent_submitted_para": false
+          },
+          {
+            "doc_id": "doc_010",
+            "para_id": "doc_010#p12",
+            "count": 1,
+            "layer": "L3_boxed_not_cited",
+            "adjacent_submitted_para": false
+          },
+          {
+            "doc_id": "doc_010",
+            "para_id": "doc_010#p3",
+            "count": 1,
+            "layer": "L3_boxed_not_cited",
+            "adjacent_submitted_para": true
+          },
+          {
+            "doc_id": "doc_011",
+            "para_id": "doc_011#p6",
+            "count": 1,
+            "layer": "L3_boxed_not_cited",
+            "adjacent_submitted_para": true
+          },
+          {
+            "doc_id": "doc_012",
+            "para_id": "doc_012#p7",
+            "count": 1,
+            "layer": "L4_never_in_products",
+            "adjacent_submitted_para": false
+          },
+          {
+            "doc_id": "doc_015",
+            "para_id": "doc_015#p7",
+            "count": 1,
+            "layer": "L3_boxed_not_cited",
+            "adjacent_submitted_para": false
+          },
+          {
+            "doc_id": "doc_029",
+            "para_id": "doc_029#p3",
+            "count": 1,
+            "layer": "L4_never_in_products",
+            "adjacent_submitted_para": false
+          },
+          {
+            "doc_id": "doc_034",
+            "para_id": "doc_034#p2",
+            "count": 1,
+            "layer": "L3_boxed_not_cited",
+            "adjacent_submitted_para": false
+          },
+          {
+            "doc_id": "doc_046",
+            "para_id": "doc_046#p3",
+            "count": 1,
+            "layer": "L3_boxed_not_cited",
+            "adjacent_submitted_para": false
+          },
+          {
+            "doc_id": "doc_051",
+            "para_id": "doc_051#p2",
+            "count": 1,
+            "layer": "L3_boxed_not_cited",
+            "adjacent_submitted_para": false
+          },
+          {
+            "doc_id": "doc_056",
+            "para_id": "doc_056#p1",
+            "count": 1,
+            "layer": "L3_boxed_not_cited",
+            "adjacent_submitted_para": false
+          },
+          {
+            "doc_id": "doc_063",
+            "para_id": "doc_063#p4",
+            "count": 1,
+            "layer": "L3_boxed_not_cited",
+            "adjacent_submitted_para": true
+          },
+          {
+            "doc_id": "doc_071",
+            "para_id": "doc_071#p2",
+            "count": 1,
+            "layer": "L3_boxed_not_cited",
+            "adjacent_submitted_para": false
+          },
+          {
+            "doc_id": "doc_073",
+            "para_id": "doc_073#p2",
+            "count": 1,
+            "layer": "L3_boxed_not_cited",
+            "adjacent_submitted_para": true
+          }
+        ],
+        "fn_total": 23,
+        "adjacency_flag": 6
+      },
+      "face_sizes": {
+        "cited_in_conclusions": 8,
+        "in_internal_evidences": 23,
+        "in_material_window": 308,
+        "n_question_dirs": 3
+      },
+      "per_question": [
+        {
+          "question_id": "q_001",
+          "gold_supporting": 5,
+          "gold_conflicting": 6,
+          "gold_total": 11,
+          "covered_by_submitted_evidence": 3,
+          "missing_for_this_question": 8,
+          "submitted_conclusions_cited_supporting": 1,
+          "submitted_conclusions_cited_conflicting": 0,
+          "unresolved_fact_ids": 0,
+          "both_sides_empty": false
+        },
+        {
+          "question_id": "q_002",
+          "gold_supporting": 5,
+          "gold_conflicting": 7,
+          "gold_total": 12,
+          "covered_by_submitted_evidence": 8,
+          "missing_for_this_question": 4,
+          "submitted_conclusions_cited_supporting": 1,
+          "submitted_conclusions_cited_conflicting": 4,
+          "unresolved_fact_ids": 0,
+          "both_sides_empty": false
+        },
+        {
+          "question_id": "q_003",
+          "gold_supporting": 9,
+          "gold_conflicting": 6,
+          "gold_total": 15,
+          "covered_by_submitted_evidence": 4,
+          "missing_for_this_question": 11,
+          "submitted_conclusions_cited_supporting": 2,
+          "submitted_conclusions_cited_conflicting": 1,
+          "unresolved_fact_ids": 0,
+          "both_sides_empty": false
+        }
+      ]
+    }
+  ],
+  "pooled": {
+    "basis": "按案内一对一匹配再求和（Σ命中/Σ提交/Σ金标），与官方 2.2 全局集合比值同形",
+    "n_cases": 6,
+    "submitted_evidence_rows": 240,
+    "gold_evidence_rows": 184,
+    "one_to_one_hits": 52,
+    "Precision_src": 0.21666666666666667,
+    "Recall_src": 0.2826086956521739,
+    "F1_src": 0.24528301886792453,
+    "score_2_2_1": 0,
+    "mean_of_cases_F1": 0.2453310446525685,
+    "recall_src_ceiling_pooled": {
+      "para_id_in_case_corpus": 183,
+      "gold_rows": 184,
+      "line": "Recall_src 上限 183/184＝99.5%"
+    },
+    "naive_union_disclosure_only": {
+      "hits": 59,
+      "Precision_src": 0.24583333333333332,
+      "Recall_src": 0.32065217391304346,
+      "locator_keys_shared_across_cases": 26,
+      "note": "doc_id 跨案重名，此臂只说明「池成一集」会不会虚高，不进判定"
+    }
+  },
+  "upper_bound_disclosure": {
+    "note": "上界披露臂：真交卷仍走默认口径（此臂不当尺、不落地为改动）",
+    "submitted_rows": 240,
+    "submitted_distinct_within_case_sum": 178,
+    "submitted_distinct_global": 165,
+    "gold_rows": 184,
+    "gold_distinct_within_case_sum": 169,
+    "gold_distinct_global": 153,
+    "gold_duplicate_rows_within_case": 15,
+    "cross_case_locator_collisions_submitted": 13,
+    "cross_case_locator_collisions_gold": 16,
+    "submitted_dedup_only": {
+      "hits": 52,
+      "submitted_rows": 178,
+      "gold_rows": 184,
+      "Precision_src": 0.29213483146067415,
+      "Recall_src": 0.2826086956521739,
+      "F1_src": 0.287292817679558,
+      "score_2_2_1": 0
+    },
+    "gold_dedup_only": {
+      "hits": 52,
+      "submitted_rows": 240,
+      "gold_rows": 169,
+      "Precision_src": 0.21666666666666667,
+      "Recall_src": 0.3076923076923077,
+      "F1_src": 0.254278728606357,
+      "score_2_2_1": 0
+    },
+    "both_dedup": {
+      "hits": 52,
+      "submitted_rows": 178,
+      "gold_rows": 169,
+      "Precision_src": 0.29213483146067415,
+      "Recall_src": 0.3076923076923077,
+      "F1_src": 0.29971181556195964,
+      "score_2_2_1": 0
+    }
+  },
+  "totals": {
+    "fn": 132,
+    "L1_cited_not_exported": 0,
+    "L2_internal_not_exported": 4,
+    "L3_boxed_not_cited": 87,
+    "L4_never_in_products": 41,
+    "adjacency": 21,
+    "fp": 188,
+    "submitted_rows": 240,
+    "gold_rows": 184
+  },
+  "gap_where": "最大损失落在「进窗未引／导出错段（L3，答题侧没引这条金标段）」＝87/132（65.9%）；其余：未进证据导出（L1＋L2）＝4/132、金标段从未进任何产物面（L4，检索／装箱侧）＝41/132",
+  "caveats": [
+    "官方 2.1 的第二阶段语义匹配未跑（须调用大模型），本读数＝下界；语义匹配只会把精确匹配判出的漏召／误召往回收，不会把读数往上抬过真值",
+    "《评分标准》附录 A.3 写「question_id＝2.2 的匹配键」，但金标证据文件evidence_samples 的字段里没有 question_id（现抄 keys 见 json 的 cases[].score_official_2_2.gold_evidence_keys_sample），故本面唯一可执行的官方读数＝案内全局集合比值；题级表按金标结论侧 fact_id→(doc_id, para_id) 换形另列，不与 2.2 混淆",
+    "题级「金标合计」＝该题 supporting＋conflicting 两侧条数相加，同一 (doc_id, para_id) 双侧都出现时计 2 次；案级 2.2 只看证据文件本身",
+    "Recall_src 上限按金标 para_id 是否落在本案语料算：不在语料的金标段永远追不回（属金标／语料不齐，不属本系统欠账），真上限须按该上限折",
+    "缺题／双方空剔除：案级 2.2 的分母是提交证据文件与金标证据文件的条数，不走逐题权重，故不受「双方为空剔除」影响；该剔除只作用在 2.4／2.5 侧（official missing_questions／extra_questions 已随案记入 json）",
+    "本票未改任何生产代码，读数为「现状量尺」而非提分声明；读数随跑次飘，跨票比较须同一跑次根"
+  ],
+  "red_line_selfcheck": {
+    "head_short": "3227200",
+    "branch": "qoder/c161-evidence-face",
+    "app_and_config_diff_stat": "",
+    "app_and_config_diff_empty": true,
+    "probe_imports_app": false
+  }
+}
