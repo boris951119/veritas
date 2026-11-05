@@ -168,12 +168,42 @@ def test_a_in_invariant_only_causal_keys_change(tmp_path, monkeypatch):
         "推理链完整性", "terms", "substitution", "score",
         "dossier_confidence", "band", "band_rule",
     }
+    # C-156 追加（本票改此格的账记我）：交卷行多了两类披露键。
+    # component_basis 只有「链那一族」三个子键许随因果环进出分母而变，
+    # 其余子键（证据条数／署名数／编队人数／等级／最弱一条强度）必须等值；
+    # recompute 是分数面的镜像（按本行印出的数复算），许变的只有那四个数值项，
+    # 容差／规则串／触发门名／可复现布尔必须等值——否则说明「复算口径」本身在漂。
+    _CB_CHAIN_SUBKEYS = {"chain_rings_applicable", "chain_rings_broken", "chain_unknown"}
+    _RC_ALLOWED_DIFF = {
+        "printed_weighted_sum", "expected_score", "reported_score", "delta",
+    }
+    _CHAIN_FAMILY |= {"component_basis", "recompute"}
+    # C-159 追加（本票改此格的账记我）：``档位依据`` 每行都在（旗开时）、
+    # ``高档收据`` 只随 band＝「高」出现。② 因因果降级掉出高档 ⇒ 它没有
+    # 高档收据 是行为正确，不是键集漂移；剥掉这两个「随档而现」的解释键之后，
+    # 键集与取值仍须按上面的老规矩等。这两个键本身属披露面，不参与任何分差。
+    _C159_CONDITIONAL = {"档位依据", "高档收据"}
     for a, b in zip(c1, c2):
-        assert set(a) == set(b)
+        ra = {k: v for k, v in a.items() if k not in _C159_CONDITIONAL}
+        rb = {k: v for k, v in b.items() if k not in _C159_CONDITIONAL}
+        assert set(ra) == set(rb)
+        for x in (a, b):
+            if "高档收据" in x:
+                assert x["band"] == "高", "高档收据出在没有落在高档的行"
+            if "档位依据" in x:
+                assert str(x["档位依据"]).strip(), "理由句不许为空壳"
         for k in _STABLE:
             assert a[k] == b[k], k
-        for k in set(a) - set(_STABLE) - _CHAIN_FAMILY:
-            assert a[k] == b[k], f"非链字段漂移: {k}"
+        for k in set(ra) - set(_STABLE) - _CHAIN_FAMILY:
+            assert ra[k] == rb[k], f"非链字段漂移: {k}"
+        cb1, cb2 = a.get("component_basis") or {}, b.get("component_basis") or {}
+        assert set(cb1) == set(cb2), "披露键集不齐"
+        for k in set(cb1) - _CB_CHAIN_SUBKEYS:
+            assert cb1[k] == cb2[k], f"component_basis 非链子键漂移: {k}"
+        rc1, rc2 = a.get("recompute") or {}, b.get("recompute") or {}
+        assert set(rc1) == set(rc2), "复算键集不齐"
+        for k in set(rc1) - _RC_ALLOWED_DIFF:
+            assert rc1[k] == rc2[k], f"recompute 口径项漂移: {k}"
         assert b["dossier_confidence"] <= a["dossier_confidence"], (
             f"降级后分数上涨: {a['dossier_confidence']} → "
             f"{b['dossier_confidence']}"

@@ -1,0 +1,270 @@
+{
+  "cases": [
+    {
+      "band_abs": {
+        "不可分": 0,
+        "中": 19,
+        "低": 2,
+        "高": 0
+      },
+      "band_abs_inversions": 0,
+      "band_rel": {
+        "不可分": 0,
+        "中": 7,
+        "低": 7,
+        "高": 7
+      },
+      "case": "2026·8·26 吉隆口岸泥石流灾害",
+      "dossier_vs_row_score_mismatch": 0,
+      "gates_dict_rows": 21,
+      "gates_fired_rows": 0,
+      "n_rows": 21,
+      "root": "/tmp/s4runs/time-20261104-135401",
+      "score_max": 0.788,
+      "score_median": 0.58,
+      "score_min": 0.4988,
+      "sub_reproducible_1e-4": 19,
+      "sub_reproducible_5e-4": 21,
+      "sub_unparsable": 0,
+      "sub_worst_abs_diff": 0.0001,
+      "terms_key_missing": {},
+      "terms_key_null": {},
+      "top_key_missing": {},
+      "top_key_null": {}
+    },
+    {
+      "band_abs": {
+        "不可分": 0,
+        "中": 39,
+        "低": 1,
+        "高": 2
+      },
+      "band_abs_inversions": 0,
+      "band_rel": {
+        "不可分": 0,
+        "中": 14,
+        "低": 11,
+        "高": 17
+      },
+      "case": "中美AI事故预警提议（2026.9）",
+      "dossier_vs_row_score_mismatch": 0,
+      "gates_dict_rows": 42,
+      "gates_fired_rows": 0,
+      "n_rows": 42,
+      "root": "/tmp/s4runs/time-20261104-135401",
+      "score_max": 0.8125,
+      "score_median": 0.6875,
+      "score_min": 0.495,
+      "sub_reproducible_1e-4": 42,
+      "sub_reproducible_5e-4": 42,
+      "sub_unparsable": 0,
+      "sub_worst_abs_diff": 0.0001,
+      "terms_key_missing": {},
+      "terms_key_null": {},
+      "top_key_missing": {},
+      "top_key_null": {}
+    },
+    {
+      "band_abs": {
+        "不可分": 0,
+        "中": 41,
+        "低": 2,
+        "高": 0
+      },
+      "band_abs_inversions": 0,
+      "band_rel": {
+        "不可分": 0,
+        "中": 13,
+        "低": 15,
+        "高": 15
+      },
+      "case": "刘翔编制“二选一”事件",
+      "dossier_vs_row_score_mismatch": 0,
+      "gates_dict_rows": 43,
+      "gates_fired_rows": 0,
+      "n_rows": 43,
+      "root": "/tmp/s4runs/time-20261104-135401",
+      "score_max": 0.78,
+      "score_median": 0.62,
+      "score_min": 0.4637,
+      "sub_reproducible_1e-4": 43,
+      "sub_reproducible_5e-4": 43,
+      "sub_unparsable": 0,
+      "sub_worst_abs_diff": 0.0001,
+      "terms_key_missing": {},
+      "terms_key_null": {},
+      "top_key_missing": {},
+      "top_key_null": {}
+    },
+    {
+      "band_abs": {
+        "不可分": 0,
+        "中": 22,
+        "低": 3,
+        "高": 0
+      },
+      "band_abs_inversions": 0,
+      "band_rel": {
+        "不可分": 0,
+        "中": 9,
+        "低": 8,
+        "高": 8
+      },
+      "case": "印度航空 AI171 空难（2025.6–2026.5）",
+      "dossier_vs_row_score_mismatch": 0,
+      "gates_dict_rows": 25,
+      "gates_fired_rows": 0,
+      "n_rows": 25,
+      "root": "/tmp/s4runs/time-20261104-135401",
+      "score_max": 0.7072,
+      "score_median": 0.5585,
+      "score_min": 0.4375,
+      "sub_reproducible_1e-4": 24,
+      "sub_reproducible_5e-4": 25,
+      "sub_unparsable": 0,
+      "sub_worst_abs_diff": 0.0001,
+      "terms_key_missing": {},
+      "terms_key_null": {},
+      "top_key_missing": {},
+      "top_key_null": {}
+    },
+    {
+      "band_abs": {
+        "不可分": 0,
+        "中": 31,
+        "低": 2,
+        "高": 0
+      },
+      "band_abs_inversions": 0,
+      "band_rel": {
+        "不可分": 0,
+        "中": 11,
+        "低": 11,
+        "高": 11
+      },
+      "case": "柬泰边境争端（2025.12–2026.9）",
+      "dossier_vs_row_score_mismatch": 0,
+      "gates_dict_rows": 33,
+      "gates_fired_rows": 0,
+      "n_rows": 33,
+      "root": "/tmp/s4runs/time-20261104-135401",
+      "score_max": 0.7833,
+      "score_median": 0.645,
+      "score_min": 0.4525,
+      "sub_reproducible_1e-4": 33,
+      "sub_reproducible_5e-4": 33,
+      "sub_unparsable": 0,
+      "sub_worst_abs_diff": 0.0001,
+      "terms_key_missing": {},
+      "terms_key_null": {},
+      "top_key_missing": {},
+      "top_key_null": {}
+    },
+    {
+      "band_abs": {
+        "不可分": 0,
+        "中": 31,
+        "低": 0,
+        "高": 1
+      },
+      "band_abs_inversions": 0,
+      "band_rel": {
+        "不可分": 0,
+        "中": 13,
+        "低": 8,
+        "高": 11
+      },
+      "case": "王虹“北大discouraged”事件",
+      "dossier_vs_row_score_mismatch": 0,
+      "gates_dict_rows": 32,
+      "gates_fired_rows": 0,
+      "n_rows": 32,
+      "root": "/tmp/s4runs/time-20261104-135401",
+      "score_max": 0.8221,
+      "score_median": 0.62,
+      "score_min": 0.5025,
+      "sub_reproducible_1e-4": 32,
+      "sub_reproducible_5e-4": 32,
+      "sub_unparsable": 0,
+      "sub_worst_abs_diff": 0.0001,
+      "terms_key_missing": {},
+      "terms_key_null": {},
+      "top_key_missing": {},
+      "top_key_null": {}
+    },
+    {
+      "band_abs": {
+        "不可分": 0,
+        "中": 31,
+        "低": 1,
+        "高": 0
+      },
+      "band_abs_inversions": 0,
+      "band_rel": {
+        "不可分": 0,
+        "中": 10,
+        "低": 11,
+        "高": 11
+      },
+      "case": "刘翔编制“二选一”事件",
+      "dossier_vs_row_score_mismatch": 0,
+      "gates_dict_rows": 32,
+      "gates_fired_rows": 0,
+      "n_rows": 32,
+      "root": "/tmp/c153runs/time-20261104-221631",
+      "score_max": 0.78,
+      "score_median": 0.62,
+      "score_min": 0.4675,
+      "sub_reproducible_1e-4": 32,
+      "sub_reproducible_5e-4": 32,
+      "sub_unparsable": 0,
+      "sub_worst_abs_diff": 0.0001,
+      "terms_key_missing": {},
+      "terms_key_null": {},
+      "top_key_missing": {},
+      "top_key_null": {}
+    }
+  ],
+  "roots": [
+    "/tmp/s4runs/time-20261104-135401",
+    "/tmp/c153runs/time-20261104-221631"
+  ],
+  "summary": {
+    "band_abs_inversions_total": 0,
+    "gates_fired_rows_total": 0,
+    "n_cases": 7,
+    "n_rows": 228,
+    "pooled_band_abs": {
+      "不可分": 0,
+      "中": 214,
+      "低": 11,
+      "高": 3
+    },
+    "pooled_band_rel": {
+      "不可分": 0,
+      "中": 80,
+      "低": 72,
+      "高": 76
+    },
+    "pooled_quantiles_p25_p50_p75_p90": [
+      0.57,
+      0.6255,
+      0.6987,
+      0.78
+    ],
+    "pooled_rel_cuts": [
+      0.59,
+      0.6638
+    ],
+    "pooled_score_max": 0.8221,
+    "pooled_score_median": 0.6255,
+    "pooled_score_min": 0.4375,
+    "rows_ge_050": 71,
+    "rows_ge_060": 143,
+    "rows_ge_080": 3,
+    "rows_lt_050": 11,
+    "rows_zero": 0,
+    "sub_reproducible_1e-4_total": 225,
+    "sub_unparsable_total": 0
+  }
+}
