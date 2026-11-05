@@ -1,0 +1,51 @@
+{
+  "baseline": {
+    "app_diff": "(空)",
+    "base_tip": "3227200"
+  },
+  "checks": {
+    "legend_七档顺序对": true,
+    "legend_冲分序在场": true,
+    "sub_写清合入与旗": true,
+    "tip_全页_无旧sha": true,
+    "tip_刷到3227200": true,
+    "卫生_新增面零命中": true,
+    "改动面_只那一页html": true,
+    "树17_C151已写NO": true,
+    "树17_Top7绿标仍在": true,
+    "树17_红标仍在": true,
+    "树22_C149读数": true,
+    "树22_C150与C152不开实现": true,
+    "树22_红与橙STOP仍在": true,
+    "树22_路演勿承诺13分": true,
+    "树22_链已合可讲": true,
+    "树25_冲分排队行": true,
+    "树27_冲分排队行": true,
+    "零app_零config": true
+  },
+  "notes": {
+    "added_chars_norm": 7933,
+    "added_lines": 29,
+    "git_status_porcelain": [
+      " M docs/architecture-tree-2026-10-27.html"
+    ],
+    "html_bytes": 74980,
+    "html_lines": 1062,
+    "hygiene_added_hits": 0,
+    "hygiene_added_windows": 7909,
+    "hygiene_wholefile_hits": 21,
+    "hygiene_wholefile_note": "整文件命中＝页面自带 CSS 样板（官方语料里被抓网页也含同款样式串），非语料正文入图；判定只看新增面",
+    "hygiene_wholefile_windows": 41421,
+    "n_tip_3227200": 11,
+    "n_tip_旧90a0608": 0,
+    "official_cases_loaded": 6,
+    "official_corpus_chars_norm": 2053325,
+    "sha256_html": "15f7f767828be531"
+  },
+  "screenshot": {
+    "instead_verified": "同一浏览器真加载后走页面自己的 click→openPop，读回弹窗与卡片文本＋弹窗未被裁切（clientHeight==scrollHeight）",
+    "status": "未交（工具报 NATIVE_BROWSER_VIEWPORT_UNAVAILABLE＝in-app Browser 面板不可见）"
+  },
+  "ticket": "C-154",
+  "verdict": "YES"
+}
