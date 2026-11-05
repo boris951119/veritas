@@ -1,0 +1,3442 @@
+{
+  "checks": {
+    "pooled": {
+      "anchor_checked": 21,
+      "anchor_ok": 21,
+      "bare_questions": 0,
+      "empty_gold_questions": 0,
+      "gold_pairs": 105,
+      "hits_pairs": 8,
+      "ledger_not_in_corpus": 0,
+      "ledger_outside_band": 93,
+      "ledger_pairs": 195,
+      "missing_questions": 0,
+      "n_questions_scored": 18,
+      "precision": 0.4286,
+      "quote_checked": 329,
+      "quote_ok": 328,
+      "recall": 0.0762,
+      "rejected_relocated": 21,
+      "rejected_with_quote": 108,
+      "score_2_4_1": 0,
+      "score_2_4_2": 0,
+      "submitted_pairs": 21
+    },
+    "判定_仅准确率过线臂": "无（没有臂把 pooled Precision 抬到 0.70）",
+    "判定_双档过线臂": "无（任何固定规则臂都没同时过 Recall≥0.55 与 Precision≥0.70）",
+    "卫生": {
+      "docs": 486,
+      "windows": {
+        "corpus_chars": 1310211,
+        "hits": 0,
+        "per_file": {
+          "C160_support_face.json": {
+            "chars": 48798,
+            "hits": 0,
+            "windows": 48774
+          },
+          "C160_support_face.md": {
+            "chars": 8093,
+            "hits": 0,
+            "windows": 8069
+          }
+        },
+        "prose_hits": 0,
+        "windows": 56843
+      },
+      "判定": "过"
+    },
+    "参照_灌面能买到什么": "K_本案全段（灌面上界）：R=1.0（2.4.1=6）／P=0.0073（2.4.2=0）＝把全案卷段落都当支撑交，只买完整性档、准确率必 0",
+    "口径_会清零现状分的臂": [
+      "D_细读面@K=3",
+      "E_焦点面@K=3",
+      "B_本题台账@K=3",
+      "I_台账∪细读@K=3",
+      "H_rerank全序@K=7",
+      "B_本题台账",
+      "C_全部带证据结论",
+      "D_细读面",
+      "E_焦点面",
+      "F_Top7定稿",
+      "G_盒rank",
+      "H_rerank全序",
+      "I_台账∪细读",
+      "J_台账且逐字可核",
+      "L_台账∪打回声明段",
+      "S_台账∪打回回贴段",
+      "M_提交且主体命中",
+      "N_提交且主体且数字或口径",
+      "O_台账且主体命中",
+      "P_台账且主体且数字或口径",
+      "Q_细读且主体命中"
+    ],
+    "口径_净涨臂": "无（没有候选臂把逐案 Σ 抬到现状 4＋2 以上且不掉已得分案）",
+    "口径_现状得分案": [
+      "印度航空 AI171 空难（2025.6–2026.5）",
+      "王虹“北大discouraged”事件"
+    ],
+    "口径_逐案满分": 72,
+    "口径_逐案现状Σ": 4,
+    "旁证_跨跑次": [
+      {
+        "case": "刘翔编制“二选一”事件",
+        "gold": 14,
+        "hits": 0,
+        "n_questions": 3,
+        "precision": 0.0,
+        "recall": 0.0,
+        "root": "/tmp/c151runs/time-20261104-224907",
+        "score_2_4_1": 0,
+        "score_2_4_2": 0,
+        "submitted": 3,
+        "unresolved_fact_ids": 0
+      },
+      {
+        "case": "王虹“北大discouraged”事件",
+        "gold": 19,
+        "hits": 3,
+        "n_questions": 3,
+        "precision": 0.7368,
+        "recall": 0.1579,
+        "root": "/tmp/c151runs/time-20261104-215005",
+        "score_2_4_1": 0,
+        "score_2_4_2": 2,
+        "submitted": 5,
+        "unresolved_fact_ids": 0
+      },
+      {
+        "case": "刘翔编制“二选一”事件",
+        "gold": 14,
+        "hits": 1,
+        "n_questions": 3,
+        "precision": 0.1429,
+        "recall": 0.0714,
+        "root": "/tmp/c151runs/time-20261104-202620",
+        "score_2_4_1": 0,
+        "score_2_4_2": 0,
+        "submitted": 4,
+        "unresolved_fact_ids": 0
+      },
+      {
+        "case": "刘翔编制“二选一”事件",
+        "gold": 14,
+        "hits": 3,
+        "n_questions": 3,
+        "precision": 0.2333,
+        "recall": 0.2143,
+        "root": "/tmp/c153runs/time-20261104-221631",
+        "score_2_4_1": 0,
+        "score_2_4_2": 0,
+        "submitted": 9,
+        "unresolved_fact_ids": 0
+      }
+    ],
+    "腿A_提交条数>0": "过",
+    "腿A_逐案都取到数": "过",
+    "腿A_金标条数>0": "过",
+    "腿A_题数>0（非空比空）": "过",
+    "腿B_语料段落键取到": "过",
+    "腿B_逐字分母>0": "过",
+    "腿B_锚分母>0": "过",
+    "腿C_台账空题数": 0,
+    "腿C_每题池面都取到数": "过",
+    "腿D_A臂＝腿A现状读数": "过",
+    "腿D_候选臂全取到读数": "过",
+    "腿E_灌面上界取到读数": "过",
+    "腿F_打回有引文行>0": "过"
+  },
+  "gates": {
+    "precision": 0.7,
+    "recall": 0.55
+  },
+  "gold_root": "/Users/liuboyu/Desktop/veritas-testcases/样例集-拓尔思-20261012",
+  "hygiene": {
+    "docs": 486,
+    "windows": {
+      "corpus_chars": 1310211,
+      "hits": 0,
+      "per_file": {
+        "C160_support_face.json": {
+          "chars": 48798,
+          "hits": 0,
+          "windows": 48774
+        },
+        "C160_support_face.md": {
+          "chars": 8093,
+          "hits": 0,
+          "windows": 8069
+        }
+      },
+      "prose_hits": 0,
+      "windows": 56843
+    },
+    "判定": "过"
+  },
+  "ladder": {
+    "ceiling": {
+      "K_本案全段（灌面上界）": {
+        "case_score_sum": 36,
+        "cases_scoring": 6,
+        "cases_scoring_of": 6,
+        "cases_zero": [],
+        "empty_pool_questions": 0,
+        "gates_pass": false,
+        "gold": 105,
+        "hits": 105,
+        "n_questions": 18,
+        "per_case": {
+          "2026·8·26 吉隆口岸泥石流灾害": {
+            "gold": 18,
+            "hits": 18,
+            "n_questions": 3,
+            "precision": 0.0014,
+            "recall": 1.0,
+            "score_2_4_1": 6,
+            "score_2_4_2": 0,
+            "submitted": 15402
+          },
+          "中美AI事故预警提议（2026.9）": {
+            "gold": 14,
+            "hits": 14,
+            "n_questions": 3,
+            "precision": 0.0081,
+            "recall": 1.0,
+            "score_2_4_1": 6,
+            "score_2_4_2": 0,
+            "submitted": 1788
+          },
+          "刘翔编制“二选一”事件": {
+            "gold": 14,
+            "hits": 14,
+            "n_questions": 3,
+            "precision": 0.0127,
+            "recall": 1.0,
+            "score_2_4_1": 6,
+            "score_2_4_2": 0,
+            "submitted": 1116
+          },
+          "印度航空 AI171 空难（2025.6–2026.5）": {
+            "gold": 24,
+            "hits": 24,
+            "n_questions": 3,
+            "precision": 0.0049,
+            "recall": 1.0,
+            "score_2_4_1": 6,
+            "score_2_4_2": 0,
+            "submitted": 5256
+          },
+          "柬泰边境争端（2025.12–2026.9）": {
+            "gold": 16,
+            "hits": 16,
+            "n_questions": 3,
+            "precision": 0.0072,
+            "recall": 1.0,
+            "score_2_4_1": 6,
+            "score_2_4_2": 0,
+            "submitted": 2238
+          },
+          "王虹“北大discouraged”事件": {
+            "gold": 19,
+            "hits": 19,
+            "n_questions": 3,
+            "precision": 0.0112,
+            "recall": 1.0,
+            "score_2_4_1": 6,
+            "score_2_4_2": 0,
+            "submitted": 1842
+          }
+        },
+        "precision": 0.0073,
+        "recall": 1.0,
+        "score_2_4_1": 6,
+        "score_2_4_2": 0,
+        "score_sum": 6,
+        "submitted": 27642
+      }
+    },
+    "filter": {
+      "L_台账∪打回声明段": {
+        "case_score_sum": 0,
+        "cases_scoring": 0,
+        "cases_scoring_of": 6,
+        "cases_zero": [
+          "2026·8·26 吉隆口岸泥石流灾害",
+          "中美AI事故预警提议（2026.9）",
+          "刘翔编制“二选一”事件",
+          "印度航空 AI171 空难（2025.6–2026.5）",
+          "柬泰边境争端（2025.12–2026.9）",
+          "王虹“北大discouraged”事件"
+        ],
+        "empty_pool_questions": 0,
+        "gates_pass": false,
+        "gold": 105,
+        "hits": 35,
+        "n_questions": 18,
+        "per_case": {
+          "2026·8·26 吉隆口岸泥石流灾害": {
+            "gold": 18,
+            "hits": 6,
+            "n_questions": 3,
+            "precision": 0.1335,
+            "recall": 0.3333,
+            "score_2_4_1": 0,
+            "score_2_4_2": 0,
+            "submitted": 50
+          },
+          "中美AI事故预警提议（2026.9）": {
+            "gold": 14,
+            "hits": 5,
+            "n_questions": 3,
+            "precision": 0.1015,
+            "recall": 0.3571,
+            "score_2_4_1": 0,
+            "score_2_4_2": 0,
+            "submitted": 47
+          },
+          "刘翔编制“二选一”事件": {
+            "gold": 14,
+            "hits": 6,
+            "n_questions": 3,
+            "precision": 0.1175,
+            "recall": 0.4286,
+            "score_2_4_1": 0,
+            "score_2_4_2": 0,
+            "submitted": 49
+          },
+          "印度航空 AI171 空难（2025.6–2026.5）": {
+            "gold": 24,
+            "hits": 6,
+            "n_questions": 3,
+            "precision": 0.1458,
+            "recall": 0.25,
+            "score_2_4_1": 0,
+            "score_2_4_2": 0,
+            "submitted": 41
+          },
+          "柬泰边境争端（2025.12–2026.9）": {
+            "gold": 16,
+            "hits": 3,
+            "n_questions": 3,
+            "precision": 0.0744,
+            "recall": 0.1875,
+            "score_2_4_1": 0,
+            "score_2_4_2": 0,
+            "submitted": 38
+          },
+          "王虹“北大discouraged”事件": {
+            "gold": 19,
+            "hits": 9,
+            "n_questions": 3,
+            "precision": 0.3329,
+            "recall": 0.4737,
+            "score_2_4_1": 0,
+            "score_2_4_2": 0,
+            "submitted": 33
+          }
+        },
+        "precision": 0.157,
+        "recall": 0.3333,
+        "score_2_4_1": 0,
+        "score_2_4_2": 0,
+        "score_sum": 0,
+        "submitted": 258
+      },
+      "M_提交且主体命中": {
+        "case_score_sum": 0,
+        "cases_scoring": 0,
+        "cases_scoring_of": 6,
+        "cases_zero": [
+          "2026·8·26 吉隆口岸泥石流灾害",
+          "中美AI事故预警提议（2026.9）",
+          "刘翔编制“二选一”事件",
+          "印度航空 AI171 空难（2025.6–2026.5）",
+          "柬泰边境争端（2025.12–2026.9）",
+          "王虹“北大discouraged”事件"
+        ],
+        "empty_pool_questions": 16,
+        "gates_pass": false,
+        "gold": 105,
+        "hits": 1,
+        "n_questions": 18,
+        "per_case": {
+          "2026·8·26 吉隆口岸泥石流灾害": {
+            "gold": 18,
+            "hits": 0,
+            "n_questions": 3,
+            "precision": 0.0,
+            "recall": 0.0,
+            "score_2_4_1": 0,
+            "score_2_4_2": 0,
+            "submitted": 0
+          },
+          "中美AI事故预警提议（2026.9）": {
+            "gold": 14,
+            "hits": 0,
+            "n_questions": 3,
+            "precision": 0.0,
+            "recall": 0.0,
+            "score_2_4_1": 0,
+            "score_2_4_2": 0,
+            "submitted": 0
+          },
+          "刘翔编制“二选一”事件": {
+            "gold": 14,
+            "hits": 1,
+            "n_questions": 3,
+            "precision": 0.3571,
+            "recall": 0.0714,
+            "score_2_4_1": 0,
+            "score_2_4_2": 0,
+            "submitted": 2
+          },
+          "印度航空 AI171 空难（2025.6–2026.5）": {
+            "gold": 24,
+            "hits": 0,
+            "n_questions": 3,
+            "precision": 0.0,
+            "recall": 0.0,
+            "score_2_4_1": 0,
+            "score_2_4_2": 0,
+            "submitted": 0
+          },
+          "柬泰边境争端（2025.12–2026.9）": {
+            "gold": 16,
+            "hits": 0,
+            "n_questions": 3,
+            "precision": 0.0,
+            "recall": 0.0,
+            "score_2_4_1": 0,
+            "score_2_4_2": 0,
+            "submitted": 0
+          },
+          "王虹“北大discouraged”事件": {
+            "gold": 19,
+            "hits": 0,
+            "n_questions": 3,
+            "precision": 0.0,
+            "recall": 0.0,
+            "score_2_4_1": 0,
+            "score_2_4_2": 0,
+            "submitted": 0
+          }
+        },
+        "precision": 0.0476,
+        "recall": 0.0095,
+        "score_2_4_1": 0,
+        "score_2_4_2": 0,
+        "score_sum": 0,
+        "submitted": 2
+      },
+      "N_提交且主体且数字或口径": {
+        "case_score_sum": 0,
+        "cases_scoring": 0,
+        "cases_scoring_of": 6,
+        "cases_zero": [
+          "2026·8·26 吉隆口岸泥石流灾害",
+          "中美AI事故预警提议（2026.9）",
+          "刘翔编制“二选一”事件",
+          "印度航空 AI171 空难（2025.6–2026.5）",
+          "柬泰边境争端（2025.12–2026.9）",
+          "王虹“北大discouraged”事件"
+        ],
+        "empty_pool_questions": 18,
+        "gates_pass": false,
+        "gold": 105,
+        "hits": 0,
+        "n_questions": 18,
+        "per_case": {
+          "2026·8·26 吉隆口岸泥石流灾害": {
+            "gold": 18,
+            "hits": 0,
+            "n_questions": 3,
+            "precision": 0.0,
+            "recall": 0.0,
+            "score_2_4_1": 0,
+            "score_2_4_2": 0,
+            "submitted": 0
+          },
+          "中美AI事故预警提议（2026.9）": {
+            "gold": 14,
+            "hits": 0,
+            "n_questions": 3,
+            "precision": 0.0,
+            "recall": 0.0,
+            "score_2_4_1": 0,
+            "score_2_4_2": 0,
+            "submitted": 0
+          },
+          "刘翔编制“二选一”事件": {
+            "gold": 14,
+            "hits": 0,
+            "n_questions": 3,
+            "precision": 0.0,
+            "recall": 0.0,
+            "score_2_4_1": 0,
+            "score_2_4_2": 0,
+            "submitted": 0
+          },
+          "印度航空 AI171 空难（2025.6–2026.5）": {
+            "gold": 24,
+            "hits": 0,
+            "n_questions": 3,
+            "precision": 0.0,
+            "recall": 0.0,
+            "score_2_4_1": 0,
+            "score_2_4_2": 0,
+            "submitted": 0
+          },
+          "柬泰边境争端（2025.12–2026.9）": {
+            "gold": 16,
+            "hits": 0,
+            "n_questions": 3,
+            "precision": 0.0,
+            "recall": 0.0,
+            "score_2_4_1": 0,
+            "score_2_4_2": 0,
+            "submitted": 0
+          },
+          "王虹“北大discouraged”事件": {
+            "gold": 19,
+            "hits": 0,
+            "n_questions": 3,
+            "precision": 0.0,
+            "recall": 0.0,
+            "score_2_4_1": 0,
+            "score_2_4_2": 0,
+            "submitted": 0
+          }
+        },
+        "precision": 0.0,
+        "recall": 0.0,
+        "score_2_4_1": 0,
+        "score_2_4_2": 0,
+        "score_sum": 0,
+        "submitted": 0
+      },
+      "O_台账且主体命中": {
+        "case_score_sum": 0,
+        "cases_scoring": 0,
+        "cases_scoring_of": 6,
+        "cases_zero": [
+          "2026·8·26 吉隆口岸泥石流灾害",
+          "中美AI事故预警提议（2026.9）",
+          "刘翔编制“二选一”事件",
+          "印度航空 AI171 空难（2025.6–2026.5）",
+          "柬泰边境争端（2025.12–2026.9）",
+          "王虹“北大discouraged”事件"
+        ],
+        "empty_pool_questions": 15,
+        "gates_pass": false,
+        "gold": 105,
+        "hits": 5,
+        "n_questions": 18,
+        "per_case": {
+          "2026·8·26 吉隆口岸泥石流灾害": {
+            "gold": 18,
+            "hits": 1,
+            "n_questions": 3,
+            "precision": 0.1111,
+            "recall": 0.0556,
+            "score_2_4_1": 0,
+            "score_2_4_2": 0,
+            "submitted": 3
+          },
+          "中美AI事故预警提议（2026.9）": {
+            "gold": 14,
+            "hits": 0,
+            "n_questions": 3,
+            "precision": 0.0,
+            "recall": 0.0,
+            "score_2_4_1": 0,
+            "score_2_4_2": 0,
+            "submitted": 0
+          },
+          "刘翔编制“二选一”事件": {
+            "gold": 14,
+            "hits": 4,
+            "n_questions": 3,
+            "precision": 0.084,
+            "recall": 0.2857,
+            "score_2_4_1": 0,
+            "score_2_4_2": 0,
+            "submitted": 28
+          },
+          "印度航空 AI171 空难（2025.6–2026.5）": {
+            "gold": 24,
+            "hits": 0,
+            "n_questions": 3,
+            "precision": 0.0,
+            "recall": 0.0,
+            "score_2_4_1": 0,
+            "score_2_4_2": 0,
+            "submitted": 0
+          },
+          "柬泰边境争端（2025.12–2026.9）": {
+            "gold": 16,
+            "hits": 0,
+            "n_questions": 3,
+            "precision": 0.0,
+            "recall": 0.0,
+            "score_2_4_1": 0,
+            "score_2_4_2": 0,
+            "submitted": 0
+          },
+          "王虹“北大discouraged”事件": {
+            "gold": 19,
+            "hits": 0,
+            "n_questions": 3,
+            "precision": 0.0,
+            "recall": 0.0,
+            "score_2_4_1": 0,
+            "score_2_4_2": 0,
+            "submitted": 0
+          }
+        },
+        "precision": 0.0303,
+        "recall": 0.0476,
+        "score_2_4_1": 0,
+        "score_2_4_2": 0,
+        "score_sum": 0,
+        "submitted": 31
+      },
+      "P_台账且主体且数字或口径": {
+        "case_score_sum": 0,
+        "cases_scoring": 0,
+        "cases_scoring_of": 6,
+        "cases_zero": [
+          "2026·8·26 吉隆口岸泥石流灾害",
+          "中美AI事故预警提议（2026.9）",
+          "刘翔编制“二选一”事件",
+          "印度航空 AI171 空难（2025.6–2026.5）",
+          "柬泰边境争端（2025.12–2026.9）",
+          "王虹“北大discouraged”事件"
+        ],
+        "empty_pool_questions": 16,
+        "gates_pass": false,
+        "gold": 105,
+        "hits": 1,
+        "n_questions": 18,
+        "per_case": {
+          "2026·8·26 吉隆口岸泥石流灾害": {
+            "gold": 18,
+            "hits": 1,
+            "n_questions": 3,
+            "precision": 0.1111,
+            "recall": 0.0556,
+            "score_2_4_1": 0,
+            "score_2_4_2": 0,
+            "submitted": 3
+          },
+          "中美AI事故预警提议（2026.9）": {
+            "gold": 14,
+            "hits": 0,
+            "n_questions": 3,
+            "precision": 0.0,
+            "recall": 0.0,
+            "score_2_4_1": 0,
+            "score_2_4_2": 0,
+            "submitted": 0
+          },
+          "刘翔编制“二选一”事件": {
+            "gold": 14,
+            "hits": 0,
+            "n_questions": 3,
+            "precision": 0.0,
+            "recall": 0.0,
+            "score_2_4_1": 0,
+            "score_2_4_2": 0,
+            "submitted": 2
+          },
+          "印度航空 AI171 空难（2025.6–2026.5）": {
+            "gold": 24,
+            "hits": 0,
+            "n_questions": 3,
+            "precision": 0.0,
+            "recall": 0.0,
+            "score_2_4_1": 0,
+            "score_2_4_2": 0,
+            "submitted": 0
+          },
+          "柬泰边境争端（2025.12–2026.9）": {
+            "gold": 16,
+            "hits": 0,
+            "n_questions": 3,
+            "precision": 0.0,
+            "recall": 0.0,
+            "score_2_4_1": 0,
+            "score_2_4_2": 0,
+            "submitted": 0
+          },
+          "王虹“北大discouraged”事件": {
+            "gold": 19,
+            "hits": 0,
+            "n_questions": 3,
+            "precision": 0.0,
+            "recall": 0.0,
+            "score_2_4_1": 0,
+            "score_2_4_2": 0,
+            "submitted": 0
+          }
+        },
+        "precision": 0.019,
+        "recall": 0.0095,
+        "score_2_4_1": 0,
+        "score_2_4_2": 0,
+        "score_sum": 0,
+        "submitted": 5
+      },
+      "Q_细读且主体命中": {
+        "case_score_sum": 0,
+        "cases_scoring": 0,
+        "cases_scoring_of": 6,
+        "cases_zero": [
+          "2026·8·26 吉隆口岸泥石流灾害",
+          "中美AI事故预警提议（2026.9）",
+          "刘翔编制“二选一”事件",
+          "印度航空 AI171 空难（2025.6–2026.5）",
+          "柬泰边境争端（2025.12–2026.9）",
+          "王虹“北大discouraged”事件"
+        ],
+        "empty_pool_questions": 15,
+        "gates_pass": false,
+        "gold": 105,
+        "hits": 2,
+        "n_questions": 18,
+        "per_case": {
+          "2026·8·26 吉隆口岸泥石流灾害": {
+            "gold": 18,
+            "hits": 1,
+            "n_questions": 3,
+            "precision": 0.3333,
+            "recall": 0.0556,
+            "score_2_4_1": 0,
+            "score_2_4_2": 0,
+            "submitted": 1
+          },
+          "中美AI事故预警提议（2026.9）": {
+            "gold": 14,
+            "hits": 0,
+            "n_questions": 3,
+            "precision": 0.0,
+            "recall": 0.0,
+            "score_2_4_1": 0,
+            "score_2_4_2": 0,
+            "submitted": 0
+          },
+          "刘翔编制“二选一”事件": {
+            "gold": 14,
+            "hits": 1,
+            "n_questions": 3,
+            "precision": 0.119,
+            "recall": 0.0714,
+            "score_2_4_1": 0,
+            "score_2_4_2": 0,
+            "submitted": 6
+          },
+          "印度航空 AI171 空难（2025.6–2026.5）": {
+            "gold": 24,
+            "hits": 0,
+            "n_questions": 3,
+            "precision": 0.0,
+            "recall": 0.0,
+            "score_2_4_1": 0,
+            "score_2_4_2": 0,
+            "submitted": 0
+          },
+          "柬泰边境争端（2025.12–2026.9）": {
+            "gold": 16,
+            "hits": 0,
+            "n_questions": 3,
+            "precision": 0.0,
+            "recall": 0.0,
+            "score_2_4_1": 0,
+            "score_2_4_2": 0,
+            "submitted": 0
+          },
+          "王虹“北大discouraged”事件": {
+            "gold": 19,
+            "hits": 0,
+            "n_questions": 3,
+            "precision": 0.0,
+            "recall": 0.0,
+            "score_2_4_1": 0,
+            "score_2_4_2": 0,
+            "submitted": 0
+          }
+        },
+        "precision": 0.073,
+        "recall": 0.019,
+        "score_2_4_1": 0,
+        "score_2_4_2": 0,
+        "score_sum": 0,
+        "submitted": 7
+      },
+      "S_台账∪打回回贴段": {
+        "case_score_sum": 0,
+        "cases_scoring": 0,
+        "cases_scoring_of": 6,
+        "cases_zero": [
+          "2026·8·26 吉隆口岸泥石流灾害",
+          "中美AI事故预警提议（2026.9）",
+          "刘翔编制“二选一”事件",
+          "印度航空 AI171 空难（2025.6–2026.5）",
+          "柬泰边境争端（2025.12–2026.9）",
+          "王虹“北大discouraged”事件"
+        ],
+        "empty_pool_questions": 0,
+        "gates_pass": false,
+        "gold": 105,
+        "hits": 34,
+        "n_questions": 18,
+        "per_case": {
+          "2026·8·26 吉隆口岸泥石流灾害": {
+            "gold": 18,
+            "hits": 7,
+            "n_questions": 3,
+            "precision": 0.0949,
+            "recall": 0.3889,
+            "score_2_4_1": 0,
+            "score_2_4_2": 0,
+            "submitted": 67
+          },
+          "中美AI事故预警提议（2026.9）": {
+            "gold": 14,
+            "hits": 6,
+            "n_questions": 3,
+            "precision": 0.1703,
+            "recall": 0.4286,
+            "score_2_4_1": 0,
+            "score_2_4_2": 0,
+            "submitted": 33
+          },
+          "刘翔编制“二选一”事件": {
+            "gold": 14,
+            "hits": 6,
+            "n_questions": 3,
+            "precision": 0.0881,
+            "recall": 0.4286,
+            "score_2_4_1": 0,
+            "score_2_4_2": 0,
+            "submitted": 78
+          },
+          "印度航空 AI171 空难（2025.6–2026.5）": {
+            "gold": 24,
+            "hits": 4,
+            "n_questions": 3,
+            "precision": 0.1569,
+            "recall": 0.1667,
+            "score_2_4_1": 0,
+            "score_2_4_2": 0,
+            "submitted": 32
+          },
+          "柬泰边境争端（2025.12–2026.9）": {
+            "gold": 16,
+            "hits": 3,
+            "n_questions": 3,
+            "precision": 0.0918,
+            "recall": 0.1875,
+            "score_2_4_1": 0,
+            "score_2_4_2": 0,
+            "submitted": 33
+          },
+          "王虹“北大discouraged”事件": {
+            "gold": 19,
+            "hits": 8,
+            "n_questions": 3,
+            "precision": 0.3109,
+            "recall": 0.4211,
+            "score_2_4_1": 0,
+            "score_2_4_2": 0,
+            "submitted": 26
+          }
+        },
+        "precision": 0.1568,
+        "recall": 0.3238,
+        "score_2_4_1": 0,
+        "score_2_4_2": 0,
+        "score_sum": 0,
+        "submitted": 269
+      }
+    },
+    "fixed": {
+      "A_交卷现状": {
+        "case_score_sum": 4,
+        "cases_scoring": 2,
+        "cases_scoring_of": 6,
+        "cases_zero": [
+          "2026·8·26 吉隆口岸泥石流灾害",
+          "中美AI事故预警提议（2026.9）",
+          "刘翔编制“二选一”事件",
+          "柬泰边境争端（2025.12–2026.9）"
+        ],
+        "empty_pool_questions": 0,
+        "gates_pass": false,
+        "gold": 105,
+        "hits": 8,
+        "n_questions": 18,
+        "per_case": {
+          "2026·8·26 吉隆口岸泥石流灾害": {
+            "gold": 18,
+            "hits": 0,
+            "n_questions": 3,
+            "precision": 0.0,
+            "recall": 0.0,
+            "score_2_4_1": 0,
+            "score_2_4_2": 0,
+            "submitted": 3
+          },
+          "中美AI事故预警提议（2026.9）": {
+            "gold": 14,
+            "hits": 0,
+            "n_questions": 3,
+            "precision": 0.0,
+            "recall": 0.0,
+            "score_2_4_1": 0,
+            "score_2_4_2": 0,
+            "submitted": 3
+          },
+          "刘翔编制“二选一”事件": {
+            "gold": 14,
+            "hits": 2,
+            "n_questions": 3,
+            "precision": 0.6429,
+            "recall": 0.1429,
+            "score_2_4_1": 0,
+            "score_2_4_2": 0,
+            "submitted": 3
+          },
+          "印度航空 AI171 空难（2025.6–2026.5）": {
+            "gold": 24,
+            "hits": 2,
+            "n_questions": 3,
+            "precision": 0.7083,
+            "recall": 0.0833,
+            "score_2_4_1": 0,
+            "score_2_4_2": 2,
+            "submitted": 3
+          },
+          "柬泰边境争端（2025.12–2026.9）": {
+            "gold": 16,
+            "hits": 1,
+            "n_questions": 3,
+            "precision": 0.3125,
+            "recall": 0.0625,
+            "score_2_4_1": 0,
+            "score_2_4_2": 0,
+            "submitted": 5
+          },
+          "王虹“北大discouraged”事件": {
+            "gold": 19,
+            "hits": 3,
+            "n_questions": 3,
+            "precision": 0.7368,
+            "recall": 0.1579,
+            "score_2_4_1": 0,
+            "score_2_4_2": 2,
+            "submitted": 4
+          }
+        },
+        "precision": 0.4286,
+        "recall": 0.0762,
+        "score_2_4_1": 0,
+        "score_2_4_2": 0,
+        "score_sum": 0,
+        "submitted": 21
+      },
+      "B_本题台账": {
+        "case_score_sum": 0,
+        "cases_scoring": 0,
+        "cases_scoring_of": 6,
+        "cases_zero": [
+          "2026·8·26 吉隆口岸泥石流灾害",
+          "中美AI事故预警提议（2026.9）",
+          "刘翔编制“二选一”事件",
+          "印度航空 AI171 空难（2025.6–2026.5）",
+          "柬泰边境争端（2025.12–2026.9）",
+          "王虹“北大discouraged”事件"
+        ],
+        "empty_pool_questions": 0,
+        "gates_pass": false,
+        "gold": 105,
+        "hits": 32,
+        "n_questions": 18,
+        "per_case": {
+          "2026·8·26 吉隆口岸泥石流灾害": {
+            "gold": 18,
+            "hits": 6,
+            "n_questions": 3,
+            "precision": 0.1745,
+            "recall": 0.3333,
+            "score_2_4_1": 0,
+            "score_2_4_2": 0,
+            "submitted": 39
+          },
+          "中美AI事故预警提议（2026.9）": {
+            "gold": 14,
+            "hits": 5,
+            "n_questions": 3,
+            "precision": 0.1673,
+            "recall": 0.3571,
+            "score_2_4_1": 0,
+            "score_2_4_2": 0,
+            "submitted": 30
+          },
+          "刘翔编制“二选一”事件": {
+            "gold": 14,
+            "hits": 6,
+            "n_questions": 3,
+            "precision": 0.1412,
+            "recall": 0.4286,
+            "score_2_4_1": 0,
+            "score_2_4_2": 0,
+            "submitted": 38
+          },
+          "印度航空 AI171 空难（2025.6–2026.5）": {
+            "gold": 24,
+            "hits": 4,
+            "n_questions": 3,
+            "precision": 0.1588,
+            "recall": 0.1667,
+            "score_2_4_1": 0,
+            "score_2_4_2": 0,
+            "submitted": 31
+          },
+          "柬泰边境争端（2025.12–2026.9）": {
+            "gold": 16,
+            "hits": 3,
+            "n_questions": 3,
+            "precision": 0.0935,
+            "recall": 0.1875,
+            "score_2_4_1": 0,
+            "score_2_4_2": 0,
+            "submitted": 32
+          },
+          "王虹“北大discouraged”事件": {
+            "gold": 19,
+            "hits": 8,
+            "n_questions": 3,
+            "precision": 0.3363,
+            "recall": 0.4211,
+            "score_2_4_1": 0,
+            "score_2_4_2": 0,
+            "submitted": 25
+          }
+        },
+        "precision": 0.1824,
+        "recall": 0.3048,
+        "score_2_4_1": 0,
+        "score_2_4_2": 0,
+        "score_sum": 0,
+        "submitted": 195
+      },
+      "C_全部带证据结论": {
+        "case_score_sum": 0,
+        "cases_scoring": 0,
+        "cases_scoring_of": 6,
+        "cases_zero": [
+          "2026·8·26 吉隆口岸泥石流灾害",
+          "中美AI事故预警提议（2026.9）",
+          "刘翔编制“二选一”事件",
+          "印度航空 AI171 空难（2025.6–2026.5）",
+          "柬泰边境争端（2025.12–2026.9）",
+          "王虹“北大discouraged”事件"
+        ],
+        "empty_pool_questions": 0,
+        "gates_pass": false,
+        "gold": 105,
+        "hits": 32,
+        "n_questions": 18,
+        "per_case": {
+          "2026·8·26 吉隆口岸泥石流灾害": {
+            "gold": 18,
+            "hits": 6,
+            "n_questions": 3,
+            "precision": 0.1745,
+            "recall": 0.3333,
+            "score_2_4_1": 0,
+            "score_2_4_2": 0,
+            "submitted": 39
+          },
+          "中美AI事故预警提议（2026.9）": {
+            "gold": 14,
+            "hits": 5,
+            "n_questions": 3,
+            "precision": 0.1673,
+            "recall": 0.3571,
+            "score_2_4_1": 0,
+            "score_2_4_2": 0,
+            "submitted": 30
+          },
+          "刘翔编制“二选一”事件": {
+            "gold": 14,
+            "hits": 6,
+            "n_questions": 3,
+            "precision": 0.1412,
+            "recall": 0.4286,
+            "score_2_4_1": 0,
+            "score_2_4_2": 0,
+            "submitted": 38
+          },
+          "印度航空 AI171 空难（2025.6–2026.5）": {
+            "gold": 24,
+            "hits": 4,
+            "n_questions": 3,
+            "precision": 0.1588,
+            "recall": 0.1667,
+            "score_2_4_1": 0,
+            "score_2_4_2": 0,
+            "submitted": 31
+          },
+          "柬泰边境争端（2025.12–2026.9）": {
+            "gold": 16,
+            "hits": 3,
+            "n_questions": 3,
+            "precision": 0.0935,
+            "recall": 0.1875,
+            "score_2_4_1": 0,
+            "score_2_4_2": 0,
+            "submitted": 32
+          },
+          "王虹“北大discouraged”事件": {
+            "gold": 19,
+            "hits": 8,
+            "n_questions": 3,
+            "precision": 0.3363,
+            "recall": 0.4211,
+            "score_2_4_1": 0,
+            "score_2_4_2": 0,
+            "submitted": 25
+          }
+        },
+        "precision": 0.1824,
+        "recall": 0.3048,
+        "score_2_4_1": 0,
+        "score_2_4_2": 0,
+        "score_sum": 0,
+        "submitted": 195
+      },
+      "D_细读面": {
+        "case_score_sum": 2,
+        "cases_scoring": 1,
+        "cases_scoring_of": 6,
+        "cases_zero": [
+          "2026·8·26 吉隆口岸泥石流灾害",
+          "中美AI事故预警提议（2026.9）",
+          "刘翔编制“二选一”事件",
+          "印度航空 AI171 空难（2025.6–2026.5）",
+          "柬泰边境争端（2025.12–2026.9）"
+        ],
+        "empty_pool_questions": 0,
+        "gates_pass": false,
+        "gold": 105,
+        "hits": 17,
+        "n_questions": 18,
+        "per_case": {
+          "2026·8·26 吉隆口岸泥石流灾害": {
+            "gold": 18,
+            "hits": 3,
+            "n_questions": 3,
+            "precision": 0.2222,
+            "recall": 0.1667,
+            "score_2_4_1": 0,
+            "score_2_4_2": 0,
+            "submitted": 9
+          },
+          "中美AI事故预警提议（2026.9）": {
+            "gold": 14,
+            "hits": 3,
+            "n_questions": 3,
+            "precision": 0.2857,
+            "recall": 0.2143,
+            "score_2_4_1": 0,
+            "score_2_4_2": 0,
+            "submitted": 9
+          },
+          "刘翔编制“二选一”事件": {
+            "gold": 14,
+            "hits": 2,
+            "n_questions": 3,
+            "precision": 0.2143,
+            "recall": 0.1429,
+            "score_2_4_1": 0,
+            "score_2_4_2": 0,
+            "submitted": 9
+          },
+          "印度航空 AI171 空难（2025.6–2026.5）": {
+            "gold": 24,
+            "hits": 2,
+            "n_questions": 3,
+            "precision": 0.3472,
+            "recall": 0.0833,
+            "score_2_4_1": 0,
+            "score_2_4_2": 0,
+            "submitted": 5
+          },
+          "柬泰边境争端（2025.12–2026.9）": {
+            "gold": 16,
+            "hits": 2,
+            "n_questions": 3,
+            "precision": 0.625,
+            "recall": 0.125,
+            "score_2_4_1": 0,
+            "score_2_4_2": 0,
+            "submitted": 5
+          },
+          "王虹“北大discouraged”事件": {
+            "gold": 19,
+            "hits": 5,
+            "n_questions": 3,
+            "precision": 0.7544,
+            "recall": 0.2632,
+            "score_2_4_1": 0,
+            "score_2_4_2": 2,
+            "submitted": 7
+          }
+        },
+        "precision": 0.4159,
+        "recall": 0.1619,
+        "score_2_4_1": 0,
+        "score_2_4_2": 0,
+        "score_sum": 0,
+        "submitted": 44
+      },
+      "E_焦点面": {
+        "case_score_sum": 0,
+        "cases_scoring": 0,
+        "cases_scoring_of": 6,
+        "cases_zero": [
+          "2026·8·26 吉隆口岸泥石流灾害",
+          "中美AI事故预警提议（2026.9）",
+          "刘翔编制“二选一”事件",
+          "印度航空 AI171 空难（2025.6–2026.5）",
+          "柬泰边境争端（2025.12–2026.9）",
+          "王虹“北大discouraged”事件"
+        ],
+        "empty_pool_questions": 0,
+        "gates_pass": false,
+        "gold": 105,
+        "hits": 27,
+        "n_questions": 18,
+        "per_case": {
+          "2026·8·26 吉隆口岸泥石流灾害": {
+            "gold": 18,
+            "hits": 4,
+            "n_questions": 3,
+            "precision": 0.1667,
+            "recall": 0.2222,
+            "score_2_4_1": 0,
+            "score_2_4_2": 0,
+            "submitted": 21
+          },
+          "中美AI事故预警提议（2026.9）": {
+            "gold": 14,
+            "hits": 3,
+            "n_questions": 3,
+            "precision": 0.1224,
+            "recall": 0.2143,
+            "score_2_4_1": 0,
+            "score_2_4_2": 0,
+            "submitted": 21
+          },
+          "刘翔编制“二选一”事件": {
+            "gold": 14,
+            "hits": 6,
+            "n_questions": 3,
+            "precision": 0.2483,
+            "recall": 0.4286,
+            "score_2_4_1": 0,
+            "score_2_4_2": 0,
+            "submitted": 23
+          },
+          "印度航空 AI171 空难（2025.6–2026.5）": {
+            "gold": 24,
+            "hits": 3,
+            "n_questions": 3,
+            "precision": 0.1429,
+            "recall": 0.125,
+            "score_2_4_1": 0,
+            "score_2_4_2": 0,
+            "submitted": 21
+          },
+          "柬泰边境争端（2025.12–2026.9）": {
+            "gold": 16,
+            "hits": 3,
+            "n_questions": 3,
+            "precision": 0.1339,
+            "recall": 0.1875,
+            "score_2_4_1": 0,
+            "score_2_4_2": 0,
+            "submitted": 21
+          },
+          "王虹“北大discouraged”事件": {
+            "gold": 19,
+            "hits": 8,
+            "n_questions": 3,
+            "precision": 0.391,
+            "recall": 0.4211,
+            "score_2_4_1": 0,
+            "score_2_4_2": 0,
+            "submitted": 21
+          }
+        },
+        "precision": 0.2018,
+        "recall": 0.2571,
+        "score_2_4_1": 0,
+        "score_2_4_2": 0,
+        "score_sum": 0,
+        "submitted": 128
+      },
+      "F_Top7定稿": {
+        "case_score_sum": 0,
+        "cases_scoring": 0,
+        "cases_scoring_of": 6,
+        "cases_zero": [
+          "2026·8·26 吉隆口岸泥石流灾害",
+          "中美AI事故预警提议（2026.9）",
+          "刘翔编制“二选一”事件",
+          "印度航空 AI171 空难（2025.6–2026.5）",
+          "柬泰边境争端（2025.12–2026.9）",
+          "王虹“北大discouraged”事件"
+        ],
+        "empty_pool_questions": 0,
+        "gates_pass": false,
+        "gold": 105,
+        "hits": 27,
+        "n_questions": 18,
+        "per_case": {
+          "2026·8·26 吉隆口岸泥石流灾害": {
+            "gold": 18,
+            "hits": 4,
+            "n_questions": 3,
+            "precision": 0.1667,
+            "recall": 0.2222,
+            "score_2_4_1": 0,
+            "score_2_4_2": 0,
+            "submitted": 21
+          },
+          "中美AI事故预警提议（2026.9）": {
+            "gold": 14,
+            "hits": 3,
+            "n_questions": 3,
+            "precision": 0.1224,
+            "recall": 0.2143,
+            "score_2_4_1": 0,
+            "score_2_4_2": 0,
+            "submitted": 21
+          },
+          "刘翔编制“二选一”事件": {
+            "gold": 14,
+            "hits": 6,
+            "n_questions": 3,
+            "precision": 0.2483,
+            "recall": 0.4286,
+            "score_2_4_1": 0,
+            "score_2_4_2": 0,
+            "submitted": 23
+          },
+          "印度航空 AI171 空难（2025.6–2026.5）": {
+            "gold": 24,
+            "hits": 3,
+            "n_questions": 3,
+            "precision": 0.1429,
+            "recall": 0.125,
+            "score_2_4_1": 0,
+            "score_2_4_2": 0,
+            "submitted": 21
+          },
+          "柬泰边境争端（2025.12–2026.9）": {
+            "gold": 16,
+            "hits": 3,
+            "n_questions": 3,
+            "precision": 0.1339,
+            "recall": 0.1875,
+            "score_2_4_1": 0,
+            "score_2_4_2": 0,
+            "submitted": 21
+          },
+          "王虹“北大discouraged”事件": {
+            "gold": 19,
+            "hits": 8,
+            "n_questions": 3,
+            "precision": 0.391,
+            "recall": 0.4211,
+            "score_2_4_1": 0,
+            "score_2_4_2": 0,
+            "submitted": 21
+          }
+        },
+        "precision": 0.2018,
+        "recall": 0.2571,
+        "score_2_4_1": 0,
+        "score_2_4_2": 0,
+        "score_sum": 0,
+        "submitted": 128
+      },
+      "G_盒rank": {
+        "case_score_sum": 2,
+        "cases_scoring": 1,
+        "cases_scoring_of": 6,
+        "cases_zero": [
+          "2026·8·26 吉隆口岸泥石流灾害",
+          "中美AI事故预警提议（2026.9）",
+          "刘翔编制“二选一”事件",
+          "印度航空 AI171 空难（2025.6–2026.5）",
+          "柬泰边境争端（2025.12–2026.9）"
+        ],
+        "empty_pool_questions": 0,
+        "gates_pass": false,
+        "gold": 105,
+        "hits": 17,
+        "n_questions": 18,
+        "per_case": {
+          "2026·8·26 吉隆口岸泥石流灾害": {
+            "gold": 18,
+            "hits": 3,
+            "n_questions": 3,
+            "precision": 0.2222,
+            "recall": 0.1667,
+            "score_2_4_1": 0,
+            "score_2_4_2": 0,
+            "submitted": 9
+          },
+          "中美AI事故预警提议（2026.9）": {
+            "gold": 14,
+            "hits": 3,
+            "n_questions": 3,
+            "precision": 0.2857,
+            "recall": 0.2143,
+            "score_2_4_1": 0,
+            "score_2_4_2": 0,
+            "submitted": 9
+          },
+          "刘翔编制“二选一”事件": {
+            "gold": 14,
+            "hits": 2,
+            "n_questions": 3,
+            "precision": 0.2143,
+            "recall": 0.1429,
+            "score_2_4_1": 0,
+            "score_2_4_2": 0,
+            "submitted": 9
+          },
+          "印度航空 AI171 空难（2025.6–2026.5）": {
+            "gold": 24,
+            "hits": 2,
+            "n_questions": 3,
+            "precision": 0.3472,
+            "recall": 0.0833,
+            "score_2_4_1": 0,
+            "score_2_4_2": 0,
+            "submitted": 5
+          },
+          "柬泰边境争端（2025.12–2026.9）": {
+            "gold": 16,
+            "hits": 2,
+            "n_questions": 3,
+            "precision": 0.625,
+            "recall": 0.125,
+            "score_2_4_1": 0,
+            "score_2_4_2": 0,
+            "submitted": 5
+          },
+          "王虹“北大discouraged”事件": {
+            "gold": 19,
+            "hits": 5,
+            "n_questions": 3,
+            "precision": 0.7544,
+            "recall": 0.2632,
+            "score_2_4_1": 0,
+            "score_2_4_2": 2,
+            "submitted": 7
+          }
+        },
+        "precision": 0.4159,
+        "recall": 0.1619,
+        "score_2_4_1": 0,
+        "score_2_4_2": 0,
+        "score_sum": 0,
+        "submitted": 44
+      },
+      "H_rerank全序": {
+        "case_score_sum": 2,
+        "cases_scoring": 1,
+        "cases_scoring_of": 6,
+        "cases_zero": [
+          "2026·8·26 吉隆口岸泥石流灾害",
+          "中美AI事故预警提议（2026.9）",
+          "印度航空 AI171 空难（2025.6–2026.5）",
+          "柬泰边境争端（2025.12–2026.9）",
+          "王虹“北大discouraged”事件"
+        ],
+        "empty_pool_questions": 0,
+        "gates_pass": false,
+        "gold": 105,
+        "hits": 39,
+        "n_questions": 18,
+        "per_case": {
+          "2026·8·26 吉隆口岸泥石流灾害": {
+            "gold": 18,
+            "hits": 5,
+            "n_questions": 3,
+            "precision": 0.0494,
+            "recall": 0.2778,
+            "score_2_4_1": 0,
+            "score_2_4_2": 0,
+            "submitted": 81
+          },
+          "中美AI事故预警提议（2026.9）": {
+            "gold": 14,
+            "hits": 6,
+            "n_questions": 3,
+            "precision": 0.074,
+            "recall": 0.4286,
+            "score_2_4_1": 0,
+            "score_2_4_2": 0,
+            "submitted": 80
+          },
+          "刘翔编制“二选一”事件": {
+            "gold": 14,
+            "hits": 8,
+            "n_questions": 3,
+            "precision": 0.1007,
+            "recall": 0.5714,
+            "score_2_4_1": 2,
+            "score_2_4_2": 0,
+            "submitted": 75
+          },
+          "印度航空 AI171 空难（2025.6–2026.5）": {
+            "gold": 24,
+            "hits": 7,
+            "n_questions": 3,
+            "precision": 0.0894,
+            "recall": 0.2917,
+            "score_2_4_1": 0,
+            "score_2_4_2": 0,
+            "submitted": 75
+          },
+          "柬泰边境争端（2025.12–2026.9）": {
+            "gold": 16,
+            "hits": 5,
+            "n_questions": 3,
+            "precision": 0.0588,
+            "recall": 0.3125,
+            "score_2_4_1": 0,
+            "score_2_4_2": 0,
+            "submitted": 84
+          },
+          "王虹“北大discouraged”事件": {
+            "gold": 19,
+            "hits": 8,
+            "n_questions": 3,
+            "precision": 0.1091,
+            "recall": 0.4211,
+            "score_2_4_1": 0,
+            "score_2_4_2": 0,
+            "submitted": 75
+          }
+        },
+        "precision": 0.0809,
+        "recall": 0.3714,
+        "score_2_4_1": 0,
+        "score_2_4_2": 0,
+        "score_sum": 0,
+        "submitted": 470
+      },
+      "I_台账∪细读": {
+        "case_score_sum": 0,
+        "cases_scoring": 0,
+        "cases_scoring_of": 6,
+        "cases_zero": [
+          "2026·8·26 吉隆口岸泥石流灾害",
+          "中美AI事故预警提议（2026.9）",
+          "刘翔编制“二选一”事件",
+          "印度航空 AI171 空难（2025.6–2026.5）",
+          "柬泰边境争端（2025.12–2026.9）",
+          "王虹“北大discouraged”事件"
+        ],
+        "empty_pool_questions": 0,
+        "gates_pass": false,
+        "gold": 105,
+        "hits": 35,
+        "n_questions": 18,
+        "per_case": {
+          "2026·8·26 吉隆口岸泥石流灾害": {
+            "gold": 18,
+            "hits": 6,
+            "n_questions": 3,
+            "precision": 0.1648,
+            "recall": 0.3333,
+            "score_2_4_1": 0,
+            "score_2_4_2": 0,
+            "submitted": 40
+          },
+          "中美AI事故预警提议（2026.9）": {
+            "gold": 14,
+            "hits": 5,
+            "n_questions": 3,
+            "precision": 0.1495,
+            "recall": 0.3571,
+            "score_2_4_1": 0,
+            "score_2_4_2": 0,
+            "submitted": 32
+          },
+          "刘翔编制“二选一”事件": {
+            "gold": 14,
+            "hits": 7,
+            "n_questions": 3,
+            "precision": 0.1508,
+            "recall": 0.5,
+            "score_2_4_1": 0,
+            "score_2_4_2": 0,
+            "submitted": 42
+          },
+          "印度航空 AI171 空难（2025.6–2026.5）": {
+            "gold": 24,
+            "hits": 4,
+            "n_questions": 3,
+            "precision": 0.1588,
+            "recall": 0.1667,
+            "score_2_4_1": 0,
+            "score_2_4_2": 0,
+            "submitted": 31
+          },
+          "柬泰边境争端（2025.12–2026.9）": {
+            "gold": 16,
+            "hits": 3,
+            "n_questions": 3,
+            "precision": 0.0935,
+            "recall": 0.1875,
+            "score_2_4_1": 0,
+            "score_2_4_2": 0,
+            "submitted": 32
+          },
+          "王虹“北大discouraged”事件": {
+            "gold": 19,
+            "hits": 10,
+            "n_questions": 3,
+            "precision": 0.372,
+            "recall": 0.5263,
+            "score_2_4_1": 0,
+            "score_2_4_2": 0,
+            "submitted": 28
+          }
+        },
+        "precision": 0.1861,
+        "recall": 0.3333,
+        "score_2_4_1": 0,
+        "score_2_4_2": 0,
+        "score_sum": 0,
+        "submitted": 205
+      },
+      "J_台账且逐字可核": {
+        "case_score_sum": 0,
+        "cases_scoring": 0,
+        "cases_scoring_of": 6,
+        "cases_zero": [
+          "2026·8·26 吉隆口岸泥石流灾害",
+          "中美AI事故预警提议（2026.9）",
+          "刘翔编制“二选一”事件",
+          "印度航空 AI171 空难（2025.6–2026.5）",
+          "柬泰边境争端（2025.12–2026.9）",
+          "王虹“北大discouraged”事件"
+        ],
+        "empty_pool_questions": 0,
+        "gates_pass": false,
+        "gold": 105,
+        "hits": 32,
+        "n_questions": 18,
+        "per_case": {
+          "2026·8·26 吉隆口岸泥石流灾害": {
+            "gold": 18,
+            "hits": 6,
+            "n_questions": 3,
+            "precision": 0.1745,
+            "recall": 0.3333,
+            "score_2_4_1": 0,
+            "score_2_4_2": 0,
+            "submitted": 39
+          },
+          "中美AI事故预警提议（2026.9）": {
+            "gold": 14,
+            "hits": 5,
+            "n_questions": 3,
+            "precision": 0.1673,
+            "recall": 0.3571,
+            "score_2_4_1": 0,
+            "score_2_4_2": 0,
+            "submitted": 30
+          },
+          "刘翔编制“二选一”事件": {
+            "gold": 14,
+            "hits": 6,
+            "n_questions": 3,
+            "precision": 0.1412,
+            "recall": 0.4286,
+            "score_2_4_1": 0,
+            "score_2_4_2": 0,
+            "submitted": 38
+          },
+          "印度航空 AI171 空难（2025.6–2026.5）": {
+            "gold": 24,
+            "hits": 4,
+            "n_questions": 3,
+            "precision": 0.1588,
+            "recall": 0.1667,
+            "score_2_4_1": 0,
+            "score_2_4_2": 0,
+            "submitted": 31
+          },
+          "柬泰边境争端（2025.12–2026.9）": {
+            "gold": 16,
+            "hits": 3,
+            "n_questions": 3,
+            "precision": 0.0935,
+            "recall": 0.1875,
+            "score_2_4_1": 0,
+            "score_2_4_2": 0,
+            "submitted": 32
+          },
+          "王虹“北大discouraged”事件": {
+            "gold": 19,
+            "hits": 8,
+            "n_questions": 3,
+            "precision": 0.3363,
+            "recall": 0.4211,
+            "score_2_4_1": 0,
+            "score_2_4_2": 0,
+            "submitted": 25
+          }
+        },
+        "precision": 0.1824,
+        "recall": 0.3048,
+        "score_2_4_1": 0,
+        "score_2_4_2": 0,
+        "score_sum": 0,
+        "submitted": 195
+      }
+    },
+    "kfixed": {
+      "B_本题台账@K=3": {
+        "case_score_sum": 0,
+        "cases_scoring": 0,
+        "cases_scoring_of": 6,
+        "cases_zero": [
+          "2026·8·26 吉隆口岸泥石流灾害",
+          "中美AI事故预警提议（2026.9）",
+          "刘翔编制“二选一”事件",
+          "印度航空 AI171 空难（2025.6–2026.5）",
+          "柬泰边境争端（2025.12–2026.9）",
+          "王虹“北大discouraged”事件"
+        ],
+        "empty_pool_questions": 0,
+        "gates_pass": false,
+        "gold": 105,
+        "hits": 16,
+        "n_questions": 18,
+        "per_case": {
+          "2026·8·26 吉隆口岸泥石流灾害": {
+            "gold": 18,
+            "hits": 4,
+            "n_questions": 3,
+            "precision": 0.5,
+            "recall": 0.2222,
+            "score_2_4_1": 0,
+            "score_2_4_2": 0,
+            "submitted": 9
+          },
+          "中美AI事故预警提议（2026.9）": {
+            "gold": 14,
+            "hits": 1,
+            "n_questions": 3,
+            "precision": 0.0952,
+            "recall": 0.0714,
+            "score_2_4_1": 0,
+            "score_2_4_2": 0,
+            "submitted": 9
+          },
+          "刘翔编制“二选一”事件": {
+            "gold": 14,
+            "hits": 2,
+            "n_questions": 3,
+            "precision": 0.2143,
+            "recall": 0.1429,
+            "score_2_4_1": 0,
+            "score_2_4_2": 0,
+            "submitted": 9
+          },
+          "印度航空 AI171 空难（2025.6–2026.5）": {
+            "gold": 24,
+            "hits": 2,
+            "n_questions": 3,
+            "precision": 0.1806,
+            "recall": 0.0833,
+            "score_2_4_1": 0,
+            "score_2_4_2": 0,
+            "submitted": 9
+          },
+          "柬泰边境争端（2025.12–2026.9）": {
+            "gold": 16,
+            "hits": 2,
+            "n_questions": 3,
+            "precision": 0.2083,
+            "recall": 0.125,
+            "score_2_4_1": 0,
+            "score_2_4_2": 0,
+            "submitted": 9
+          },
+          "王虹“北大discouraged”事件": {
+            "gold": 19,
+            "hits": 5,
+            "n_questions": 3,
+            "precision": 0.5789,
+            "recall": 0.2632,
+            "score_2_4_1": 0,
+            "score_2_4_2": 0,
+            "submitted": 9
+          }
+        },
+        "precision": 0.3048,
+        "recall": 0.1524,
+        "score_2_4_1": 0,
+        "score_2_4_2": 0,
+        "score_sum": 0,
+        "submitted": 54
+      },
+      "D_细读面@K=3": {
+        "case_score_sum": 2,
+        "cases_scoring": 1,
+        "cases_scoring_of": 6,
+        "cases_zero": [
+          "2026·8·26 吉隆口岸泥石流灾害",
+          "中美AI事故预警提议（2026.9）",
+          "刘翔编制“二选一”事件",
+          "印度航空 AI171 空难（2025.6–2026.5）",
+          "柬泰边境争端（2025.12–2026.9）"
+        ],
+        "empty_pool_questions": 0,
+        "gates_pass": false,
+        "gold": 105,
+        "hits": 17,
+        "n_questions": 18,
+        "per_case": {
+          "2026·8·26 吉隆口岸泥石流灾害": {
+            "gold": 18,
+            "hits": 3,
+            "n_questions": 3,
+            "precision": 0.2222,
+            "recall": 0.1667,
+            "score_2_4_1": 0,
+            "score_2_4_2": 0,
+            "submitted": 9
+          },
+          "中美AI事故预警提议（2026.9）": {
+            "gold": 14,
+            "hits": 3,
+            "n_questions": 3,
+            "precision": 0.2857,
+            "recall": 0.2143,
+            "score_2_4_1": 0,
+            "score_2_4_2": 0,
+            "submitted": 9
+          },
+          "刘翔编制“二选一”事件": {
+            "gold": 14,
+            "hits": 2,
+            "n_questions": 3,
+            "precision": 0.2143,
+            "recall": 0.1429,
+            "score_2_4_1": 0,
+            "score_2_4_2": 0,
+            "submitted": 9
+          },
+          "印度航空 AI171 空难（2025.6–2026.5）": {
+            "gold": 24,
+            "hits": 2,
+            "n_questions": 3,
+            "precision": 0.3472,
+            "recall": 0.0833,
+            "score_2_4_1": 0,
+            "score_2_4_2": 0,
+            "submitted": 5
+          },
+          "柬泰边境争端（2025.12–2026.9）": {
+            "gold": 16,
+            "hits": 2,
+            "n_questions": 3,
+            "precision": 0.625,
+            "recall": 0.125,
+            "score_2_4_1": 0,
+            "score_2_4_2": 0,
+            "submitted": 5
+          },
+          "王虹“北大discouraged”事件": {
+            "gold": 19,
+            "hits": 5,
+            "n_questions": 3,
+            "precision": 0.7544,
+            "recall": 0.2632,
+            "score_2_4_1": 0,
+            "score_2_4_2": 2,
+            "submitted": 7
+          }
+        },
+        "precision": 0.4159,
+        "recall": 0.1619,
+        "score_2_4_1": 0,
+        "score_2_4_2": 0,
+        "score_sum": 0,
+        "submitted": 44
+      },
+      "E_焦点面@K=3": {
+        "case_score_sum": 0,
+        "cases_scoring": 0,
+        "cases_scoring_of": 6,
+        "cases_zero": [
+          "2026·8·26 吉隆口岸泥石流灾害",
+          "中美AI事故预警提议（2026.9）",
+          "刘翔编制“二选一”事件",
+          "印度航空 AI171 空难（2025.6–2026.5）",
+          "柬泰边境争端（2025.12–2026.9）",
+          "王虹“北大discouraged”事件"
+        ],
+        "empty_pool_questions": 0,
+        "gates_pass": false,
+        "gold": 105,
+        "hits": 18,
+        "n_questions": 18,
+        "per_case": {
+          "2026·8·26 吉隆口岸泥石流灾害": {
+            "gold": 18,
+            "hits": 3,
+            "n_questions": 3,
+            "precision": 0.2222,
+            "recall": 0.1667,
+            "score_2_4_1": 0,
+            "score_2_4_2": 0,
+            "submitted": 9
+          },
+          "中美AI事故预警提议（2026.9）": {
+            "gold": 14,
+            "hits": 3,
+            "n_questions": 3,
+            "precision": 0.2857,
+            "recall": 0.2143,
+            "score_2_4_1": 0,
+            "score_2_4_2": 0,
+            "submitted": 9
+          },
+          "刘翔编制“二选一”事件": {
+            "gold": 14,
+            "hits": 2,
+            "n_questions": 3,
+            "precision": 0.2143,
+            "recall": 0.1429,
+            "score_2_4_1": 0,
+            "score_2_4_2": 0,
+            "submitted": 9
+          },
+          "印度航空 AI171 空难（2025.6–2026.5）": {
+            "gold": 24,
+            "hits": 3,
+            "n_questions": 3,
+            "precision": 0.3333,
+            "recall": 0.125,
+            "score_2_4_1": 0,
+            "score_2_4_2": 0,
+            "submitted": 9
+          },
+          "柬泰边境争端（2025.12–2026.9）": {
+            "gold": 16,
+            "hits": 2,
+            "n_questions": 3,
+            "precision": 0.2083,
+            "recall": 0.125,
+            "score_2_4_1": 0,
+            "score_2_4_2": 0,
+            "submitted": 9
+          },
+          "王虹“北大discouraged”事件": {
+            "gold": 19,
+            "hits": 5,
+            "n_questions": 3,
+            "precision": 0.5789,
+            "recall": 0.2632,
+            "score_2_4_1": 0,
+            "score_2_4_2": 0,
+            "submitted": 9
+          }
+        },
+        "precision": 0.3175,
+        "recall": 0.1714,
+        "score_2_4_1": 0,
+        "score_2_4_2": 0,
+        "score_sum": 0,
+        "submitted": 54
+      },
+      "H_rerank全序@K=7": {
+        "case_score_sum": 0,
+        "cases_scoring": 0,
+        "cases_scoring_of": 6,
+        "cases_zero": [
+          "2026·8·26 吉隆口岸泥石流灾害",
+          "中美AI事故预警提议（2026.9）",
+          "刘翔编制“二选一”事件",
+          "印度航空 AI171 空难（2025.6–2026.5）",
+          "柬泰边境争端（2025.12–2026.9）",
+          "王虹“北大discouraged”事件"
+        ],
+        "empty_pool_questions": 0,
+        "gates_pass": false,
+        "gold": 105,
+        "hits": 27,
+        "n_questions": 18,
+        "per_case": {
+          "2026·8·26 吉隆口岸泥石流灾害": {
+            "gold": 18,
+            "hits": 4,
+            "n_questions": 3,
+            "precision": 0.1667,
+            "recall": 0.2222,
+            "score_2_4_1": 0,
+            "score_2_4_2": 0,
+            "submitted": 21
+          },
+          "中美AI事故预警提议（2026.9）": {
+            "gold": 14,
+            "hits": 3,
+            "n_questions": 3,
+            "precision": 0.1224,
+            "recall": 0.2143,
+            "score_2_4_1": 0,
+            "score_2_4_2": 0,
+            "submitted": 21
+          },
+          "刘翔编制“二选一”事件": {
+            "gold": 14,
+            "hits": 6,
+            "n_questions": 3,
+            "precision": 0.2755,
+            "recall": 0.4286,
+            "score_2_4_1": 0,
+            "score_2_4_2": 0,
+            "submitted": 21
+          },
+          "印度航空 AI171 空难（2025.6–2026.5）": {
+            "gold": 24,
+            "hits": 3,
+            "n_questions": 3,
+            "precision": 0.1429,
+            "recall": 0.125,
+            "score_2_4_1": 0,
+            "score_2_4_2": 0,
+            "submitted": 21
+          },
+          "柬泰边境争端（2025.12–2026.9）": {
+            "gold": 16,
+            "hits": 3,
+            "n_questions": 3,
+            "precision": 0.1339,
+            "recall": 0.1875,
+            "score_2_4_1": 0,
+            "score_2_4_2": 0,
+            "submitted": 21
+          },
+          "王虹“北大discouraged”事件": {
+            "gold": 19,
+            "hits": 8,
+            "n_questions": 3,
+            "precision": 0.391,
+            "recall": 0.4211,
+            "score_2_4_1": 0,
+            "score_2_4_2": 0,
+            "submitted": 21
+          }
+        },
+        "precision": 0.2054,
+        "recall": 0.2571,
+        "score_2_4_1": 0,
+        "score_2_4_2": 0,
+        "score_sum": 0,
+        "submitted": 126
+      },
+      "I_台账∪细读@K=3": {
+        "case_score_sum": 0,
+        "cases_scoring": 0,
+        "cases_scoring_of": 6,
+        "cases_zero": [
+          "2026·8·26 吉隆口岸泥石流灾害",
+          "中美AI事故预警提议（2026.9）",
+          "刘翔编制“二选一”事件",
+          "印度航空 AI171 空难（2025.6–2026.5）",
+          "柬泰边境争端（2025.12–2026.9）",
+          "王虹“北大discouraged”事件"
+        ],
+        "empty_pool_questions": 0,
+        "gates_pass": false,
+        "gold": 105,
+        "hits": 16,
+        "n_questions": 18,
+        "per_case": {
+          "2026·8·26 吉隆口岸泥石流灾害": {
+            "gold": 18,
+            "hits": 4,
+            "n_questions": 3,
+            "precision": 0.5,
+            "recall": 0.2222,
+            "score_2_4_1": 0,
+            "score_2_4_2": 0,
+            "submitted": 9
+          },
+          "中美AI事故预警提议（2026.9）": {
+            "gold": 14,
+            "hits": 1,
+            "n_questions": 3,
+            "precision": 0.0952,
+            "recall": 0.0714,
+            "score_2_4_1": 0,
+            "score_2_4_2": 0,
+            "submitted": 9
+          },
+          "刘翔编制“二选一”事件": {
+            "gold": 14,
+            "hits": 2,
+            "n_questions": 3,
+            "precision": 0.2143,
+            "recall": 0.1429,
+            "score_2_4_1": 0,
+            "score_2_4_2": 0,
+            "submitted": 9
+          },
+          "印度航空 AI171 空难（2025.6–2026.5）": {
+            "gold": 24,
+            "hits": 2,
+            "n_questions": 3,
+            "precision": 0.1806,
+            "recall": 0.0833,
+            "score_2_4_1": 0,
+            "score_2_4_2": 0,
+            "submitted": 9
+          },
+          "柬泰边境争端（2025.12–2026.9）": {
+            "gold": 16,
+            "hits": 2,
+            "n_questions": 3,
+            "precision": 0.2083,
+            "recall": 0.125,
+            "score_2_4_1": 0,
+            "score_2_4_2": 0,
+            "submitted": 9
+          },
+          "王虹“北大discouraged”事件": {
+            "gold": 19,
+            "hits": 5,
+            "n_questions": 3,
+            "precision": 0.5789,
+            "recall": 0.2632,
+            "score_2_4_1": 0,
+            "score_2_4_2": 0,
+            "submitted": 9
+          }
+        },
+        "precision": 0.3048,
+        "recall": 0.1524,
+        "score_2_4_1": 0,
+        "score_2_4_2": 0,
+        "score_sum": 0,
+        "submitted": 54
+      }
+    },
+    "sweep": {
+      "B_本题台账": [
+        {
+          "case_score_sum": 2,
+          "cases_scoring": 1,
+          "gates_pass": false,
+          "hits": 5,
+          "k": 1,
+          "precision": 0.2952,
+          "recall": 0.0476,
+          "score_sum": 0,
+          "submitted": 18
+        },
+        {
+          "case_score_sum": 0,
+          "cases_scoring": 0,
+          "gates_pass": false,
+          "hits": 8,
+          "k": 2,
+          "precision": 0.2429,
+          "recall": 0.0762,
+          "score_sum": 0,
+          "submitted": 36
+        },
+        {
+          "case_score_sum": 0,
+          "cases_scoring": 0,
+          "gates_pass": false,
+          "hits": 16,
+          "k": 3,
+          "precision": 0.3048,
+          "recall": 0.1524,
+          "score_sum": 0,
+          "submitted": 54
+        },
+        {
+          "case_score_sum": 0,
+          "cases_scoring": 0,
+          "gates_pass": false,
+          "hits": 23,
+          "k": 5,
+          "precision": 0.261,
+          "recall": 0.219,
+          "score_sum": 0,
+          "submitted": 88
+        },
+        {
+          "case_score_sum": 0,
+          "cases_scoring": 0,
+          "gates_pass": false,
+          "hits": 25,
+          "k": 7,
+          "precision": 0.215,
+          "recall": 0.2381,
+          "score_sum": 0,
+          "submitted": 121
+        },
+        {
+          "case_score_sum": 0,
+          "cases_scoring": 0,
+          "gates_pass": false,
+          "hits": 26,
+          "k": 9,
+          "precision": 0.1875,
+          "recall": 0.2476,
+          "score_sum": 0,
+          "submitted": 149
+        },
+        {
+          "case_score_sum": 0,
+          "cases_scoring": 0,
+          "gates_pass": false,
+          "hits": 32,
+          "k": 12,
+          "precision": 0.1915,
+          "recall": 0.3048,
+          "score_sum": 0,
+          "submitted": 181
+        },
+        {
+          "case_score_sum": 0,
+          "cases_scoring": 0,
+          "gates_pass": false,
+          "hits": 32,
+          "k": 16,
+          "precision": 0.1831,
+          "recall": 0.3048,
+          "score_sum": 0,
+          "submitted": 194
+        },
+        {
+          "case_score_sum": 0,
+          "cases_scoring": 0,
+          "gates_pass": false,
+          "hits": 32,
+          "k": 20,
+          "precision": 0.1824,
+          "recall": 0.3048,
+          "score_sum": 0,
+          "submitted": 195
+        },
+        {
+          "case_score_sum": 0,
+          "cases_scoring": 0,
+          "gates_pass": false,
+          "hits": 32,
+          "k": 24,
+          "precision": 0.1824,
+          "recall": 0.3048,
+          "score_sum": 0,
+          "submitted": 195
+        },
+        {
+          "case_score_sum": 0,
+          "cases_scoring": 0,
+          "gates_pass": false,
+          "hits": 32,
+          "k": 28,
+          "precision": 0.1824,
+          "recall": 0.3048,
+          "score_sum": 0,
+          "submitted": 195
+        },
+        {
+          "case_score_sum": 0,
+          "cases_scoring": 0,
+          "gates_pass": false,
+          "hits": 32,
+          "k": 32,
+          "precision": 0.1824,
+          "recall": 0.3048,
+          "score_sum": 0,
+          "submitted": 195
+        }
+      ],
+      "C_全部带证据结论": [
+        {
+          "case_score_sum": 4,
+          "cases_scoring": 2,
+          "gates_pass": false,
+          "hits": 7,
+          "k": 1,
+          "precision": 0.4286,
+          "recall": 0.0667,
+          "score_sum": 0,
+          "submitted": 18
+        },
+        {
+          "case_score_sum": 4,
+          "cases_scoring": 1,
+          "gates_pass": false,
+          "hits": 15,
+          "k": 2,
+          "precision": 0.4333,
+          "recall": 0.1429,
+          "score_sum": 0,
+          "submitted": 36
+        },
+        {
+          "case_score_sum": 0,
+          "cases_scoring": 0,
+          "gates_pass": false,
+          "hits": 17,
+          "k": 3,
+          "precision": 0.3143,
+          "recall": 0.1619,
+          "score_sum": 0,
+          "submitted": 54
+        },
+        {
+          "case_score_sum": 0,
+          "cases_scoring": 0,
+          "gates_pass": false,
+          "hits": 22,
+          "k": 5,
+          "precision": 0.261,
+          "recall": 0.2095,
+          "score_sum": 0,
+          "submitted": 88
+        },
+        {
+          "case_score_sum": 0,
+          "cases_scoring": 0,
+          "gates_pass": false,
+          "hits": 29,
+          "k": 7,
+          "precision": 0.2395,
+          "recall": 0.2762,
+          "score_sum": 0,
+          "submitted": 121
+        },
+        {
+          "case_score_sum": 0,
+          "cases_scoring": 0,
+          "gates_pass": false,
+          "hits": 31,
+          "k": 9,
+          "precision": 0.2139,
+          "recall": 0.2952,
+          "score_sum": 0,
+          "submitted": 149
+        },
+        {
+          "case_score_sum": 0,
+          "cases_scoring": 0,
+          "gates_pass": false,
+          "hits": 32,
+          "k": 12,
+          "precision": 0.1915,
+          "recall": 0.3048,
+          "score_sum": 0,
+          "submitted": 181
+        },
+        {
+          "case_score_sum": 0,
+          "cases_scoring": 0,
+          "gates_pass": false,
+          "hits": 32,
+          "k": 16,
+          "precision": 0.1831,
+          "recall": 0.3048,
+          "score_sum": 0,
+          "submitted": 194
+        },
+        {
+          "case_score_sum": 0,
+          "cases_scoring": 0,
+          "gates_pass": false,
+          "hits": 32,
+          "k": 20,
+          "precision": 0.1824,
+          "recall": 0.3048,
+          "score_sum": 0,
+          "submitted": 195
+        },
+        {
+          "case_score_sum": 0,
+          "cases_scoring": 0,
+          "gates_pass": false,
+          "hits": 32,
+          "k": 24,
+          "precision": 0.1824,
+          "recall": 0.3048,
+          "score_sum": 0,
+          "submitted": 195
+        },
+        {
+          "case_score_sum": 0,
+          "cases_scoring": 0,
+          "gates_pass": false,
+          "hits": 32,
+          "k": 28,
+          "precision": 0.1824,
+          "recall": 0.3048,
+          "score_sum": 0,
+          "submitted": 195
+        },
+        {
+          "case_score_sum": 0,
+          "cases_scoring": 0,
+          "gates_pass": false,
+          "hits": 32,
+          "k": 32,
+          "precision": 0.1824,
+          "recall": 0.3048,
+          "score_sum": 0,
+          "submitted": 195
+        }
+      ],
+      "D_细读面": [
+        {
+          "case_score_sum": 0,
+          "cases_scoring": 0,
+          "gates_pass": false,
+          "hits": 10,
+          "k": 1,
+          "precision": 0.4762,
+          "recall": 0.0952,
+          "score_sum": 0,
+          "submitted": 18
+        },
+        {
+          "case_score_sum": 2,
+          "cases_scoring": 1,
+          "gates_pass": false,
+          "hits": 15,
+          "k": 2,
+          "precision": 0.4619,
+          "recall": 0.1429,
+          "score_sum": 0,
+          "submitted": 31
+        },
+        {
+          "case_score_sum": 2,
+          "cases_scoring": 1,
+          "gates_pass": false,
+          "hits": 17,
+          "k": 3,
+          "precision": 0.4159,
+          "recall": 0.1619,
+          "score_sum": 0,
+          "submitted": 44
+        },
+        {
+          "case_score_sum": 2,
+          "cases_scoring": 1,
+          "gates_pass": false,
+          "hits": 17,
+          "k": 5,
+          "precision": 0.4159,
+          "recall": 0.1619,
+          "score_sum": 0,
+          "submitted": 44
+        },
+        {
+          "case_score_sum": 2,
+          "cases_scoring": 1,
+          "gates_pass": false,
+          "hits": 17,
+          "k": 7,
+          "precision": 0.4159,
+          "recall": 0.1619,
+          "score_sum": 0,
+          "submitted": 44
+        },
+        {
+          "case_score_sum": 2,
+          "cases_scoring": 1,
+          "gates_pass": false,
+          "hits": 17,
+          "k": 9,
+          "precision": 0.4159,
+          "recall": 0.1619,
+          "score_sum": 0,
+          "submitted": 44
+        },
+        {
+          "case_score_sum": 2,
+          "cases_scoring": 1,
+          "gates_pass": false,
+          "hits": 17,
+          "k": 12,
+          "precision": 0.4159,
+          "recall": 0.1619,
+          "score_sum": 0,
+          "submitted": 44
+        },
+        {
+          "case_score_sum": 2,
+          "cases_scoring": 1,
+          "gates_pass": false,
+          "hits": 17,
+          "k": 16,
+          "precision": 0.4159,
+          "recall": 0.1619,
+          "score_sum": 0,
+          "submitted": 44
+        },
+        {
+          "case_score_sum": 2,
+          "cases_scoring": 1,
+          "gates_pass": false,
+          "hits": 17,
+          "k": 20,
+          "precision": 0.4159,
+          "recall": 0.1619,
+          "score_sum": 0,
+          "submitted": 44
+        },
+        {
+          "case_score_sum": 2,
+          "cases_scoring": 1,
+          "gates_pass": false,
+          "hits": 17,
+          "k": 24,
+          "precision": 0.4159,
+          "recall": 0.1619,
+          "score_sum": 0,
+          "submitted": 44
+        },
+        {
+          "case_score_sum": 2,
+          "cases_scoring": 1,
+          "gates_pass": false,
+          "hits": 17,
+          "k": 28,
+          "precision": 0.4159,
+          "recall": 0.1619,
+          "score_sum": 0,
+          "submitted": 44
+        },
+        {
+          "case_score_sum": 2,
+          "cases_scoring": 1,
+          "gates_pass": false,
+          "hits": 17,
+          "k": 32,
+          "precision": 0.4159,
+          "recall": 0.1619,
+          "score_sum": 0,
+          "submitted": 44
+        }
+      ],
+      "E_焦点面": [
+        {
+          "case_score_sum": 6,
+          "cases_scoring": 1,
+          "gates_pass": false,
+          "hits": 12,
+          "k": 1,
+          "precision": 0.6,
+          "recall": 0.1143,
+          "score_sum": 0,
+          "submitted": 18
+        },
+        {
+          "case_score_sum": 0,
+          "cases_scoring": 0,
+          "gates_pass": false,
+          "hits": 16,
+          "k": 2,
+          "precision": 0.4095,
+          "recall": 0.1524,
+          "score_sum": 0,
+          "submitted": 36
+        },
+        {
+          "case_score_sum": 0,
+          "cases_scoring": 0,
+          "gates_pass": false,
+          "hits": 18,
+          "k": 3,
+          "precision": 0.3175,
+          "recall": 0.1714,
+          "score_sum": 0,
+          "submitted": 54
+        },
+        {
+          "case_score_sum": 0,
+          "cases_scoring": 0,
+          "gates_pass": false,
+          "hits": 21,
+          "k": 5,
+          "precision": 0.2171,
+          "recall": 0.2,
+          "score_sum": 0,
+          "submitted": 90
+        },
+        {
+          "case_score_sum": 0,
+          "cases_scoring": 0,
+          "gates_pass": false,
+          "hits": 27,
+          "k": 7,
+          "precision": 0.2054,
+          "recall": 0.2571,
+          "score_sum": 0,
+          "submitted": 126
+        },
+        {
+          "case_score_sum": 0,
+          "cases_scoring": 0,
+          "gates_pass": false,
+          "hits": 27,
+          "k": 9,
+          "precision": 0.2018,
+          "recall": 0.2571,
+          "score_sum": 0,
+          "submitted": 128
+        },
+        {
+          "case_score_sum": 0,
+          "cases_scoring": 0,
+          "gates_pass": false,
+          "hits": 27,
+          "k": 12,
+          "precision": 0.2018,
+          "recall": 0.2571,
+          "score_sum": 0,
+          "submitted": 128
+        },
+        {
+          "case_score_sum": 0,
+          "cases_scoring": 0,
+          "gates_pass": false,
+          "hits": 27,
+          "k": 16,
+          "precision": 0.2018,
+          "recall": 0.2571,
+          "score_sum": 0,
+          "submitted": 128
+        },
+        {
+          "case_score_sum": 0,
+          "cases_scoring": 0,
+          "gates_pass": false,
+          "hits": 27,
+          "k": 20,
+          "precision": 0.2018,
+          "recall": 0.2571,
+          "score_sum": 0,
+          "submitted": 128
+        },
+        {
+          "case_score_sum": 0,
+          "cases_scoring": 0,
+          "gates_pass": false,
+          "hits": 27,
+          "k": 24,
+          "precision": 0.2018,
+          "recall": 0.2571,
+          "score_sum": 0,
+          "submitted": 128
+        },
+        {
+          "case_score_sum": 0,
+          "cases_scoring": 0,
+          "gates_pass": false,
+          "hits": 27,
+          "k": 28,
+          "precision": 0.2018,
+          "recall": 0.2571,
+          "score_sum": 0,
+          "submitted": 128
+        },
+        {
+          "case_score_sum": 0,
+          "cases_scoring": 0,
+          "gates_pass": false,
+          "hits": 27,
+          "k": 32,
+          "precision": 0.2018,
+          "recall": 0.2571,
+          "score_sum": 0,
+          "submitted": 128
+        }
+      ],
+      "H_rerank全序": [
+        {
+          "case_score_sum": 6,
+          "cases_scoring": 1,
+          "gates_pass": false,
+          "hits": 12,
+          "k": 1,
+          "precision": 0.6,
+          "recall": 0.1143,
+          "score_sum": 0,
+          "submitted": 18
+        },
+        {
+          "case_score_sum": 0,
+          "cases_scoring": 0,
+          "gates_pass": false,
+          "hits": 16,
+          "k": 2,
+          "precision": 0.4095,
+          "recall": 0.1524,
+          "score_sum": 0,
+          "submitted": 36
+        },
+        {
+          "case_score_sum": 0,
+          "cases_scoring": 0,
+          "gates_pass": false,
+          "hits": 18,
+          "k": 3,
+          "precision": 0.3175,
+          "recall": 0.1714,
+          "score_sum": 0,
+          "submitted": 54
+        },
+        {
+          "case_score_sum": 0,
+          "cases_scoring": 0,
+          "gates_pass": false,
+          "hits": 21,
+          "k": 5,
+          "precision": 0.2171,
+          "recall": 0.2,
+          "score_sum": 0,
+          "submitted": 90
+        },
+        {
+          "case_score_sum": 0,
+          "cases_scoring": 0,
+          "gates_pass": false,
+          "hits": 27,
+          "k": 7,
+          "precision": 0.2054,
+          "recall": 0.2571,
+          "score_sum": 0,
+          "submitted": 126
+        },
+        {
+          "case_score_sum": 0,
+          "cases_scoring": 0,
+          "gates_pass": false,
+          "hits": 29,
+          "k": 9,
+          "precision": 0.1778,
+          "recall": 0.2762,
+          "score_sum": 0,
+          "submitted": 162
+        },
+        {
+          "case_score_sum": 0,
+          "cases_scoring": 0,
+          "gates_pass": false,
+          "hits": 32,
+          "k": 12,
+          "precision": 0.1468,
+          "recall": 0.3048,
+          "score_sum": 0,
+          "submitted": 216
+        },
+        {
+          "case_score_sum": 0,
+          "cases_scoring": 0,
+          "gates_pass": false,
+          "hits": 33,
+          "k": 16,
+          "precision": 0.1131,
+          "recall": 0.3143,
+          "score_sum": 0,
+          "submitted": 288
+        },
+        {
+          "case_score_sum": 0,
+          "cases_scoring": 0,
+          "gates_pass": false,
+          "hits": 34,
+          "k": 20,
+          "precision": 0.0919,
+          "recall": 0.3238,
+          "score_sum": 0,
+          "submitted": 360
+        },
+        {
+          "case_score_sum": 0,
+          "cases_scoring": 0,
+          "gates_pass": false,
+          "hits": 36,
+          "k": 24,
+          "precision": 0.0818,
+          "recall": 0.3429,
+          "score_sum": 0,
+          "submitted": 428
+        },
+        {
+          "case_score_sum": 2,
+          "cases_scoring": 1,
+          "gates_pass": false,
+          "hits": 38,
+          "k": 28,
+          "precision": 0.0793,
+          "recall": 0.3619,
+          "score_sum": 0,
+          "submitted": 467
+        },
+        {
+          "case_score_sum": 2,
+          "cases_scoring": 1,
+          "gates_pass": false,
+          "hits": 39,
+          "k": 32,
+          "precision": 0.0809,
+          "recall": 0.3714,
+          "score_sum": 0,
+          "submitted": 470
+        }
+      ]
+    }
+  },
+  "passing_arms": [],
+  "per_case": [
+    {
+      "anchor_checked": 3,
+      "anchor_ok": 3,
+      "bare_questions": 0,
+      "case": "2026·8·26 吉隆口岸泥石流灾害",
+      "corpus_para_n": 5134,
+      "empty_gold_questions": 0,
+      "errors": [],
+      "gold_pairs": 18,
+      "hits_pairs": 0,
+      "ledger_not_in_corpus": 0,
+      "ledger_outside_band": 21,
+      "ledger_pairs": 39,
+      "missing_questions": 0,
+      "per_question": {
+        "q_001": {
+          "n_evidences": 26,
+          "n_ledger": 14,
+          "n_ledger_not_in_corpus": 0,
+          "n_ledger_outside_band": 6,
+          "n_rejected": 4,
+          "n_rejected_relocated": 3,
+          "n_rejected_with_quote": 4,
+          "n_relocated_pairs": 5,
+          "pool_n": {
+            "B_本题台账": 14,
+            "C_全部带证据结论": 14,
+            "D_细读面": 3,
+            "E_焦点面": 7,
+            "F_Top7定稿": 7,
+            "G_盒rank": 3,
+            "H_rerank全序": 27,
+            "I_台账∪细读": 14,
+            "J_台账且逐字可核": 14
+          },
+          "quote_checked": 26,
+          "quote_ok": 26
+        },
+        "q_002": {
+          "n_evidences": 22,
+          "n_ledger": 12,
+          "n_ledger_not_in_corpus": 0,
+          "n_ledger_outside_band": 6,
+          "n_rejected": 8,
+          "n_rejected_relocated": 1,
+          "n_rejected_with_quote": 8,
+          "n_relocated_pairs": 26,
+          "pool_n": {
+            "B_本题台账": 12,
+            "C_全部带证据结论": 12,
+            "D_细读面": 3,
+            "E_焦点面": 7,
+            "F_Top7定稿": 7,
+            "G_盒rank": 3,
+            "H_rerank全序": 27,
+            "I_台账∪细读": 13,
+            "J_台账且逐字可核": 12
+          },
+          "quote_checked": 22,
+          "quote_ok": 22
+        },
+        "q_003": {
+          "n_evidences": 20,
+          "n_ledger": 13,
+          "n_ledger_not_in_corpus": 0,
+          "n_ledger_outside_band": 9,
+          "n_rejected": 9,
+          "n_rejected_relocated": 1,
+          "n_rejected_with_quote": 9,
+          "n_relocated_pairs": 1,
+          "pool_n": {
+            "B_本题台账": 13,
+            "C_全部带证据结论": 13,
+            "D_细读面": 3,
+            "E_焦点面": 7,
+            "F_Top7定稿": 7,
+            "G_盒rank": 3,
+            "H_rerank全序": 27,
+            "I_台账∪细读": 13,
+            "J_台账且逐字可核": 13
+          },
+          "quote_checked": 20,
+          "quote_ok": 20
+        }
+      },
+      "precision_sup": 0.0,
+      "questions": 3,
+      "questions_scored": 3,
+      "quote_checked": 68,
+      "quote_ok": 68,
+      "recall_sup": 0.0,
+      "rejected_relocated": 5,
+      "rejected_with_quote": 21,
+      "score_2_4_1": 0,
+      "score_2_4_2": 0,
+      "submitted_pairs": 3,
+      "unresolved_fact_ids": 0
+    },
+    {
+      "anchor_checked": 3,
+      "anchor_ok": 3,
+      "bare_questions": 0,
+      "case": "中美AI事故预警提议（2026.9）",
+      "corpus_para_n": 596,
+      "empty_gold_questions": 0,
+      "errors": [],
+      "gold_pairs": 14,
+      "hits_pairs": 0,
+      "ledger_not_in_corpus": 0,
+      "ledger_outside_band": 13,
+      "ledger_pairs": 30,
+      "missing_questions": 0,
+      "per_question": {
+        "q_001": {
+          "n_evidences": 12,
+          "n_ledger": 6,
+          "n_ledger_not_in_corpus": 0,
+          "n_ledger_outside_band": 3,
+          "n_rejected": 7,
+          "n_rejected_relocated": 1,
+          "n_rejected_with_quote": 7,
+          "n_relocated_pairs": 1,
+          "pool_n": {
+            "B_本题台账": 6,
+            "C_全部带证据结论": 6,
+            "D_细读面": 3,
+            "E_焦点面": 7,
+            "F_Top7定稿": 7,
+            "G_盒rank": 3,
+            "H_rerank全序": 26,
+            "I_台账∪细读": 8,
+            "J_台账且逐字可核": 6
+          },
+          "quote_checked": 12,
+          "quote_ok": 12
+        },
+        "q_002": {
+          "n_evidences": 21,
+          "n_ledger": 11,
+          "n_ledger_not_in_corpus": 0,
+          "n_ledger_outside_band": 4,
+          "n_rejected": 9,
+          "n_rejected_relocated": 0,
+          "n_rejected_with_quote": 9,
+          "n_relocated_pairs": 0,
+          "pool_n": {
+            "B_本题台账": 11,
+            "C_全部带证据结论": 11,
+            "D_细读面": 3,
+            "E_焦点面": 7,
+            "F_Top7定稿": 7,
+            "G_盒rank": 3,
+            "H_rerank全序": 25,
+            "I_台账∪细读": 11,
+            "J_台账且逐字可核": 11
+          },
+          "quote_checked": 21,
+          "quote_ok": 21
+        },
+        "q_003": {
+          "n_evidences": 19,
+          "n_ledger": 13,
+          "n_ledger_not_in_corpus": 0,
+          "n_ledger_outside_band": 6,
+          "n_rejected": 10,
+          "n_rejected_relocated": 3,
+          "n_rejected_with_quote": 10,
+          "n_relocated_pairs": 5,
+          "pool_n": {
+            "B_本题台账": 13,
+            "C_全部带证据结论": 13,
+            "D_细读面": 3,
+            "E_焦点面": 7,
+            "F_Top7定稿": 7,
+            "G_盒rank": 3,
+            "H_rerank全序": 29,
+            "I_台账∪细读": 13,
+            "J_台账且逐字可核": 13
+          },
+          "quote_checked": 19,
+          "quote_ok": 19
+        }
+      },
+      "precision_sup": 0.0,
+      "questions": 3,
+      "questions_scored": 3,
+      "quote_checked": 52,
+      "quote_ok": 52,
+      "recall_sup": 0.0,
+      "rejected_relocated": 4,
+      "rejected_with_quote": 26,
+      "score_2_4_1": 0,
+      "score_2_4_2": 0,
+      "submitted_pairs": 3,
+      "unresolved_fact_ids": 0
+    },
+    {
+      "anchor_checked": 3,
+      "anchor_ok": 3,
+      "bare_questions": 0,
+      "case": "刘翔编制“二选一”事件",
+      "corpus_para_n": 372,
+      "empty_gold_questions": 0,
+      "errors": [],
+      "gold_pairs": 14,
+      "hits_pairs": 2,
+      "ledger_not_in_corpus": 0,
+      "ledger_outside_band": 18,
+      "ledger_pairs": 38,
+      "missing_questions": 0,
+      "per_question": {
+        "q_001": {
+          "n_evidences": 17,
+          "n_ledger": 10,
+          "n_ledger_not_in_corpus": 0,
+          "n_ledger_outside_band": 3,
+          "n_rejected": 9,
+          "n_rejected_relocated": 3,
+          "n_rejected_with_quote": 9,
+          "n_relocated_pairs": 10,
+          "pool_n": {
+            "B_本题台账": 10,
+            "C_全部带证据结论": 10,
+            "D_细读面": 3,
+            "E_焦点面": 9,
+            "F_Top7定稿": 9,
+            "G_盒rank": 3,
+            "H_rerank全序": 27,
+            "I_台账∪细读": 12,
+            "J_台账且逐字可核": 10
+          },
+          "quote_checked": 17,
+          "quote_ok": 17
+        },
+        "q_002": {
+          "n_evidences": 16,
+          "n_ledger": 11,
+          "n_ledger_not_in_corpus": 0,
+          "n_ledger_outside_band": 6,
+          "n_rejected": 7,
+          "n_rejected_relocated": 5,
+          "n_rejected_with_quote": 7,
+          "n_relocated_pairs": 24,
+          "pool_n": {
+            "B_本题台账": 11,
+            "C_全部带证据结论": 11,
+            "D_细读面": 3,
+            "E_焦点面": 7,
+            "F_Top7定稿": 7,
+            "G_盒rank": 3,
+            "H_rerank全序": 23,
+            "I_台账∪细读": 12,
+            "J_台账且逐字可核": 11
+          },
+          "quote_checked": 16,
+          "quote_ok": 16
+        },
+        "q_003": {
+          "n_evidences": 21,
+          "n_ledger": 17,
+          "n_ledger_not_in_corpus": 0,
+          "n_ledger_outside_band": 9,
+          "n_rejected": 7,
+          "n_rejected_relocated": 1,
+          "n_rejected_with_quote": 7,
+          "n_relocated_pairs": 9,
+          "pool_n": {
+            "B_本题台账": 17,
+            "C_全部带证据结论": 17,
+            "D_细读面": 3,
+            "E_焦点面": 7,
+            "F_Top7定稿": 7,
+            "G_盒rank": 3,
+            "H_rerank全序": 25,
+            "I_台账∪细读": 18,
+            "J_台账且逐字可核": 17
+          },
+          "quote_checked": 21,
+          "quote_ok": 21
+        }
+      },
+      "precision_sup": 0.6429,
+      "questions": 3,
+      "questions_scored": 3,
+      "quote_checked": 54,
+      "quote_ok": 54,
+      "recall_sup": 0.1429,
+      "rejected_relocated": 9,
+      "rejected_with_quote": 23,
+      "score_2_4_1": 0,
+      "score_2_4_2": 0,
+      "submitted_pairs": 3,
+      "unresolved_fact_ids": 0
+    },
+    {
+      "anchor_checked": 3,
+      "anchor_ok": 3,
+      "bare_questions": 0,
+      "case": "印度航空 AI171 空难（2025.6–2026.5）",
+      "corpus_para_n": 1752,
+      "empty_gold_questions": 0,
+      "errors": [],
+      "gold_pairs": 24,
+      "hits_pairs": 2,
+      "ledger_not_in_corpus": 0,
+      "ledger_outside_band": 14,
+      "ledger_pairs": 31,
+      "missing_questions": 0,
+      "per_question": {
+        "q_001": {
+          "n_evidences": 18,
+          "n_ledger": 13,
+          "n_ledger_not_in_corpus": 0,
+          "n_ledger_outside_band": 6,
+          "n_rejected": 0,
+          "n_rejected_relocated": 0,
+          "n_rejected_with_quote": 0,
+          "n_relocated_pairs": 0,
+          "pool_n": {
+            "B_本题台账": 13,
+            "C_全部带证据结论": 13,
+            "D_细读面": 3,
+            "E_焦点面": 7,
+            "F_Top7定稿": 7,
+            "G_盒rank": 3,
+            "H_rerank全序": 21,
+            "I_台账∪细读": 13,
+            "J_台账且逐字可核": 13
+          },
+          "quote_checked": 18,
+          "quote_ok": 18
+        },
+        "q_002": {
+          "n_evidences": 25,
+          "n_ledger": 15,
+          "n_ledger_not_in_corpus": 0,
+          "n_ledger_outside_band": 7,
+          "n_rejected": 3,
+          "n_rejected_relocated": 1,
+          "n_rejected_with_quote": 3,
+          "n_relocated_pairs": 1,
+          "pool_n": {
+            "B_本题台账": 15,
+            "C_全部带证据结论": 15,
+            "D_细读面": 1,
+            "E_焦点面": 7,
+            "F_Top7定稿": 7,
+            "G_盒rank": 1,
+            "H_rerank全序": 29,
+            "I_台账∪细读": 15,
+            "J_台账且逐字可核": 15
+          },
+          "quote_checked": 25,
+          "quote_ok": 25
+        },
+        "q_003": {
+          "n_evidences": 5,
+          "n_ledger": 3,
+          "n_ledger_not_in_corpus": 0,
+          "n_ledger_outside_band": 1,
+          "n_rejected": 11,
+          "n_rejected_relocated": 0,
+          "n_rejected_with_quote": 11,
+          "n_relocated_pairs": 0,
+          "pool_n": {
+            "B_本题台账": 3,
+            "C_全部带证据结论": 3,
+            "D_细读面": 1,
+            "E_焦点面": 7,
+            "F_Top7定稿": 7,
+            "G_盒rank": 1,
+            "H_rerank全序": 25,
+            "I_台账∪细读": 3,
+            "J_台账且逐字可核": 3
+          },
+          "quote_checked": 5,
+          "quote_ok": 5
+        }
+      },
+      "precision_sup": 0.7083,
+      "questions": 3,
+      "questions_scored": 3,
+      "quote_checked": 48,
+      "quote_ok": 48,
+      "recall_sup": 0.0833,
+      "rejected_relocated": 1,
+      "rejected_with_quote": 14,
+      "score_2_4_1": 0,
+      "score_2_4_2": 2,
+      "submitted_pairs": 3,
+      "unresolved_fact_ids": 0
+    },
+    {
+      "anchor_checked": 5,
+      "anchor_ok": 5,
+      "bare_questions": 0,
+      "case": "柬泰边境争端（2025.12–2026.9）",
+      "corpus_para_n": 746,
+      "empty_gold_questions": 0,
+      "errors": [],
+      "gold_pairs": 16,
+      "hits_pairs": 1,
+      "ledger_not_in_corpus": 0,
+      "ledger_outside_band": 14,
+      "ledger_pairs": 32,
+      "missing_questions": 0,
+      "per_question": {
+        "q_001": {
+          "n_evidences": 21,
+          "n_ledger": 13,
+          "n_ledger_not_in_corpus": 0,
+          "n_ledger_outside_band": 5,
+          "n_rejected": 2,
+          "n_rejected_relocated": 1,
+          "n_rejected_with_quote": 2,
+          "n_relocated_pairs": 1,
+          "pool_n": {
+            "B_本题台账": 13,
+            "C_全部带证据结论": 13,
+            "D_细读面": 1,
+            "E_焦点面": 7,
+            "F_Top7定稿": 7,
+            "G_盒rank": 1,
+            "H_rerank全序": 28,
+            "I_台账∪细读": 13,
+            "J_台账且逐字可核": 13
+          },
+          "quote_checked": 21,
+          "quote_ok": 21
+        },
+        "q_002": {
+          "n_evidences": 17,
+          "n_ledger": 10,
+          "n_ledger_not_in_corpus": 0,
+          "n_ledger_outside_band": 4,
+          "n_rejected": 3,
+          "n_rejected_relocated": 0,
+          "n_rejected_with_quote": 3,
+          "n_relocated_pairs": 0,
+          "pool_n": {
+            "B_本题台账": 10,
+            "C_全部带证据结论": 10,
+            "D_细读面": 3,
+            "E_焦点面": 7,
+            "F_Top7定稿": 7,
+            "G_盒rank": 3,
+            "H_rerank全序": 29,
+            "I_台账∪细读": 10,
+            "J_台账且逐字可核": 10
+          },
+          "quote_checked": 17,
+          "quote_ok": 17
+        },
+        "q_003": {
+          "n_evidences": 21,
+          "n_ledger": 9,
+          "n_ledger_not_in_corpus": 0,
+          "n_ledger_outside_band": 5,
+          "n_rejected": 5,
+          "n_rejected_relocated": 0,
+          "n_rejected_with_quote": 5,
+          "n_relocated_pairs": 0,
+          "pool_n": {
+            "B_本题台账": 9,
+            "C_全部带证据结论": 9,
+            "D_细读面": 1,
+            "E_焦点面": 7,
+            "F_Top7定稿": 7,
+            "G_盒rank": 1,
+            "H_rerank全序": 27,
+            "I_台账∪细读": 9,
+            "J_台账且逐字可核": 9
+          },
+          "quote_checked": 21,
+          "quote_ok": 20
+        }
+      },
+      "precision_sup": 0.3125,
+      "questions": 3,
+      "questions_scored": 3,
+      "quote_checked": 59,
+      "quote_ok": 58,
+      "recall_sup": 0.0625,
+      "rejected_relocated": 1,
+      "rejected_with_quote": 10,
+      "score_2_4_1": 0,
+      "score_2_4_2": 0,
+      "submitted_pairs": 5,
+      "unresolved_fact_ids": 0
+    },
+    {
+      "anchor_checked": 4,
+      "anchor_ok": 4,
+      "bare_questions": 0,
+      "case": "王虹“北大discouraged”事件",
+      "corpus_para_n": 614,
+      "empty_gold_questions": 0,
+      "errors": [],
+      "gold_pairs": 19,
+      "hits_pairs": 3,
+      "ledger_not_in_corpus": 0,
+      "ledger_outside_band": 13,
+      "ledger_pairs": 25,
+      "missing_questions": 0,
+      "per_question": {
+        "q_001": {
+          "n_evidences": 15,
+          "n_ledger": 7,
+          "n_ledger_not_in_corpus": 0,
+          "n_ledger_outside_band": 5,
+          "n_rejected": 0,
+          "n_rejected_relocated": 0,
+          "n_rejected_with_quote": 0,
+          "n_relocated_pairs": 0,
+          "pool_n": {
+            "B_本题台账": 7,
+            "C_全部带证据结论": 7,
+            "D_细读面": 1,
+            "E_焦点面": 7,
+            "F_Top7定稿": 7,
+            "G_盒rank": 1,
+            "H_rerank全序": 24,
+            "I_台账∪细读": 8,
+            "J_台账且逐字可核": 7
+          },
+          "quote_checked": 15,
+          "quote_ok": 15
+        },
+        "q_002": {
+          "n_evidences": 24,
+          "n_ledger": 11,
+          "n_ledger_not_in_corpus": 0,
+          "n_ledger_outside_band": 4,
+          "n_rejected": 12,
+          "n_rejected_relocated": 0,
+          "n_rejected_with_quote": 12,
+          "n_relocated_pairs": 0,
+          "pool_n": {
+            "B_本题台账": 11,
+            "C_全部带证据结论": 11,
+            "D_细读面": 3,
+            "E_焦点面": 7,
+            "F_Top7定稿": 7,
+            "G_盒rank": 3,
+            "H_rerank全序": 26,
+            "I_台账∪细读": 11,
+            "J_台账且逐字可核": 11
+          },
+          "quote_checked": 24,
+          "quote_ok": 24
+        },
+        "q_003": {
+          "n_evidences": 9,
+          "n_ledger": 7,
+          "n_ledger_not_in_corpus": 0,
+          "n_ledger_outside_band": 4,
+          "n_rejected": 2,
+          "n_rejected_relocated": 1,
+          "n_rejected_with_quote": 2,
+          "n_relocated_pairs": 1,
+          "pool_n": {
+            "B_本题台账": 7,
+            "C_全部带证据结论": 7,
+            "D_细读面": 3,
+            "E_焦点面": 7,
+            "F_Top7定稿": 7,
+            "G_盒rank": 3,
+            "H_rerank全序": 25,
+            "I_台账∪细读": 9,
+            "J_台账且逐字可核": 7
+          },
+          "quote_checked": 9,
+          "quote_ok": 9
+        }
+      },
+      "precision_sup": 0.7368,
+      "questions": 3,
+      "questions_scored": 3,
+      "quote_checked": 48,
+      "quote_ok": 48,
+      "recall_sup": 0.1579,
+      "rejected_relocated": 1,
+      "rejected_with_quote": 14,
+      "score_2_4_1": 0,
+      "score_2_4_2": 2,
+      "submitted_pairs": 4,
+      "unresolved_fact_ids": 0
+    }
+  ],
+  "pooled": {
+    "anchor_checked": 21,
+    "anchor_ok": 21,
+    "bare_questions": 0,
+    "empty_gold_questions": 0,
+    "gold_pairs": 105,
+    "hits_pairs": 8,
+    "ledger_not_in_corpus": 0,
+    "ledger_outside_band": 93,
+    "ledger_pairs": 195,
+    "missing_questions": 0,
+    "n_questions_scored": 18,
+    "precision": 0.4286,
+    "quote_checked": 329,
+    "quote_ok": 328,
+    "recall": 0.0762,
+    "rejected_relocated": 21,
+    "rejected_with_quote": 108,
+    "score_2_4_1": 0,
+    "score_2_4_2": 0,
+    "submitted_pairs": 21
+  },
+  "precision_only_arms": [],
+  "primary_case": "刘翔编制“二选一”事件",
+  "roots": [
+    "/tmp/s4runs/time-20261104-135401"
+  ],
+  "ticket": "C-160",
+  "verdict": "PARTIAL（量到了，无固定规则臂过线＝只量不开刀）"
+}
