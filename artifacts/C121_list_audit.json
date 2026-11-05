@@ -1,0 +1,1839 @@
+{
+ "schema_version": "c121.audit.v1",
+ "wall_s": 3.6,
+ "n_questions": 12,
+ "rule": {
+  "kept_reasons": [
+   "close_read",
+   "conflict_pair"
+  ],
+  "min_score": 0.0,
+  "cap": 5
+ },
+ "reason_table": {
+  "conflict_pair": {
+   "n": 4,
+   "gold": 2,
+   "gold_ge2": 4,
+   "kept_by_rule": 4
+  },
+  "close_read": {
+   "n": 34,
+   "gold": 24,
+   "gold_ge2": 34,
+   "kept_by_rule": 28
+  },
+  "role_official": {
+   "n": 74,
+   "gold": 1,
+   "gold_ge2": 74,
+   "kept_by_rule": 0
+  },
+  "role_party": {
+   "n": 4,
+   "gold": 0,
+   "gold_ge2": 0,
+   "kept_by_rule": 0
+  },
+  "claim_alt": {
+   "n": 4,
+   "gold": 1,
+   "gold_ge2": 4,
+   "kept_by_rule": 0
+  }
+ },
+ "curves": [
+  {
+   "reasons": [
+    "close_read"
+   ],
+   "cap": 0,
+   "n": 34,
+   "gold": 24,
+   "precision": 0.7059,
+   "box_gold_cover": 0.5714,
+   "name": "close_only"
+  },
+  {
+   "reasons": [
+    "close_read"
+   ],
+   "cap": 3,
+   "n": 26,
+   "gold": 19,
+   "precision": 0.7308,
+   "box_gold_cover": 0.4524,
+   "name": "close_only"
+  },
+  {
+   "reasons": [
+    "close_read"
+   ],
+   "cap": 4,
+   "n": 28,
+   "gold": 21,
+   "precision": 0.75,
+   "box_gold_cover": 0.5,
+   "name": "close_only"
+  },
+  {
+   "reasons": [
+    "close_read"
+   ],
+   "cap": 5,
+   "n": 30,
+   "gold": 23,
+   "precision": 0.7667,
+   "box_gold_cover": 0.5476,
+   "name": "close_only"
+  },
+  {
+   "reasons": [
+    "close_read"
+   ],
+   "cap": 6,
+   "n": 32,
+   "gold": 23,
+   "precision": 0.7188,
+   "box_gold_cover": 0.5476,
+   "name": "close_only"
+  },
+  {
+   "reasons": [
+    "close_read"
+   ],
+   "cap": 7,
+   "n": 34,
+   "gold": 24,
+   "precision": 0.7059,
+   "box_gold_cover": 0.5714,
+   "name": "close_only"
+  },
+  {
+   "reasons": [
+    "close_read"
+   ],
+   "cap": 10,
+   "n": 34,
+   "gold": 24,
+   "precision": 0.7059,
+   "box_gold_cover": 0.5714,
+   "name": "close_only"
+  },
+  {
+   "reasons": [
+    "close_read",
+    "conflict_pair"
+   ],
+   "cap": 0,
+   "n": 38,
+   "gold": 26,
+   "precision": 0.6842,
+   "box_gold_cover": 0.619,
+   "name": "close+conflict"
+  },
+  {
+   "reasons": [
+    "close_read",
+    "conflict_pair"
+   ],
+   "cap": 3,
+   "n": 26,
+   "gold": 18,
+   "precision": 0.6923,
+   "box_gold_cover": 0.4286,
+   "name": "close+conflict"
+  },
+  {
+   "reasons": [
+    "close_read",
+    "conflict_pair"
+   ],
+   "cap": 4,
+   "n": 29,
+   "gold": 21,
+   "precision": 0.7241,
+   "box_gold_cover": 0.5,
+   "name": "close+conflict"
+  },
+  {
+   "reasons": [
+    "close_read",
+    "conflict_pair"
+   ],
+   "cap": 5,
+   "n": 32,
+   "gold": 24,
+   "precision": 0.75,
+   "box_gold_cover": 0.5714,
+   "name": "close+conflict"
+  },
+  {
+   "reasons": [
+    "close_read",
+    "conflict_pair"
+   ],
+   "cap": 6,
+   "n": 35,
+   "gold": 25,
+   "precision": 0.7143,
+   "box_gold_cover": 0.5952,
+   "name": "close+conflict"
+  },
+  {
+   "reasons": [
+    "close_read",
+    "conflict_pair"
+   ],
+   "cap": 7,
+   "n": 38,
+   "gold": 26,
+   "precision": 0.6842,
+   "box_gold_cover": 0.619,
+   "name": "close+conflict"
+  },
+  {
+   "reasons": [
+    "close_read",
+    "conflict_pair"
+   ],
+   "cap": 10,
+   "n": 38,
+   "gold": 26,
+   "precision": 0.6842,
+   "box_gold_cover": 0.619,
+   "name": "close+conflict"
+  },
+  {
+   "reasons": [
+    "claim_alt",
+    "close_read",
+    "conflict_pair"
+   ],
+   "cap": 0,
+   "n": 42,
+   "gold": 27,
+   "precision": 0.6429,
+   "box_gold_cover": 0.6429,
+   "name": "close+conflict+claim"
+  },
+  {
+   "reasons": [
+    "claim_alt",
+    "close_read",
+    "conflict_pair"
+   ],
+   "cap": 3,
+   "n": 28,
+   "gold": 19,
+   "precision": 0.6786,
+   "box_gold_cover": 0.4524,
+   "name": "close+conflict+claim"
+  },
+  {
+   "reasons": [
+    "claim_alt",
+    "close_read",
+    "conflict_pair"
+   ],
+   "cap": 4,
+   "n": 33,
+   "gold": 22,
+   "precision": 0.6667,
+   "box_gold_cover": 0.5238,
+   "name": "close+conflict+claim"
+  },
+  {
+   "reasons": [
+    "claim_alt",
+    "close_read",
+    "conflict_pair"
+   ],
+   "cap": 5,
+   "n": 36,
+   "gold": 25,
+   "precision": 0.6944,
+   "box_gold_cover": 0.5952,
+   "name": "close+conflict+claim"
+  },
+  {
+   "reasons": [
+    "claim_alt",
+    "close_read",
+    "conflict_pair"
+   ],
+   "cap": 6,
+   "n": 39,
+   "gold": 26,
+   "precision": 0.6667,
+   "box_gold_cover": 0.619,
+   "name": "close+conflict+claim"
+  },
+  {
+   "reasons": [
+    "claim_alt",
+    "close_read",
+    "conflict_pair"
+   ],
+   "cap": 7,
+   "n": 42,
+   "gold": 27,
+   "precision": 0.6429,
+   "box_gold_cover": 0.6429,
+   "name": "close+conflict+claim"
+  },
+  {
+   "reasons": [
+    "claim_alt",
+    "close_read",
+    "conflict_pair"
+   ],
+   "cap": 10,
+   "n": 42,
+   "gold": 27,
+   "precision": 0.6429,
+   "box_gold_cover": 0.6429,
+   "name": "close+conflict+claim"
+  },
+  {
+   "reasons": [
+    "claim_alt",
+    "close_read",
+    "conflict_pair",
+    "priority_head",
+    "role_official",
+    "role_party"
+   ],
+   "cap": 0,
+   "n": 120,
+   "gold": 28,
+   "precision": 0.2333,
+   "box_gold_cover": 0.6667,
+   "name": "all_with_role"
+  },
+  {
+   "reasons": [
+    "claim_alt",
+    "close_read",
+    "conflict_pair",
+    "priority_head",
+    "role_official",
+    "role_party"
+   ],
+   "cap": 3,
+   "n": 36,
+   "gold": 18,
+   "precision": 0.5,
+   "box_gold_cover": 0.4286,
+   "name": "all_with_role"
+  },
+  {
+   "reasons": [
+    "claim_alt",
+    "close_read",
+    "conflict_pair",
+    "priority_head",
+    "role_official",
+    "role_party"
+   ],
+   "cap": 4,
+   "n": 48,
+   "gold": 22,
+   "precision": 0.4583,
+   "box_gold_cover": 0.5238,
+   "name": "all_with_role"
+  },
+  {
+   "reasons": [
+    "claim_alt",
+    "close_read",
+    "conflict_pair",
+    "priority_head",
+    "role_official",
+    "role_party"
+   ],
+   "cap": 5,
+   "n": 60,
+   "gold": 25,
+   "precision": 0.4167,
+   "box_gold_cover": 0.5952,
+   "name": "all_with_role"
+  },
+  {
+   "reasons": [
+    "claim_alt",
+    "close_read",
+    "conflict_pair",
+    "priority_head",
+    "role_official",
+    "role_party"
+   ],
+   "cap": 6,
+   "n": 72,
+   "gold": 26,
+   "precision": 0.3611,
+   "box_gold_cover": 0.619,
+   "name": "all_with_role"
+  },
+  {
+   "reasons": [
+    "claim_alt",
+    "close_read",
+    "conflict_pair",
+    "priority_head",
+    "role_official",
+    "role_party"
+   ],
+   "cap": 7,
+   "n": 84,
+   "gold": 28,
+   "precision": 0.3333,
+   "box_gold_cover": 0.6667,
+   "name": "all_with_role"
+  },
+  {
+   "reasons": [
+    "claim_alt",
+    "close_read",
+    "conflict_pair",
+    "priority_head",
+    "role_official",
+    "role_party"
+   ],
+   "cap": 10,
+   "n": 120,
+   "gold": 28,
+   "precision": 0.2333,
+   "box_gold_cover": 0.6667,
+   "name": "all_with_role"
+  }
+ ],
+ "totals": {
+  "raw": 120,
+  "raw_gold": 28,
+  "raw_precision": 0.2333,
+  "kept": 32,
+  "kept_gold": 24,
+  "kept_precision": 0.75,
+  "box_gold": 42,
+  "box_gold_kept_share": 0.5714
+ },
+ "leak_audit": {
+  "forbidden_key_hits": 0,
+  "block_text_leak": 0,
+  "ids_outside_box": 0
+ },
+ "per_question": [
+  {
+   "case": "刘翔编制“二选一”事件",
+   "qid": "q_001",
+   "denom": 4,
+   "n_sel": 88,
+   "gold_in_box": 4,
+   "gold_box_ids": [
+    "doc_002#p3",
+    "doc_024#p1",
+    "doc_025#p6",
+    "doc_035#p7"
+   ],
+   "cand_detail": [
+    {
+     "id": "doc_033#p2",
+     "reason": "conflict_pair",
+     "score": 100.0,
+     "gold": false
+    },
+    {
+     "id": "doc_012#p5",
+     "reason": "conflict_pair",
+     "score": 99.99,
+     "gold": false
+    },
+    {
+     "id": "doc_002#p3",
+     "reason": "conflict_pair",
+     "score": 99.98,
+     "gold": true
+    },
+    {
+     "id": "doc_035#p7",
+     "reason": "conflict_pair",
+     "score": 99.97,
+     "gold": true
+    },
+    {
+     "id": "doc_024#p1",
+     "reason": "close_read",
+     "score": 89.98,
+     "gold": true
+    },
+    {
+     "id": "doc_025#p6",
+     "reason": "close_read",
+     "score": 89.97,
+     "gold": true
+    },
+    {
+     "id": "doc_043#p1",
+     "reason": "close_read",
+     "score": 89.95,
+     "gold": false
+    },
+    {
+     "id": "doc_029#p6",
+     "reason": "role_official",
+     "score": 4.4,
+     "gold": false
+    },
+    {
+     "id": "doc_052#p1",
+     "reason": "role_official",
+     "score": 4.4,
+     "gold": false
+    },
+    {
+     "id": "doc_012#p6",
+     "reason": "role_official",
+     "score": 4.4,
+     "gold": false
+    }
+   ],
+   "n_raw": 10,
+   "raw_gold": 4,
+   "n_kept": 5,
+   "kept_gold": 3,
+   "kept_ids": [
+    "doc_033#p2",
+    "doc_012#p5",
+    "doc_002#p3",
+    "doc_035#p7",
+    "doc_024#p1"
+   ],
+   "dropped_rules": [
+    "over_cap",
+    "weak_reason"
+   ],
+   "n_dropped": 5,
+   "raw_ids": [
+    "doc_033#p2",
+    "doc_012#p5",
+    "doc_002#p3",
+    "doc_035#p7",
+    "doc_024#p1",
+    "doc_025#p6",
+    "doc_043#p1",
+    "doc_029#p6",
+    "doc_052#p1",
+    "doc_012#p6"
+   ],
+   "raw_reasons": {
+    "doc_033#p2": "conflict_pair",
+    "doc_012#p5": "conflict_pair",
+    "doc_002#p3": "conflict_pair",
+    "doc_035#p7": "conflict_pair",
+    "doc_024#p1": "close_read",
+    "doc_025#p6": "close_read",
+    "doc_043#p1": "close_read",
+    "doc_029#p6": "role_official",
+    "doc_052#p1": "role_official",
+    "doc_012#p6": "role_official"
+   },
+   "box_gold_not_in_kept": [
+    "doc_025#p6"
+   ],
+   "leaks": [],
+   "block_text_leak": [],
+   "ids_outside_box": []
+  },
+  {
+   "case": "刘翔编制“二选一”事件",
+   "qid": "q_002",
+   "denom": 5,
+   "n_sel": 94,
+   "gold_in_box": 5,
+   "gold_box_ids": [
+    "doc_002#p3",
+    "doc_009#p5",
+    "doc_028#p1",
+    "doc_029#p7",
+    "doc_051#p3"
+   ],
+   "cand_detail": [
+    {
+     "id": "doc_009#p5",
+     "reason": "close_read",
+     "score": 90.0,
+     "gold": true
+    },
+    {
+     "id": "doc_011#p7",
+     "reason": "close_read",
+     "score": 89.99,
+     "gold": false
+    },
+    {
+     "id": "doc_041#p1",
+     "reason": "close_read",
+     "score": 89.98,
+     "gold": false
+    },
+    {
+     "id": "doc_002#p3",
+     "reason": "close_read",
+     "score": 89.97,
+     "gold": true
+    },
+    {
+     "id": "doc_051#p3",
+     "reason": "close_read",
+     "score": 89.96,
+     "gold": true
+    },
+    {
+     "id": "doc_051#p5",
+     "reason": "close_read",
+     "score": 89.95,
+     "gold": false
+    },
+    {
+     "id": "doc_029#p7",
+     "reason": "close_read",
+     "score": 89.94,
+     "gold": true
+    },
+    {
+     "id": "doc_052#p1",
+     "reason": "role_official",
+     "score": 4.4,
+     "gold": false
+    },
+    {
+     "id": "doc_012#p6",
+     "reason": "role_official",
+     "score": 4.4,
+     "gold": false
+    },
+    {
+     "id": "doc_029#p8",
+     "reason": "role_official",
+     "score": 4.4,
+     "gold": false
+    }
+   ],
+   "n_raw": 10,
+   "raw_gold": 4,
+   "n_kept": 5,
+   "kept_gold": 3,
+   "kept_ids": [
+    "doc_009#p5",
+    "doc_011#p7",
+    "doc_041#p1",
+    "doc_002#p3",
+    "doc_051#p3"
+   ],
+   "dropped_rules": [
+    "over_cap",
+    "weak_reason"
+   ],
+   "n_dropped": 5,
+   "raw_ids": [
+    "doc_009#p5",
+    "doc_011#p7",
+    "doc_041#p1",
+    "doc_002#p3",
+    "doc_051#p3",
+    "doc_051#p5",
+    "doc_029#p7",
+    "doc_052#p1",
+    "doc_012#p6",
+    "doc_029#p8"
+   ],
+   "raw_reasons": {
+    "doc_009#p5": "close_read",
+    "doc_011#p7": "close_read",
+    "doc_041#p1": "close_read",
+    "doc_002#p3": "close_read",
+    "doc_051#p3": "close_read",
+    "doc_051#p5": "close_read",
+    "doc_029#p7": "close_read",
+    "doc_052#p1": "role_official",
+    "doc_012#p6": "role_official",
+    "doc_029#p8": "role_official"
+   },
+   "box_gold_not_in_kept": [
+    "doc_028#p1",
+    "doc_029#p7"
+   ],
+   "leaks": [],
+   "block_text_leak": [],
+   "ids_outside_box": []
+  },
+  {
+   "case": "刘翔编制“二选一”事件",
+   "qid": "q_003",
+   "denom": 5,
+   "n_sel": 95,
+   "gold_in_box": 4,
+   "gold_box_ids": [
+    "doc_002#p3",
+    "doc_006#p3",
+    "doc_012#p5",
+    "doc_033#p5"
+   ],
+   "cand_detail": [
+    {
+     "id": "doc_012#p5",
+     "reason": "close_read",
+     "score": 90.0,
+     "gold": true
+    },
+    {
+     "id": "doc_046#p3",
+     "reason": "close_read",
+     "score": 89.99,
+     "gold": false
+    },
+    {
+     "id": "doc_006#p3",
+     "reason": "close_read",
+     "score": 89.98,
+     "gold": true
+    },
+    {
+     "id": "doc_002#p3",
+     "reason": "close_read",
+     "score": 89.97,
+     "gold": true
+    },
+    {
+     "id": "doc_033#p5",
+     "reason": "close_read",
+     "score": 89.96,
+     "gold": true
+    },
+    {
+     "id": "doc_027#p3",
+     "reason": "close_read",
+     "score": 89.95,
+     "gold": false
+    },
+    {
+     "id": "doc_050#p10",
+     "reason": "close_read",
+     "score": 89.94,
+     "gold": false
+    },
+    {
+     "id": "doc_029#p6",
+     "reason": "role_official",
+     "score": 4.4,
+     "gold": false
+    },
+    {
+     "id": "doc_043#p4",
+     "reason": "role_official",
+     "score": 4.4,
+     "gold": false
+    },
+    {
+     "id": "doc_025#p1",
+     "reason": "role_official",
+     "score": 4.4,
+     "gold": false
+    }
+   ],
+   "n_raw": 10,
+   "raw_gold": 4,
+   "n_kept": 5,
+   "kept_gold": 4,
+   "kept_ids": [
+    "doc_012#p5",
+    "doc_046#p3",
+    "doc_006#p3",
+    "doc_002#p3",
+    "doc_033#p5"
+   ],
+   "dropped_rules": [
+    "over_cap",
+    "weak_reason"
+   ],
+   "n_dropped": 5,
+   "raw_ids": [
+    "doc_012#p5",
+    "doc_046#p3",
+    "doc_006#p3",
+    "doc_002#p3",
+    "doc_033#p5",
+    "doc_027#p3",
+    "doc_050#p10",
+    "doc_029#p6",
+    "doc_043#p4",
+    "doc_025#p1"
+   ],
+   "raw_reasons": {
+    "doc_012#p5": "close_read",
+    "doc_046#p3": "close_read",
+    "doc_006#p3": "close_read",
+    "doc_002#p3": "close_read",
+    "doc_033#p5": "close_read",
+    "doc_027#p3": "close_read",
+    "doc_050#p10": "close_read",
+    "doc_029#p6": "role_official",
+    "doc_043#p4": "role_official",
+    "doc_025#p1": "role_official"
+   },
+   "box_gold_not_in_kept": [],
+   "leaks": [],
+   "block_text_leak": [],
+   "ids_outside_box": []
+  },
+  {
+   "case": "王虹“北大discouraged”事件",
+   "qid": "q_001",
+   "denom": 5,
+   "n_sel": 76,
+   "gold_in_box": 2,
+   "gold_box_ids": [
+    "doc_001#p1",
+    "doc_010#p4"
+   ],
+   "cand_detail": [
+    {
+     "id": "doc_001#p1",
+     "reason": "close_read",
+     "score": 90.0,
+     "gold": true
+    },
+    {
+     "id": "doc_067#p12",
+     "reason": "role_official",
+     "score": 4.4,
+     "gold": false
+    },
+    {
+     "id": "doc_030#p1",
+     "reason": "role_official",
+     "score": 3.6,
+     "gold": false
+    },
+    {
+     "id": "doc_059#p1",
+     "reason": "role_official",
+     "score": 3.6,
+     "gold": false
+    },
+    {
+     "id": "doc_040#p12",
+     "reason": "role_official",
+     "score": 3.6,
+     "gold": false
+    },
+    {
+     "id": "doc_014#p12",
+     "reason": "role_official",
+     "score": 2.8,
+     "gold": false
+    },
+    {
+     "id": "doc_068#p12",
+     "reason": "role_official",
+     "score": 2.4,
+     "gold": false
+    },
+    {
+     "id": "doc_017#p1",
+     "reason": "role_official",
+     "score": 2.0,
+     "gold": false
+    },
+    {
+     "id": "doc_038#p1",
+     "reason": "role_official",
+     "score": 2.0,
+     "gold": false
+    },
+    {
+     "id": "doc_054#p1",
+     "reason": "role_official",
+     "score": 2.0,
+     "gold": false
+    }
+   ],
+   "n_raw": 10,
+   "raw_gold": 1,
+   "n_kept": 1,
+   "kept_gold": 1,
+   "kept_ids": [
+    "doc_001#p1"
+   ],
+   "dropped_rules": [
+    "weak_reason"
+   ],
+   "n_dropped": 9,
+   "raw_ids": [
+    "doc_001#p1",
+    "doc_067#p12",
+    "doc_030#p1",
+    "doc_059#p1",
+    "doc_040#p12",
+    "doc_014#p12",
+    "doc_068#p12",
+    "doc_017#p1",
+    "doc_038#p1",
+    "doc_054#p1"
+   ],
+   "raw_reasons": {
+    "doc_001#p1": "close_read",
+    "doc_067#p12": "role_official",
+    "doc_030#p1": "role_official",
+    "doc_059#p1": "role_official",
+    "doc_040#p12": "role_official",
+    "doc_014#p12": "role_official",
+    "doc_068#p12": "role_official",
+    "doc_017#p1": "role_official",
+    "doc_038#p1": "role_official",
+    "doc_054#p1": "role_official"
+   },
+   "box_gold_not_in_kept": [
+    "doc_010#p4"
+   ],
+   "leaks": [],
+   "block_text_leak": [],
+   "ids_outside_box": []
+  },
+  {
+   "case": "王虹“北大discouraged”事件",
+   "qid": "q_002",
+   "denom": 5,
+   "n_sel": 92,
+   "gold_in_box": 2,
+   "gold_box_ids": [
+    "doc_010#p7",
+    "doc_011#p1"
+   ],
+   "cand_detail": [
+    {
+     "id": "doc_010#p7",
+     "reason": "close_read",
+     "score": 90.0,
+     "gold": true
+    },
+    {
+     "id": "doc_011#p1",
+     "reason": "close_read",
+     "score": 89.99,
+     "gold": true
+    },
+    {
+     "id": "doc_011#p5",
+     "reason": "close_read",
+     "score": 89.98,
+     "gold": false
+    },
+    {
+     "id": "doc_030#p1",
+     "reason": "role_official",
+     "score": 3.6,
+     "gold": false
+    },
+    {
+     "id": "doc_040#p12",
+     "reason": "role_official",
+     "score": 3.6,
+     "gold": false
+    },
+    {
+     "id": "doc_048#p5",
+     "reason": "role_official",
+     "score": 2.0,
+     "gold": false
+    },
+    {
+     "id": "doc_063#p2",
+     "reason": "role_official",
+     "score": 2.0,
+     "gold": false
+    },
+    {
+     "id": "doc_059#p4",
+     "reason": "role_party",
+     "score": 1.6,
+     "gold": false
+    },
+    {
+     "id": "doc_046#p3",
+     "reason": "role_party",
+     "score": 1.6,
+     "gold": false
+    },
+    {
+     "id": "doc_046#p8",
+     "reason": "role_party",
+     "score": 1.6,
+     "gold": false
+    }
+   ],
+   "n_raw": 10,
+   "raw_gold": 2,
+   "n_kept": 3,
+   "kept_gold": 2,
+   "kept_ids": [
+    "doc_010#p7",
+    "doc_011#p1",
+    "doc_011#p5"
+   ],
+   "dropped_rules": [
+    "weak_reason"
+   ],
+   "n_dropped": 7,
+   "raw_ids": [
+    "doc_010#p7",
+    "doc_011#p1",
+    "doc_011#p5",
+    "doc_030#p1",
+    "doc_040#p12",
+    "doc_048#p5",
+    "doc_063#p2",
+    "doc_059#p4",
+    "doc_046#p3",
+    "doc_046#p8"
+   ],
+   "raw_reasons": {
+    "doc_010#p7": "close_read",
+    "doc_011#p1": "close_read",
+    "doc_011#p5": "close_read",
+    "doc_030#p1": "role_official",
+    "doc_040#p12": "role_official",
+    "doc_048#p5": "role_official",
+    "doc_063#p2": "role_official",
+    "doc_059#p4": "role_party",
+    "doc_046#p3": "role_party",
+    "doc_046#p8": "role_party"
+   },
+   "box_gold_not_in_kept": [],
+   "leaks": [],
+   "block_text_leak": [],
+   "ids_outside_box": []
+  },
+  {
+   "case": "王虹“北大discouraged”事件",
+   "qid": "q_003",
+   "denom": 9,
+   "n_sel": 78,
+   "gold_in_box": 3,
+   "gold_box_ids": [
+    "doc_003#p5",
+    "doc_007#p1",
+    "doc_007#p2"
+   ],
+   "cand_detail": [
+    {
+     "id": "doc_007#p1",
+     "reason": "close_read",
+     "score": 90.0,
+     "gold": true
+    },
+    {
+     "id": "doc_007#p2",
+     "reason": "close_read",
+     "score": 89.99,
+     "gold": true
+    },
+    {
+     "id": "doc_003#p5",
+     "reason": "close_read",
+     "score": 89.98,
+     "gold": true
+    },
+    {
+     "id": "doc_067#p12",
+     "reason": "role_official",
+     "score": 4.4,
+     "gold": false
+    },
+    {
+     "id": "doc_030#p1",
+     "reason": "role_official",
+     "score": 3.6,
+     "gold": false
+    },
+    {
+     "id": "doc_040#p12",
+     "reason": "role_official",
+     "score": 3.6,
+     "gold": false
+    },
+    {
+     "id": "doc_073#p5",
+     "reason": "claim_alt",
+     "score": 3.0,
+     "gold": false
+    },
+    {
+     "id": "doc_014#p12",
+     "reason": "role_official",
+     "score": 2.8,
+     "gold": false
+    },
+    {
+     "id": "doc_068#p12",
+     "reason": "role_official",
+     "score": 2.4,
+     "gold": false
+    },
+    {
+     "id": "doc_017#p1",
+     "reason": "role_official",
+     "score": 2.0,
+     "gold": false
+    }
+   ],
+   "n_raw": 10,
+   "raw_gold": 3,
+   "n_kept": 3,
+   "kept_gold": 3,
+   "kept_ids": [
+    "doc_007#p1",
+    "doc_007#p2",
+    "doc_003#p5"
+   ],
+   "dropped_rules": [
+    "weak_reason"
+   ],
+   "n_dropped": 7,
+   "raw_ids": [
+    "doc_007#p1",
+    "doc_007#p2",
+    "doc_003#p5",
+    "doc_067#p12",
+    "doc_030#p1",
+    "doc_040#p12",
+    "doc_073#p5",
+    "doc_014#p12",
+    "doc_068#p12",
+    "doc_017#p1"
+   ],
+   "raw_reasons": {
+    "doc_007#p1": "close_read",
+    "doc_007#p2": "close_read",
+    "doc_003#p5": "close_read",
+    "doc_067#p12": "role_official",
+    "doc_030#p1": "role_official",
+    "doc_040#p12": "role_official",
+    "doc_073#p5": "claim_alt",
+    "doc_014#p12": "role_official",
+    "doc_068#p12": "role_official",
+    "doc_017#p1": "role_official"
+   },
+   "box_gold_not_in_kept": [],
+   "leaks": [],
+   "block_text_leak": [],
+   "ids_outside_box": []
+  },
+  {
+   "case": "柬泰边境争端（2025.12–2026.9）",
+   "qid": "q_001",
+   "denom": 5,
+   "n_sel": 79,
+   "gold_in_box": 1,
+   "gold_box_ids": [
+    "doc_027#p2"
+   ],
+   "cand_detail": [
+    {
+     "id": "doc_027#p2",
+     "reason": "close_read",
+     "score": 90.0,
+     "gold": true
+    },
+    {
+     "id": "doc_007#p8",
+     "reason": "role_official",
+     "score": 3.6,
+     "gold": false
+    },
+    {
+     "id": "doc_061#p1",
+     "reason": "role_official",
+     "score": 3.6,
+     "gold": false
+    },
+    {
+     "id": "doc_053#p2",
+     "reason": "role_official",
+     "score": 2.8,
+     "gold": false
+    },
+    {
+     "id": "doc_087#p4",
+     "reason": "role_official",
+     "score": 2.8,
+     "gold": false
+    },
+    {
+     "id": "doc_067#p1",
+     "reason": "role_official",
+     "score": 2.8,
+     "gold": false
+    },
+    {
+     "id": "doc_038#p10",
+     "reason": "role_official",
+     "score": 2.0,
+     "gold": false
+    },
+    {
+     "id": "doc_039#p1",
+     "reason": "role_official",
+     "score": 2.0,
+     "gold": false
+    },
+    {
+     "id": "doc_010#p1",
+     "reason": "role_official",
+     "score": 2.0,
+     "gold": false
+    },
+    {
+     "id": "doc_026#p2",
+     "reason": "role_official",
+     "score": 2.0,
+     "gold": false
+    }
+   ],
+   "n_raw": 10,
+   "raw_gold": 1,
+   "n_kept": 1,
+   "kept_gold": 1,
+   "kept_ids": [
+    "doc_027#p2"
+   ],
+   "dropped_rules": [
+    "weak_reason"
+   ],
+   "n_dropped": 9,
+   "raw_ids": [
+    "doc_027#p2",
+    "doc_007#p8",
+    "doc_061#p1",
+    "doc_053#p2",
+    "doc_087#p4",
+    "doc_067#p1",
+    "doc_038#p10",
+    "doc_039#p1",
+    "doc_010#p1",
+    "doc_026#p2"
+   ],
+   "raw_reasons": {
+    "doc_027#p2": "close_read",
+    "doc_007#p8": "role_official",
+    "doc_061#p1": "role_official",
+    "doc_053#p2": "role_official",
+    "doc_087#p4": "role_official",
+    "doc_067#p1": "role_official",
+    "doc_038#p10": "role_official",
+    "doc_039#p1": "role_official",
+    "doc_010#p1": "role_official",
+    "doc_026#p2": "role_official"
+   },
+   "box_gold_not_in_kept": [],
+   "leaks": [],
+   "block_text_leak": [],
+   "ids_outside_box": []
+  },
+  {
+   "case": "柬泰边境争端（2025.12–2026.9）",
+   "qid": "q_002",
+   "denom": 6,
+   "n_sel": 64,
+   "gold_in_box": 3,
+   "gold_box_ids": [
+    "doc_006#p4",
+    "doc_009#p10",
+    "doc_021#p2"
+   ],
+   "cand_detail": [
+    {
+     "id": "doc_009#p10",
+     "reason": "close_read",
+     "score": 90.0,
+     "gold": true
+    },
+    {
+     "id": "doc_103#p3",
+     "reason": "close_read",
+     "score": 89.99,
+     "gold": false
+    },
+    {
+     "id": "doc_006#p4",
+     "reason": "close_read",
+     "score": 89.98,
+     "gold": true
+    },
+    {
+     "id": "doc_001#p1",
+     "reason": "role_official",
+     "score": 3.6,
+     "gold": false
+    },
+    {
+     "id": "doc_061#p1",
+     "reason": "role_official",
+     "score": 3.6,
+     "gold": false
+    },
+    {
+     "id": "doc_041#p4",
+     "reason": "role_official",
+     "score": 2.8,
+     "gold": false
+    },
+    {
+     "id": "doc_087#p4",
+     "reason": "role_official",
+     "score": 2.8,
+     "gold": false
+    },
+    {
+     "id": "doc_067#p1",
+     "reason": "role_official",
+     "score": 2.8,
+     "gold": false
+    },
+    {
+     "id": "doc_038#p12",
+     "reason": "role_official",
+     "score": 2.8,
+     "gold": false
+    },
+    {
+     "id": "doc_100#p12",
+     "reason": "role_official",
+     "score": 2.0,
+     "gold": false
+    }
+   ],
+   "n_raw": 10,
+   "raw_gold": 2,
+   "n_kept": 3,
+   "kept_gold": 2,
+   "kept_ids": [
+    "doc_009#p10",
+    "doc_103#p3",
+    "doc_006#p4"
+   ],
+   "dropped_rules": [
+    "weak_reason"
+   ],
+   "n_dropped": 7,
+   "raw_ids": [
+    "doc_009#p10",
+    "doc_103#p3",
+    "doc_006#p4",
+    "doc_001#p1",
+    "doc_061#p1",
+    "doc_041#p4",
+    "doc_087#p4",
+    "doc_067#p1",
+    "doc_038#p12",
+    "doc_100#p12"
+   ],
+   "raw_reasons": {
+    "doc_009#p10": "close_read",
+    "doc_103#p3": "close_read",
+    "doc_006#p4": "close_read",
+    "doc_001#p1": "role_official",
+    "doc_061#p1": "role_official",
+    "doc_041#p4": "role_official",
+    "doc_087#p4": "role_official",
+    "doc_067#p1": "role_official",
+    "doc_038#p12": "role_official",
+    "doc_100#p12": "role_official"
+   },
+   "box_gold_not_in_kept": [
+    "doc_021#p2"
+   ],
+   "leaks": [],
+   "block_text_leak": [],
+   "ids_outside_box": []
+  },
+  {
+   "case": "柬泰边境争端（2025.12–2026.9）",
+   "qid": "q_003",
+   "denom": 5,
+   "n_sel": 77,
+   "gold_in_box": 5,
+   "gold_box_ids": [
+    "doc_007#p7",
+    "doc_023#p2",
+    "doc_023#p4",
+    "doc_024#p1",
+    "doc_024#p2"
+   ],
+   "cand_detail": [
+    {
+     "id": "doc_023#p2",
+     "reason": "close_read",
+     "score": 90.0,
+     "gold": true
+    },
+    {
+     "id": "doc_001#p1",
+     "reason": "role_official",
+     "score": 3.6,
+     "gold": false
+    },
+    {
+     "id": "doc_007#p8",
+     "reason": "role_official",
+     "score": 3.6,
+     "gold": false
+    },
+    {
+     "id": "doc_041#p4",
+     "reason": "role_official",
+     "score": 2.8,
+     "gold": false
+    },
+    {
+     "id": "doc_038#p12",
+     "reason": "role_official",
+     "score": 2.8,
+     "gold": false
+    },
+    {
+     "id": "doc_054#p3",
+     "reason": "role_official",
+     "score": 2.8,
+     "gold": false
+    },
+    {
+     "id": "doc_088#p2",
+     "reason": "role_official",
+     "score": 2.0,
+     "gold": false
+    },
+    {
+     "id": "doc_038#p10",
+     "reason": "role_official",
+     "score": 2.0,
+     "gold": false
+    },
+    {
+     "id": "doc_039#p1",
+     "reason": "role_official",
+     "score": 2.0,
+     "gold": false
+    },
+    {
+     "id": "doc_010#p1",
+     "reason": "role_official",
+     "score": 2.0,
+     "gold": false
+    }
+   ],
+   "n_raw": 10,
+   "raw_gold": 1,
+   "n_kept": 1,
+   "kept_gold": 1,
+   "kept_ids": [
+    "doc_023#p2"
+   ],
+   "dropped_rules": [
+    "weak_reason"
+   ],
+   "n_dropped": 9,
+   "raw_ids": [
+    "doc_023#p2",
+    "doc_001#p1",
+    "doc_007#p8",
+    "doc_041#p4",
+    "doc_038#p12",
+    "doc_054#p3",
+    "doc_088#p2",
+    "doc_038#p10",
+    "doc_039#p1",
+    "doc_010#p1"
+   ],
+   "raw_reasons": {
+    "doc_023#p2": "close_read",
+    "doc_001#p1": "role_official",
+    "doc_007#p8": "role_official",
+    "doc_041#p4": "role_official",
+    "doc_038#p12": "role_official",
+    "doc_054#p3": "role_official",
+    "doc_088#p2": "role_official",
+    "doc_038#p10": "role_official",
+    "doc_039#p1": "role_official",
+    "doc_010#p1": "role_official"
+   },
+   "box_gold_not_in_kept": [
+    "doc_007#p7",
+    "doc_023#p4",
+    "doc_024#p1",
+    "doc_024#p2"
+   ],
+   "leaks": [],
+   "block_text_leak": [],
+   "ids_outside_box": []
+  },
+  {
+   "case": "印度航空 AI171 空难（2025.6–2026.5）",
+   "qid": "q_001",
+   "denom": 7,
+   "n_sel": 108,
+   "gold_in_box": 4,
+   "gold_box_ids": [
+    "doc_001#p3",
+    "doc_002#p8",
+    "doc_005#p3",
+    "doc_015#p5"
+   ],
+   "cand_detail": [
+    {
+     "id": "doc_001#p3",
+     "reason": "close_read",
+     "score": 90.0,
+     "gold": true
+    },
+    {
+     "id": "doc_015#p5",
+     "reason": "close_read",
+     "score": 89.99,
+     "gold": true
+    },
+    {
+     "id": "doc_017#p4",
+     "reason": "close_read",
+     "score": 89.98,
+     "gold": false
+    },
+    {
+     "id": "doc_036#p18",
+     "reason": "role_official",
+     "score": 3.6,
+     "gold": false
+    },
+    {
+     "id": "doc_002#p86",
+     "reason": "role_official",
+     "score": 2.8,
+     "gold": false
+    },
+    {
+     "id": "doc_020#p19",
+     "reason": "role_official",
+     "score": 2.0,
+     "gold": false
+    },
+    {
+     "id": "doc_047#p23",
+     "reason": "role_official",
+     "score": 2.0,
+     "gold": false
+    },
+    {
+     "id": "doc_039#p4",
+     "reason": "role_official",
+     "score": 2.0,
+     "gold": false
+    },
+    {
+     "id": "doc_003#p1",
+     "reason": "role_official",
+     "score": 2.0,
+     "gold": false
+    },
+    {
+     "id": "doc_055#p1",
+     "reason": "role_official",
+     "score": 2.0,
+     "gold": false
+    }
+   ],
+   "n_raw": 10,
+   "raw_gold": 2,
+   "n_kept": 3,
+   "kept_gold": 2,
+   "kept_ids": [
+    "doc_001#p3",
+    "doc_015#p5",
+    "doc_017#p4"
+   ],
+   "dropped_rules": [
+    "weak_reason"
+   ],
+   "n_dropped": 7,
+   "raw_ids": [
+    "doc_001#p3",
+    "doc_015#p5",
+    "doc_017#p4",
+    "doc_036#p18",
+    "doc_002#p86",
+    "doc_020#p19",
+    "doc_047#p23",
+    "doc_039#p4",
+    "doc_003#p1",
+    "doc_055#p1"
+   ],
+   "raw_reasons": {
+    "doc_001#p3": "close_read",
+    "doc_015#p5": "close_read",
+    "doc_017#p4": "close_read",
+    "doc_036#p18": "role_official",
+    "doc_002#p86": "role_official",
+    "doc_020#p19": "role_official",
+    "doc_047#p23": "role_official",
+    "doc_039#p4": "role_official",
+    "doc_003#p1": "role_official",
+    "doc_055#p1": "role_official"
+   },
+   "box_gold_not_in_kept": [
+    "doc_002#p8",
+    "doc_005#p3"
+   ],
+   "leaks": [],
+   "block_text_leak": [],
+   "ids_outside_box": []
+  },
+  {
+   "case": "印度航空 AI171 空难（2025.6–2026.5）",
+   "qid": "q_002",
+   "denom": 11,
+   "n_sel": 118,
+   "gold_in_box": 5,
+   "gold_box_ids": [
+    "doc_006#p3",
+    "doc_012#p8",
+    "doc_015#p6",
+    "doc_016#p19",
+    "doc_020#p30"
+   ],
+   "cand_detail": [
+    {
+     "id": "doc_015#p6",
+     "reason": "close_read",
+     "score": 90.0,
+     "gold": true
+    },
+    {
+     "id": "doc_036#p18",
+     "reason": "role_official",
+     "score": 3.6,
+     "gold": false
+    },
+    {
+     "id": "doc_031#p6",
+     "reason": "role_official",
+     "score": 2.0,
+     "gold": false
+    },
+    {
+     "id": "doc_047#p23",
+     "reason": "role_official",
+     "score": 2.0,
+     "gold": false
+    },
+    {
+     "id": "doc_025#p4",
+     "reason": "role_official",
+     "score": 2.0,
+     "gold": false
+    },
+    {
+     "id": "doc_018#p26",
+     "reason": "role_official",
+     "score": 2.0,
+     "gold": false
+    },
+    {
+     "id": "doc_006#p3",
+     "reason": "role_official",
+     "score": 2.0,
+     "gold": true
+    },
+    {
+     "id": "doc_017#p25",
+     "reason": "role_official",
+     "score": 2.0,
+     "gold": false
+    },
+    {
+     "id": "doc_032#p1",
+     "reason": "role_official",
+     "score": 2.0,
+     "gold": false
+    },
+    {
+     "id": "doc_024#p1",
+     "reason": "role_party",
+     "score": 1.6,
+     "gold": false
+    }
+   ],
+   "n_raw": 10,
+   "raw_gold": 2,
+   "n_kept": 1,
+   "kept_gold": 1,
+   "kept_ids": [
+    "doc_015#p6"
+   ],
+   "dropped_rules": [
+    "weak_reason"
+   ],
+   "n_dropped": 9,
+   "raw_ids": [
+    "doc_015#p6",
+    "doc_036#p18",
+    "doc_031#p6",
+    "doc_047#p23",
+    "doc_025#p4",
+    "doc_018#p26",
+    "doc_006#p3",
+    "doc_017#p25",
+    "doc_032#p1",
+    "doc_024#p1"
+   ],
+   "raw_reasons": {
+    "doc_015#p6": "close_read",
+    "doc_036#p18": "role_official",
+    "doc_031#p6": "role_official",
+    "doc_047#p23": "role_official",
+    "doc_025#p4": "role_official",
+    "doc_018#p26": "role_official",
+    "doc_006#p3": "role_official",
+    "doc_017#p25": "role_official",
+    "doc_032#p1": "role_official",
+    "doc_024#p1": "role_party"
+   },
+   "box_gold_not_in_kept": [
+    "doc_006#p3",
+    "doc_012#p8",
+    "doc_016#p19",
+    "doc_020#p30"
+   ],
+   "leaks": [],
+   "block_text_leak": [],
+   "ids_outside_box": []
+  },
+  {
+   "case": "印度航空 AI171 空难（2025.6–2026.5）",
+   "qid": "q_003",
+   "denom": 6,
+   "n_sel": 151,
+   "gold_in_box": 4,
+   "gold_box_ids": [
+    "doc_004#p3",
+    "doc_004#p8",
+    "doc_004#p9",
+    "doc_005#p4"
+   ],
+   "cand_detail": [
+    {
+     "id": "doc_004#p3",
+     "reason": "close_read",
+     "score": 90.0,
+     "gold": true
+    },
+    {
+     "id": "doc_001#p3",
+     "reason": "role_official",
+     "score": 4.4,
+     "gold": false
+    },
+    {
+     "id": "doc_036#p18",
+     "reason": "role_official",
+     "score": 3.6,
+     "gold": false
+    },
+    {
+     "id": "doc_004#p8",
+     "reason": "claim_alt",
+     "score": 3.0,
+     "gold": true
+    },
+    {
+     "id": "doc_055#p15",
+     "reason": "claim_alt",
+     "score": 3.0,
+     "gold": false
+    },
+    {
+     "id": "doc_004#p5",
+     "reason": "claim_alt",
+     "score": 3.0,
+     "gold": false
+    },
+    {
+     "id": "doc_002#p86",
+     "reason": "role_official",
+     "score": 2.8,
+     "gold": false
+    },
+    {
+     "id": "doc_002#p18",
+     "reason": "role_official",
+     "score": 2.0,
+     "gold": false
+    },
+    {
+     "id": "doc_003#p1",
+     "reason": "role_official",
+     "score": 2.0,
+     "gold": false
+    },
+    {
+     "id": "doc_055#p1",
+     "reason": "role_official",
+     "score": 2.0,
+     "gold": false
+    }
+   ],
+   "n_raw": 10,
+   "raw_gold": 2,
+   "n_kept": 1,
+   "kept_gold": 1,
+   "kept_ids": [
+    "doc_004#p3"
+   ],
+   "dropped_rules": [
+    "weak_reason"
+   ],
+   "n_dropped": 9,
+   "raw_ids": [
+    "doc_004#p3",
+    "doc_001#p3",
+    "doc_036#p18",
+    "doc_004#p8",
+    "doc_055#p15",
+    "doc_004#p5",
+    "doc_002#p86",
+    "doc_002#p18",
+    "doc_003#p1",
+    "doc_055#p1"
+   ],
+   "raw_reasons": {
+    "doc_004#p3": "close_read",
+    "doc_001#p3": "role_official",
+    "doc_036#p18": "role_official",
+    "doc_004#p8": "claim_alt",
+    "doc_055#p15": "claim_alt",
+    "doc_004#p5": "claim_alt",
+    "doc_002#p86": "role_official",
+    "doc_002#p18": "role_official",
+    "doc_003#p1": "role_official",
+    "doc_055#p1": "role_official"
+   },
+   "box_gold_not_in_kept": [
+    "doc_004#p8",
+    "doc_004#p9",
+    "doc_005#p4"
+   ],
+   "leaks": [],
+   "block_text_leak": [],
+   "ids_outside_box": []
+  }
+ ]
+}

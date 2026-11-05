@@ -1,0 +1,40 @@
+{
+ "schema_version": "c122.stable_offline.v1",
+ "ruler_off": "_check_strict（现行生产尺）",
+ "ruler_on": "citation_stable.check_stable（A 规范化＋B 有界回贴）",
+ "n_items_with_ids": 982,
+ "fail_off": 187,
+ "fail_on": 146,
+ "rate_off": 0.1904,
+ "rate_on": 0.1487,
+ "recovered_by_A": 10,
+ "recovered_by_B": 31,
+ "still_fail": 146,
+ "pass_both": 795,
+ "per_case": {
+  "bi-delivery-risk": {
+   "n": 924,
+   "fail_off": 187,
+   "fail_on": 146
+  },
+  "demo-solid-state": {
+   "n": 23,
+   "fail_off": 0,
+   "fail_on": 0
+  },
+  "rumor-vs-official": {
+   "n": 18,
+   "fail_off": 0,
+   "fail_on": 0
+  },
+  "user-20261008-144308": {
+   "n": 17,
+   "fail_off": 0,
+   "fail_on": 0
+  }
+ },
+ "regressions": 0,
+ "invariant": "n_tot == pass_both + recovered_A + recovered_B + still_fail",
+ "invariant_ok": true,
+ "note": "regressions 必须＝0：开旗只准救回，不准则把原本能过的证条判死（那等于拿稳定性换召回）；不为 0 就当场把这条腿写红"
+}

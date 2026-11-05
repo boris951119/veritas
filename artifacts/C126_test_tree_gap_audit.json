@@ -1,0 +1,93 @@
+{
+  "ticket": "C-126-test-tree-gap-audit",
+  "date": "2026-11-03",
+  "head": "57e768782e21d31871959ed3b44cfbff5a020895",
+  "head_contains_c125_code_tip": "349156e",
+  "experiment_repo_mounted": true,
+  "experiment_repo": "/Users/liuboyu/Developer/veritas-obsidian-kg-exp",
+  "flag_readonly": true,
+  "checklist": {
+    "tag_slots": {
+      "verdict": "有",
+      "main_path": "app/core/kg_test_tree_line.py L120/166-184; app/kg_lab/{index_build,source_role,case_lexicon,tag_schema,portable_tags,channel_tier,r8_fit}",
+      "exp_path": "同名同文件（slices/config 除外字节一致）",
+      "evidence": "开旗显式调用 _meta_from_row/lexicon/augment_features/apply_r9/apply_portable_features；portable_tags has_time_nail L181、has_amount_nail L182；r8_fit._BASE_DIMS 含 subject_match/claim_align/amount_status/time_anchor"
+    },
+    "kg_frontend": {
+      "verdict": "部分",
+      "main_path": "app/kg_lab/stage1_pool.fuse_r19 (neighbor_window=1); recall_arms._fuse_rrf; graph.load_adjacency",
+      "exp_path": "同码；跳边一跳仅 scripts/kg_lab/probe_r2b_q002_measure.py 调过；建库器 batch_summarize_case.py",
+      "evidence": "邻块臂＋五臂混合 RRF 在链上；跳边（实体/因果一跳）两仓均不在 R44 交付链＝有仓无路，非端口遗漏"
+    },
+    "expand_paraphrase": {
+      "verdict": "有",
+      "main_path": "index_build.keyword_expand_query (DEFAULT_EXPAND_TOP_N=16); query_expand.rule_paraphrase_questions (DEFAULT_PARAPHRASE_N=1)",
+      "exp_path": "同常量 query_expand.py L59-60",
+      "evidence": "经典臂＋每视图臂过 expand；paraphrase n=1 进经典 RRF；LLM 视图 use_llm_views=False 与实验 R44 链同参"
+    },
+    "stage1_pool": {
+      "verdict": "有",
+      "main_path": "fuse_r19 → multidim_weight.build_bundle → r8_fit.evaluate(coeff=r9_coeff.json 35 键+r21 微移)",
+      "exp_path": "run_r22._coeff_names 同式",
+      "evidence": "kg_test_tree_line L159-190；出口只 ranked 序；l2=[] 零金标"
+    },
+    "stage2_box": {
+      "verdict": "有",
+      "main_path": "stage2_authority.authority_rerank(density_cut=True,k_min=3,k_max=7) → density_submit.density_constrained_submit; build_conflict_pairs; 簇并段经 inbox_rerank L247",
+      "exp_path": "同码",
+      "evidence": "可变 k∈[3,7]＋conflict_pairs＋交卷前 rank_order；六案门控密度读数在 artifacts/c125/"
+    },
+    "narrow_submit": {
+      "verdict": "有",
+      "main_path": "layer_boundary.{stage2_box_export,build_submit_surface,pack_hints_from_submit} + audit_forbidden_keys×2+raise; pipeline.py L604-611 接 pack_material(**kg_pack_hints)",
+      "exp_path": "run_r44 同链",
+      "evidence": "旗开写 accounting[kg_submit]→apply_kg_submit_surface→pack_kwargs_for_kg→pack_material；assert_clean_pack_kwargs+assert_submit_no_coeff 双闸零系数"
+    },
+    "tree17_cite": {
+      "verdict": "有",
+      "main_path": "tree17_cite.apply_tree17_cite(box,metas,question,anchors,align_to_box=True,gold_ids=None,support_ids=None)",
+      "exp_path": "同码；量尺侧 gold 只进 measure_l3",
+      "evidence": "只读盒+rank+pairs；plan.close_read 进 surface（kg_test_tree_line L227-233）"
+    },
+    "cache_dependency": {
+      "verdict": "部分",
+      "evidence": "嵌入降级有披露（embed.status=fallback_lexical）；摘要缓存缺席＝静默（load_summary 返 None→嵌入 blob+BM25 摘要面变样，无披露键）；向量缓存按 para_id 复用不校验文本（ensure_embeddings L217-224）；现行说明仅在 config.py docstring＋artifacts/C125_merge.md 更正记录"
+    },
+    "module_list": {
+      "verdict": "文件级零缺",
+      "evidence": "实验 app/kg_lab 37 项全在主仓（主仓 36 py＋r9_coeff.json 数据件）；内容差 3 处＝__init__/config（缓存根）/slices（摘 4 只 eval 函数）；实验 scripts/kg_lab 57 只 runner 按设计不端口"
+    }
+  },
+  "gaps": [
+    {
+      "id": 1,
+      "kind": "半端口·仪器面·真缺口",
+      "what": "摘要缓存缺席无披露键：冷缓存静默改变嵌入 blob 与 BM25 摘要面（C-125 冷缓存三案红实证）；embed 降级有披露、summary 没有",
+      "next_knife_input": "补一颗披露键（如 kg_test_tree.n_with_summary）或启动闸"
+    },
+    {
+      "id": 2,
+      "kind": "仪器面·真缺口",
+      "what": "向量缓存按 para_id 复用不校验文本：换摘要后不整份换缓存＝白跑（ensure_embeddings L217-224）",
+      "next_knife_input": "缓存键加文本指纹或写入 pack_ver 式配方号"
+    },
+    {
+      "id": 3,
+      "kind": "口径澄清·两仓一致",
+      "what": "跳边臂（实体/因果一跳＋graph 建库器）有仓无路：R44 交付链本就不含",
+      "next_knife_input": "开它＝新实验票，不属端口遗漏"
+    },
+    {
+      "id": 4,
+      "kind": "仅实验有·按设计",
+      "what": "摘要建库器 batch_summarize_case.py 未端口：主仓无缓存自建能力",
+      "next_knife_input": "决定是否端口＋钉重建协议"
+    }
+  ],
+  "non_gaps": [
+    "六只拟合器模块（eval_metrics/slice_dims/box_filter/opposition_patch/r14_stages/r15_stage2）主仓零内部调用＝有仓无路，实验侧也只被 R-runner 调用——拟合仪器留 eval 侧＝层边界要求，非遗漏",
+    "仅文档有＝无（R42/R44 清单项都能指到码或调用图）"
+  ],
+  "method": "读码+grep 调用图为主，零 LLM、零真跑、零代码改动；开旗走到＝显式调用点+C-125 门控腿C 实跑旁证",
+  "hygiene": "无官语料原文；无 Markdown 表"
+}

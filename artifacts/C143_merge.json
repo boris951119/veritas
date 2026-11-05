@@ -1,0 +1,85 @@
+{
+ "ticket": "C-143-merge",
+ "order": "合 qoder/c143-tree22-conflict-usable @ 610c6c0 → main（现 tip d0c062a）",
+ "ff_or_rebase": {
+  "parents": "610c6c0 parent=90a0608",
+  "ff_possible": false,
+  "reason": "610c6c0 的父＝90a0608，而 main 已到 d0c062a ⇒ 非直系祖先，FF 不成立",
+  "action": "独立 worktree（veritas-merge-c143）建 tmp/c143-rebase，git rebase d0c062a ⇒ 零冲突，新 tip f157b71",
+  "patch_id": {
+   "610c6c0": "691d556eb6061c6595d60e1ac64e97643d44609c",
+   "f157b71": "691d556eb6061c6595d60e1ac64e97643d44609c"
+  },
+  "patch_id_equal": true,
+  "diff_610c6c0_f157b71": [
+   "artifacts/C144_arch_tree_resync.md",
+   "artifacts/C144_dom_tree15_green.png",
+   "artifacts/C144_dom_tree17_retry_pop.png",
+   "docs/architecture-tree-2026-10-27.html"
+  ]
+ },
+ "merge_surface": {
+  "diff_stat": "app/export/official.py               |  23 +-\n app/pipeline.py                      |   9 +-\n artifacts/C143_trace_face.json       | 218 ++++++++++++++\n artifacts/C143_trace_face.md         |  47 +++\n docs/dev-journal.md                  |   4 +\n scripts/probe_c143_trace_face.py     | 545 +++++++++++++++++++++++++++++++++++\n tests/test_c143_trace_report_face.py | 145 ++++++++++\n 7 files changed, 985 insertions(+), 6 deletions(-)",
+  "app_numstat": [
+   "19\t4\tapp/export/official.py",
+   "7\t2\tapp/pipeline.py"
+  ],
+  "production_files": [
+   "app/export/official.py",
+   "app/pipeline.py"
+  ],
+  "not_touched": "归并／消解判定／装箱／续盒／Top-7／树15 零 diff；C-141 枝与 worktree 未碰"
+ },
+ "pytest": {
+  "base_d0c062a": "7 failed, 1257 passed, 1 skipped in 52.89s",
+  "rebased_worktree": "7 failed, 1262 passed, 1 skipped in 50.27s",
+  "merged_main": "7 failed, 1262 passed, 1 skipped in 58.73s",
+  "red_names_base": [
+   "tests/test_c19_pack_window.py::test_m_production_messages_bite",
+   "tests/test_c37_engineering_gates.py::test_c37_except_pass_registry_bidirectional",
+   "tests/test_c37_engineering_gates.py::test_c37_knife8_narrative_mention_does_not_wash",
+   "tests/test_c37_engineering_gates.py::test_c37_knife9_registry_module_import_does_not_wash",
+   "tests/test_c37_engineering_gates.py::test_c37_script_zero_ref_equals_exemption_registry",
+   "tests/test_c37_engineering_gates.py::test_c38_knife_blank_line_top_does_not_red_registries",
+   "tests/test_c73_window_ledger.py::test_c73_knife_kept_drops_window_ledger_must_red"
+  ],
+  "red_names_merged": [
+   "tests/test_c19_pack_window.py::test_m_production_messages_bite",
+   "tests/test_c37_engineering_gates.py::test_c37_except_pass_registry_bidirectional",
+   "tests/test_c37_engineering_gates.py::test_c37_knife8_narrative_mention_does_not_wash",
+   "tests/test_c37_engineering_gates.py::test_c37_knife9_registry_module_import_does_not_wash",
+   "tests/test_c37_engineering_gates.py::test_c37_script_zero_ref_equals_exemption_registry",
+   "tests/test_c37_engineering_gates.py::test_c38_knife_blank_line_top_does_not_red_registries",
+   "tests/test_c73_window_ledger.py::test_c73_knife_kept_drops_window_ledger_must_red"
+  ],
+  "red_list_grew": 0,
+  "passed_delta": 5
+ },
+ "flag_off_artifact_equality": {
+  "method": "两树各跑 scripts/demo_offline.py（先对齐 .kgcache／.kg_lab_vault 符号链接到主检出，避向量缓存漂移）；归一化剥时间戳、CON/EV/CFL 自增 id 换序贯占位、绝对路径、accounting.steps 后逐键比",
+  "report_json_content_face_diffs": 0,
+  "report_md_diff": "仅墙钟一行（0.4 秒 vs 0.3 秒）",
+  "files_compared": 3
+ },
+ "flag_on_spot_check": {
+  "report_accounting_key": "合后 main 现量（VERITAS_CONFLICT_TRACE=1 跑 demo_offline）三份 report.json 均含 accounting.conflict_trace：demo-solid-state n=1／classified=0／unclassified=1／coverage_rate=0.0；bi-delivery-risk n=5／classified=4／unclassified=1／coverage_rate=0.8；rumor-vs-official n=1／classified=0／unclassified=1／coverage_rate=0.0；trace_complete_rate 三案均 1.0",
+  "export_empty_state": "合成零对撞案卷走 export_official ⇒ 仍写 conflict_trace.json：records=[]、empty_state=true、detail 末句「本次 1 题均未检出冲突对或事实对撞（未检出＝本次研判没有碰到，不等于资料无冲突）。」（本次题数由 len(runs) 现取）",
+  "export_hit_state": "同键写入 records n=1、summary n=1／coverage_rate=1.0／trace_complete_rate=1.0／by_class.same_window=1；此态无 empty_state 键",
+  "export_flag_off": "paths 无 conflict_trace 键；out_dir 仅 causal_evidence/conclusions/confidence/conflict_resolution/evidence.json＋字段说明.md＝官方提交件面不变"
+ },
+ "default_not_flipped": {
+  "config_default": [
+   "conflict_trace: bool = False"
+  ],
+  "env_or_config_json": "(零命中)"
+ },
+ "push": {
+  "result": "d0c062a..f157b71 main -> main（无 force）",
+  "origin_main": "f157b71ed186f8afad11f65ce73225de06f61c23",
+  "local_main": "f157b71ed186f8afad11f65ce73225de06f61c23",
+  "equal": true
+ },
+ "cleanup": "git worktree remove --force 掉 veritas-merge-c143／veritas-c143-base，删 tmp/c143-rebase；未动 veritas-c141／w140／w142／w143／veritas-c144；主检出 .venv／.kgcache／.kg_lab_vault 仍在（摘的是符号链接，实体未删）",
+ "forbidden": "未合 C-123 整枝／禁枝；未开 VERITAS_CONFLICT_TRACE 默认；未动归并判定",
+ "spot_check_rerun_on_main": "本节读数在合后 main（f157b71）当场复跑取得，非沿用 worktree 旧读"
+}

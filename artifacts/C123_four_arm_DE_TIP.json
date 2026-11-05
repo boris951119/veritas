@@ -1,0 +1,703 @@
+{
+ "schema_version": "c123.four_arm.v1",
+ "tip_declared": "0e957faa0952e6260c4f981d048d8ca785ec189a",
+ "arms": [
+  {
+   "arm": "arm0_双旗关＝生产默认",
+   "trace": "0",
+   "calib": "0"
+  },
+  {
+   "arm": "arm1_只开冲突留痕",
+   "trace": "1",
+   "calib": "0"
+  },
+  {
+   "arm": "arm2_只开置信校准",
+   "trace": "0",
+   "calib": "1"
+  },
+  {
+   "arm": "arm3_双旗开",
+   "trace": "1",
+   "calib": "1"
+  }
+ ],
+ "base_env_pinned": {
+  "VERITAS_KG_SUBMIT_SURFACE": "1",
+  "VERITAS_KG_STAGE1": "1",
+  "VERITAS_KG_REHYDRATE_BOX": "1",
+  "VERITAS_MULTI_BOX": "0",
+  "VERITAS_SECOND_PASS": "0",
+  "VERITAS_REVIEW_BOOST": "0",
+  "VERITAS_TREE15_DEPRESS": "0",
+  "VERITAS_ANCHOR_STABLE": "0",
+  "VERITAS_CONFLICT_TRACE": "0",
+  "VERITAS_CONF_CALIB": "0",
+  "VERITAS_CLAIM_SLOTS": "0",
+  "VERITAS_MECH_MERGE": "0",
+  "VERITAS_LEDGER_OUTLIER_TAG": "0",
+  "VERITAS_LEDGER_TIME_CLASS": "0",
+  "VERITAS_SOURCE_TIME_UNIFIED": "0",
+  "VERITAS_EVOLVE_VALUE_CHANGE": "0",
+  "VERITAS_METRIC_CANON": "0",
+  "VERITAS_RELEVANCE_SOFT_GATE": "1",
+  "VERITAS_MODEL_PROBE": "0",
+  "VERITAS_OCR": "0",
+  "VERITAS_FETCH_LINKS": "0"
+ },
+ "model_calls": 0,
+ "legs": {
+  "D": {
+   "arms": {
+    "arm0_双旗关＝生产默认": {
+     "trace_env": "0",
+     "calib_env": "0",
+     "liuxiang_at7": 12,
+     "liuxiang_l2": 13,
+     "holdout_l2": 29,
+     "leaks_total": 0,
+     "rows": [
+      {
+       "slug": "liuxiang",
+       "qid": "q_001",
+       "role": "regression",
+       "l2": 4,
+       "at7": 4,
+       "leaks": 0,
+       "n_sel": 88
+      },
+      {
+       "slug": "liuxiang",
+       "qid": "q_002",
+       "role": "regression",
+       "l2": 5,
+       "at7": 4,
+       "leaks": 0,
+       "n_sel": 94
+      },
+      {
+       "slug": "liuxiang",
+       "qid": "q_003",
+       "role": "regression",
+       "l2": 4,
+       "at7": 4,
+       "leaks": 0,
+       "n_sel": 95
+      },
+      {
+       "slug": "wanghong",
+       "qid": "q_001",
+       "role": "holdout",
+       "l2": 2,
+       "at7": 1,
+       "leaks": 0,
+       "n_sel": 76
+      },
+      {
+       "slug": "wanghong",
+       "qid": "q_002",
+       "role": "holdout",
+       "l2": 2,
+       "at7": 2,
+       "leaks": 0,
+       "n_sel": 92
+      },
+      {
+       "slug": "wanghong",
+       "qid": "q_003",
+       "role": "holdout",
+       "l2": 3,
+       "at7": 3,
+       "leaks": 0,
+       "n_sel": 78
+      },
+      {
+       "slug": "kh_th",
+       "qid": "q_001",
+       "role": "holdout",
+       "l2": 1,
+       "at7": 1,
+       "leaks": 0,
+       "n_sel": 79
+      },
+      {
+       "slug": "kh_th",
+       "qid": "q_002",
+       "role": "holdout",
+       "l2": 3,
+       "at7": 2,
+       "leaks": 0,
+       "n_sel": 64
+      },
+      {
+       "slug": "kh_th",
+       "qid": "q_003",
+       "role": "holdout",
+       "l2": 5,
+       "at7": 2,
+       "leaks": 0,
+       "n_sel": 77
+      },
+      {
+       "slug": "ai171",
+       "qid": "q_001",
+       "role": "holdout",
+       "l2": 4,
+       "at7": 2,
+       "leaks": 0,
+       "n_sel": 108
+      },
+      {
+       "slug": "ai171",
+       "qid": "q_002",
+       "role": "holdout",
+       "l2": 5,
+       "at7": 1,
+       "leaks": 0,
+       "n_sel": 118
+      },
+      {
+       "slug": "ai171",
+       "qid": "q_003",
+       "role": "holdout",
+       "l2": 4,
+       "at7": 1,
+       "leaks": 0,
+       "n_sel": 151
+      }
+     ]
+    },
+    "arm1_只开冲突留痕": {
+     "trace_env": "1",
+     "calib_env": "0",
+     "liuxiang_at7": 12,
+     "liuxiang_l2": 13,
+     "holdout_l2": 29,
+     "leaks_total": 0,
+     "rows": [
+      {
+       "slug": "liuxiang",
+       "qid": "q_001",
+       "role": "regression",
+       "l2": 4,
+       "at7": 4,
+       "leaks": 0,
+       "n_sel": 88
+      },
+      {
+       "slug": "liuxiang",
+       "qid": "q_002",
+       "role": "regression",
+       "l2": 5,
+       "at7": 4,
+       "leaks": 0,
+       "n_sel": 94
+      },
+      {
+       "slug": "liuxiang",
+       "qid": "q_003",
+       "role": "regression",
+       "l2": 4,
+       "at7": 4,
+       "leaks": 0,
+       "n_sel": 95
+      },
+      {
+       "slug": "wanghong",
+       "qid": "q_001",
+       "role": "holdout",
+       "l2": 2,
+       "at7": 1,
+       "leaks": 0,
+       "n_sel": 76
+      },
+      {
+       "slug": "wanghong",
+       "qid": "q_002",
+       "role": "holdout",
+       "l2": 2,
+       "at7": 2,
+       "leaks": 0,
+       "n_sel": 92
+      },
+      {
+       "slug": "wanghong",
+       "qid": "q_003",
+       "role": "holdout",
+       "l2": 3,
+       "at7": 3,
+       "leaks": 0,
+       "n_sel": 78
+      },
+      {
+       "slug": "kh_th",
+       "qid": "q_001",
+       "role": "holdout",
+       "l2": 1,
+       "at7": 1,
+       "leaks": 0,
+       "n_sel": 79
+      },
+      {
+       "slug": "kh_th",
+       "qid": "q_002",
+       "role": "holdout",
+       "l2": 3,
+       "at7": 2,
+       "leaks": 0,
+       "n_sel": 64
+      },
+      {
+       "slug": "kh_th",
+       "qid": "q_003",
+       "role": "holdout",
+       "l2": 5,
+       "at7": 2,
+       "leaks": 0,
+       "n_sel": 77
+      },
+      {
+       "slug": "ai171",
+       "qid": "q_001",
+       "role": "holdout",
+       "l2": 4,
+       "at7": 2,
+       "leaks": 0,
+       "n_sel": 108
+      },
+      {
+       "slug": "ai171",
+       "qid": "q_002",
+       "role": "holdout",
+       "l2": 5,
+       "at7": 1,
+       "leaks": 0,
+       "n_sel": 118
+      },
+      {
+       "slug": "ai171",
+       "qid": "q_003",
+       "role": "holdout",
+       "l2": 4,
+       "at7": 1,
+       "leaks": 0,
+       "n_sel": 151
+      }
+     ]
+    },
+    "arm2_只开置信校准": {
+     "trace_env": "0",
+     "calib_env": "1",
+     "liuxiang_at7": 12,
+     "liuxiang_l2": 13,
+     "holdout_l2": 29,
+     "leaks_total": 0,
+     "rows": [
+      {
+       "slug": "liuxiang",
+       "qid": "q_001",
+       "role": "regression",
+       "l2": 4,
+       "at7": 4,
+       "leaks": 0,
+       "n_sel": 88
+      },
+      {
+       "slug": "liuxiang",
+       "qid": "q_002",
+       "role": "regression",
+       "l2": 5,
+       "at7": 4,
+       "leaks": 0,
+       "n_sel": 94
+      },
+      {
+       "slug": "liuxiang",
+       "qid": "q_003",
+       "role": "regression",
+       "l2": 4,
+       "at7": 4,
+       "leaks": 0,
+       "n_sel": 95
+      },
+      {
+       "slug": "wanghong",
+       "qid": "q_001",
+       "role": "holdout",
+       "l2": 2,
+       "at7": 1,
+       "leaks": 0,
+       "n_sel": 76
+      },
+      {
+       "slug": "wanghong",
+       "qid": "q_002",
+       "role": "holdout",
+       "l2": 2,
+       "at7": 2,
+       "leaks": 0,
+       "n_sel": 92
+      },
+      {
+       "slug": "wanghong",
+       "qid": "q_003",
+       "role": "holdout",
+       "l2": 3,
+       "at7": 3,
+       "leaks": 0,
+       "n_sel": 78
+      },
+      {
+       "slug": "kh_th",
+       "qid": "q_001",
+       "role": "holdout",
+       "l2": 1,
+       "at7": 1,
+       "leaks": 0,
+       "n_sel": 79
+      },
+      {
+       "slug": "kh_th",
+       "qid": "q_002",
+       "role": "holdout",
+       "l2": 3,
+       "at7": 2,
+       "leaks": 0,
+       "n_sel": 64
+      },
+      {
+       "slug": "kh_th",
+       "qid": "q_003",
+       "role": "holdout",
+       "l2": 5,
+       "at7": 2,
+       "leaks": 0,
+       "n_sel": 77
+      },
+      {
+       "slug": "ai171",
+       "qid": "q_001",
+       "role": "holdout",
+       "l2": 4,
+       "at7": 2,
+       "leaks": 0,
+       "n_sel": 108
+      },
+      {
+       "slug": "ai171",
+       "qid": "q_002",
+       "role": "holdout",
+       "l2": 5,
+       "at7": 1,
+       "leaks": 0,
+       "n_sel": 118
+      },
+      {
+       "slug": "ai171",
+       "qid": "q_003",
+       "role": "holdout",
+       "l2": 4,
+       "at7": 1,
+       "leaks": 0,
+       "n_sel": 151
+      }
+     ]
+    },
+    "arm3_双旗开": {
+     "trace_env": "1",
+     "calib_env": "1",
+     "liuxiang_at7": 12,
+     "liuxiang_l2": 13,
+     "holdout_l2": 29,
+     "leaks_total": 0,
+     "rows": [
+      {
+       "slug": "liuxiang",
+       "qid": "q_001",
+       "role": "regression",
+       "l2": 4,
+       "at7": 4,
+       "leaks": 0,
+       "n_sel": 88
+      },
+      {
+       "slug": "liuxiang",
+       "qid": "q_002",
+       "role": "regression",
+       "l2": 5,
+       "at7": 4,
+       "leaks": 0,
+       "n_sel": 94
+      },
+      {
+       "slug": "liuxiang",
+       "qid": "q_003",
+       "role": "regression",
+       "l2": 4,
+       "at7": 4,
+       "leaks": 0,
+       "n_sel": 95
+      },
+      {
+       "slug": "wanghong",
+       "qid": "q_001",
+       "role": "holdout",
+       "l2": 2,
+       "at7": 1,
+       "leaks": 0,
+       "n_sel": 76
+      },
+      {
+       "slug": "wanghong",
+       "qid": "q_002",
+       "role": "holdout",
+       "l2": 2,
+       "at7": 2,
+       "leaks": 0,
+       "n_sel": 92
+      },
+      {
+       "slug": "wanghong",
+       "qid": "q_003",
+       "role": "holdout",
+       "l2": 3,
+       "at7": 3,
+       "leaks": 0,
+       "n_sel": 78
+      },
+      {
+       "slug": "kh_th",
+       "qid": "q_001",
+       "role": "holdout",
+       "l2": 1,
+       "at7": 1,
+       "leaks": 0,
+       "n_sel": 79
+      },
+      {
+       "slug": "kh_th",
+       "qid": "q_002",
+       "role": "holdout",
+       "l2": 3,
+       "at7": 2,
+       "leaks": 0,
+       "n_sel": 64
+      },
+      {
+       "slug": "kh_th",
+       "qid": "q_003",
+       "role": "holdout",
+       "l2": 5,
+       "at7": 2,
+       "leaks": 0,
+       "n_sel": 77
+      },
+      {
+       "slug": "ai171",
+       "qid": "q_001",
+       "role": "holdout",
+       "l2": 4,
+       "at7": 2,
+       "leaks": 0,
+       "n_sel": 108
+      },
+      {
+       "slug": "ai171",
+       "qid": "q_002",
+       "role": "holdout",
+       "l2": 5,
+       "at7": 1,
+       "leaks": 0,
+       "n_sel": 118
+      },
+      {
+       "slug": "ai171",
+       "qid": "q_003",
+       "role": "holdout",
+       "l2": 4,
+       "at7": 1,
+       "leaks": 0,
+       "n_sel": 151
+      }
+     ]
+    }
+   },
+   "plan_n": 12,
+   "meta_present": true
+  },
+  "E": {
+   "arms": {
+    "arm0_双旗关＝生产默认": {
+     "trace_env": "0",
+     "calib_env": "0",
+     "error": null,
+     "export_files": [
+      "causal_evidence.json",
+      "conclusions.json",
+      "confidence.json",
+      "conflict_resolution.json",
+      "evidence.json",
+      "q_001",
+      "q_002",
+      "字段说明.md"
+     ],
+     "official_five_complete": true,
+     "conflict_trace_json_written": false,
+     "conflict_trace_summary": null,
+     "confidence_band_fields": {
+      "band": 4,
+      "band_rel": 4
+     },
+     "dossier_trace_key_after_run": [
+      "NO",
+      "NO"
+     ],
+     "n_conflict_pairs": [
+      1,
+      1
+     ],
+     "n_majority": [
+      2,
+      2
+     ],
+     "wall_s": 5.8
+    },
+    "arm1_只开冲突留痕": {
+     "trace_env": "1",
+     "calib_env": "0",
+     "error": null,
+     "export_files": [
+      "causal_evidence.json",
+      "conclusions.json",
+      "confidence.json",
+      "conflict_resolution.json",
+      "evidence.json",
+      "q_001",
+      "q_002",
+      "字段说明.md"
+     ],
+     "official_five_complete": true,
+     "conflict_trace_json_written": false,
+     "conflict_trace_summary": null,
+     "confidence_band_fields": {
+      "band": 4,
+      "band_rel": 4
+     },
+     "dossier_trace_key_after_run": [
+      "NO",
+      "NO"
+     ],
+     "n_conflict_pairs": [
+      1,
+      1
+     ],
+     "n_majority": [
+      2,
+      2
+     ],
+     "wall_s": 6.0
+    },
+    "arm2_只开置信校准": {
+     "trace_env": "0",
+     "calib_env": "1",
+     "error": null,
+     "export_files": [
+      "causal_evidence.json",
+      "conclusions.json",
+      "confidence.json",
+      "conflict_resolution.json",
+      "evidence.json",
+      "q_001",
+      "q_002",
+      "字段说明.md"
+     ],
+     "official_five_complete": true,
+     "conflict_trace_json_written": false,
+     "conflict_trace_summary": null,
+     "confidence_band_fields": {
+      "band": 4,
+      "predicted_band": 4,
+      "demote_reasons": 4,
+      "band_rel": 4
+     },
+     "dossier_trace_key_after_run": [
+      "NO",
+      "NO"
+     ],
+     "n_conflict_pairs": [
+      1,
+      1
+     ],
+     "n_majority": [
+      2,
+      2
+     ],
+     "wall_s": 5.8
+    },
+    "arm3_双旗开": {
+     "trace_env": "1",
+     "calib_env": "1",
+     "error": null,
+     "export_files": [
+      "causal_evidence.json",
+      "conclusions.json",
+      "confidence.json",
+      "conflict_resolution.json",
+      "evidence.json",
+      "q_001",
+      "q_002",
+      "字段说明.md"
+     ],
+     "official_five_complete": true,
+     "conflict_trace_json_written": false,
+     "conflict_trace_summary": null,
+     "confidence_band_fields": {
+      "band": 4,
+      "predicted_band": 4,
+      "demote_reasons": 4,
+      "band_rel": 4
+     },
+     "dossier_trace_key_after_run": [
+      "NO",
+      "NO"
+     ],
+     "n_conflict_pairs": [
+      1,
+      1
+     ],
+     "n_majority": [
+      2,
+      2
+     ],
+     "wall_s": 6.1
+    }
+   },
+   "case": "刘翔编制“二选一”事件",
+   "n_questions": 2,
+   "checks": {},
+   "question_ids": [
+    "q_001",
+    "q_002"
+   ]
+  }
+ },
+ "checks": {
+  "D腿四臂都取到 @7／holdout": true,
+  "D腿逐臂都取到行数（12 题）": true,
+  "D腿泄漏＝0（逐臂实测，不是没跑）": true,
+  "D腿 @7 两侧都非零": true,
+  "E腿四臂都跑完": true,
+  "E腿逐臂交卷五份齐全": true,
+  "E腿无异常吞跑": true
+ },
+ "checks_failed": [],
+ "legs_requested": [
+  "D",
+  "E"
+ ],
+ "legs_ran": [
+  "D",
+  "E"
+ ]
+}

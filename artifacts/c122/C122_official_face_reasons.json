@@ -1,0 +1,283 @@
+{
+ "schema_version": "c122.official_face_reasons.v1",
+ "case": "刘翔编制“二选一”事件",
+ "qid": "q_003",
+ "passes": 3,
+ "model": "openai/veritas-qwen3-14b",
+ "temperature": null,
+ "masking": "只落引文长度＋sha8＋桶名＋原因码；官方卷原文与引文文本一律不落盘",
+ "buckets": {
+  "fuzzy_close": 9,
+  "pass_current_check": 4,
+  "real_hallucination": 4
+ },
+ "n_fail": 13,
+ "reanchor_reject_codes": {
+  "ratio_below_gate": 6,
+  "coverage_below_gate": 7
+ },
+ "why_b_not_attempted": {},
+ "leaks": 0,
+ "items": [
+  {
+   "pass": 1,
+   "len": 62,
+   "sha8": "1b6b6e80",
+   "declared": [
+    "doc_046#p3"
+   ],
+   "declared_in_box": [
+    "doc_046#p3"
+   ],
+   "bucket": "fuzzy_close",
+   "best_ratio": 0.531,
+   "best_lcs": 52,
+   "reanchor_codes": [
+    "ratio_below_gate"
+   ],
+   "problems": [
+    "引文未命中任何所指段落（doc_046#p3）"
+   ]
+  },
+  {
+   "pass": 1,
+   "len": 41,
+   "sha8": "359c2da5",
+   "declared": [
+    "doc_006#p3"
+   ],
+   "declared_in_box": [
+    "doc_006#p3"
+   ],
+   "bucket": "fuzzy_close",
+   "best_ratio": 0.951,
+   "best_lcs": 21,
+   "reanchor_codes": [
+    "coverage_below_gate"
+   ],
+   "problems": [
+    "引文未命中任何所指段落（doc_006#p3）"
+   ]
+  },
+  {
+   "pass": 1,
+   "len": 75,
+   "sha8": "e209e97f",
+   "declared": [
+    "doc_027#p3"
+   ],
+   "declared_in_box": [
+    "doc_027#p3"
+   ],
+   "bucket": "fuzzy_close",
+   "best_ratio": 0.664,
+   "best_lcs": 67,
+   "reanchor_codes": [
+    "coverage_below_gate"
+   ],
+   "problems": [
+    "引文未命中任何所指段落（doc_027#p3）"
+   ]
+  },
+  {
+   "pass": 1,
+   "len": 102,
+   "sha8": "52e083de",
+   "declared": [
+    "doc_046#p3"
+   ],
+   "declared_in_box": [
+    "doc_046#p3"
+   ],
+   "bucket": "real_hallucination",
+   "best_ratio": 0.737,
+   "best_lcs": 54,
+   "reanchor_codes": [
+    "ratio_below_gate"
+   ],
+   "problems": [
+    "引文未命中任何所指段落（doc_046#p3）"
+   ]
+  },
+  {
+   "pass": 1,
+   "len": 59,
+   "sha8": "1d7d216c",
+   "declared": [
+    "doc_050#p10"
+   ],
+   "declared_in_box": [
+    "doc_050#p10"
+   ],
+   "bucket": "real_hallucination",
+   "best_ratio": 0.551,
+   "best_lcs": 30,
+   "reanchor_codes": [
+    "coverage_below_gate"
+   ],
+   "problems": [
+    "引文未命中任何所指段落（doc_050#p10）"
+   ]
+  },
+  {
+   "pass": 2,
+   "len": 62,
+   "sha8": "1b6b6e80",
+   "declared": [
+    "doc_046#p3"
+   ],
+   "declared_in_box": [
+    "doc_046#p3"
+   ],
+   "bucket": "fuzzy_close",
+   "best_ratio": 0.531,
+   "best_lcs": 52,
+   "reanchor_codes": [
+    "ratio_below_gate"
+   ],
+   "problems": [
+    "引文未命中任何所指段落（doc_046#p3）"
+   ]
+  },
+  {
+   "pass": 2,
+   "len": 75,
+   "sha8": "e209e97f",
+   "declared": [
+    "doc_027#p3"
+   ],
+   "declared_in_box": [
+    "doc_027#p3"
+   ],
+   "bucket": "fuzzy_close",
+   "best_ratio": 0.664,
+   "best_lcs": 67,
+   "reanchor_codes": [
+    "coverage_below_gate"
+   ],
+   "problems": [
+    "引文未命中任何所指段落（doc_027#p3）"
+   ]
+  },
+  {
+   "pass": 2,
+   "len": 41,
+   "sha8": "359c2da5",
+   "declared": [
+    "doc_006#p3"
+   ],
+   "declared_in_box": [
+    "doc_006#p3"
+   ],
+   "bucket": "fuzzy_close",
+   "best_ratio": 0.951,
+   "best_lcs": 21,
+   "reanchor_codes": [
+    "coverage_below_gate"
+   ],
+   "problems": [
+    "引文未命中任何所指段落（doc_006#p3）"
+   ]
+  },
+  {
+   "pass": 2,
+   "len": 75,
+   "sha8": "50548dd2",
+   "declared": [
+    "doc_012#p5"
+   ],
+   "declared_in_box": [
+    "doc_012#p5"
+   ],
+   "bucket": "real_hallucination",
+   "best_ratio": 0.751,
+   "best_lcs": 29,
+   "reanchor_codes": [
+    "ratio_below_gate"
+   ],
+   "problems": [
+    "引文未命中任何所指段落（doc_012#p5）"
+   ]
+  },
+  {
+   "pass": 3,
+   "len": 62,
+   "sha8": "1b6b6e80",
+   "declared": [
+    "doc_046#p3"
+   ],
+   "declared_in_box": [
+    "doc_046#p3"
+   ],
+   "bucket": "fuzzy_close",
+   "best_ratio": 0.531,
+   "best_lcs": 52,
+   "reanchor_codes": [
+    "ratio_below_gate"
+   ],
+   "problems": [
+    "引文未命中任何所指段落（doc_046#p3）"
+   ]
+  },
+  {
+   "pass": 3,
+   "len": 75,
+   "sha8": "e209e97f",
+   "declared": [
+    "doc_027#p3"
+   ],
+   "declared_in_box": [
+    "doc_027#p3"
+   ],
+   "bucket": "fuzzy_close",
+   "best_ratio": 0.664,
+   "best_lcs": 67,
+   "reanchor_codes": [
+    "coverage_below_gate"
+   ],
+   "problems": [
+    "引文未命中任何所指段落（doc_027#p3）"
+   ]
+  },
+  {
+   "pass": 3,
+   "len": 41,
+   "sha8": "359c2da5",
+   "declared": [
+    "doc_006#p3"
+   ],
+   "declared_in_box": [
+    "doc_006#p3"
+   ],
+   "bucket": "fuzzy_close",
+   "best_ratio": 0.951,
+   "best_lcs": 21,
+   "reanchor_codes": [
+    "coverage_below_gate"
+   ],
+   "problems": [
+    "引文未命中任何所指段落（doc_006#p3）"
+   ]
+  },
+  {
+   "pass": 3,
+   "len": 75,
+   "sha8": "50548dd2",
+   "declared": [
+    "doc_012#p5"
+   ],
+   "declared_in_box": [
+    "doc_012#p5"
+   ],
+   "bucket": "real_hallucination",
+   "best_ratio": 0.751,
+   "best_lcs": 29,
+   "reanchor_codes": [
+    "ratio_below_gate"
+   ],
+   "problems": [
+    "引文未命中任何所指段落（doc_012#p5）"
+   ]
+  }
+ ]
+}

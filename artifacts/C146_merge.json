@@ -1,0 +1,166 @@
+{
+ "ticket": "C-146-merge",
+ "order": "合 qoder/c146-conflict-triage @ e8f6392 → main（合前 tip 8e4a817）",
+ "ff_or_rebase": {
+  "ff_possible": false,
+  "reason": "e8f6392 的父＝03bfd4a，而 main 已到 8e4a817（C-145）⇒ 非直系祖先，FF 不成立",
+  "action": "独立 worktree（veritas-merge-c146）cherry-pick e8f6392 到 8e4a817 ⇒ 新 tip f9509a2",
+  "conflicts": "仅 docs/dev-journal.md 一处（两票同栈尾追加）；解法＝C-145 在前、C-146 在后，两条都在",
+  "auto_merged": [
+   "app/core/conflict_trace.py",
+   "app/export/official.py"
+  ],
+  "surface_8e4a817_to_f9509a2": " 10 files changed, 2014 insertions(+), 7 deletions(-)"
+ },
+ "pytest": {
+  "pre_merge_8e4a817": "7 failed, 1275 passed, 1 skipped in 57.54s",
+  "merge_tree_f9509a2": "7 failed, 1291 passed, 1 skipped in 63.17s (0:01:03)",
+  "post_merge_main": "7 failed, 1291 passed, 1 skipped in 61.71s (0:01:01)",
+  "red_names_pre": [
+   "FAILED tests/test_c19_pack_window.py::test_m_production_messages_bite",
+   "FAILED tests/test_c37_engineering_gates.py::test_c37_except_pass_registry_bidirectional",
+   "FAILED tests/test_c37_engineering_gates.py::test_c37_knife8_narrative_mention_does_not_wash",
+   "FAILED tests/test_c37_engineering_gates.py::test_c37_knife9_registry_module_import_does_not_wash",
+   "FAILED tests/test_c37_engineering_gates.py::test_c37_script_zero_ref_equals_exemption_registry",
+   "FAILED tests/test_c37_engineering_gates.py::test_c38_knife_blank_line_top_does_not_red_registries",
+   "FAILED tests/test_c73_window_ledger.py::test_c73_knife_kept_drops_window_ledger_must_red"
+  ],
+  "red_names_post": [
+   "FAILED tests/test_c19_pack_window.py::test_m_production_messages_bite",
+   "FAILED tests/test_c37_engineering_gates.py::test_c37_except_pass_registry_bidirectional",
+   "FAILED tests/test_c37_engineering_gates.py::test_c37_knife8_narrative_mention_does_not_wash",
+   "FAILED tests/test_c37_engineering_gates.py::test_c37_knife9_registry_module_import_does_not_wash",
+   "FAILED tests/test_c37_engineering_gates.py::test_c37_script_zero_ref_equals_exemption_registry",
+   "FAILED tests/test_c37_engineering_gates.py::test_c38_knife_blank_line_top_does_not_red_registries",
+   "FAILED tests/test_c73_window_ledger.py::test_c73_knife_kept_drops_window_ledger_must_red"
+  ],
+  "red_names_post_main": [
+   "FAILED tests/test_c19_pack_window.py::test_m_production_messages_bite",
+   "FAILED tests/test_c37_engineering_gates.py::test_c37_except_pass_registry_bidirectional",
+   "FAILED tests/test_c37_engineering_gates.py::test_c37_knife8_narrative_mention_does_not_wash",
+   "FAILED tests/test_c37_engineering_gates.py::test_c37_knife9_registry_module_import_does_not_wash",
+   "FAILED tests/test_c37_engineering_gates.py::test_c37_script_zero_ref_equals_exemption_registry",
+   "FAILED tests/test_c37_engineering_gates.py::test_c38_knife_blank_line_top_does_not_red_registries",
+   "FAILED tests/test_c73_window_ledger.py::test_c73_knife_kept_drops_window_ledger_must_red"
+  ],
+  "red_names_added_vs_pre": [],
+  "red_names_added": [],
+  "passed_delta": 16
+ },
+ "flag_on_spot_check_on_main": {
+  "by_triage_total": {
+   "date_offset": 0,
+   "oral_misread": 3,
+   "other": 1,
+   "true_oppose": 2
+  },
+  "by_triage_total_n": 6,
+  "per_case": {
+   "demo-solid-state": {
+    "n": 1,
+    "all_rows_have_triage_keys": true,
+    "by_triage": {
+     "date_offset": 0,
+     "oral_misread": 0,
+     "other": 0,
+     "true_oppose": 1
+    },
+    "merge_gate_section": true
+   },
+   "bi-delivery-risk": {
+    "n": 4,
+    "all_rows_have_triage_keys": true,
+    "by_triage": {
+     "date_offset": 0,
+     "oral_misread": 3,
+     "other": 0,
+     "true_oppose": 1
+    },
+    "merge_gate_section": true
+   },
+   "rumor-vs-official": {
+    "n": 1,
+    "all_rows_have_triage_keys": true,
+    "by_triage": {
+     "date_offset": 0,
+     "oral_misread": 0,
+     "other": 1,
+     "true_oppose": 0
+    },
+    "merge_gate_section": true
+   }
+  },
+  "rows_detail": {
+   "demo-solid-state": [
+    {
+     "id": "CFL-41dfd0deff",
+     "triage_class": "true_oppose",
+     "triage_reason_code": "pair_disjoint_numbers",
+     "conflict_class": "unclassified",
+     "disposition": "dissent"
+    }
+   ],
+   "bi-delivery-risk": [
+    {
+     "id": "LEDGER-0001",
+     "triage_class": "oral_misread",
+     "triage_reason_code": "metric_not_quantity",
+     "conflict_class": "unknown_time",
+     "disposition": "undecided"
+    },
+    {
+     "id": "LEDGER-0002",
+     "triage_class": "oral_misread",
+     "triage_reason_code": "single_segment_two_numbers",
+     "conflict_class": "unknown_time",
+     "disposition": "undecided"
+    },
+    {
+     "id": "LEDGER-0003",
+     "triage_class": "oral_misread",
+     "triage_reason_code": "metric_not_quantity",
+     "conflict_class": "unknown_time",
+     "disposition": "undecided"
+    },
+    {
+     "id": "LEDGER-0004",
+     "triage_class": "true_oppose",
+     "triage_reason_code": "distinct_values_unknown_time",
+     "conflict_class": "unknown_time",
+     "disposition": "undecided"
+    }
+   ],
+   "rumor-vs-official": [
+    {
+     "id": "CFL-0106fbe23e",
+     "triage_class": "other",
+     "triage_reason_code": "pair_mechanically_undetermined",
+     "conflict_class": "unclassified",
+     "disposition": "dissent"
+    }
+   ]
+  },
+  "note": "合后读数与枝上单独跑不同＝C-145 归并闸已在场（行集变化），分流轴本身 3/3 齐全；merge_gate 节与 triage 载荷共存"
+ },
+ "flag_off_cross_tree": {
+  "measured_in": "合入前的 merge 树 vs 8e4a817 树（缓存符号链接对齐主检出＋背靠背重跑）",
+  "report_json_diff_paths": 0,
+  "report_md_diff_lines_after_normalizing": 0,
+  "report_md_raw_diff_lines": "10／7／8 行（剥墙钟秒数与随机 CON·CFL id 后＝0）",
+  "chain_jsonl_multiset_same": "3/3（剥 hash／mac／payload_hash／prev_hash／index＋到达序＋墙钟）",
+  "normalizer_extra_note": "committed 探针 crossface 段的文本面未剥「N.N 秒」与随机 id，故 md／chain 这两项用当场 harnes 复算，已在此披露"
+ },
+ "export_face": {
+  "records_carry_triage": true,
+  "summary_by_triage_present": true,
+  "empty_state_keeps_true_question_count_sentence": true,
+  "detail_declares_both_axes": "conflict_class 三档＋triage_class 四档；merge_gate 否决句仅在确有否决时追加（C-145 既有断言未破）"
+ },
+ "push": {
+  "result": "8e4a817..f9509a2 main -> main（无 force）",
+  "local_main": "f9509a24644dca2bdbbecb08e3bf03e915a28268",
+  "origin_main": "f9509a24644dca2bdbbecb08e3bf03e915a28268"
+ },
+ "forbidden_and_untouched": "未开 cite_accept；未改报告叙事面；未碰 C-141 枝与其 worktree；未碰 C-145 线与其 worktree；禁枝未合",
+ "cleanup": "摘掉临时 merge 树与 8e4a817 对照树、删 tmp/c146-rebase；veritas-c146（枝树）与 C-140／C-141／C-143／C-144／C-145 各树未动"
+}

@@ -1,0 +1,429 @@
+{
+  "件": "C-120 件①（解剖，零 LLM）",
+  "枝树": "/private/tmp/c120/c113",
+  "枝tip": "1e14cfc",
+  "main_tip": "0e957fa",
+  "case": "刘翔编制“二选一”事件",
+  "qids": [
+    "q_001",
+    "q_002",
+    "q_003"
+  ],
+  "leaks": 0,
+  "rows": [
+    {
+      "qid": "q_001",
+      "denom": 4,
+      "box_same": true,
+      "n_sel_off": 88,
+      "n_sel_on": 88,
+      "gold_in_box": [
+        "doc_002#p3",
+        "doc_024#p1",
+        "doc_025#p6",
+        "doc_035#p7"
+      ],
+      "must": [
+        "doc_033#p2",
+        "doc_012#p5",
+        "doc_002#p3",
+        "doc_035#p7",
+        "doc_024#p1",
+        "doc_025#p6",
+        "doc_043#p1",
+        "doc_029#p8",
+        "doc_029#p6",
+        "doc_025#p1"
+      ],
+      "must_in_box": [
+        "doc_002#p3",
+        "doc_012#p5",
+        "doc_024#p1",
+        "doc_025#p1",
+        "doc_025#p6",
+        "doc_029#p6",
+        "doc_029#p8",
+        "doc_033#p2",
+        "doc_035#p7",
+        "doc_043#p1"
+      ],
+      "must_extra_not_in_box": [],
+      "n_must_extra": 0,
+      "must_gold_hits": [
+        "doc_002#p3",
+        "doc_024#p1",
+        "doc_025#p6",
+        "doc_035#p7"
+      ],
+      "must_non_gold": [
+        "doc_012#p5",
+        "doc_025#p1",
+        "doc_029#p6",
+        "doc_029#p8",
+        "doc_033#p2",
+        "doc_043#p1"
+      ],
+      "block_chars_off": 21801,
+      "block_chars_on": 21989,
+      "block_delta_chars": 188,
+      "n_rendered_off": 88,
+      "n_rendered_on": 88,
+      "rendered_added": [],
+      "rendered_missing": [],
+      "order_changed_prefix": false,
+      "window_tokens_declared": 4096,
+      "block_diff_span": {
+        "common_prefix_chars": 42,
+        "common_suffix_chars": 21759,
+        "removed_chars": 0,
+        "added_chars": 188,
+        "pure_insertion": true,
+        "added_head": "【点名必读／树17】下列段落已进入本窗资料清单。作答时证据链须覆盖其中与议题相关的条目（segment_id 原样引用）；不得只复述通稿而跳过点名段：\ndoc_033#p2、doc_012#p5、doc_002#p3、doc_035#p7、doc_024#p1、doc_025#p6、doc_043#p1、doc_029#p8、doc_029#p6、doc_025#p1。\n\n"
+      },
+      "tail_cut": {
+        "window_source": "fallback",
+        "window_rule": "align_to_window_未检查",
+        "window_detail": "端点可探但该模型未写 num_ctx，落保守常量 4096（未检查；〔150〕本机见过 Modelfile 未写 num_ctx 时运行时回退 2048，本保守值仍可能偏大，不是安全保证）",
+        "dens_1.45": {
+          "est_tokens_block_only": 15164.8,
+          "room_chars_in_window": 5939,
+          "block_chars": 21989,
+          "tail_chars_out": 16050
+        },
+        "dens_1.6": {
+          "est_tokens_block_only": 13743.1,
+          "room_chars_in_window": 6553,
+          "block_chars": 21989,
+          "tail_chars_out": 15436
+        }
+      },
+      "gold_positions": {
+        "doc_002#p3": {
+          "text_head": "9月1日，刘翔递交了自愿选择自主择业申请表，并签署了",
+          "off_present": true,
+          "on_present": true,
+          "off_ratio": 0.0141,
+          "on_ratio": 0.0226,
+          "on_chars_from_head": 496
+        },
+        "doc_024#p1": {
+          "text_head": "上海体育局回应刘翔买断\n情况通报\n刘翔同志是我国优秀",
+          "off_present": true,
+          "on_present": true,
+          "off_ratio": 0.3003,
+          "on_ratio": 0.3062,
+          "on_chars_from_head": 6734
+        },
+        "doc_025#p6": {
+          "text_head": "在运动员退役安置的制度框架中，“买断”对应的表述是“",
+          "off_present": true,
+          "on_present": true,
+          "off_ratio": 0.356,
+          "on_ratio": 0.3615,
+          "on_chars_from_head": 7950
+        },
+        "doc_035#p7": {
+          "text_head": "9月7日，人事关系手续基本办理完结，并按规定给予了自",
+          "off_present": true,
+          "on_present": true,
+          "off_ratio": 0.5795,
+          "on_ratio": 0.5831,
+          "on_chars_from_head": 12821
+        }
+      },
+      "leaks": [],
+      "md5_off": "fb8d1e5d8251",
+      "md5_on": "153a258292f5"
+    },
+    {
+      "qid": "q_002",
+      "denom": 5,
+      "box_same": true,
+      "n_sel_off": 94,
+      "n_sel_on": 94,
+      "gold_in_box": [
+        "doc_002#p3",
+        "doc_009#p5",
+        "doc_028#p1",
+        "doc_029#p7",
+        "doc_051#p3"
+      ],
+      "must": [
+        "doc_009#p5",
+        "doc_011#p7",
+        "doc_041#p1",
+        "doc_002#p3",
+        "doc_051#p3",
+        "doc_051#p5",
+        "doc_029#p7",
+        "doc_029#p8",
+        "doc_025#p1",
+        "doc_012#p6"
+      ],
+      "must_in_box": [
+        "doc_002#p3",
+        "doc_009#p5",
+        "doc_011#p7",
+        "doc_012#p6",
+        "doc_025#p1",
+        "doc_029#p7",
+        "doc_029#p8",
+        "doc_041#p1",
+        "doc_051#p3",
+        "doc_051#p5"
+      ],
+      "must_extra_not_in_box": [],
+      "n_must_extra": 0,
+      "must_gold_hits": [
+        "doc_002#p3",
+        "doc_009#p5",
+        "doc_029#p7",
+        "doc_051#p3"
+      ],
+      "must_non_gold": [
+        "doc_011#p7",
+        "doc_012#p6",
+        "doc_025#p1",
+        "doc_029#p8",
+        "doc_041#p1",
+        "doc_051#p5"
+      ],
+      "block_chars_off": 22640,
+      "block_chars_on": 22828,
+      "block_delta_chars": 188,
+      "n_rendered_off": 94,
+      "n_rendered_on": 94,
+      "rendered_added": [],
+      "rendered_missing": [],
+      "order_changed_prefix": false,
+      "window_tokens_declared": 4096,
+      "block_diff_span": {
+        "common_prefix_chars": 40,
+        "common_suffix_chars": 22600,
+        "removed_chars": 0,
+        "added_chars": 188,
+        "pure_insertion": true,
+        "added_head": "【点名必读／树17】下列段落已进入本窗资料清单。作答时证据链须覆盖其中与议题相关的条目（segment_id 原样引用）；不得只复述通稿而跳过点名段：\ndoc_009#p5、doc_011#p7、doc_041#p1、doc_002#p3、doc_051#p3、doc_051#p5、doc_029#p7、doc_029#p8、doc_025#p1、doc_012#p6。\n\n"
+      },
+      "tail_cut": {
+        "window_source": "fallback",
+        "window_rule": "align_to_window_未检查",
+        "window_detail": "端点可探但该模型未写 num_ctx，落保守常量 4096（未检查；〔150〕本机见过 Modelfile 未写 num_ctx 时运行时回退 2048，本保守值仍可能偏大，不是安全保证）",
+        "dens_1.45": {
+          "est_tokens_block_only": 15743.4,
+          "room_chars_in_window": 5939,
+          "block_chars": 22828,
+          "tail_chars_out": 16889
+        },
+        "dens_1.6": {
+          "est_tokens_block_only": 14267.5,
+          "room_chars_in_window": 6553,
+          "block_chars": 22828,
+          "tail_chars_out": 16275
+        }
+      },
+      "gold_positions": {
+        "doc_002#p3": {
+          "text_head": "9月1日，刘翔递交了自愿选择自主择业申请表，并签署了",
+          "off_present": true,
+          "on_present": true,
+          "off_ratio": 0.0183,
+          "on_ratio": 0.0264,
+          "on_chars_from_head": 603
+        },
+        "doc_009#p5": {
+          "text_head": "但刘翔对这个回应并不买账，继续于深夜发文：“不是我不",
+          "off_present": true,
+          "on_present": true,
+          "off_ratio": 0.1513,
+          "on_ratio": 0.1583,
+          "on_chars_from_head": 3613
+        },
+        "doc_028#p1": {
+          "text_head": "每经评论员 付克友\n刘翔上热搜了。这位雅典奥运会11",
+          "off_present": true,
+          "on_present": true,
+          "off_ratio": 0.4607,
+          "on_ratio": 0.4651,
+          "on_chars_from_head": 10618
+        },
+        "doc_029#p7": {
+          "text_head": "9月2日：刘翔将2015年4月退役至今体制发放的全部",
+          "off_present": true,
+          "on_present": true,
+          "off_ratio": 0.5013,
+          "on_ratio": 0.5054,
+          "on_chars_from_head": 11537
+        },
+        "doc_051#p3": {
+          "text_head": "针对刘翔在个人微博发文情况，上海市体育局回应称，刘翔",
+          "off_present": true,
+          "on_present": true,
+          "off_ratio": 0.9298,
+          "on_ratio": 0.9303,
+          "on_chars_from_head": 21238
+        }
+      },
+      "leaks": [],
+      "md5_off": "2f581932956b",
+      "md5_on": "3f14f6bdfa44"
+    },
+    {
+      "qid": "q_003",
+      "denom": 5,
+      "box_same": true,
+      "n_sel_off": 95,
+      "n_sel_on": 95,
+      "gold_in_box": [
+        "doc_002#p3",
+        "doc_006#p3",
+        "doc_012#p5",
+        "doc_033#p5"
+      ],
+      "must": [
+        "doc_012#p5",
+        "doc_046#p3",
+        "doc_006#p3",
+        "doc_002#p3",
+        "doc_033#p5",
+        "doc_027#p3",
+        "doc_050#p10",
+        "doc_029#p6",
+        "doc_025#p1",
+        "doc_043#p4"
+      ],
+      "must_in_box": [
+        "doc_002#p3",
+        "doc_006#p3",
+        "doc_012#p5",
+        "doc_025#p1",
+        "doc_027#p3",
+        "doc_029#p6",
+        "doc_033#p5",
+        "doc_043#p4",
+        "doc_046#p3",
+        "doc_050#p10"
+      ],
+      "must_extra_not_in_box": [],
+      "n_must_extra": 0,
+      "must_gold_hits": [
+        "doc_002#p3",
+        "doc_006#p3",
+        "doc_012#p5",
+        "doc_033#p5"
+      ],
+      "must_non_gold": [
+        "doc_025#p1",
+        "doc_027#p3",
+        "doc_029#p6",
+        "doc_043#p4",
+        "doc_046#p3",
+        "doc_050#p10"
+      ],
+      "block_chars_off": 22172,
+      "block_chars_on": 22361,
+      "block_delta_chars": 189,
+      "n_rendered_off": 95,
+      "n_rendered_on": 95,
+      "rendered_added": [],
+      "rendered_missing": [],
+      "order_changed_prefix": false,
+      "window_tokens_declared": 4096,
+      "block_diff_span": {
+        "common_prefix_chars": 42,
+        "common_suffix_chars": 22130,
+        "removed_chars": 0,
+        "added_chars": 189,
+        "pure_insertion": true,
+        "added_head": "【点名必读／树17】下列段落已进入本窗资料清单。作答时证据链须覆盖其中与议题相关的条目（segment_id 原样引用）；不得只复述通稿而跳过点名段：\ndoc_012#p5、doc_046#p3、doc_006#p3、doc_002#p3、doc_033#p5、doc_027#p3、doc_050#p10、doc_029#p6、doc_025#p1、doc_043#p4。\n\n"
+      },
+      "tail_cut": {
+        "window_source": "fallback",
+        "window_rule": "align_to_window_未检查",
+        "window_detail": "端点可探但该模型未写 num_ctx，落保守常量 4096（未检查；〔150〕本机见过 Modelfile 未写 num_ctx 时运行时回退 2048，本保守值仍可能偏大，不是安全保证）",
+        "dens_1.45": {
+          "est_tokens_block_only": 15421.4,
+          "room_chars_in_window": 5939,
+          "block_chars": 22361,
+          "tail_chars_out": 16422
+        },
+        "dens_1.6": {
+          "est_tokens_block_only": 13975.6,
+          "room_chars_in_window": 6553,
+          "block_chars": 22361,
+          "tail_chars_out": 15808
+        }
+      },
+      "gold_positions": {
+        "doc_002#p3": {
+          "text_head": "9月1日，刘翔递交了自愿选择自主择业申请表，并签署了",
+          "off_present": true,
+          "on_present": true,
+          "off_ratio": 0.0167,
+          "on_ratio": 0.025,
+          "on_chars_from_head": 560
+        },
+        "doc_006#p3": {
+          "text_head": "刘翔表示，官方说按规定处理“在编不在岗”，但其退役至",
+          "off_present": true,
+          "on_present": true,
+          "off_ratio": 0.0739,
+          "on_ratio": 0.0817,
+          "on_chars_from_head": 1828
+        },
+        "doc_012#p5": {
+          "text_head": "上海体育局发布该声明的背景是，体育局因应巡视组整改要",
+          "off_present": true,
+          "on_present": true,
+          "off_ratio": 0.1991,
+          "on_ratio": 0.2058,
+          "on_chars_from_head": 4603
+        },
+        "doc_033#p5": {
+          "text_head": "所以也迷茫。”\n刘翔直言，没有第三条路给他选，征求广",
+          "off_present": true,
+          "on_present": true,
+          "off_ratio": 0.5969,
+          "on_ratio": 0.6003,
+          "on_chars_from_head": 13423
+        }
+      },
+      "leaks": [],
+      "md5_off": "b4ec07f862b3",
+      "md5_on": "002ede51c21b"
+    }
+  ],
+  "note": "gold_ids 在 density_submit 只做披露不参与选段（已读源码核实）；本票不产模型调用。",
+  "A_verdict": {
+    "主因": "跑动噪声 ±1 掩盖了「事前点名把证据名额换成非金标段」这个可复现偏移；q_003 的回落本身不复现；最大漏桶在引文逐字核对不过（每遍 3～5 条被打回），不在点名",
+    "件②读数": {
+      "off_l3": [
+        3,
+        2,
+        2
+      ],
+      "on_l3": [
+        1,
+        2,
+        2
+      ],
+      "目标段被引": "关 2/3 开 2/3",
+      "非金标点名段被引": "关每遍 0／开每遍 3～4"
+    },
+    "排除": [
+      "装箱挤出（两臂盒逐段相同）",
+      "提示层加段（纯插入 188～189 字、渲染段数 95→95）",
+      "后置闸剪枝（模块只写 accounting＋插块）"
+    ],
+    "未证": [
+      "服务端尾部截断到哪（window_ledger 在这条路上为 None；另有反证：另一题 12821 字处金标被引过）"
+    ],
+    "仪器坑": [
+      "探针不走 _reject_failed_citations ⇒ L3 是打回前口径",
+      "L3 用 para∪quote 而 seen_not 只用 id 面",
+      "本版 cause_c 判据第一版写错已订正",
+      "单遍配对不配归因 ±1 ⇒ 以后 L3 类刀门槛预写每臂 ≥5 遍"
+    ],
+    "B": "未开（等 Boyu 点头重定靶子）"
+  }
+}

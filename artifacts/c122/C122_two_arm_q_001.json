@@ -1,0 +1,506 @@
+{
+ "schema_version": "c122.two_arm.v1",
+ "case": "刘翔编制“二选一”事件",
+ "qid": "q_001",
+ "model": "openai/veritas-qwen3-14b",
+ "temperature": null,
+ "model_probe_enabled": true,
+ "force_profile_tier": "",
+ "passes_per_arm": 3,
+ "prune_ruler": "pipeline._reject_failed_citations（生产剪证那一步＝打回后口径）",
+ "base_env": {
+  "VERITAS_KG_SUBMIT_SURFACE": "1",
+  "VERITAS_KG_STAGE1": "1",
+  "VERITAS_KG_REHYDRATE_BOX": "1",
+  "VERITAS_MULTI_BOX": "0",
+  "VERITAS_SECOND_PASS": "0",
+  "VERITAS_REVIEW_BOOST": "0",
+  "VERITAS_TREE15_DEPRESS": "0",
+  "VERITAS_ANCHOR_STABLE": "0",
+  "VERITAS_CONFLICT_TRACE": "0",
+  "VERITAS_CONF_CALIB": "0",
+  "VERITAS_CLAIM_SLOTS": "0",
+  "VERITAS_MECH_MERGE": "0",
+  "VERITAS_LEDGER_TIME_CLASS": "0",
+  "VERITAS_LEDGER_OUTLIER_TAG": "0",
+  "VERITAS_SOURCE_TIME_UNIFIED": "0",
+  "VERITAS_EVOLVE_VALUE_CHANGE": "0",
+  "VERITAS_METRIC_CANON": "0",
+  "VERITAS_RELEVANCE_SOFT_GATE": "1"
+ },
+ "stats": {
+  "on": {
+   "n_passes": 3,
+   "fail_rate": {
+    "vals": [
+     0.0,
+     0.25,
+     0.0
+    ],
+    "mean": 0.0833
+   },
+   "n_rejected": {
+    "vals": [
+     0,
+     1,
+     0
+    ],
+    "mean": 0.3333
+   },
+   "n_ev_post": {
+    "vals": [
+     4,
+     3,
+     4
+    ],
+    "mean": 3.6667
+   },
+   "gold_cited_post": {
+    "vals": [
+     3,
+     3,
+     3
+    ],
+    "mean": 3.0
+   },
+   "gold_cited_pre": {
+    "vals": [
+     3,
+     4,
+     3
+    ],
+    "mean": 3.3333
+   },
+   "l3_post": {
+    "vals": [
+     3,
+     3,
+     3
+    ],
+    "mean": 3.0
+   },
+   "l3_pre": {
+    "vals": [
+     3,
+     4,
+     3
+    ],
+    "mean": 3.3333
+   },
+   "nongold_cited_post": {
+    "vals": [
+     1,
+     0,
+     0
+    ],
+    "mean": 0.3333
+   },
+   "ruler_fail_after": {
+    "vals": [
+     0,
+     0,
+     0
+    ],
+    "mean": 0.0
+   },
+   "unattributed_after": {
+    "vals": [
+     0,
+     0,
+     0
+    ],
+    "mean": 0.0
+   },
+   "strict_fail_after": {
+    "vals": [
+     0,
+     0,
+     0
+    ],
+    "mean": 0.0
+   },
+   "reanchor_total": 1,
+   "fmt_pass_total": 0,
+   "still_fail_total": 1,
+   "checked_total": 12,
+   "rounds_max": 1
+  },
+  "off": {
+   "n_passes": 3,
+   "fail_rate": {
+    "vals": [
+     0.0,
+     0.3333,
+     0.0
+    ],
+    "mean": 0.1111
+   },
+   "n_rejected": {
+    "vals": [
+     0,
+     1,
+     0
+    ],
+    "mean": 0.3333
+   },
+   "n_ev_post": {
+    "vals": [
+     4,
+     2,
+     3
+    ],
+    "mean": 3.0
+   },
+   "gold_cited_post": {
+    "vals": [
+     4,
+     2,
+     3
+    ],
+    "mean": 3.0
+   },
+   "gold_cited_pre": {
+    "vals": [
+     4,
+     3,
+     3
+    ],
+    "mean": 3.3333
+   },
+   "l3_post": {
+    "vals": [
+     4,
+     2,
+     3
+    ],
+    "mean": 3.0
+   },
+   "l3_pre": {
+    "vals": [
+     4,
+     3,
+     3
+    ],
+    "mean": 3.3333
+   },
+   "nongold_cited_post": {
+    "vals": [
+     0,
+     0,
+     0
+    ],
+    "mean": 0.0
+   },
+   "ruler_fail_after": {
+    "vals": [
+     0,
+     0,
+     0
+    ],
+    "mean": 0.0
+   },
+   "unattributed_after": {
+    "vals": [
+     0,
+     0,
+     0
+    ],
+    "mean": 0.0
+   },
+   "strict_fail_after": {
+    "vals": [
+     0,
+     0,
+     0
+    ],
+    "mean": 0.0
+   },
+   "reanchor_total": 0,
+   "fmt_pass_total": 0,
+   "still_fail_total": 0,
+   "checked_total": 0,
+   "rounds_max": 0
+  }
+ },
+ "pairwise": {
+  "fail_rate_mean_off": 0.1111,
+  "fail_rate_mean_on": 0.0833,
+  "p_fail_rate_lower": 0.49558,
+  "gold_cited_post_mean_off": 3.0,
+  "gold_cited_post_mean_on": 3.0,
+  "p_gold_cited_post_on_gt_off": 0.70306,
+  "n_ev_post_mean_off": 3.0,
+  "n_ev_post_mean_on": 3.667,
+  "p_n_ev_post_on_gt_off": 0.34513,
+  "per_pass_gold_cited_off": [
+   4.0,
+   2.0,
+   3.0
+  ],
+  "per_pass_gold_cited_on": [
+   3.0,
+   3.0,
+   3.0
+  ],
+  "per_pass_fail_rate_off": [
+   0.0,
+   0.3333,
+   0.0
+  ],
+  "per_pass_fail_rate_on": [
+   0.0,
+   0.25,
+   0.0
+  ]
+ },
+ "leaks_total": 0,
+ "rows": [
+  {
+   "arm": "off",
+   "stub": false,
+   "denom": 4,
+   "box_n": 88,
+   "box_sel_sha": "86b7905aeb26",
+   "n_ev_pre": 4,
+   "n_rejected": 0,
+   "n_ev_post": 4,
+   "fail_rate": 0.0,
+   "ruler_fail_after": 0,
+   "strict_fail_after": 0,
+   "unattributed_after": 0,
+   "fabricated_line_survived": false,
+   "gold_cited_pre": 4,
+   "gold_cited_post": 4,
+   "gold_cited_post_ids": [
+    "doc_002#p3",
+    "doc_024#p1",
+    "doc_025#p6",
+    "doc_035#p7"
+   ],
+   "nongold_cited_pre": 0,
+   "nongold_cited_post": 0,
+   "l3_pre": 4,
+   "l3_post": 4,
+   "rejected_ids": [],
+   "tally": {},
+   "n_reanchored_in_products": 0,
+   "prompt_sha": [
+    "e6728b2094f83abe"
+   ],
+   "prompt_chars": 3822,
+   "leaks": [],
+   "wall_s": 40.1,
+   "conclusions_post": 1,
+   "pass": 1
+  },
+  {
+   "arm": "off",
+   "stub": false,
+   "denom": 4,
+   "box_n": 88,
+   "box_sel_sha": "86b7905aeb26",
+   "n_ev_pre": 3,
+   "n_rejected": 1,
+   "n_ev_post": 2,
+   "fail_rate": 0.3333,
+   "ruler_fail_after": 0,
+   "strict_fail_after": 0,
+   "unattributed_after": 0,
+   "fabricated_line_survived": false,
+   "gold_cited_pre": 3,
+   "gold_cited_post": 2,
+   "gold_cited_post_ids": [
+    "doc_002#p3",
+    "doc_035#p7"
+   ],
+   "nongold_cited_pre": 0,
+   "nongold_cited_post": 0,
+   "l3_pre": 3,
+   "l3_post": 2,
+   "rejected_ids": [
+    "EV-18bbf23a1bea"
+   ],
+   "tally": {},
+   "n_reanchored_in_products": 0,
+   "prompt_sha": [
+    "e6728b2094f83abe"
+   ],
+   "prompt_chars": 3822,
+   "leaks": [],
+   "wall_s": 31.6,
+   "conclusions_post": 1,
+   "pass": 2
+  },
+  {
+   "arm": "off",
+   "stub": false,
+   "denom": 4,
+   "box_n": 88,
+   "box_sel_sha": "86b7905aeb26",
+   "n_ev_pre": 3,
+   "n_rejected": 0,
+   "n_ev_post": 3,
+   "fail_rate": 0.0,
+   "ruler_fail_after": 0,
+   "strict_fail_after": 0,
+   "unattributed_after": 0,
+   "fabricated_line_survived": false,
+   "gold_cited_pre": 3,
+   "gold_cited_post": 3,
+   "gold_cited_post_ids": [
+    "doc_024#p1",
+    "doc_025#p6",
+    "doc_035#p7"
+   ],
+   "nongold_cited_pre": 0,
+   "nongold_cited_post": 0,
+   "l3_pre": 3,
+   "l3_post": 3,
+   "rejected_ids": [],
+   "tally": {},
+   "n_reanchored_in_products": 0,
+   "prompt_sha": [
+    "e6728b2094f83abe"
+   ],
+   "prompt_chars": 3822,
+   "leaks": [],
+   "wall_s": 29.4,
+   "conclusions_post": 1,
+   "pass": 3
+  },
+  {
+   "arm": "on",
+   "stub": false,
+   "denom": 4,
+   "box_n": 88,
+   "box_sel_sha": "86b7905aeb26",
+   "n_ev_pre": 4,
+   "n_rejected": 0,
+   "n_ev_post": 4,
+   "fail_rate": 0.0,
+   "ruler_fail_after": 0,
+   "strict_fail_after": 0,
+   "unattributed_after": 0,
+   "fabricated_line_survived": false,
+   "gold_cited_pre": 3,
+   "gold_cited_post": 3,
+   "gold_cited_post_ids": [
+    "doc_024#p1",
+    "doc_025#p6",
+    "doc_035#p7"
+   ],
+   "nongold_cited_pre": 1,
+   "nongold_cited_post": 1,
+   "l3_pre": 3,
+   "l3_post": 3,
+   "rejected_ids": [],
+   "tally": {
+    "n_checked": 4,
+    "n_pass_strict": 4,
+    "n_fmt_pass": 0,
+    "n_reanchored": 0,
+    "n_still_fail": 0,
+    "rounds": 1
+   },
+   "n_reanchored_in_products": 0,
+   "prompt_sha": [
+    "e6728b2094f83abe"
+   ],
+   "prompt_chars": 3822,
+   "leaks": [],
+   "wall_s": 42.9,
+   "conclusions_post": 4,
+   "pass": 1
+  },
+  {
+   "arm": "on",
+   "stub": false,
+   "denom": 4,
+   "box_n": 88,
+   "box_sel_sha": "86b7905aeb26",
+   "n_ev_pre": 4,
+   "n_rejected": 1,
+   "n_ev_post": 3,
+   "fail_rate": 0.25,
+   "ruler_fail_after": 0,
+   "strict_fail_after": 0,
+   "unattributed_after": 0,
+   "fabricated_line_survived": false,
+   "gold_cited_pre": 4,
+   "gold_cited_post": 3,
+   "gold_cited_post_ids": [
+    "doc_002#p3",
+    "doc_024#p1",
+    "doc_035#p7"
+   ],
+   "nongold_cited_pre": 0,
+   "nongold_cited_post": 0,
+   "l3_pre": 4,
+   "l3_post": 3,
+   "rejected_ids": [
+    "EV-381b3bc53029"
+   ],
+   "tally": {
+    "n_checked": 4,
+    "n_pass_strict": 3,
+    "n_fmt_pass": 0,
+    "n_reanchored": 0,
+    "n_still_fail": 1,
+    "rounds": 1
+   },
+   "n_reanchored_in_products": 0,
+   "prompt_sha": [
+    "e6728b2094f83abe"
+   ],
+   "prompt_chars": 3822,
+   "leaks": [],
+   "wall_s": 33.6,
+   "conclusions_post": 1,
+   "pass": 2
+  },
+  {
+   "arm": "on",
+   "stub": false,
+   "denom": 4,
+   "box_n": 88,
+   "box_sel_sha": "86b7905aeb26",
+   "n_ev_pre": 4,
+   "n_rejected": 0,
+   "n_ev_post": 4,
+   "fail_rate": 0.0,
+   "ruler_fail_after": 0,
+   "strict_fail_after": 0,
+   "unattributed_after": 0,
+   "fabricated_line_survived": false,
+   "gold_cited_pre": 3,
+   "gold_cited_post": 3,
+   "gold_cited_post_ids": [
+    "doc_002#p3",
+    "doc_025#p6",
+    "doc_035#p7"
+   ],
+   "nongold_cited_pre": 0,
+   "nongold_cited_post": 0,
+   "l3_pre": 3,
+   "l3_post": 3,
+   "rejected_ids": [],
+   "tally": {
+    "n_checked": 4,
+    "n_pass_strict": 3,
+    "n_fmt_pass": 0,
+    "n_reanchored": 1,
+    "n_still_fail": 0,
+    "rounds": 1
+   },
+   "n_reanchored_in_products": 1,
+   "prompt_sha": [
+    "e6728b2094f83abe"
+   ],
+   "prompt_chars": 3822,
+   "leaks": [],
+   "wall_s": 39.1,
+   "conclusions_post": 3,
+   "pass": 3
+  }
+ ]
+}

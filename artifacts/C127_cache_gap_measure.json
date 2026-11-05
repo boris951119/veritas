@@ -1,0 +1,32 @@
+{
+  "ticket": "C-127-part1-cache-gap-measure",
+  "date": "2026-11-03",
+  "head": "57e768782e21d31871959ed3b44cfbff5a020895",
+  "flag_default": {"Settings": false, "from_env": false},
+  "method": "旗开（探针进程内 env）刘翔 q_001 ensure_test_tree_submit(force=True)；冷臂＝挪走 .kg_lab_vault（.kgcache 留，同 C-125 冷缓存场景），跑完还原；零 LLM、零真跑",
+  "findings": {
+    "disclosure_keys": {
+      "warm_arm_kg_test_tree_keys": ["close_read_n", "embed", "k", "line", "n_pairs", "pool_n", "route", "rows_n", "stage1_names", "universe_n"],
+      "cold_arm_keys_identical": true,
+      "cold_embed_report": {"status": "ok", "n_vec": 372},
+      "top_level_suspicious_keys": [],
+      "build_surface_return_suspicious_keys": [],
+      "verdict": "缺席＝零披露键，与 C-126① 一致"
+    },
+    "builder_script": {
+      "summarize_paras_summary_path_in_repo": true,
+      "auto_called_on_flag_on_hot_path": false,
+      "batch_summarize_case_in_main": false,
+      "port_note": "实验版 import 的 slices.union_pack_ids 已按金标隔离闸摘除；端口版 universe 逻辑须自含在 scripts/ 侧（同 probe_c125 的 _questions_from_conclusions/_union_pack_ids 法），load_official_case 用 app.ingest.official_case"
+    },
+    "flag_off_side_evidence_baseline": {
+      "source": "artifacts/c125/C125_six_case_gate.md（合后 main 缓存对齐复跑 279.4s）",
+      "liuxiang_at7": 12,
+      "holdout_micro": {"wanghong": 0.8571, "kh_th": 0.8, "ai171": 0.8},
+      "leaks": 0,
+      "ready": true
+    }
+  },
+  "repro": "mv .kg_lab_vault /tmp/aside && VERITAS_TEST_TREE_LINE=1 跑 build_test_tree_surface（刘翔）看 accounting[kg_test_tree] 键集与暖臂逐位同、无缺席键，跑完 mv 回；探针 /tmp/c127/probe_cache.py（未入库）",
+  "hygiene": "无官语料原文；无 Markdown 表；缓存目录未提交"
+}

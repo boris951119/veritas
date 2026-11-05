@@ -1,0 +1,200 @@
+{
+ "n_passes_per_arm": [
+  8,
+  8
+ ],
+ "src": {
+  "C120_q003_noise.json": [
+   3
+  ],
+  "C120_q003_noise_v2.json": [
+   5
+  ]
+ },
+ "l3_off_sorted": [
+  2,
+  2,
+  3,
+  3,
+  3,
+  3,
+  3,
+  4
+ ],
+ "l3_on_sorted": [
+  1,
+  1,
+  1,
+  1,
+  1,
+  2,
+  2,
+  3
+ ],
+ "l3_off_mean": 2.875,
+ "l3_on_mean": 1.5,
+ "l3_diff_mean": -1.375,
+ "l3_off_span": 2,
+ "l3_on_span": 2,
+ "old_criterion_b_noise": true,
+ "perm_test": {
+  "obs_abs_mean_diff": 1.375,
+  "p_two_sided": 0.007,
+  "n_perm": "C(16,8)=12870"
+ },
+ "l3_le1_off": 0,
+ "l3_le1_on": 5,
+ "fisher_l3_le1_one_sided_p": 0.0128,
+ "l3_ge3_off": 6,
+ "l3_ge3_on": 1,
+ "per_gold_cited": {
+  "doc_002#p3": {
+   "off": "7/8",
+   "on": "1/8",
+   "fisher_one_sided_p": 0.00505
+  },
+  "doc_006#p3": {
+   "off": "8/8",
+   "on": "8/8",
+   "fisher_one_sided_p": 1.0
+  },
+  "doc_012#p5": {
+   "off": "6/8",
+   "on": "3/8",
+   "fisher_one_sided_p": 0.15734
+  },
+  "doc_033#p5": {
+   "off": "2/8",
+   "on": "0/8",
+   "fisher_one_sided_p": 0.23333
+  }
+ },
+ "target_cited": {
+  "off": "6/8",
+  "on": "3/8",
+  "fisher_one_sided_p": 0.1573
+ },
+ "nongold_cited_off": [
+  2,
+  3,
+  3,
+  2,
+  3,
+  2,
+  3,
+  3
+ ],
+ "nongold_cited_on": [
+  3,
+  4,
+  4,
+  5,
+  4,
+  5,
+  4,
+  5
+ ],
+ "nongold_mean": {
+  "off": 2.62,
+  "on": 4.25
+ },
+ "must_non_gold_cited_on_all": {
+  "probe_3pass": [
+   3,
+   4,
+   4
+  ],
+  "probe_5pass": [
+   5,
+   4,
+   5,
+   4,
+   5
+  ]
+ },
+ "face_fidelity_rows_inconsistent": [],
+ "check_fail": {
+  "off": "21/46=0.457",
+  "on": "26/54=0.481"
+ },
+ "cited_ids_total": {
+  "off": [
+   5,
+   5,
+   5,
+   6,
+   6,
+   5,
+   6,
+   6
+  ],
+  "on": [
+   4,
+   6,
+   6,
+   6,
+   5,
+   6,
+   7,
+   6
+  ]
+ },
+ "cited_ids_total_mean": {
+  "off": 5.5,
+  "on": 5.75
+ },
+ "n_evidences": {
+  "off": [
+   6,
+   5,
+   6,
+   6,
+   6,
+   5,
+   6,
+   6
+  ],
+  "on": [
+   6,
+   6,
+   8,
+   7,
+   6,
+   7,
+   7,
+   7
+  ]
+ },
+ "wall_s_mean": {
+  "off": 63.4,
+  "on": 73.5
+ },
+ "off_by_src": {
+  "C120_q003_noise.json": [
+   3,
+   2,
+   2
+  ],
+  "C120_q003_noise_v2.json": [
+   4,
+   3,
+   3,
+   3,
+   3
+  ]
+ },
+ "on_by_src": {
+  "C120_q003_noise.json": [
+   1,
+   2,
+   2
+  ],
+  "C120_q003_noise_v2.json": [
+   1,
+   1,
+   1,
+   3,
+   1
+  ]
+ }
+}

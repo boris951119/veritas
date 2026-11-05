@@ -1,0 +1,100 @@
+{
+  "ticket": "C-148",
+  "verdict": "YES",
+  "base_tip": "bf65d23",
+  "gates": {
+    "g1_默认开仲裁留痕在场": true,
+    "g2_轻裁不叫模型_双方保位": true,
+    "g3_上下文片段在场": true,
+    "g4_路由与轻裁单元腿": true,
+    "g5_关旗与改前同形": true,
+    "g6_pytest红不扩": true
+  },
+  "delta": {
+    "on": {
+      "opp": {
+        "chain_ok": true,
+        "n_arbitrate_calls": 1,
+        "context_in_prompt": true,
+        "acc_arbitration_present": true,
+        "n_llm": 1,
+        "n_light": 0,
+        "route": "llm_enriched",
+        "llm_called": true,
+        "context_included": true,
+        "resolved": true,
+        "winner_id": "CON-6a9c627f4e71",
+        "method": "arbitration"
+      },
+      "mis": {
+        "chain_ok": true,
+        "n_arbitrate_calls": 0,
+        "acc_arbitration_present": true,
+        "n_light": 1,
+        "resolution_method": "tie",
+        "resolution_winner": "tie",
+        "light_rationale": true,
+        "both_majority": true,
+        "route": "light_program",
+        "llm_called": false,
+        "context_included": false,
+        "triage_class": "oral_misread"
+      }
+    },
+    "off": {
+      "opp": {
+        "chain_ok": true,
+        "n_arbitrate_calls": 1,
+        "context_in_prompt": false,
+        "acc_arbitration_present": false,
+        "n_llm": null,
+        "n_light": null
+      },
+      "mis": {
+        "chain_ok": true,
+        "n_arbitrate_calls": 1,
+        "acc_arbitration_present": false,
+        "n_light": null,
+        "resolution_method": null,
+        "resolution_winner": null,
+        "light_rationale": false,
+        "both_majority": true
+      }
+    },
+    "base": {
+      "opp": {
+        "chain_ok": true,
+        "n_arbitrate_calls": 1,
+        "context_in_prompt": false,
+        "acc_arbitration_present": false,
+        "n_llm": null,
+        "n_light": null
+      },
+      "mis": {
+        "chain_ok": true,
+        "n_arbitrate_calls": 1,
+        "acc_arbitration_present": false,
+        "n_light": null,
+        "resolution_method": null,
+        "resolution_winner": null,
+        "light_rationale": false,
+        "both_majority": true
+      }
+    },
+    "off_vs_base": {
+      "files_compared": 5,
+      "diff_files": [],
+      "both_nonempty": true,
+      "same_keyset": true
+    },
+    "route_and_light_legs": {
+      "misread_routes_light": true,
+      "true_oppose_routes_llm": true,
+      "light_is_tie_no_false_inequality": true,
+      "light_keeps_both_majority": true,
+      "veto_face_hits": true,
+      "context_carries_faces": true
+    },
+    "pytest_tail": "7 failed, 1316 passed, 1 skipped in 57.42s"
+  }
+}

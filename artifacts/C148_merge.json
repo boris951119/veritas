@@ -1,0 +1,9 @@
+{
+  "ticket": "C-148",
+  "action": "merge_ff",
+  "from": "bf65d23",
+  "to": "3227200",
+  "conflicts": 0,
+  "pushed": true,
+  "next": "C-149 measure 2.5 conflicting_facts vs gold"
+}

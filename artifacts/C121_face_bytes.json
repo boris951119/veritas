@@ -1,0 +1,94 @@
+{
+ "schema_version": "c121.face_bytes.v1",
+ "case": "刘翔编制“二选一”事件",
+ "qid": "q_003",
+ "leg_bit": true,
+ "cross_tree_off_identical": true,
+ "sha_off_main": "b4ec07f862b3956e12295e29f13795bf12d54374d349fff999123414a3ac243b",
+ "sha_off_branch": "b4ec07f862b3956e12295e29f13795bf12d54374d349fff999123414a3ac243b",
+ "sha_on_branch": "8da0b20421bc79d431bf5b11752dc4b8fdcda5ed0e3cdf9729d1ebc62cc8b55a",
+ "off_face_chars": 22172,
+ "on_face_chars": 22336,
+ "off_tree17_list_keys": [],
+ "off_other_tree17_keys": [
+  "tree17_cite"
+ ],
+ "off_rows_with_list_keys": 0,
+ "on_diff": {
+  "common_prefix_chars": 42,
+  "common_suffix_chars": 22130,
+  "a_only_chars": 0,
+  "b_only_chars": 164,
+  "net_insert_chars": 164
+ },
+ "on_list_n": 5,
+ "on_list_ids": [
+  "doc_012#p5",
+  "doc_046#p3",
+  "doc_006#p3",
+  "doc_002#p3",
+  "doc_033#p5"
+ ],
+ "on_list_outside_box": [],
+ "leak_ids_outside_box": 0,
+ "text_replaced_chars": 0,
+ "n_sel_off_on": [
+  95,
+  95
+ ],
+ "note": "leg_bit＝开旗腿真的咬上（名单非空、块非空）⇒ 净插入那句不是空比空；text_replaced_chars＝0 ⇒ 开旗没删原文＝纯插入；关旗两棵树 sha 相同 ⇒ 默认路径零溢出；off_rows_with_list_keys＝0 是结构性的（关旗压根不写 tree17_list* 键），对照量看 chars 与 sha 两侧都取到数",
+ "rows": {
+  "main_tree_off": {
+   "tree": "/Users/liuboyu/Developer/veritas",
+   "flag": "0",
+   "list_precision_cfg": false,
+   "n_sel": 95,
+   "chars": 22172,
+   "sha256": "b4ec07f862b3956e12295e29f13795bf12d54374d349fff999123414a3ac243b",
+   "list_keys": [],
+   "other_tree17_keys": [
+    "tree17_cite"
+   ],
+   "must": [],
+   "must_outside_box": []
+  },
+  "branch_tree_off": {
+   "tree": "/private/tmp/c121/tree",
+   "flag": "0",
+   "list_precision_cfg": false,
+   "n_sel": 95,
+   "chars": 22172,
+   "sha256": "b4ec07f862b3956e12295e29f13795bf12d54374d349fff999123414a3ac243b",
+   "list_keys": [],
+   "other_tree17_keys": [
+    "tree17_cite"
+   ],
+   "must": [],
+   "must_outside_box": []
+  },
+  "branch_tree_on": {
+   "tree": "/private/tmp/c121/tree",
+   "flag": "1",
+   "list_precision_cfg": true,
+   "n_sel": 95,
+   "chars": 22336,
+   "sha256": "8da0b20421bc79d431bf5b11752dc4b8fdcda5ed0e3cdf9729d1ebc62cc8b55a",
+   "list_keys": [
+    "tree17_list_must",
+    "tree17_list_precision",
+    "tree17_list_precision_active"
+   ],
+   "other_tree17_keys": [
+    "tree17_cite"
+   ],
+   "must": [
+    "doc_012#p5",
+    "doc_046#p3",
+    "doc_006#p3",
+    "doc_002#p3",
+    "doc_033#p5"
+   ],
+   "must_outside_box": []
+  }
+ }
+}

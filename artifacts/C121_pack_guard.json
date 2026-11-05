@@ -1,0 +1,293 @@
+{
+ "schema_version": "c121.pack_guard.v1",
+ "n_questions": 12,
+ "all_identical": true,
+ "l2_total_off_on": [
+  42,
+  42
+ ],
+ "at7_total_off_on": [
+  27,
+  27
+ ],
+ "leak_hits": 0,
+ "list_out_of_box_total": 0,
+ "rows": [
+  {
+   "case": "刘翔编制“二选一”事件",
+   "qid": "q_001",
+   "off": {
+    "l2": 4,
+    "at7": 4,
+    "n_sel": 88,
+    "gold_in_box": 4,
+    "leaks": [],
+    "list_out_of_box": [],
+    "list_n": 0
+   },
+   "on": {
+    "l2": 4,
+    "at7": 4,
+    "n_sel": 88,
+    "gold_in_box": 4,
+    "leaks": [],
+    "list_out_of_box": [],
+    "list_n": 5
+   },
+   "packing_identical": true
+  },
+  {
+   "case": "刘翔编制“二选一”事件",
+   "qid": "q_002",
+   "off": {
+    "l2": 5,
+    "at7": 4,
+    "n_sel": 94,
+    "gold_in_box": 5,
+    "leaks": [],
+    "list_out_of_box": [],
+    "list_n": 0
+   },
+   "on": {
+    "l2": 5,
+    "at7": 4,
+    "n_sel": 94,
+    "gold_in_box": 5,
+    "leaks": [],
+    "list_out_of_box": [],
+    "list_n": 5
+   },
+   "packing_identical": true
+  },
+  {
+   "case": "刘翔编制“二选一”事件",
+   "qid": "q_003",
+   "off": {
+    "l2": 4,
+    "at7": 4,
+    "n_sel": 95,
+    "gold_in_box": 4,
+    "leaks": [],
+    "list_out_of_box": [],
+    "list_n": 0
+   },
+   "on": {
+    "l2": 4,
+    "at7": 4,
+    "n_sel": 95,
+    "gold_in_box": 4,
+    "leaks": [],
+    "list_out_of_box": [],
+    "list_n": 5
+   },
+   "packing_identical": true
+  },
+  {
+   "case": "王虹“北大discouraged”事件",
+   "qid": "q_001",
+   "off": {
+    "l2": 2,
+    "at7": 1,
+    "n_sel": 76,
+    "gold_in_box": 2,
+    "leaks": [],
+    "list_out_of_box": [],
+    "list_n": 0
+   },
+   "on": {
+    "l2": 2,
+    "at7": 1,
+    "n_sel": 76,
+    "gold_in_box": 2,
+    "leaks": [],
+    "list_out_of_box": [],
+    "list_n": 1
+   },
+   "packing_identical": true
+  },
+  {
+   "case": "王虹“北大discouraged”事件",
+   "qid": "q_002",
+   "off": {
+    "l2": 2,
+    "at7": 2,
+    "n_sel": 92,
+    "gold_in_box": 2,
+    "leaks": [],
+    "list_out_of_box": [],
+    "list_n": 0
+   },
+   "on": {
+    "l2": 2,
+    "at7": 2,
+    "n_sel": 92,
+    "gold_in_box": 2,
+    "leaks": [],
+    "list_out_of_box": [],
+    "list_n": 3
+   },
+   "packing_identical": true
+  },
+  {
+   "case": "王虹“北大discouraged”事件",
+   "qid": "q_003",
+   "off": {
+    "l2": 3,
+    "at7": 3,
+    "n_sel": 78,
+    "gold_in_box": 3,
+    "leaks": [],
+    "list_out_of_box": [],
+    "list_n": 0
+   },
+   "on": {
+    "l2": 3,
+    "at7": 3,
+    "n_sel": 78,
+    "gold_in_box": 3,
+    "leaks": [],
+    "list_out_of_box": [],
+    "list_n": 3
+   },
+   "packing_identical": true
+  },
+  {
+   "case": "柬泰边境争端（2025.12–2026.9）",
+   "qid": "q_001",
+   "off": {
+    "l2": 1,
+    "at7": 1,
+    "n_sel": 79,
+    "gold_in_box": 1,
+    "leaks": [],
+    "list_out_of_box": [],
+    "list_n": 0
+   },
+   "on": {
+    "l2": 1,
+    "at7": 1,
+    "n_sel": 79,
+    "gold_in_box": 1,
+    "leaks": [],
+    "list_out_of_box": [],
+    "list_n": 1
+   },
+   "packing_identical": true
+  },
+  {
+   "case": "柬泰边境争端（2025.12–2026.9）",
+   "qid": "q_002",
+   "off": {
+    "l2": 3,
+    "at7": 2,
+    "n_sel": 64,
+    "gold_in_box": 3,
+    "leaks": [],
+    "list_out_of_box": [],
+    "list_n": 0
+   },
+   "on": {
+    "l2": 3,
+    "at7": 2,
+    "n_sel": 64,
+    "gold_in_box": 3,
+    "leaks": [],
+    "list_out_of_box": [],
+    "list_n": 3
+   },
+   "packing_identical": true
+  },
+  {
+   "case": "柬泰边境争端（2025.12–2026.9）",
+   "qid": "q_003",
+   "off": {
+    "l2": 5,
+    "at7": 2,
+    "n_sel": 77,
+    "gold_in_box": 5,
+    "leaks": [],
+    "list_out_of_box": [],
+    "list_n": 0
+   },
+   "on": {
+    "l2": 5,
+    "at7": 2,
+    "n_sel": 77,
+    "gold_in_box": 5,
+    "leaks": [],
+    "list_out_of_box": [],
+    "list_n": 1
+   },
+   "packing_identical": true
+  },
+  {
+   "case": "印度航空 AI171 空难（2025.6–2026.5）",
+   "qid": "q_001",
+   "off": {
+    "l2": 4,
+    "at7": 2,
+    "n_sel": 108,
+    "gold_in_box": 4,
+    "leaks": [],
+    "list_out_of_box": [],
+    "list_n": 0
+   },
+   "on": {
+    "l2": 4,
+    "at7": 2,
+    "n_sel": 108,
+    "gold_in_box": 4,
+    "leaks": [],
+    "list_out_of_box": [],
+    "list_n": 3
+   },
+   "packing_identical": true
+  },
+  {
+   "case": "印度航空 AI171 空难（2025.6–2026.5）",
+   "qid": "q_002",
+   "off": {
+    "l2": 5,
+    "at7": 1,
+    "n_sel": 118,
+    "gold_in_box": 5,
+    "leaks": [],
+    "list_out_of_box": [],
+    "list_n": 0
+   },
+   "on": {
+    "l2": 5,
+    "at7": 1,
+    "n_sel": 118,
+    "gold_in_box": 5,
+    "leaks": [],
+    "list_out_of_box": [],
+    "list_n": 1
+   },
+   "packing_identical": true
+  },
+  {
+   "case": "印度航空 AI171 空难（2025.6–2026.5）",
+   "qid": "q_003",
+   "off": {
+    "l2": 4,
+    "at7": 1,
+    "n_sel": 151,
+    "gold_in_box": 4,
+    "leaks": [],
+    "list_out_of_box": [],
+    "list_n": 0
+   },
+   "on": {
+    "l2": 4,
+    "at7": 1,
+    "n_sel": 151,
+    "gold_in_box": 4,
+    "leaks": [],
+    "list_out_of_box": [],
+    "list_n": 1
+   },
+   "packing_identical": true
+  }
+ ]
+}

@@ -1,0 +1,1499 @@
+{
+ "ticket": "C-134-two-case-gate",
+ "tip": "e6349e0",
+ "branch": "qoder/c134-two-case-gate",
+ "env_note": "不设 VERITAS_TEST_TREE_LINE（出厂开）；env 组与 R44/C-129/C-130 门控基线同（REVIEW_BOOST 显式 0 非出厂，为可比性）",
+ "model": "openai/veritas-qwen3-14b",
+ "embed": "本机 bge-m3 暖缓存（.kgcache，按 para_id 复用）",
+ "temperature": "unset(None)＝与 C-120/C-130 同口径",
+ "wall_s": 0.0,
+ "gate": {
+  "gate1_dens": true,
+  "gate2_tree17": true,
+  "gate3_leak": true,
+  "anomalies": []
+ },
+ "gate_cases": {
+  "liuxiang": {
+   "slug": "liuxiang",
+   "gold_total": 14,
+   "cut_hits": {
+    "4": 9,
+    "5": 11,
+    "7": 12
+   },
+   "density_rows": [
+    {
+     "qid": "q_001",
+     "route": "adjudicate",
+     "k": 7,
+     "n_gold": 4,
+     "gold_density": 0.5714,
+     "density_cut": false
+    },
+    {
+     "qid": "q_002",
+     "route": "adjudicate",
+     "k": 7,
+     "n_gold": 4,
+     "gold_density": 0.5714,
+     "density_cut": false
+    },
+    {
+     "qid": "q_003",
+     "route": "adjudicate",
+     "k": 7,
+     "n_gold": 4,
+     "gold_density": 0.5714,
+     "density_cut": false
+    }
+   ],
+   "avg_gold_density": 0.5714,
+   "micro_gold_density": 0.5714,
+   "sum_gold_in_boxes": 12,
+   "sum_k": 21,
+   "wall_s": 7.1,
+   "plan_rows": [
+    {
+     "qid": "q_001",
+     "k": 7,
+     "n_gold": 4,
+     "gold_density": 0.5714,
+     "gold_in_box_to_close": 1.0,
+     "n_pairs": 8
+    },
+    {
+     "qid": "q_002",
+     "k": 7,
+     "n_gold": 4,
+     "gold_density": 0.5714,
+     "gold_in_box_to_close": 1.0,
+     "n_pairs": 0
+    },
+    {
+     "qid": "q_003",
+     "k": 7,
+     "n_gold": 4,
+     "gold_density": 0.5714,
+     "gold_in_box_to_close": 1.0,
+     "n_pairs": 0
+    }
+   ],
+   "mean_gold_box_to_close": 1.0,
+   "n_leaks": 0,
+   "leak_sample": [],
+   "n_submit_ok": 3,
+   "n_questions": 3,
+   "prod_leg": {
+    "rows": [
+     {
+      "qid": "q_001",
+      "k": 3,
+      "n_gold": 1,
+      "gold_density": 0.3333,
+      "route": "adjudicate",
+      "embed": "ok",
+      "n_pairs": 8
+     },
+     {
+      "qid": "q_002",
+      "k": 3,
+      "n_gold": 1,
+      "gold_density": 0.3333,
+      "route": "adjudicate",
+      "embed": "ok",
+      "n_pairs": 0
+     },
+     {
+      "qid": "q_003",
+      "k": 3,
+      "n_gold": 2,
+      "gold_density": 0.6667,
+      "route": "adjudicate",
+      "embed": "ok",
+      "n_pairs": 0
+     }
+    ],
+    "micro_gold_density": 0.4444
+   }
+  },
+  "wanghong": {
+   "slug": "wanghong",
+   "gold_total": 19,
+   "cut_hits": {
+    "4": 6,
+    "5": 6,
+    "7": 6
+   },
+   "density_rows": [
+    {
+     "qid": "q_001",
+     "route": "fact_check",
+     "k": 1,
+     "n_gold": 1,
+     "gold_density": 1.0,
+     "density_cut": true
+    },
+    {
+     "qid": "q_002",
+     "route": "adjudicate",
+     "k": 3,
+     "n_gold": 2,
+     "gold_density": 0.6667,
+     "density_cut": true
+    },
+    {
+     "qid": "q_003",
+     "route": "adjudicate",
+     "k": 3,
+     "n_gold": 3,
+     "gold_density": 1.0,
+     "density_cut": true
+    }
+   ],
+   "avg_gold_density": 0.8889,
+   "micro_gold_density": 0.8571,
+   "sum_gold_in_boxes": 6,
+   "sum_k": 7,
+   "wall_s": 16.9,
+   "plan_rows": [
+    {
+     "qid": "q_001",
+     "k": 1,
+     "n_gold": 1,
+     "gold_density": 1.0,
+     "gold_in_box_to_close": 1.0,
+     "n_pairs": 0
+    },
+    {
+     "qid": "q_002",
+     "k": 3,
+     "n_gold": 2,
+     "gold_density": 0.6667,
+     "gold_in_box_to_close": 1.0,
+     "n_pairs": 0
+    },
+    {
+     "qid": "q_003",
+     "k": 3,
+     "n_gold": 3,
+     "gold_density": 1.0,
+     "gold_in_box_to_close": 1.0,
+     "n_pairs": 0
+    }
+   ],
+   "mean_gold_box_to_close": 1.0,
+   "n_leaks": 0,
+   "leak_sample": [],
+   "n_submit_ok": 3,
+   "n_questions": 3,
+   "prod_leg": {
+    "rows": [
+     {
+      "qid": "q_001",
+      "k": 1,
+      "n_gold": 1,
+      "gold_density": 1.0,
+      "route": "fact_check",
+      "embed": "ok",
+      "n_pairs": 0
+     },
+     {
+      "qid": "q_002",
+      "k": 3,
+      "n_gold": 2,
+      "gold_density": 0.6667,
+      "route": "adjudicate",
+      "embed": "ok",
+      "n_pairs": 0
+     },
+     {
+      "qid": "q_003",
+      "k": 3,
+      "n_gold": 3,
+      "gold_density": 1.0,
+      "route": "adjudicate",
+      "embed": "ok",
+      "n_pairs": 0
+     }
+    ],
+    "micro_gold_density": 0.8571
+   }
+  }
+ },
+ "rings": [
+  {
+   "slug": "liuxiang",
+   "qid": "q_001",
+   "ring0": {
+    "rows_n": 362,
+    "universe_n": 362,
+    "max_row_chars": 6058,
+    "gold_total": 4,
+    "l1_gold_in_universe_n": 4,
+    "l1_ratio": 1.0,
+    "l1_missing_ids": []
+   },
+   "ring1": {
+    "n_box": 3,
+    "role_nonempty": 3,
+    "fine_role_nonempty": 3,
+    "portable_role_nonempty": 3,
+    "channel_nonempty": 3,
+    "signals_nonempty": 3
+   },
+   "ring2": {
+    "expand_terms_n": 86,
+    "paraphrase_n": 1,
+    "accounting_expand_keys": [],
+    "gap_note": "扩写在 fuse_r19 内部跑；accounting 无扩写披露键（缺口，本单不修）"
+   },
+   "ring3": {
+    "pool_n": 362,
+    "pool20_n": 20,
+    "gold_in_pool_n": 4,
+    "pool_missing_gold_ids": [],
+    "stage1_names_n": 35
+   },
+   "ring4": {
+    "k": 3,
+    "n_core": 1,
+    "n_filler": 2,
+    "proxy_density": null,
+    "met_target": false,
+    "n_pairs": 8,
+    "n_pairs_paired": 8,
+    "n_pairs_preferred": 8,
+    "pairs_in_close": [
+     {
+      "support_id": "doc_014#p1",
+      "oppose_id": "doc_002#p3",
+      "both_in_close": true
+     },
+     {
+      "support_id": "doc_014#p1",
+      "oppose_id": "doc_012#p3",
+      "both_in_close": false
+     },
+     {
+      "support_id": "doc_014#p1",
+      "oppose_id": "doc_012#p2",
+      "both_in_close": false
+     },
+     {
+      "support_id": "doc_014#p1",
+      "oppose_id": "doc_002#p3",
+      "both_in_close": true
+     },
+     {
+      "support_id": "doc_014#p1",
+      "oppose_id": "doc_002#p3",
+      "both_in_close": true
+     },
+     {
+      "support_id": "doc_014#p1",
+      "oppose_id": "doc_012#p3",
+      "both_in_close": false
+     },
+     {
+      "support_id": "doc_014#p1",
+      "oppose_id": "doc_012#p2",
+      "both_in_close": false
+     },
+     {
+      "support_id": "doc_014#p1",
+      "oppose_id": "doc_002#p3",
+      "both_in_close": true
+     }
+    ],
+    "box_is_order_head": true
+   },
+   "ring5": {
+    "leaks_s2": 0,
+    "surface_keys": [
+     "conflict_pairs",
+     "density_public",
+     "k",
+     "layer",
+     "rank_order",
+     "route",
+     "schema_version",
+     "tree17"
+    ],
+    "hints_keys": [
+     "conflict_pairs",
+     "focus_segment_ids",
+     "max_segments",
+     "priority_segment_ids"
+    ],
+    "n_pairs_surface": 8
+   },
+   "ring6": {
+    "close_n": 3,
+    "close_ids": [
+     "doc_030#p12",
+     "doc_014#p1",
+     "doc_002#p3"
+    ],
+    "gold_in_close_n": 1,
+    "gold_to_close_prod": 1.0,
+    "list_precision_prod": 0.3333,
+    "nail_ids_in_box": [
+     "doc_002#p3",
+     "doc_014#p1",
+     "doc_030#p12"
+    ],
+    "nail_in_close_n": 3,
+    "tree17_keys": [
+     "close_read_ids",
+     "conflict_route",
+     "labels",
+     "pair_required"
+    ]
+   },
+   "box_ids": [
+    "doc_002#p3",
+    "doc_030#p12",
+    "doc_014#p1"
+   ],
+   "equiv_prod_entry": {
+    "box": true,
+    "k": true,
+    "close": true
+   }
+  },
+  {
+   "slug": "liuxiang",
+   "qid": "q_002",
+   "ring0": {
+    "rows_n": 362,
+    "universe_n": 362,
+    "max_row_chars": 6058,
+    "gold_total": 5,
+    "l1_gold_in_universe_n": 5,
+    "l1_ratio": 1.0,
+    "l1_missing_ids": []
+   },
+   "ring1": {
+    "n_box": 3,
+    "role_nonempty": 3,
+    "fine_role_nonempty": 3,
+    "portable_role_nonempty": 3,
+    "channel_nonempty": 3,
+    "signals_nonempty": 3
+   },
+   "ring2": {
+    "expand_terms_n": 116,
+    "paraphrase_n": 1,
+    "accounting_expand_keys": [],
+    "gap_note": "扩写在 fuse_r19 内部跑；accounting 无扩写披露键（缺口，本单不修）"
+   },
+   "ring3": {
+    "pool_n": 362,
+    "pool20_n": 20,
+    "gold_in_pool_n": 2,
+    "pool_missing_gold_ids": [
+     "doc_002#p3",
+     "doc_029#p7",
+     "doc_051#p3"
+    ],
+    "stage1_names_n": 35
+   },
+   "ring4": {
+    "k": 3,
+    "n_core": 0,
+    "n_filler": 3,
+    "proxy_density": null,
+    "met_target": false,
+    "n_pairs": 0,
+    "n_pairs_paired": 0,
+    "n_pairs_preferred": 0,
+    "pairs_in_close": [],
+    "box_is_order_head": true
+   },
+   "ring5": {
+    "leaks_s2": 0,
+    "surface_keys": [
+     "conflict_pairs",
+     "density_public",
+     "k",
+     "layer",
+     "rank_order",
+     "route",
+     "schema_version",
+     "tree17"
+    ],
+    "hints_keys": [
+     "conflict_pairs",
+     "focus_segment_ids",
+     "max_segments",
+     "priority_segment_ids"
+    ],
+    "n_pairs_surface": 0
+   },
+   "ring6": {
+    "close_n": 3,
+    "close_ids": [
+     "doc_002#p3",
+     "doc_012#p3",
+     "doc_002#p2"
+    ],
+    "gold_in_close_n": 1,
+    "gold_to_close_prod": 1.0,
+    "list_precision_prod": 0.3333,
+    "nail_ids_in_box": [
+     "doc_002#p2",
+     "doc_002#p3",
+     "doc_012#p3"
+    ],
+    "nail_in_close_n": 3,
+    "tree17_keys": [
+     "close_read_ids",
+     "conflict_route",
+     "labels",
+     "pair_required"
+    ]
+   },
+   "box_ids": [
+    "doc_002#p3",
+    "doc_002#p2",
+    "doc_012#p3"
+   ],
+   "equiv_prod_entry": {
+    "box": true,
+    "k": true,
+    "close": true
+   }
+  },
+  {
+   "slug": "liuxiang",
+   "qid": "q_003",
+   "ring0": {
+    "rows_n": 362,
+    "universe_n": 362,
+    "max_row_chars": 6058,
+    "gold_total": 5,
+    "l1_gold_in_universe_n": 5,
+    "l1_ratio": 1.0,
+    "l1_missing_ids": []
+   },
+   "ring1": {
+    "n_box": 3,
+    "role_nonempty": 3,
+    "fine_role_nonempty": 3,
+    "portable_role_nonempty": 3,
+    "channel_nonempty": 3,
+    "signals_nonempty": 3
+   },
+   "ring2": {
+    "expand_terms_n": 136,
+    "paraphrase_n": 1,
+    "accounting_expand_keys": [],
+    "gap_note": "扩写在 fuse_r19 内部跑；accounting 无扩写披露键（缺口，本单不修）"
+   },
+   "ring3": {
+    "pool_n": 362,
+    "pool20_n": 20,
+    "gold_in_pool_n": 2,
+    "pool_missing_gold_ids": [
+     "doc_002#p3",
+     "doc_033#p5",
+     "doc_033#p6"
+    ],
+    "stage1_names_n": 35
+   },
+   "ring4": {
+    "k": 3,
+    "n_core": 0,
+    "n_filler": 3,
+    "proxy_density": null,
+    "met_target": false,
+    "n_pairs": 0,
+    "n_pairs_paired": 0,
+    "n_pairs_preferred": 0,
+    "pairs_in_close": [],
+    "box_is_order_head": true
+   },
+   "ring5": {
+    "leaks_s2": 0,
+    "surface_keys": [
+     "conflict_pairs",
+     "density_public",
+     "k",
+     "layer",
+     "rank_order",
+     "route",
+     "schema_version",
+     "tree17"
+    ],
+    "hints_keys": [
+     "conflict_pairs",
+     "focus_segment_ids",
+     "max_segments",
+     "priority_segment_ids"
+    ],
+    "n_pairs_surface": 0
+   },
+   "ring6": {
+    "close_n": 3,
+    "close_ids": [
+     "doc_002#p3",
+     "doc_050#p9",
+     "doc_006#p3"
+    ],
+    "gold_in_close_n": 2,
+    "gold_to_close_prod": 1.0,
+    "list_precision_prod": 0.6667,
+    "nail_ids_in_box": [
+     "doc_002#p3",
+     "doc_006#p3",
+     "doc_050#p9"
+    ],
+    "nail_in_close_n": 3,
+    "tree17_keys": [
+     "close_read_ids",
+     "conflict_route",
+     "labels",
+     "pair_required"
+    ]
+   },
+   "box_ids": [
+    "doc_002#p3",
+    "doc_050#p9",
+    "doc_006#p3"
+   ],
+   "equiv_prod_entry": {
+    "box": true,
+    "k": true,
+    "close": true
+   }
+  },
+  {
+   "slug": "wanghong",
+   "qid": "q_001",
+   "ring0": {
+    "rows_n": 459,
+    "universe_n": 459,
+    "max_row_chars": 10453,
+    "gold_total": 5,
+    "l1_gold_in_universe_n": 5,
+    "l1_ratio": 1.0,
+    "l1_missing_ids": []
+   },
+   "ring1": {
+    "n_box": 1,
+    "role_nonempty": 1,
+    "fine_role_nonempty": 1,
+    "portable_role_nonempty": 1,
+    "channel_nonempty": 1,
+    "signals_nonempty": 1
+   },
+   "ring2": {
+    "expand_terms_n": 185,
+    "paraphrase_n": 1,
+    "accounting_expand_keys": [],
+    "gap_note": "扩写在 fuse_r19 内部跑；accounting 无扩写披露键（缺口，本单不修）"
+   },
+   "ring3": {
+    "pool_n": 459,
+    "pool20_n": 20,
+    "gold_in_pool_n": 1,
+    "pool_missing_gold_ids": [
+     "doc_004#p4",
+     "doc_004#p5",
+     "doc_008#p12",
+     "doc_010#p4"
+    ],
+    "stage1_names_n": 35
+   },
+   "ring4": {
+    "k": 1,
+    "n_core": 1,
+    "n_filler": 0,
+    "proxy_density": null,
+    "met_target": true,
+    "n_pairs": 0,
+    "n_pairs_paired": 0,
+    "n_pairs_preferred": 0,
+    "pairs_in_close": [],
+    "box_is_order_head": true
+   },
+   "ring5": {
+    "leaks_s2": 0,
+    "surface_keys": [
+     "conflict_pairs",
+     "density_public",
+     "k",
+     "layer",
+     "rank_order",
+     "route",
+     "schema_version",
+     "tree17"
+    ],
+    "hints_keys": [
+     "conflict_pairs",
+     "focus_segment_ids",
+     "max_segments",
+     "priority_segment_ids"
+    ],
+    "n_pairs_surface": 0
+   },
+   "ring6": {
+    "close_n": 1,
+    "close_ids": [
+     "doc_001#p1"
+    ],
+    "gold_in_close_n": 1,
+    "gold_to_close_prod": 1.0,
+    "list_precision_prod": 1.0,
+    "nail_ids_in_box": [],
+    "nail_in_close_n": 0,
+    "tree17_keys": [
+     "close_read_ids",
+     "conflict_route",
+     "labels",
+     "pair_required"
+    ]
+   },
+   "box_ids": [
+    "doc_001#p1"
+   ],
+   "equiv_prod_entry": {
+    "box": true,
+    "k": true,
+    "close": true
+   }
+  },
+  {
+   "slug": "wanghong",
+   "qid": "q_002",
+   "ring0": {
+    "rows_n": 476,
+    "universe_n": 476,
+    "max_row_chars": 10453,
+    "gold_total": 5,
+    "l1_gold_in_universe_n": 5,
+    "l1_ratio": 1.0,
+    "l1_missing_ids": []
+   },
+   "ring1": {
+    "n_box": 3,
+    "role_nonempty": 3,
+    "fine_role_nonempty": 3,
+    "portable_role_nonempty": 3,
+    "channel_nonempty": 3,
+    "signals_nonempty": 3
+   },
+   "ring2": {
+    "expand_terms_n": 147,
+    "paraphrase_n": 1,
+    "accounting_expand_keys": [],
+    "gap_note": "扩写在 fuse_r19 内部跑；accounting 无扩写披露键（缺口，本单不修）"
+   },
+   "ring3": {
+    "pool_n": 476,
+    "pool20_n": 20,
+    "gold_in_pool_n": 2,
+    "pool_missing_gold_ids": [
+     "doc_011#p2",
+     "doc_011#p3",
+     "doc_011#p6"
+    ],
+    "stage1_names_n": 35
+   },
+   "ring4": {
+    "k": 3,
+    "n_core": 3,
+    "n_filler": 0,
+    "proxy_density": null,
+    "met_target": true,
+    "n_pairs": 0,
+    "n_pairs_paired": 0,
+    "n_pairs_preferred": 0,
+    "pairs_in_close": [],
+    "box_is_order_head": true
+   },
+   "ring5": {
+    "leaks_s2": 0,
+    "surface_keys": [
+     "conflict_pairs",
+     "density_public",
+     "k",
+     "layer",
+     "rank_order",
+     "route",
+     "schema_version",
+     "tree17"
+    ],
+    "hints_keys": [
+     "conflict_pairs",
+     "focus_segment_ids",
+     "max_segments",
+     "priority_segment_ids"
+    ],
+    "n_pairs_surface": 0
+   },
+   "ring6": {
+    "close_n": 3,
+    "close_ids": [
+     "doc_011#p1",
+     "doc_010#p7",
+     "doc_011#p5"
+    ],
+    "gold_in_close_n": 2,
+    "gold_to_close_prod": 1.0,
+    "list_precision_prod": 0.6667,
+    "nail_ids_in_box": [],
+    "nail_in_close_n": 0,
+    "tree17_keys": [
+     "close_read_ids",
+     "conflict_route",
+     "labels",
+     "pair_required"
+    ]
+   },
+   "box_ids": [
+    "doc_010#p7",
+    "doc_011#p1",
+    "doc_011#p5"
+   ],
+   "equiv_prod_entry": {
+    "box": true,
+    "k": true,
+    "close": true
+   }
+  },
+  {
+   "slug": "wanghong",
+   "qid": "q_003",
+   "ring0": {
+    "rows_n": 479,
+    "universe_n": 479,
+    "max_row_chars": 10453,
+    "gold_total": 9,
+    "l1_gold_in_universe_n": 9,
+    "l1_ratio": 1.0,
+    "l1_missing_ids": []
+   },
+   "ring1": {
+    "n_box": 3,
+    "role_nonempty": 3,
+    "fine_role_nonempty": 3,
+    "portable_role_nonempty": 3,
+    "channel_nonempty": 3,
+    "signals_nonempty": 3
+   },
+   "ring2": {
+    "expand_terms_n": 137,
+    "paraphrase_n": 1,
+    "accounting_expand_keys": [],
+    "gap_note": "扩写在 fuse_r19 内部跑；accounting 无扩写披露键（缺口，本单不修）"
+   },
+   "ring3": {
+    "pool_n": 479,
+    "pool20_n": 20,
+    "gold_in_pool_n": 6,
+    "pool_missing_gold_ids": [
+     "doc_003#p7",
+     "doc_007#p3",
+     "doc_012#p7"
+    ],
+    "stage1_names_n": 35
+   },
+   "ring4": {
+    "k": 3,
+    "n_core": 3,
+    "n_filler": 0,
+    "proxy_density": null,
+    "met_target": true,
+    "n_pairs": 0,
+    "n_pairs_paired": 0,
+    "n_pairs_preferred": 0,
+    "pairs_in_close": [],
+    "box_is_order_head": true
+   },
+   "ring5": {
+    "leaks_s2": 0,
+    "surface_keys": [
+     "conflict_pairs",
+     "density_public",
+     "k",
+     "layer",
+     "rank_order",
+     "route",
+     "schema_version",
+     "tree17"
+    ],
+    "hints_keys": [
+     "conflict_pairs",
+     "focus_segment_ids",
+     "max_segments",
+     "priority_segment_ids"
+    ],
+    "n_pairs_surface": 0
+   },
+   "ring6": {
+    "close_n": 3,
+    "close_ids": [
+     "doc_007#p1",
+     "doc_007#p2",
+     "doc_003#p5"
+    ],
+    "gold_in_close_n": 3,
+    "gold_to_close_prod": 1.0,
+    "list_precision_prod": 1.0,
+    "nail_ids_in_box": [
+     "doc_007#p1"
+    ],
+    "nail_in_close_n": 1,
+    "tree17_keys": [
+     "close_read_ids",
+     "conflict_route",
+     "labels",
+     "pair_required"
+    ]
+   },
+   "box_ids": [
+    "doc_007#p1",
+    "doc_007#p2",
+    "doc_003#p5"
+   ],
+   "equiv_prod_entry": {
+    "box": true,
+    "k": true,
+    "close": true
+   }
+  }
+ ],
+ "real_runs": [
+  {
+   "slug": "liuxiang",
+   "qid": "q_001",
+   "surface_line": "test_tree(factory)",
+   "box_n": 3,
+   "focus_n": 3,
+   "focus_ids": [
+    "doc_030#p12",
+    "doc_014#p1",
+    "doc_002#p3"
+   ],
+   "focus_gold_n": 1,
+   "focus_precision": 0.3333,
+   "face_chars": 1580,
+   "face_sha8": "e34f503d",
+   "denom": 4,
+   "l3": 1,
+   "cited_gold_ids": [
+    "doc_002#p3"
+   ],
+   "cited_n": 2,
+   "out_of_band_ids": [],
+   "pairs": [
+    {
+     "support_id": "doc_014#p1",
+     "oppose_id": "doc_002#p3",
+     "support_cited": false,
+     "oppose_cited": true,
+     "preferred": "doc_002#p3",
+     "one_sided": true
+    },
+    {
+     "support_id": "doc_014#p1",
+     "oppose_id": "doc_012#p3",
+     "support_cited": false,
+     "oppose_cited": false,
+     "preferred": "doc_012#p3",
+     "one_sided": false
+    },
+    {
+     "support_id": "doc_014#p1",
+     "oppose_id": "doc_012#p2",
+     "support_cited": false,
+     "oppose_cited": false,
+     "preferred": "doc_012#p2",
+     "one_sided": false
+    },
+    {
+     "support_id": "doc_014#p1",
+     "oppose_id": "doc_002#p3",
+     "support_cited": false,
+     "oppose_cited": true,
+     "preferred": "doc_002#p3",
+     "one_sided": true
+    },
+    {
+     "support_id": "doc_014#p1",
+     "oppose_id": "doc_002#p3",
+     "support_cited": false,
+     "oppose_cited": true,
+     "preferred": "doc_002#p3",
+     "one_sided": true
+    },
+    {
+     "support_id": "doc_014#p1",
+     "oppose_id": "doc_012#p3",
+     "support_cited": false,
+     "oppose_cited": false,
+     "preferred": "doc_012#p3",
+     "one_sided": false
+    },
+    {
+     "support_id": "doc_014#p1",
+     "oppose_id": "doc_012#p2",
+     "support_cited": false,
+     "oppose_cited": false,
+     "preferred": "doc_012#p2",
+     "one_sided": false
+    },
+    {
+     "support_id": "doc_014#p1",
+     "oppose_id": "doc_002#p3",
+     "support_cited": false,
+     "oppose_cited": true,
+     "preferred": "doc_002#p3",
+     "one_sided": true
+    }
+   ],
+   "one_sided_n": 4,
+   "nail_ids": [
+    "doc_002#p3",
+    "doc_014#p1",
+    "doc_030#p12"
+   ],
+   "nail_in_close_n": 3,
+   "nail_cited_n": 2,
+   "n_conclusions": 1,
+   "stance_labels": "single_analyst_shape(无标注面)＝D 不可判",
+   "n_evidences": 2,
+   "n_ev_check_fail": 0,
+   "fail_buckets": {
+    "empty_quote": 0,
+    "seg_missing": 0,
+    "verbatim_miss": 0,
+    "adjacent_only": 0,
+    "other": 0
+   },
+   "server_input_tokens": null,
+   "over_window": false,
+   "wall_s": 38.7
+  },
+  {
+   "slug": "liuxiang",
+   "qid": "q_002",
+   "surface_line": "test_tree(factory)",
+   "box_n": 3,
+   "focus_n": 3,
+   "focus_ids": [
+    "doc_002#p3",
+    "doc_012#p3",
+    "doc_002#p2"
+   ],
+   "focus_gold_n": 1,
+   "focus_precision": 0.3333,
+   "face_chars": 932,
+   "face_sha8": "b3a0ecd8",
+   "denom": 5,
+   "l3": 1,
+   "cited_gold_ids": [
+    "doc_002#p3"
+   ],
+   "cited_n": 3,
+   "out_of_band_ids": [],
+   "pairs": [],
+   "one_sided_n": 0,
+   "nail_ids": [
+    "doc_002#p2",
+    "doc_002#p3",
+    "doc_012#p3"
+   ],
+   "nail_in_close_n": 3,
+   "nail_cited_n": 3,
+   "n_conclusions": 3,
+   "stance_labels": "single_analyst_shape(无标注面)＝D 不可判",
+   "n_evidences": 3,
+   "n_ev_check_fail": 0,
+   "fail_buckets": {
+    "empty_quote": 0,
+    "seg_missing": 0,
+    "verbatim_miss": 0,
+    "adjacent_only": 0,
+    "other": 0
+   },
+   "server_input_tokens": null,
+   "over_window": false,
+   "wall_s": 38.3
+  },
+  {
+   "slug": "liuxiang",
+   "qid": "q_003",
+   "surface_line": "test_tree(factory)",
+   "box_n": 3,
+   "focus_n": 3,
+   "focus_ids": [
+    "doc_002#p3",
+    "doc_050#p9",
+    "doc_006#p3"
+   ],
+   "focus_gold_n": 2,
+   "focus_precision": 0.6667,
+   "face_chars": 933,
+   "face_sha8": "81809109",
+   "denom": 5,
+   "l3": 2,
+   "cited_gold_ids": [
+    "doc_002#p3",
+    "doc_006#p3"
+   ],
+   "cited_n": 3,
+   "out_of_band_ids": [],
+   "pairs": [],
+   "one_sided_n": 0,
+   "nail_ids": [
+    "doc_002#p3",
+    "doc_006#p3",
+    "doc_050#p9"
+   ],
+   "nail_in_close_n": 3,
+   "nail_cited_n": 3,
+   "n_conclusions": 3,
+   "stance_labels": "single_analyst_shape(无标注面)＝D 不可判",
+   "n_evidences": 3,
+   "n_ev_check_fail": 0,
+   "fail_buckets": {
+    "empty_quote": 0,
+    "seg_missing": 0,
+    "verbatim_miss": 0,
+    "adjacent_only": 0,
+    "other": 0
+   },
+   "server_input_tokens": null,
+   "over_window": false,
+   "wall_s": 34.3
+  },
+  {
+   "slug": "wanghong",
+   "qid": "q_001",
+   "surface_line": "test_tree(factory)",
+   "box_n": 1,
+   "focus_n": 1,
+   "focus_ids": [
+    "doc_001#p1"
+   ],
+   "focus_gold_n": 1,
+   "focus_precision": 1.0,
+   "face_chars": 471,
+   "face_sha8": "1bbd5432",
+   "denom": 5,
+   "l3": 1,
+   "cited_gold_ids": [
+    "doc_001#p1"
+   ],
+   "cited_n": 1,
+   "out_of_band_ids": [],
+   "pairs": [],
+   "one_sided_n": 0,
+   "nail_ids": [],
+   "nail_in_close_n": 0,
+   "nail_cited_n": 0,
+   "n_conclusions": 1,
+   "stance_labels": "single_analyst_shape(无标注面)＝D 不可判",
+   "n_evidences": 1,
+   "n_ev_check_fail": 0,
+   "fail_buckets": {
+    "empty_quote": 0,
+    "seg_missing": 0,
+    "verbatim_miss": 0,
+    "adjacent_only": 0,
+    "other": 0
+   },
+   "server_input_tokens": null,
+   "over_window": false,
+   "wall_s": 20.7
+  },
+  {
+   "slug": "wanghong",
+   "qid": "q_002",
+   "surface_line": "test_tree(factory)",
+   "box_n": 3,
+   "focus_n": 3,
+   "focus_ids": [
+    "doc_011#p1",
+    "doc_010#p7",
+    "doc_011#p5"
+   ],
+   "focus_gold_n": 2,
+   "focus_precision": 0.6667,
+   "face_chars": 976,
+   "face_sha8": "be586b55",
+   "denom": 5,
+   "l3": 1,
+   "cited_gold_ids": [
+    "doc_010#p7"
+   ],
+   "cited_n": 2,
+   "out_of_band_ids": [],
+   "pairs": [],
+   "one_sided_n": 0,
+   "nail_ids": [],
+   "nail_in_close_n": 0,
+   "nail_cited_n": 0,
+   "n_conclusions": 3,
+   "stance_labels": "single_analyst_shape(无标注面)＝D 不可判",
+   "n_evidences": 3,
+   "n_ev_check_fail": 0,
+   "fail_buckets": {
+    "empty_quote": 0,
+    "seg_missing": 0,
+    "verbatim_miss": 0,
+    "adjacent_only": 0,
+    "other": 0
+   },
+   "server_input_tokens": null,
+   "over_window": false,
+   "wall_s": 46.9
+  },
+  {
+   "slug": "wanghong",
+   "qid": "q_003",
+   "surface_line": "test_tree(factory)",
+   "box_n": 3,
+   "focus_n": 3,
+   "focus_ids": [
+    "doc_007#p1",
+    "doc_007#p2",
+    "doc_003#p5"
+   ],
+   "focus_gold_n": 3,
+   "focus_precision": 1.0,
+   "face_chars": 947,
+   "face_sha8": "e5a1cdda",
+   "denom": 9,
+   "l3": 1,
+   "cited_gold_ids": [
+    "doc_007#p1"
+   ],
+   "cited_n": 1,
+   "out_of_band_ids": [],
+   "pairs": [],
+   "one_sided_n": 0,
+   "nail_ids": [
+    "doc_007#p1"
+   ],
+   "nail_in_close_n": 1,
+   "nail_cited_n": 1,
+   "n_conclusions": 1,
+   "stance_labels": "single_analyst_shape(无标注面)＝D 不可判",
+   "n_evidences": 1,
+   "n_ev_check_fail": 0,
+   "fail_buckets": {
+    "empty_quote": 0,
+    "seg_missing": 0,
+    "verbatim_miss": 0,
+    "adjacent_only": 0,
+    "other": 0
+   },
+   "server_input_tokens": null,
+   "over_window": false,
+   "wall_s": 18.2
+  }
+ ],
+ "symptoms": [
+  {
+   "sym": "A_带宽外引用",
+   "slug": "liuxiang",
+   "qid": "q_001",
+   "state": "已消",
+   "evidence": "带外 0 条＝[]",
+   "ref": "本跑（C-130 未量带外；面已坍缩 focus＝构造上受限）"
+  },
+  {
+   "sym": "B_成对单边",
+   "slug": "liuxiang",
+   "qid": "q_001",
+   "state": "仍在",
+   "evidence": "单边 4/8 对；计划层成对 8/8；close 覆盖成对 8/8；focus 面不含碰撞块（C-130 件①），成对只经段文本到达",
+   "ref": "C-129 计划层 pair_violation 全 False；本跑看引用侧"
+  },
+  {
+   "sym": "C_核验钉未优先",
+   "slug": "liuxiang",
+   "qid": "q_001",
+   "state": "已消",
+   "evidence": "钉进 close 3/3；钉被引 2/3",
+   "ref": "本跑首量（R41 设计意图；C-130 未量）"
+  },
+  {
+   "sym": "D_采信对立标注",
+   "slug": "liuxiang",
+   "qid": "q_001",
+   "state": "缺环（单分析师形状无标注面）",
+   "evidence": "结论数 1；计划层 preferred 8/8",
+   "ref": "标注面在归并/仲裁层；本跑形状与 C-130 同"
+  },
+  {
+   "sym": "E_可用密度低",
+   "slug": "liuxiang",
+   "qid": "q_001",
+   "state": "已消",
+   "evidence": "金标→close 1.0（1 金标/3 close，非金标 2）",
+   "ref": "C-129 计划层 6/6=1.0；C-130 q_003 开臂可用密度低"
+  },
+  {
+   "sym": "F_名单准度",
+   "slug": "liuxiang",
+   "qid": "q_001",
+   "state": "首量（无同臂参照）",
+   "evidence": "focus 准度 0.3333；R44 臂口径 0.5714 为另一臂、不可比",
+   "ref": "同臂＝C-130 开臂（仅 liuxiang q_003 有真跑参照）；C-129 为 R44 式回归臂口径"
+  },
+  {
+   "sym": "A_带宽外引用",
+   "slug": "liuxiang",
+   "qid": "q_002",
+   "state": "已消",
+   "evidence": "带外 0 条＝[]",
+   "ref": "本跑（C-130 未量带外；面已坍缩 focus＝构造上受限）"
+  },
+  {
+   "sym": "B_成对单边",
+   "slug": "liuxiang",
+   "qid": "q_002",
+   "state": "无对可判",
+   "evidence": "单边 0/0 对；计划层成对 0/0；close 覆盖成对 0/0；focus 面不含碰撞块（C-130 件①），成对只经段文本到达",
+   "ref": "C-129 计划层 pair_violation 全 False；本跑看引用侧"
+  },
+  {
+   "sym": "C_核验钉未优先",
+   "slug": "liuxiang",
+   "qid": "q_002",
+   "state": "已消",
+   "evidence": "钉进 close 3/3；钉被引 3/3",
+   "ref": "本跑首量（R41 设计意图；C-130 未量）"
+  },
+  {
+   "sym": "D_采信对立标注",
+   "slug": "liuxiang",
+   "qid": "q_002",
+   "state": "缺环（单分析师形状无标注面）",
+   "evidence": "结论数 3；计划层 preferred 0/0",
+   "ref": "标注面在归并/仲裁层；本跑形状与 C-130 同"
+  },
+  {
+   "sym": "E_可用密度低",
+   "slug": "liuxiang",
+   "qid": "q_002",
+   "state": "已消",
+   "evidence": "金标→close 1.0（1 金标/3 close，非金标 2）",
+   "ref": "C-129 计划层 6/6=1.0；C-130 q_003 开臂可用密度低"
+  },
+  {
+   "sym": "F_名单准度",
+   "slug": "liuxiang",
+   "qid": "q_002",
+   "state": "首量（无同臂参照）",
+   "evidence": "focus 准度 0.3333；R44 臂口径 0.5714 为另一臂、不可比",
+   "ref": "同臂＝C-130 开臂（仅 liuxiang q_003 有真跑参照）；C-129 为 R44 式回归臂口径"
+  },
+  {
+   "sym": "A_带宽外引用",
+   "slug": "liuxiang",
+   "qid": "q_003",
+   "state": "已消",
+   "evidence": "带外 0 条＝[]",
+   "ref": "本跑（C-130 未量带外；面已坍缩 focus＝构造上受限）"
+  },
+  {
+   "sym": "B_成对单边",
+   "slug": "liuxiang",
+   "qid": "q_003",
+   "state": "无对可判",
+   "evidence": "单边 0/0 对；计划层成对 0/0；close 覆盖成对 0/0；focus 面不含碰撞块（C-130 件①），成对只经段文本到达",
+   "ref": "C-129 计划层 pair_violation 全 False；本跑看引用侧"
+  },
+  {
+   "sym": "C_核验钉未优先",
+   "slug": "liuxiang",
+   "qid": "q_003",
+   "state": "已消",
+   "evidence": "钉进 close 3/3；钉被引 3/3",
+   "ref": "本跑首量（R41 设计意图；C-130 未量）"
+  },
+  {
+   "sym": "D_采信对立标注",
+   "slug": "liuxiang",
+   "qid": "q_003",
+   "state": "缺环（单分析师形状无标注面）",
+   "evidence": "结论数 3；计划层 preferred 0/0",
+   "ref": "标注面在归并/仲裁层；本跑形状与 C-130 同"
+  },
+  {
+   "sym": "E_可用密度低",
+   "slug": "liuxiang",
+   "qid": "q_003",
+   "state": "已消",
+   "evidence": "金标→close 1.0（2 金标/3 close，非金标 1）",
+   "ref": "C-129 计划层 6/6=1.0；C-130 q_003 开臂可用密度低"
+  },
+  {
+   "sym": "F_名单准度",
+   "slug": "liuxiang",
+   "qid": "q_003",
+   "state": "已消（持平）",
+   "evidence": "focus 准度 0.6667 vs C-130 开臂 0.6667（L3 本跑 2 vs 均值 2.0）；R44 臂口径 0.5714 不可比仅附注",
+   "ref": "同臂＝C-130 开臂（仅 liuxiang q_003 有真跑参照）；C-129 为 R44 式回归臂口径"
+  },
+  {
+   "sym": "A_带宽外引用",
+   "slug": "wanghong",
+   "qid": "q_001",
+   "state": "已消",
+   "evidence": "带外 0 条＝[]",
+   "ref": "本跑（C-130 未量带外；面已坍缩 focus＝构造上受限）"
+  },
+  {
+   "sym": "B_成对单边",
+   "slug": "wanghong",
+   "qid": "q_001",
+   "state": "无对可判",
+   "evidence": "单边 0/0 对；计划层成对 0/0；close 覆盖成对 0/0；focus 面不含碰撞块（C-130 件①），成对只经段文本到达",
+   "ref": "C-129 计划层 pair_violation 全 False；本跑看引用侧"
+  },
+  {
+   "sym": "C_核验钉未优先",
+   "slug": "wanghong",
+   "qid": "q_001",
+   "state": "无钉可判",
+   "evidence": "钉进 close 0/0；钉被引 0/0",
+   "ref": "本跑首量（R41 设计意图；C-130 未量）"
+  },
+  {
+   "sym": "D_采信对立标注",
+   "slug": "wanghong",
+   "qid": "q_001",
+   "state": "缺环（单分析师形状无标注面）",
+   "evidence": "结论数 1；计划层 preferred 0/0",
+   "ref": "标注面在归并/仲裁层；本跑形状与 C-130 同"
+  },
+  {
+   "sym": "E_可用密度低",
+   "slug": "wanghong",
+   "qid": "q_001",
+   "state": "已消",
+   "evidence": "金标→close 1.0（1 金标/1 close，非金标 0）",
+   "ref": "C-129 计划层 6/6=1.0；C-130 q_003 开臂可用密度低"
+  },
+  {
+   "sym": "F_名单准度",
+   "slug": "wanghong",
+   "qid": "q_001",
+   "state": "首量（无同臂参照）",
+   "evidence": "focus 准度 1.0；R44 臂口径 0.8571 为另一臂、不可比",
+   "ref": "同臂＝C-130 开臂（仅 liuxiang q_003 有真跑参照）；C-129 为 R44 式回归臂口径"
+  },
+  {
+   "sym": "A_带宽外引用",
+   "slug": "wanghong",
+   "qid": "q_002",
+   "state": "已消",
+   "evidence": "带外 0 条＝[]",
+   "ref": "本跑（C-130 未量带外；面已坍缩 focus＝构造上受限）"
+  },
+  {
+   "sym": "B_成对单边",
+   "slug": "wanghong",
+   "qid": "q_002",
+   "state": "无对可判",
+   "evidence": "单边 0/0 对；计划层成对 0/0；close 覆盖成对 0/0；focus 面不含碰撞块（C-130 件①），成对只经段文本到达",
+   "ref": "C-129 计划层 pair_violation 全 False；本跑看引用侧"
+  },
+  {
+   "sym": "C_核验钉未优先",
+   "slug": "wanghong",
+   "qid": "q_002",
+   "state": "无钉可判",
+   "evidence": "钉进 close 0/0；钉被引 0/0",
+   "ref": "本跑首量（R41 设计意图；C-130 未量）"
+  },
+  {
+   "sym": "D_采信对立标注",
+   "slug": "wanghong",
+   "qid": "q_002",
+   "state": "缺环（单分析师形状无标注面）",
+   "evidence": "结论数 3；计划层 preferred 0/0",
+   "ref": "标注面在归并/仲裁层；本跑形状与 C-130 同"
+  },
+  {
+   "sym": "E_可用密度低",
+   "slug": "wanghong",
+   "qid": "q_002",
+   "state": "已消",
+   "evidence": "金标→close 1.0（2 金标/3 close，非金标 1）",
+   "ref": "C-129 计划层 6/6=1.0；C-130 q_003 开臂可用密度低"
+  },
+  {
+   "sym": "F_名单准度",
+   "slug": "wanghong",
+   "qid": "q_002",
+   "state": "首量（无同臂参照）",
+   "evidence": "focus 准度 0.6667；R44 臂口径 0.8571 为另一臂、不可比",
+   "ref": "同臂＝C-130 开臂（仅 liuxiang q_003 有真跑参照）；C-129 为 R44 式回归臂口径"
+  },
+  {
+   "sym": "A_带宽外引用",
+   "slug": "wanghong",
+   "qid": "q_003",
+   "state": "已消",
+   "evidence": "带外 0 条＝[]",
+   "ref": "本跑（C-130 未量带外；面已坍缩 focus＝构造上受限）"
+  },
+  {
+   "sym": "B_成对单边",
+   "slug": "wanghong",
+   "qid": "q_003",
+   "state": "无对可判",
+   "evidence": "单边 0/0 对；计划层成对 0/0；close 覆盖成对 0/0；focus 面不含碰撞块（C-130 件①），成对只经段文本到达",
+   "ref": "C-129 计划层 pair_violation 全 False；本跑看引用侧"
+  },
+  {
+   "sym": "C_核验钉未优先",
+   "slug": "wanghong",
+   "qid": "q_003",
+   "state": "已消",
+   "evidence": "钉进 close 1/1；钉被引 1/1",
+   "ref": "本跑首量（R41 设计意图；C-130 未量）"
+  },
+  {
+   "sym": "D_采信对立标注",
+   "slug": "wanghong",
+   "qid": "q_003",
+   "state": "缺环（单分析师形状无标注面）",
+   "evidence": "结论数 1；计划层 preferred 0/0",
+   "ref": "标注面在归并/仲裁层；本跑形状与 C-130 同"
+  },
+  {
+   "sym": "E_可用密度低",
+   "slug": "wanghong",
+   "qid": "q_003",
+   "state": "已消",
+   "evidence": "金标→close 1.0（3 金标/3 close，非金标 0）",
+   "ref": "C-129 计划层 6/6=1.0；C-130 q_003 开臂可用密度低"
+  },
+  {
+   "sym": "F_名单准度",
+   "slug": "wanghong",
+   "qid": "q_003",
+   "state": "首量（无同臂参照）",
+   "evidence": "focus 准度 1.0；R44 臂口径 0.8571 为另一臂、不可比",
+   "ref": "同臂＝C-130 开臂（仅 liuxiang q_003 有真跑参照）；C-129 为 R44 式回归臂口径"
+  }
+ ],
+ "symptom_count": {
+  "仍在": 1,
+  "已消": 16,
+  "新现": 0,
+  "缺环/无对": 13
+ },
+ "deltas_vs_refs": {
+  "note": "R44 尺见 EXPECT；C-129 计划层名单准度/金标→close 见 C129_PLAN；C-130 q_003 真跑 L3 off 2.6／on 2.0（单题）"
+ }
+}

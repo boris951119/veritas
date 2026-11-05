@@ -1,0 +1,25 @@
+{
+  "ticket": "C-128-part1-case-slug-gap-measure",
+  "date": "2026-11-03",
+  "head": "115772355efef5020f9e87a4a485bfeca05c5259",
+  "head_contains_9881dbb": true,
+  "flag_default": {"Settings": false, "from_env": false},
+  "call_chain": "pipeline.py L604-606 → ensure_test_tree_submit(dossier)（无 slug）→ build_test_tree_surface(dossier) 默认 case_slug='case'；探针腿C 显式传 case_slug=slug＝与生产不一致",
+  "title_facts": {
+    "official_loader": "app/ingest/official_case.py L78 Dossier(title=Path(case_dir).name)",
+    "regular_loader": "app/ingest/case_loader.py L478 Dossier(title=manifest title or case_dir.name)",
+    "note": "两入口 title 都含案名标记，可解析"
+  },
+  "arms": {
+    "empty_title": {"slug": "case", "cache": {"vault_dir_present": false, "n_with_summary": 0, "summary_missing": true, "affected": ["summary", "vault"], "degraded_continue": true}, "case_slug_disclosure_present": false},
+    "liuxiang_title_with_warm_vault": {"warm_vault_exists": true, "still_keyed_case": true, "cache_identical_to_empty_title": true, "verdict": "暖缓存被读成缺席＝误报实锤"},
+    "explicit_liuxiang_contrast": {"vault_dir_present": true, "summary_missing": false, "affected": [], "note": "夹具 doc_id 与真实缓存同命名空间（21/30 撞名），只用于说明接线差"}
+  },
+  "mapping_tables_current": {
+    "batch_summarize_case._slug": "六对自含（mark→slug）",
+    "probe_c125.CASE_MARKS": "同六对（slug→mark）",
+    "risk": "两表各自维护＝第三套表漂移风险"
+  },
+  "repro": "VERITAS_TEST_TREE_LINE=1 下 ensure_test_tree_submit(手造 title 含刘翔的 dossier, force=True) 看 accounting[kg_test_tree][cache] summary_missing=true（暖 vault 在场）且无 case_slug 键",
+  "hygiene": "无官语料原文；无 Markdown 表；缓存目录未提交"
+}

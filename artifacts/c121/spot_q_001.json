@@ -1,0 +1,152 @@
+{
+ "schema_version": "c121.three_arm.v1",
+ "case": "刘翔编制“二选一”事件",
+ "qid": "q_001",
+ "model": "openai/veritas-qwen3-14b",
+ "temperature": null,
+ "passes_per_arm": 1,
+ "rule": {
+  "kept_reasons": [
+   "close_read",
+   "conflict_pair"
+  ],
+  "cap": 5,
+  "min_score": 0.0
+ },
+ "lists": {
+  "raw_ids": [
+   "doc_033#p2",
+   "doc_012#p5",
+   "doc_002#p3",
+   "doc_035#p7",
+   "doc_024#p1",
+   "doc_025#p6",
+   "doc_043#p1",
+   "doc_052#p1",
+   "doc_029#p6",
+   "doc_051#p1"
+  ],
+  "kept_ids": [
+   "doc_033#p2",
+   "doc_012#p5",
+   "doc_002#p3",
+   "doc_035#p7",
+   "doc_024#p1"
+  ],
+  "box_gold": [
+   "doc_002#p3",
+   "doc_024#p1",
+   "doc_025#p6",
+   "doc_035#p7"
+  ]
+ },
+ "leaks_total": 0,
+ "rows": [
+  {
+   "arm": "off",
+   "pass": 1,
+   "denom": 4,
+   "box_n": 88,
+   "list_n": 0,
+   "list_gold": 0,
+   "block_chars": 0,
+   "nongold_cited": 0,
+   "list_nongold_cited": 0,
+   "doc_002_p3_cited": true,
+   "doc_012_p5_cited": false,
+   "check_fail_n": 0,
+   "check_fail_tot": 3,
+   "text_leak": [],
+   "ids_outside_box": [],
+   "wall_s": 37.4,
+   "l3": 3,
+   "cited_gold_ids": [
+    "doc_002#p3",
+    "doc_025#p6",
+    "doc_035#p7"
+   ],
+   "n_evidences": 3,
+   "n_conclusions": 1,
+   "cited_ids_all": [
+    "doc_002#p3",
+    "doc_025#p6",
+    "doc_035#p7"
+   ],
+   "evidences": [
+    {
+     "seg_ids": [
+      "doc_035#p7"
+     ],
+     "quote_head": "9月7日，人事关系手续基本办理完结，并按规定给予了自主择业经济补偿金。",
+     "check_fails": []
+    },
+    {
+     "seg_ids": [
+      "doc_025#p6"
+     ],
+     "quote_head": "在运动员退役安置的制度框架中，“买断”对应的表述是“自主择业”——依据2",
+     "check_fails": []
+    },
+    {
+     "seg_ids": [
+      "doc_002#p3"
+     ],
+     "quote_head": "刘翔递交了自愿选择自主择业申请表，并签署了有关协议；9月7日，人事关系手",
+     "check_fails": []
+    }
+   ],
+   "seen_not_id_face": [
+    "doc_024#p1"
+   ]
+  },
+  {
+   "arm": "filt",
+   "pass": 1,
+   "denom": 4,
+   "box_n": 88,
+   "list_n": 5,
+   "list_gold": 3,
+   "block_chars": 163,
+   "nongold_cited": 0,
+   "list_nongold_cited": 0,
+   "doc_002_p3_cited": false,
+   "doc_012_p5_cited": false,
+   "check_fail_n": 0,
+   "check_fail_tot": 2,
+   "text_leak": [],
+   "ids_outside_box": [],
+   "wall_s": 21.5,
+   "l3": 2,
+   "cited_gold_ids": [
+    "doc_024#p1",
+    "doc_035#p7"
+   ],
+   "n_evidences": 2,
+   "n_conclusions": 1,
+   "cited_ids_all": [
+    "doc_024#p1",
+    "doc_035#p7"
+   ],
+   "evidences": [
+    {
+     "seg_ids": [
+      "doc_035#p7"
+     ],
+     "quote_head": "9月7日，人事关系手续基本办理完结，并按规定给予了自主择业经济补偿金。",
+     "check_fails": []
+    },
+    {
+     "seg_ids": [
+      "doc_024#p1"
+     ],
+     "quote_head": "刘翔最终选择自主择业，我们予以充分尊重。9月1日，刘翔递交了自愿选择自主",
+     "check_fails": []
+    }
+   ],
+   "seen_not_id_face": [
+    "doc_002#p3",
+    "doc_025#p6"
+   ]
+  }
+ ]
+}

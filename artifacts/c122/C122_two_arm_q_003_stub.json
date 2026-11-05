@@ -1,0 +1,105 @@
+{
+ "checks": {
+  "两臂盒指纹相同": true,
+  "两臂提示字节相同": true,
+  "五条桩都进了剪证前清单": true,
+  "关臂至少打回 3 条（排版脏＋漏字＋凭空编）": true,
+  "开臂打回严格少于关臂": true,
+  "A 刀真救回过": true,
+  "B 刀真救回过（案卷里落了原文回贴）": true,
+  "凭空编那条两臂都被打掉": true,
+  "两臂剪完都没有假绿（当期尺全过）": true,
+  "两臂幸存条目活路全可归因（严格尺／A 子串／B 留痕）": true,
+  "开臂确有 A 宽容面（strict_fail 非空比空的正数）": true,
+  "开臂 accounting 写数且 Σ 闭合": true,
+  "关臂不写 accounting 键": true,
+  "泄漏＝0（越界 id／禁品键）": true,
+  "金标被引剪后开臂≥关臂": true
+ },
+ "failed": [],
+ "rows": [
+  {
+   "arm": "off",
+   "stub": true,
+   "denom": 5,
+   "box_n": 95,
+   "box_sel_sha": "8a02208cccf7",
+   "n_ev_pre": 5,
+   "n_rejected": 4,
+   "n_ev_post": 1,
+   "fail_rate": 0.8,
+   "ruler_fail_after": 0,
+   "strict_fail_after": 0,
+   "unattributed_after": 0,
+   "fabricated_line_survived": false,
+   "gold_cited_pre": 1,
+   "gold_cited_post": 1,
+   "gold_cited_post_ids": [
+    "doc_002#p3"
+   ],
+   "nongold_cited_pre": 3,
+   "nongold_cited_post": 0,
+   "l3_pre": 1,
+   "l3_post": 1,
+   "rejected_ids": [
+    "EV-8015ae1dfc55",
+    "EV-27e01a93b90c",
+    "EV-3587549c9465",
+    "EV-cd5c480f2ccd"
+   ],
+   "tally": {},
+   "n_reanchored_in_products": 0,
+   "prompt_sha": [
+    "ec80ffd3ead12936"
+   ],
+   "prompt_chars": 3789,
+   "leaks": [],
+   "wall_s": 0.2,
+   "conclusions_post": 1
+  },
+  {
+   "arm": "on",
+   "stub": true,
+   "denom": 5,
+   "box_n": 95,
+   "box_sel_sha": "8a02208cccf7",
+   "n_ev_pre": 5,
+   "n_rejected": 2,
+   "n_ev_post": 3,
+   "fail_rate": 0.4,
+   "ruler_fail_after": 0,
+   "strict_fail_after": 1,
+   "unattributed_after": 0,
+   "fabricated_line_survived": false,
+   "gold_cited_pre": 1,
+   "gold_cited_post": 1,
+   "gold_cited_post_ids": [
+    "doc_002#p3"
+   ],
+   "nongold_cited_pre": 3,
+   "nongold_cited_post": 2,
+   "l3_pre": 1,
+   "l3_post": 1,
+   "rejected_ids": [
+    "EV-7b44225206c5",
+    "EV-510e14a3b90d"
+   ],
+   "tally": {
+    "n_checked": 5,
+    "n_pass_strict": 1,
+    "n_fmt_pass": 1,
+    "n_reanchored": 1,
+    "n_still_fail": 2,
+    "rounds": 1
+   },
+   "n_reanchored_in_products": 1,
+   "prompt_sha": [
+    "ec80ffd3ead12936"
+   ],
+   "prompt_chars": 3789,
+   "leaks": [],
+   "wall_s": 0.2,
+   "conclusions_post": 1
+  }
+ ]
+}

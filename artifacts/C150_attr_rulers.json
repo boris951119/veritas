@@ -1,0 +1,2504 @@
+{
+ "ticket": "C-150",
+ "run_root": "/tmp/s4runs/time-20261104-135401",
+ "c149_json": "/Users/liuboyu/Developer/veritas/artifacts/C149_conf_score.json",
+ "c149_run_root": "/tmp/s4runs/time-20261104-135401",
+ "n_question_total": 18,
+ "faces": [
+  "volume",
+  "union",
+  "rerank",
+  "focus",
+  "prio",
+  "close",
+  "top7",
+  "cut",
+  "sp",
+  "cited",
+  "ct_ledger",
+  "pair_opts",
+  "pair_rows",
+  "conflict_sides",
+  "pair_loser",
+  "pair_winner",
+  "merge_blocked",
+  "drops",
+  "rejected"
+ ],
+ "gap_note": "material_pack_selected（首箱 id）不在 kept 白名单＝「装箱」与「进主分析师提示」不可分，material_pack_union 只作上界；unused_topic_segments 18/18 缺席；BM25 一筛候选无 id 级留痕＝「未召回」与「召回即被箱限掉」合并成「池外」档",
+ "locator_noloc_total": 0,
+ "locator_mapped_total": 385,
+ "hot_range": "25–31 段",
+ "r1_grand_total": 48,
+ "r1_tally_all": {
+  "A2 进提示未引用·只在宽料并集": 33,
+  "C 池外（未召回／召回即被箱限·二者不可再分）": 15
+ },
+ "r2_grand_total": 11,
+ "r2_tally_all": {
+  "E4 有引用无候选": 7,
+  "E2 有候选·判定环留痕（闸/分流/丢弃在场）": 3,
+  "E1 成对未进流·只在胜方侧（甲规则只交败方＝有意不交）": 1
+ },
+ "r1_by_grade": {
+  "C 池外（未召回／召回即被箱限·二者不可再分）": [
+   {
+    "key": "doc_001#p230",
+    "grade": "C 池外（未召回／召回即被箱限·二者不可再分）",
+    "in_hot_face": [],
+    "in_rerank": false,
+    "rerank_best_rank": null,
+    "in_cut": false,
+    "q_union": [],
+    "q_hot": [],
+    "slug": "jilong"
+   },
+   {
+    "key": "doc_001#p422",
+    "grade": "C 池外（未召回／召回即被箱限·二者不可再分）",
+    "in_hot_face": [],
+    "in_rerank": false,
+    "rerank_best_rank": null,
+    "in_cut": false,
+    "q_union": [],
+    "q_hot": [],
+    "slug": "jilong"
+   },
+   {
+    "key": "doc_002#p1",
+    "grade": "C 池外（未召回／召回即被箱限·二者不可再分）",
+    "in_hot_face": [],
+    "in_rerank": false,
+    "rerank_best_rank": null,
+    "in_cut": false,
+    "q_union": [],
+    "q_hot": [],
+    "slug": "jilong"
+   },
+   {
+    "key": "doc_048#p4",
+    "grade": "C 池外（未召回／召回即被箱限·二者不可再分）",
+    "in_hot_face": [],
+    "in_rerank": false,
+    "rerank_best_rank": null,
+    "in_cut": false,
+    "q_union": [],
+    "q_hot": [],
+    "slug": "us_cn_ai"
+   },
+   {
+    "key": "doc_062#p11",
+    "grade": "C 池外（未召回／召回即被箱限·二者不可再分）",
+    "in_hot_face": [],
+    "in_rerank": false,
+    "rerank_best_rank": null,
+    "in_cut": false,
+    "q_union": [],
+    "q_hot": [],
+    "slug": "us_cn_ai"
+   },
+   {
+    "key": "doc_014#p1",
+    "grade": "C 池外（未召回／召回即被箱限·二者不可再分）",
+    "in_hot_face": [],
+    "in_rerank": false,
+    "rerank_best_rank": null,
+    "in_cut": false,
+    "q_union": [],
+    "q_hot": [],
+    "slug": "ai171"
+   },
+   {
+    "key": "doc_014#p2",
+    "grade": "C 池外（未召回／召回即被箱限·二者不可再分）",
+    "in_hot_face": [],
+    "in_rerank": false,
+    "rerank_best_rank": null,
+    "in_cut": false,
+    "q_union": [],
+    "q_hot": [],
+    "slug": "ai171"
+   },
+   {
+    "key": "doc_025#p9",
+    "grade": "C 池外（未召回／召回即被箱限·二者不可再分）",
+    "in_hot_face": [],
+    "in_rerank": false,
+    "rerank_best_rank": null,
+    "in_cut": false,
+    "q_union": [],
+    "q_hot": [],
+    "slug": "ai171"
+   },
+   {
+    "key": "doc_057#p4",
+    "grade": "C 池外（未召回／召回即被箱限·二者不可再分）",
+    "in_hot_face": [],
+    "in_rerank": false,
+    "rerank_best_rank": null,
+    "in_cut": false,
+    "q_union": [],
+    "q_hot": [],
+    "slug": "ai171"
+   },
+   {
+    "key": "doc_057#p5",
+    "grade": "C 池外（未召回／召回即被箱限·二者不可再分）",
+    "in_hot_face": [],
+    "in_rerank": false,
+    "rerank_best_rank": null,
+    "in_cut": false,
+    "q_union": [],
+    "q_hot": [],
+    "slug": "ai171"
+   },
+   {
+    "key": "doc_006#p8",
+    "grade": "C 池外（未召回／召回即被箱限·二者不可再分）",
+    "in_hot_face": [],
+    "in_rerank": false,
+    "rerank_best_rank": null,
+    "in_cut": false,
+    "q_union": [],
+    "q_hot": [],
+    "slug": "kh_th"
+   },
+   {
+    "key": "doc_008#p2",
+    "grade": "C 池外（未召回／召回即被箱限·二者不可再分）",
+    "in_hot_face": [],
+    "in_rerank": false,
+    "rerank_best_rank": null,
+    "in_cut": false,
+    "q_union": [],
+    "q_hot": [],
+    "slug": "kh_th"
+   },
+   {
+    "key": "doc_009#p11",
+    "grade": "C 池外（未召回／召回即被箱限·二者不可再分）",
+    "in_hot_face": [],
+    "in_rerank": false,
+    "rerank_best_rank": null,
+    "in_cut": false,
+    "q_union": [],
+    "q_hot": [],
+    "slug": "kh_th"
+   },
+   {
+    "key": "doc_009#p12",
+    "grade": "C 池外（未召回／召回即被箱限·二者不可再分）",
+    "in_hot_face": [],
+    "in_rerank": false,
+    "rerank_best_rank": null,
+    "in_cut": false,
+    "q_union": [],
+    "q_hot": [],
+    "slug": "kh_th"
+   },
+   {
+    "key": "doc_029#p3",
+    "grade": "C 池外（未召回／召回即被箱限·二者不可再分）",
+    "in_hot_face": [],
+    "in_rerank": false,
+    "rerank_best_rank": null,
+    "in_cut": false,
+    "q_union": [],
+    "q_hot": [],
+    "slug": "wanghong"
+   }
+  ],
+  "A2 进提示未引用·只在宽料并集": [
+   {
+    "key": "doc_001#p424",
+    "grade": "A2 进提示未引用·只在宽料并集",
+    "in_hot_face": [],
+    "in_rerank": false,
+    "rerank_best_rank": null,
+    "in_cut": false,
+    "q_union": [
+     "q_003"
+    ],
+    "q_hot": [],
+    "slug": "jilong"
+   },
+   {
+    "key": "doc_024#p6",
+    "grade": "A2 进提示未引用·只在宽料并集",
+    "in_hot_face": [],
+    "in_rerank": true,
+    "rerank_best_rank": 17,
+    "in_cut": true,
+    "q_union": [
+     "q_001",
+     "q_002"
+    ],
+    "q_hot": [],
+    "slug": "us_cn_ai"
+   },
+   {
+    "key": "doc_038#p1",
+    "grade": "A2 进提示未引用·只在宽料并集",
+    "in_hot_face": [],
+    "in_rerank": false,
+    "rerank_best_rank": null,
+    "in_cut": false,
+    "q_union": [
+     "q_002"
+    ],
+    "q_hot": [],
+    "slug": "us_cn_ai"
+   },
+   {
+    "key": "doc_047#p7",
+    "grade": "A2 进提示未引用·只在宽料并集",
+    "in_hot_face": [],
+    "in_rerank": false,
+    "rerank_best_rank": null,
+    "in_cut": false,
+    "q_union": [
+     "q_001",
+     "q_002"
+    ],
+    "q_hot": [],
+    "slug": "us_cn_ai"
+   },
+   {
+    "key": "doc_064#p6",
+    "grade": "A2 进提示未引用·只在宽料并集",
+    "in_hot_face": [],
+    "in_rerank": false,
+    "rerank_best_rank": null,
+    "in_cut": false,
+    "q_union": [
+     "q_001",
+     "q_002",
+     "q_003"
+    ],
+    "q_hot": [],
+    "slug": "us_cn_ai"
+   },
+   {
+    "key": "doc_065#p8",
+    "grade": "A2 进提示未引用·只在宽料并集",
+    "in_hot_face": [],
+    "in_rerank": false,
+    "rerank_best_rank": null,
+    "in_cut": false,
+    "q_union": [
+     "q_003"
+    ],
+    "q_hot": [],
+    "slug": "us_cn_ai"
+   },
+   {
+    "key": "doc_025#p4",
+    "grade": "A2 进提示未引用·只在宽料并集",
+    "in_hot_face": [],
+    "in_rerank": false,
+    "rerank_best_rank": null,
+    "in_cut": false,
+    "q_union": [
+     "q_002",
+     "q_003"
+    ],
+    "q_hot": [],
+    "slug": "liuxiang"
+   },
+   {
+    "key": "doc_026#p5",
+    "grade": "A2 进提示未引用·只在宽料并集",
+    "in_hot_face": [],
+    "in_rerank": false,
+    "rerank_best_rank": null,
+    "in_cut": false,
+    "q_union": [
+     "q_001",
+     "q_002",
+     "q_003"
+    ],
+    "q_hot": [],
+    "slug": "liuxiang"
+   },
+   {
+    "key": "doc_026#p6",
+    "grade": "A2 进提示未引用·只在宽料并集",
+    "in_hot_face": [],
+    "in_rerank": false,
+    "rerank_best_rank": null,
+    "in_cut": false,
+    "q_union": [
+     "q_001",
+     "q_002",
+     "q_003"
+    ],
+    "q_hot": [],
+    "slug": "liuxiang"
+   },
+   {
+    "key": "doc_026#p7",
+    "grade": "A2 进提示未引用·只在宽料并集",
+    "in_hot_face": [],
+    "in_rerank": false,
+    "rerank_best_rank": null,
+    "in_cut": false,
+    "q_union": [
+     "q_001",
+     "q_002",
+     "q_003"
+    ],
+    "q_hot": [],
+    "slug": "liuxiang"
+   },
+   {
+    "key": "doc_027#p3",
+    "grade": "A2 进提示未引用·只在宽料并集",
+    "in_hot_face": [],
+    "in_rerank": true,
+    "rerank_best_rank": 9,
+    "in_cut": true,
+    "q_union": [
+     "q_001",
+     "q_002",
+     "q_003"
+    ],
+    "q_hot": [],
+    "slug": "liuxiang"
+   },
+   {
+    "key": "doc_028#p3",
+    "grade": "A2 进提示未引用·只在宽料并集",
+    "in_hot_face": [],
+    "in_rerank": true,
+    "rerank_best_rank": 24,
+    "in_cut": true,
+    "q_union": [
+     "q_001",
+     "q_002",
+     "q_003"
+    ],
+    "q_hot": [],
+    "slug": "liuxiang"
+   },
+   {
+    "key": "doc_045#p6",
+    "grade": "A2 进提示未引用·只在宽料并集",
+    "in_hot_face": [],
+    "in_rerank": true,
+    "rerank_best_rank": 22,
+    "in_cut": true,
+    "q_union": [
+     "q_002",
+     "q_003"
+    ],
+    "q_hot": [],
+    "slug": "liuxiang"
+   },
+   {
+    "key": "doc_051#p1",
+    "grade": "A2 进提示未引用·只在宽料并集",
+    "in_hot_face": [],
+    "in_rerank": false,
+    "rerank_best_rank": null,
+    "in_cut": false,
+    "q_union": [
+     "q_001",
+     "q_002",
+     "q_003"
+    ],
+    "q_hot": [],
+    "slug": "liuxiang"
+   },
+   {
+    "key": "doc_052#p1",
+    "grade": "A2 进提示未引用·只在宽料并集",
+    "in_hot_face": [],
+    "in_rerank": false,
+    "rerank_best_rank": null,
+    "in_cut": false,
+    "q_union": [
+     "q_001",
+     "q_002",
+     "q_003"
+    ],
+    "q_hot": [],
+    "slug": "liuxiang"
+   },
+   {
+    "key": "doc_053#p4",
+    "grade": "A2 进提示未引用·只在宽料并集",
+    "in_hot_face": [],
+    "in_rerank": false,
+    "rerank_best_rank": null,
+    "in_cut": false,
+    "q_union": [
+     "q_002",
+     "q_003"
+    ],
+    "q_hot": [],
+    "slug": "liuxiang"
+   },
+   {
+    "key": "doc_016#p20",
+    "grade": "A2 进提示未引用·只在宽料并集",
+    "in_hot_face": [],
+    "in_rerank": false,
+    "rerank_best_rank": null,
+    "in_cut": false,
+    "q_union": [
+     "q_002"
+    ],
+    "q_hot": [],
+    "slug": "ai171"
+   },
+   {
+    "key": "doc_018#p21",
+    "grade": "A2 进提示未引用·只在宽料并集",
+    "in_hot_face": [],
+    "in_rerank": false,
+    "rerank_best_rank": null,
+    "in_cut": false,
+    "q_union": [
+     "q_001",
+     "q_003"
+    ],
+    "q_hot": [],
+    "slug": "ai171"
+   },
+   {
+    "key": "doc_031#p6",
+    "grade": "A2 进提示未引用·只在宽料并集",
+    "in_hot_face": [],
+    "in_rerank": true,
+    "rerank_best_rank": 11,
+    "in_cut": true,
+    "q_union": [
+     "q_001",
+     "q_002",
+     "q_003"
+    ],
+    "q_hot": [],
+    "slug": "ai171"
+   },
+   {
+    "key": "doc_036#p16",
+    "grade": "A2 进提示未引用·只在宽料并集",
+    "in_hot_face": [],
+    "in_rerank": false,
+    "rerank_best_rank": null,
+    "in_cut": false,
+    "q_union": [
+     "q_002"
+    ],
+    "q_hot": [],
+    "slug": "ai171"
+   },
+   {
+    "key": "doc_044#p16",
+    "grade": "A2 进提示未引用·只在宽料并集",
+    "in_hot_face": [],
+    "in_rerank": false,
+    "rerank_best_rank": null,
+    "in_cut": false,
+    "q_union": [
+     "q_003"
+    ],
+    "q_hot": [],
+    "slug": "ai171"
+   },
+   {
+    "key": "doc_049#p1",
+    "grade": "A2 进提示未引用·只在宽料并集",
+    "in_hot_face": [],
+    "in_rerank": false,
+    "rerank_best_rank": null,
+    "in_cut": false,
+    "q_union": [
+     "q_001",
+     "q_002"
+    ],
+    "q_hot": [],
+    "slug": "ai171"
+   },
+   {
+    "key": "doc_055#p18",
+    "grade": "A2 进提示未引用·只在宽料并集",
+    "in_hot_face": [],
+    "in_rerank": false,
+    "rerank_best_rank": null,
+    "in_cut": false,
+    "q_union": [
+     "q_003"
+    ],
+    "q_hot": [],
+    "slug": "ai171"
+   },
+   {
+    "key": "doc_006#p4",
+    "grade": "A2 进提示未引用·只在宽料并集",
+    "in_hot_face": [],
+    "in_rerank": false,
+    "rerank_best_rank": null,
+    "in_cut": false,
+    "q_union": [
+     "q_002"
+    ],
+    "q_hot": [],
+    "slug": "kh_th"
+   },
+   {
+    "key": "doc_004#p7",
+    "grade": "A2 进提示未引用·只在宽料并集",
+    "in_hot_face": [],
+    "in_rerank": false,
+    "rerank_best_rank": null,
+    "in_cut": false,
+    "q_union": [
+     "q_001"
+    ],
+    "q_hot": [],
+    "slug": "wanghong"
+   },
+   {
+    "key": "doc_010#p3",
+    "grade": "A2 进提示未引用·只在宽料并集",
+    "in_hot_face": [],
+    "in_rerank": false,
+    "rerank_best_rank": null,
+    "in_cut": false,
+    "q_union": [
+     "q_002",
+     "q_003"
+    ],
+    "q_hot": [],
+    "slug": "wanghong"
+   },
+   {
+    "key": "doc_015#p7",
+    "grade": "A2 进提示未引用·只在宽料并集",
+    "in_hot_face": [],
+    "in_rerank": false,
+    "rerank_best_rank": null,
+    "in_cut": false,
+    "q_union": [
+     "q_001"
+    ],
+    "q_hot": [],
+    "slug": "wanghong"
+   },
+   {
+    "key": "doc_034#p2",
+    "grade": "A2 进提示未引用·只在宽料并集",
+    "in_hot_face": [],
+    "in_rerank": false,
+    "rerank_best_rank": null,
+    "in_cut": false,
+    "q_union": [
+     "q_001",
+     "q_002",
+     "q_003"
+    ],
+    "q_hot": [],
+    "slug": "wanghong"
+   },
+   {
+    "key": "doc_046#p3",
+    "grade": "A2 进提示未引用·只在宽料并集",
+    "in_hot_face": [],
+    "in_rerank": false,
+    "rerank_best_rank": null,
+    "in_cut": false,
+    "q_union": [
+     "q_002",
+     "q_003"
+    ],
+    "q_hot": [],
+    "slug": "wanghong"
+   },
+   {
+    "key": "doc_056#p1",
+    "grade": "A2 进提示未引用·只在宽料并集",
+    "in_hot_face": [],
+    "in_rerank": false,
+    "rerank_best_rank": null,
+    "in_cut": false,
+    "q_union": [
+     "q_001"
+    ],
+    "q_hot": [],
+    "slug": "wanghong"
+   },
+   {
+    "key": "doc_063#p4",
+    "grade": "A2 进提示未引用·只在宽料并集",
+    "in_hot_face": [],
+    "in_rerank": true,
+    "rerank_best_rank": 25,
+    "in_cut": true,
+    "q_union": [
+     "q_002",
+     "q_003"
+    ],
+    "q_hot": [],
+    "slug": "wanghong"
+   },
+   {
+    "key": "doc_071#p2",
+    "grade": "A2 进提示未引用·只在宽料并集",
+    "in_hot_face": [],
+    "in_rerank": false,
+    "rerank_best_rank": null,
+    "in_cut": false,
+    "q_union": [
+     "q_002"
+    ],
+    "q_hot": [],
+    "slug": "wanghong"
+   },
+   {
+    "key": "doc_073#p2",
+    "grade": "A2 进提示未引用·只在宽料并集",
+    "in_hot_face": [],
+    "in_rerank": false,
+    "rerank_best_rank": null,
+    "in_cut": false,
+    "q_union": [
+     "q_002",
+     "q_003"
+    ],
+    "q_hot": [],
+    "slug": "wanghong"
+   }
+  ]
+ },
+ "r2_by_grade": {
+  "E4 有引用无候选": [
+   {
+    "key": "doc_002#p2",
+    "grade": "E4 有引用无候选",
+    "candidate_faces": [],
+    "paired_loser": false,
+    "paired_winner": false,
+    "cited_now": true,
+    "merge_blocked": false,
+    "in_conflict_drops": false,
+    "citation_check_failed": false,
+    "gate_kinds": [],
+    "n_cites": 1,
+    "cite_roles": [
+     "mainstream"
+    ],
+    "cite_statuses": [
+     "majority"
+    ],
+    "cite_conclusions": [
+     "CON-b556adc3fef1"
+    ],
+    "cite_conclusion_paired": [],
+    "q_cited": [
+     "q_003"
+    ],
+    "gate_traces": [],
+    "slug": "liuxiang"
+   },
+   {
+    "key": "doc_007#p4",
+    "grade": "E4 有引用无候选",
+    "candidate_faces": [],
+    "paired_loser": false,
+    "paired_winner": false,
+    "cited_now": true,
+    "merge_blocked": false,
+    "in_conflict_drops": false,
+    "citation_check_failed": false,
+    "gate_kinds": [],
+    "n_cites": 1,
+    "cite_roles": [
+     "mainstream"
+    ],
+    "cite_statuses": [
+     "majority"
+    ],
+    "cite_conclusions": [
+     "CON-e476dfa133ed"
+    ],
+    "cite_conclusion_paired": [],
+    "q_cited": [
+     "q_003"
+    ],
+    "gate_traces": [],
+    "slug": "liuxiang"
+   },
+   {
+    "key": "doc_013#p3",
+    "grade": "E4 有引用无候选",
+    "candidate_faces": [],
+    "paired_loser": false,
+    "paired_winner": false,
+    "cited_now": true,
+    "merge_blocked": false,
+    "in_conflict_drops": false,
+    "citation_check_failed": false,
+    "gate_kinds": [],
+    "n_cites": 1,
+    "cite_roles": [
+     "mainstream"
+    ],
+    "cite_statuses": [
+     "majority"
+    ],
+    "cite_conclusions": [
+     "CON-d86629c5cbfb"
+    ],
+    "cite_conclusion_paired": [],
+    "q_cited": [
+     "q_003"
+    ],
+    "gate_traces": [],
+    "slug": "liuxiang"
+   },
+   {
+    "key": "doc_026#p2",
+    "grade": "E4 有引用无候选",
+    "candidate_faces": [],
+    "paired_loser": false,
+    "paired_winner": false,
+    "cited_now": true,
+    "merge_blocked": false,
+    "in_conflict_drops": false,
+    "citation_check_failed": false,
+    "gate_kinds": [],
+    "n_cites": 1,
+    "cite_roles": [
+     "mainstream"
+    ],
+    "cite_statuses": [
+     "majority"
+    ],
+    "cite_conclusions": [
+     "CON-f140639dcdc1"
+    ],
+    "cite_conclusion_paired": [],
+    "q_cited": [
+     "q_002"
+    ],
+    "gate_traces": [],
+    "slug": "liuxiang"
+   },
+   {
+    "key": "doc_027#p4",
+    "grade": "E4 有引用无候选",
+    "candidate_faces": [],
+    "paired_loser": false,
+    "paired_winner": false,
+    "cited_now": true,
+    "merge_blocked": false,
+    "in_conflict_drops": false,
+    "citation_check_failed": false,
+    "gate_kinds": [],
+    "n_cites": 1,
+    "cite_roles": [
+     "mainstream"
+    ],
+    "cite_statuses": [
+     "majority"
+    ],
+    "cite_conclusions": [
+     "CON-3050882f822f"
+    ],
+    "cite_conclusion_paired": [],
+    "q_cited": [
+     "q_002"
+    ],
+    "gate_traces": [],
+    "slug": "liuxiang"
+   },
+   {
+    "key": "doc_020#p1",
+    "grade": "E4 有引用无候选",
+    "candidate_faces": [],
+    "paired_loser": false,
+    "paired_winner": false,
+    "cited_now": true,
+    "merge_blocked": false,
+    "in_conflict_drops": false,
+    "citation_check_failed": false,
+    "gate_kinds": [],
+    "n_cites": 1,
+    "cite_roles": [
+     "mainstream"
+    ],
+    "cite_statuses": [
+     "majority"
+    ],
+    "cite_conclusions": [
+     "CON-36b176983f76"
+    ],
+    "cite_conclusion_paired": [],
+    "q_cited": [
+     "q_003"
+    ],
+    "gate_traces": [],
+    "slug": "kh_th"
+   },
+   {
+    "key": "doc_010#p5",
+    "grade": "E4 有引用无候选",
+    "candidate_faces": [],
+    "paired_loser": false,
+    "paired_winner": false,
+    "cited_now": true,
+    "merge_blocked": false,
+    "in_conflict_drops": false,
+    "citation_check_failed": false,
+    "gate_kinds": [],
+    "n_cites": 1,
+    "cite_roles": [
+     "mainstream"
+    ],
+    "cite_statuses": [
+     "majority"
+    ],
+    "cite_conclusions": [
+     "CON-1f3a03fede3c"
+    ],
+    "cite_conclusion_paired": [],
+    "q_cited": [
+     "q_002"
+    ],
+    "gate_traces": [],
+    "slug": "wanghong"
+   }
+  ],
+  "E1 成对未进流·只在胜方侧（甲规则只交败方＝有意不交）": [
+   {
+    "key": "doc_003#p1",
+    "grade": "E1 成对未进流·只在胜方侧（甲规则只交败方＝有意不交）",
+    "candidate_faces": [
+     "merge_blocked"
+    ],
+    "paired_loser": false,
+    "paired_winner": true,
+    "cited_now": true,
+    "merge_blocked": true,
+    "in_conflict_drops": false,
+    "citation_check_failed": false,
+    "gate_kinds": [
+     "merge_gate 否决"
+    ],
+    "n_cites": 3,
+    "cite_roles": [
+     "redteam",
+     "technologist"
+    ],
+    "cite_statuses": [
+     "majority"
+    ],
+    "cite_conclusions": [
+     "CON-40b1a900dba8",
+     "CON-6e510eaec98d",
+     "CON-947290ba483b"
+    ],
+    "cite_conclusion_paired": [
+     "CON-40b1a900dba8"
+    ],
+    "q_cited": [
+     "q_001"
+    ],
+    "gate_traces": [],
+    "slug": "ai171"
+   }
+  ],
+  "E2 有候选·判定环留痕（闸/分流/丢弃在场）": [
+   {
+    "key": "doc_036#p18",
+    "grade": "E2 有候选·判定环留痕（闸/分流/丢弃在场）",
+    "candidate_faces": [
+     "merge_blocked"
+    ],
+    "paired_loser": false,
+    "paired_winner": false,
+    "cited_now": true,
+    "merge_blocked": true,
+    "in_conflict_drops": false,
+    "citation_check_failed": false,
+    "gate_kinds": [
+     "merge_gate 否决"
+    ],
+    "n_cites": 3,
+    "cite_roles": [
+     "mainstream",
+     "redteam",
+     "technologist"
+    ],
+    "cite_statuses": [
+     "majority"
+    ],
+    "cite_conclusions": [
+     "CON-03a39d408a70",
+     "CON-344e5399e640",
+     "CON-4b002608a9b6"
+    ],
+    "cite_conclusion_paired": [],
+    "q_cited": [
+     "q_002"
+    ],
+    "gate_traces": [],
+    "slug": "ai171"
+   },
+   {
+    "key": "doc_023#p2",
+    "grade": "E2 有候选·判定环留痕（闸/分流/丢弃在场）",
+    "candidate_faces": [
+     "merge_blocked"
+    ],
+    "paired_loser": false,
+    "paired_winner": false,
+    "cited_now": true,
+    "merge_blocked": true,
+    "in_conflict_drops": false,
+    "citation_check_failed": false,
+    "gate_kinds": [
+     "merge_gate 否决"
+    ],
+    "n_cites": 5,
+    "cite_roles": [
+     "mainstream",
+     "redteam",
+     "technologist"
+    ],
+    "cite_statuses": [
+     "majority"
+    ],
+    "cite_conclusions": [
+     "CON-051473daa71d",
+     "CON-100d08697ab8",
+     "CON-54d2c7112a7f",
+     "CON-5578676b2019",
+     "CON-b49d1c6a5fa6"
+    ],
+    "cite_conclusion_paired": [],
+    "q_cited": [
+     "q_003"
+    ],
+    "gate_traces": [],
+    "slug": "kh_th"
+   },
+   {
+    "key": "doc_004#p10",
+    "grade": "E2 有候选·判定环留痕（闸/分流/丢弃在场）",
+    "candidate_faces": [
+     "merge_blocked"
+    ],
+    "paired_loser": false,
+    "paired_winner": false,
+    "cited_now": true,
+    "merge_blocked": true,
+    "in_conflict_drops": false,
+    "citation_check_failed": false,
+    "gate_kinds": [
+     "merge_gate 否决"
+    ],
+    "n_cites": 1,
+    "cite_roles": [
+     "mainstream"
+    ],
+    "cite_statuses": [
+     "majority"
+    ],
+    "cite_conclusions": [
+     "CON-ec6db0b3b3d8"
+    ],
+    "cite_conclusion_paired": [],
+    "q_cited": [
+     "q_001"
+    ],
+    "gate_traces": [],
+    "slug": "wanghong"
+   }
+  ]
+ },
+ "verdict": {
+  "r1_max_grade": "A2 进提示未引用·只在宽料并集",
+  "r1_max_count": 33,
+  "r1_in_material_a": 33,
+  "r1_outside_pool_c": 15,
+  "r1_contradict_b": 0,
+  "r1_main_break": "段已在材料里、断在引用纪律／细读带宽",
+  "r2_max_grade": "E4 有引用无候选",
+  "r2_max_count": 7,
+  "r2_candidate_ring": 4,
+  "r2_no_candidate": 7,
+  "r2_main_break": "对撞候选生成（判定闸不是主犯）",
+  "unattributable": 0,
+  "recommend_impl_ticket": "PARTIAL",
+  "why": "尺①：A 档 33/48（半数线 24）、C 档 15/48、矛盾态 B 档 0；尺②：主断点＝E4 有引用无候选 7/11，判定环合计只有 4/11——预登记的 YES 需要「尺①A 主断点 且 尺②主断点落在判定环」，后半条不成立⇒票面靶不明确，不满足开票条件",
+  "half_lines": {
+   "r1": 24,
+   "r2": 6
+  },
+  "relaxed_rule_ticket": "YES"
+ },
+ "r2_e4_stats": {
+  "n": 7,
+  "roles": [
+   "mainstream"
+  ],
+  "statuses": [
+   "majority"
+  ],
+  "conclusion_paired_any": false,
+  "n_per_question": [
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1
+  ]
+ },
+ "r2_loser_paired_any": false,
+ "invariant_r1": true,
+ "invariant_r2": true,
+ "invariant_cited_empty": true,
+ "invariant_c149_match": true,
+ "shrink_note": "jilong 4507→503（并集占卷 11%、重点面 25）、us_cn_ai 594→397（并集占卷 67%、重点面 26）、liuxiang 372→276（并集占卷 74%、重点面 31）、ai171 1462→502（并集占卷 34%、重点面 29）、kh_th 746→349（并集占卷 47%、重点面 28）、wanghong 614→308（并集占卷 50%、重点面 26）",
+ "cases": [
+  {
+   "slug": "jilong",
+   "run_case_dir": "2026·8·26 吉隆口岸泥石流灾害",
+   "n_questions": 3,
+   "face_sizes_by_q": {
+    "q_001": {
+     "volume": 4507,
+     "union": 262,
+     "rerank": 27,
+     "focus": 7,
+     "prio": 3,
+     "close": 3,
+     "top7": 7,
+     "cut": 20,
+     "sp": 3,
+     "cited": 14,
+     "ct_ledger": 180,
+     "pair_opts": 0,
+     "pair_rows": 0,
+     "conflict_sides": 14,
+     "pair_loser": 13,
+     "pair_winner": 13,
+     "merge_blocked": 12,
+     "drops": 0,
+     "rejected": 4
+    },
+    "q_002": {
+     "volume": 4507,
+     "union": 272,
+     "rerank": 27,
+     "focus": 7,
+     "prio": 3,
+     "close": 3,
+     "top7": 7,
+     "cut": 20,
+     "sp": 3,
+     "cited": 12,
+     "ct_ledger": 180,
+     "pair_opts": 0,
+     "pair_rows": 0,
+     "conflict_sides": 7,
+     "pair_loser": 4,
+     "pair_winner": 5,
+     "merge_blocked": 1,
+     "drops": 0,
+     "rejected": 7
+    },
+    "q_003": {
+     "volume": 4507,
+     "union": 222,
+     "rerank": 27,
+     "focus": 7,
+     "prio": 3,
+     "close": 3,
+     "top7": 7,
+     "cut": 20,
+     "sp": 3,
+     "cited": 13,
+     "ct_ledger": 180,
+     "pair_opts": 0,
+     "pair_rows": 0,
+     "conflict_sides": 13,
+     "pair_loser": 9,
+     "pair_winner": 11,
+     "merge_blocked": 9,
+     "drops": 0,
+     "rejected": 7
+    }
+   },
+   "n_volume_segments": 4507,
+   "r1_cited_intersect": 0,
+   "union_case": 503,
+   "hot_case": 25,
+   "locator_noloc": 0,
+   "locator_mapped": 111,
+   "r1_total": 4,
+   "r1_tally": {
+    "C 池外（未召回／召回即被箱限·二者不可再分）": 3,
+    "A2 进提示未引用·只在宽料并集": 1
+   },
+   "r1_rows": [
+    {
+     "key": "doc_001#p230",
+     "grade": "C 池外（未召回／召回即被箱限·二者不可再分）",
+     "in_hot_face": [],
+     "in_rerank": false,
+     "rerank_best_rank": null,
+     "in_cut": false,
+     "q_union": [],
+     "q_hot": []
+    },
+    {
+     "key": "doc_001#p422",
+     "grade": "C 池外（未召回／召回即被箱限·二者不可再分）",
+     "in_hot_face": [],
+     "in_rerank": false,
+     "rerank_best_rank": null,
+     "in_cut": false,
+     "q_union": [],
+     "q_hot": []
+    },
+    {
+     "key": "doc_001#p424",
+     "grade": "A2 进提示未引用·只在宽料并集",
+     "in_hot_face": [],
+     "in_rerank": false,
+     "rerank_best_rank": null,
+     "in_cut": false,
+     "q_union": [
+      "q_003"
+     ],
+     "q_hot": []
+    },
+    {
+     "key": "doc_002#p1",
+     "grade": "C 池外（未召回／召回即被箱限·二者不可再分）",
+     "in_hot_face": [],
+     "in_rerank": false,
+     "rerank_best_rank": null,
+     "in_cut": false,
+     "q_union": [],
+     "q_hot": []
+    }
+   ],
+   "r2_total": 0,
+   "r2_tally": {},
+   "r2_rows": []
+  },
+  {
+   "slug": "us_cn_ai",
+   "run_case_dir": "中美AI事故预警提议（2026.9）",
+   "n_questions": 3,
+   "face_sizes_by_q": {
+    "q_001": {
+     "volume": 594,
+     "union": 227,
+     "rerank": 26,
+     "focus": 7,
+     "prio": 3,
+     "close": 3,
+     "top7": 7,
+     "cut": 19,
+     "sp": 3,
+     "cited": 6,
+     "ct_ledger": 0,
+     "pair_opts": 0,
+     "pair_rows": 0,
+     "conflict_sides": 5,
+     "pair_loser": 5,
+     "pair_winner": 1,
+     "merge_blocked": 0,
+     "drops": 0,
+     "rejected": 7
+    },
+    "q_002": {
+     "volume": 594,
+     "union": 250,
+     "rerank": 25,
+     "focus": 7,
+     "prio": 3,
+     "close": 3,
+     "top7": 7,
+     "cut": 18,
+     "sp": 3,
+     "cited": 11,
+     "ct_ledger": 0,
+     "pair_opts": 0,
+     "pair_rows": 0,
+     "conflict_sides": 10,
+     "pair_loser": 10,
+     "pair_winner": 5,
+     "merge_blocked": 0,
+     "drops": 0,
+     "rejected": 7
+    },
+    "q_003": {
+     "volume": 594,
+     "union": 179,
+     "rerank": 29,
+     "focus": 7,
+     "prio": 3,
+     "close": 3,
+     "top7": 7,
+     "cut": 22,
+     "sp": 3,
+     "cited": 13,
+     "ct_ledger": 0,
+     "pair_opts": 0,
+     "pair_rows": 0,
+     "conflict_sides": 5,
+     "pair_loser": 5,
+     "pair_winner": 1,
+     "merge_blocked": 1,
+     "drops": 0,
+     "rejected": 8
+    }
+   },
+   "n_volume_segments": 594,
+   "r1_cited_intersect": 0,
+   "union_case": 397,
+   "hot_case": 26,
+   "locator_noloc": 0,
+   "locator_mapped": 48,
+   "r1_total": 7,
+   "r1_tally": {
+    "A2 进提示未引用·只在宽料并集": 5,
+    "C 池外（未召回／召回即被箱限·二者不可再分）": 2
+   },
+   "r1_rows": [
+    {
+     "key": "doc_024#p6",
+     "grade": "A2 进提示未引用·只在宽料并集",
+     "in_hot_face": [],
+     "in_rerank": true,
+     "rerank_best_rank": 17,
+     "in_cut": true,
+     "q_union": [
+      "q_001",
+      "q_002"
+     ],
+     "q_hot": []
+    },
+    {
+     "key": "doc_038#p1",
+     "grade": "A2 进提示未引用·只在宽料并集",
+     "in_hot_face": [],
+     "in_rerank": false,
+     "rerank_best_rank": null,
+     "in_cut": false,
+     "q_union": [
+      "q_002"
+     ],
+     "q_hot": []
+    },
+    {
+     "key": "doc_047#p7",
+     "grade": "A2 进提示未引用·只在宽料并集",
+     "in_hot_face": [],
+     "in_rerank": false,
+     "rerank_best_rank": null,
+     "in_cut": false,
+     "q_union": [
+      "q_001",
+      "q_002"
+     ],
+     "q_hot": []
+    },
+    {
+     "key": "doc_048#p4",
+     "grade": "C 池外（未召回／召回即被箱限·二者不可再分）",
+     "in_hot_face": [],
+     "in_rerank": false,
+     "rerank_best_rank": null,
+     "in_cut": false,
+     "q_union": [],
+     "q_hot": []
+    },
+    {
+     "key": "doc_062#p11",
+     "grade": "C 池外（未召回／召回即被箱限·二者不可再分）",
+     "in_hot_face": [],
+     "in_rerank": false,
+     "rerank_best_rank": null,
+     "in_cut": false,
+     "q_union": [],
+     "q_hot": []
+    },
+    {
+     "key": "doc_064#p6",
+     "grade": "A2 进提示未引用·只在宽料并集",
+     "in_hot_face": [],
+     "in_rerank": false,
+     "rerank_best_rank": null,
+     "in_cut": false,
+     "q_union": [
+      "q_001",
+      "q_002",
+      "q_003"
+     ],
+     "q_hot": []
+    },
+    {
+     "key": "doc_065#p8",
+     "grade": "A2 进提示未引用·只在宽料并集",
+     "in_hot_face": [],
+     "in_rerank": false,
+     "rerank_best_rank": null,
+     "in_cut": false,
+     "q_union": [
+      "q_003"
+     ],
+     "q_hot": []
+    }
+   ],
+   "r2_total": 0,
+   "r2_tally": {},
+   "r2_rows": []
+  },
+  {
+   "slug": "liuxiang",
+   "run_case_dir": "刘翔编制“二选一”事件",
+   "n_questions": 3,
+   "face_sizes_by_q": {
+    "q_001": {
+     "volume": 372,
+     "union": 227,
+     "rerank": 27,
+     "focus": 9,
+     "prio": 3,
+     "close": 3,
+     "top7": 9,
+     "cut": 18,
+     "sp": 3,
+     "cited": 10,
+     "ct_ledger": 6,
+     "pair_opts": 6,
+     "pair_rows": 3,
+     "conflict_sides": 7,
+     "pair_loser": 6,
+     "pair_winner": 1,
+     "merge_blocked": 6,
+     "drops": 0,
+     "rejected": 5
+    },
+    "q_002": {
+     "volume": 372,
+     "union": 230,
+     "rerank": 23,
+     "focus": 7,
+     "prio": 3,
+     "close": 3,
+     "top7": 7,
+     "cut": 16,
+     "sp": 3,
+     "cited": 11,
+     "ct_ledger": 6,
+     "pair_opts": 1,
+     "pair_rows": 0,
+     "conflict_sides": 5,
+     "pair_loser": 5,
+     "pair_winner": 2,
+     "merge_blocked": 0,
+     "drops": 0,
+     "rejected": 6
+    },
+    "q_003": {
+     "volume": 372,
+     "union": 258,
+     "rerank": 25,
+     "focus": 7,
+     "prio": 3,
+     "close": 3,
+     "top7": 7,
+     "cut": 18,
+     "sp": 3,
+     "cited": 17,
+     "ct_ledger": 6,
+     "pair_opts": 0,
+     "pair_rows": 0,
+     "conflict_sides": 7,
+     "pair_loser": 7,
+     "pair_winner": 1,
+     "merge_blocked": 0,
+     "drops": 0,
+     "rejected": 5
+    }
+   },
+   "n_volume_segments": 372,
+   "r1_cited_intersect": 0,
+   "union_case": 276,
+   "hot_case": 31,
+   "locator_noloc": 0,
+   "locator_mapped": 47,
+   "r1_total": 10,
+   "r1_tally": {
+    "A2 进提示未引用·只在宽料并集": 10
+   },
+   "r1_rows": [
+    {
+     "key": "doc_025#p4",
+     "grade": "A2 进提示未引用·只在宽料并集",
+     "in_hot_face": [],
+     "in_rerank": false,
+     "rerank_best_rank": null,
+     "in_cut": false,
+     "q_union": [
+      "q_002",
+      "q_003"
+     ],
+     "q_hot": []
+    },
+    {
+     "key": "doc_026#p5",
+     "grade": "A2 进提示未引用·只在宽料并集",
+     "in_hot_face": [],
+     "in_rerank": false,
+     "rerank_best_rank": null,
+     "in_cut": false,
+     "q_union": [
+      "q_001",
+      "q_002",
+      "q_003"
+     ],
+     "q_hot": []
+    },
+    {
+     "key": "doc_026#p6",
+     "grade": "A2 进提示未引用·只在宽料并集",
+     "in_hot_face": [],
+     "in_rerank": false,
+     "rerank_best_rank": null,
+     "in_cut": false,
+     "q_union": [
+      "q_001",
+      "q_002",
+      "q_003"
+     ],
+     "q_hot": []
+    },
+    {
+     "key": "doc_026#p7",
+     "grade": "A2 进提示未引用·只在宽料并集",
+     "in_hot_face": [],
+     "in_rerank": false,
+     "rerank_best_rank": null,
+     "in_cut": false,
+     "q_union": [
+      "q_001",
+      "q_002",
+      "q_003"
+     ],
+     "q_hot": []
+    },
+    {
+     "key": "doc_027#p3",
+     "grade": "A2 进提示未引用·只在宽料并集",
+     "in_hot_face": [],
+     "in_rerank": true,
+     "rerank_best_rank": 9,
+     "in_cut": true,
+     "q_union": [
+      "q_001",
+      "q_002",
+      "q_003"
+     ],
+     "q_hot": []
+    },
+    {
+     "key": "doc_028#p3",
+     "grade": "A2 进提示未引用·只在宽料并集",
+     "in_hot_face": [],
+     "in_rerank": true,
+     "rerank_best_rank": 24,
+     "in_cut": true,
+     "q_union": [
+      "q_001",
+      "q_002",
+      "q_003"
+     ],
+     "q_hot": []
+    },
+    {
+     "key": "doc_045#p6",
+     "grade": "A2 进提示未引用·只在宽料并集",
+     "in_hot_face": [],
+     "in_rerank": true,
+     "rerank_best_rank": 22,
+     "in_cut": true,
+     "q_union": [
+      "q_002",
+      "q_003"
+     ],
+     "q_hot": []
+    },
+    {
+     "key": "doc_051#p1",
+     "grade": "A2 进提示未引用·只在宽料并集",
+     "in_hot_face": [],
+     "in_rerank": false,
+     "rerank_best_rank": null,
+     "in_cut": false,
+     "q_union": [
+      "q_001",
+      "q_002",
+      "q_003"
+     ],
+     "q_hot": []
+    },
+    {
+     "key": "doc_052#p1",
+     "grade": "A2 进提示未引用·只在宽料并集",
+     "in_hot_face": [],
+     "in_rerank": false,
+     "rerank_best_rank": null,
+     "in_cut": false,
+     "q_union": [
+      "q_001",
+      "q_002",
+      "q_003"
+     ],
+     "q_hot": []
+    },
+    {
+     "key": "doc_053#p4",
+     "grade": "A2 进提示未引用·只在宽料并集",
+     "in_hot_face": [],
+     "in_rerank": false,
+     "rerank_best_rank": null,
+     "in_cut": false,
+     "q_union": [
+      "q_002",
+      "q_003"
+     ],
+     "q_hot": []
+    }
+   ],
+   "r2_total": 5,
+   "r2_tally": {
+    "E4 有引用无候选": 5
+   },
+   "r2_rows": [
+    {
+     "key": "doc_002#p2",
+     "grade": "E4 有引用无候选",
+     "candidate_faces": [],
+     "paired_loser": false,
+     "paired_winner": false,
+     "cited_now": true,
+     "merge_blocked": false,
+     "in_conflict_drops": false,
+     "citation_check_failed": false,
+     "gate_kinds": [],
+     "n_cites": 1,
+     "cite_roles": [
+      "mainstream"
+     ],
+     "cite_statuses": [
+      "majority"
+     ],
+     "cite_conclusions": [
+      "CON-b556adc3fef1"
+     ],
+     "cite_conclusion_paired": [],
+     "q_cited": [
+      "q_003"
+     ],
+     "gate_traces": []
+    },
+    {
+     "key": "doc_007#p4",
+     "grade": "E4 有引用无候选",
+     "candidate_faces": [],
+     "paired_loser": false,
+     "paired_winner": false,
+     "cited_now": true,
+     "merge_blocked": false,
+     "in_conflict_drops": false,
+     "citation_check_failed": false,
+     "gate_kinds": [],
+     "n_cites": 1,
+     "cite_roles": [
+      "mainstream"
+     ],
+     "cite_statuses": [
+      "majority"
+     ],
+     "cite_conclusions": [
+      "CON-e476dfa133ed"
+     ],
+     "cite_conclusion_paired": [],
+     "q_cited": [
+      "q_003"
+     ],
+     "gate_traces": []
+    },
+    {
+     "key": "doc_013#p3",
+     "grade": "E4 有引用无候选",
+     "candidate_faces": [],
+     "paired_loser": false,
+     "paired_winner": false,
+     "cited_now": true,
+     "merge_blocked": false,
+     "in_conflict_drops": false,
+     "citation_check_failed": false,
+     "gate_kinds": [],
+     "n_cites": 1,
+     "cite_roles": [
+      "mainstream"
+     ],
+     "cite_statuses": [
+      "majority"
+     ],
+     "cite_conclusions": [
+      "CON-d86629c5cbfb"
+     ],
+     "cite_conclusion_paired": [],
+     "q_cited": [
+      "q_003"
+     ],
+     "gate_traces": []
+    },
+    {
+     "key": "doc_026#p2",
+     "grade": "E4 有引用无候选",
+     "candidate_faces": [],
+     "paired_loser": false,
+     "paired_winner": false,
+     "cited_now": true,
+     "merge_blocked": false,
+     "in_conflict_drops": false,
+     "citation_check_failed": false,
+     "gate_kinds": [],
+     "n_cites": 1,
+     "cite_roles": [
+      "mainstream"
+     ],
+     "cite_statuses": [
+      "majority"
+     ],
+     "cite_conclusions": [
+      "CON-f140639dcdc1"
+     ],
+     "cite_conclusion_paired": [],
+     "q_cited": [
+      "q_002"
+     ],
+     "gate_traces": []
+    },
+    {
+     "key": "doc_027#p4",
+     "grade": "E4 有引用无候选",
+     "candidate_faces": [],
+     "paired_loser": false,
+     "paired_winner": false,
+     "cited_now": true,
+     "merge_blocked": false,
+     "in_conflict_drops": false,
+     "citation_check_failed": false,
+     "gate_kinds": [],
+     "n_cites": 1,
+     "cite_roles": [
+      "mainstream"
+     ],
+     "cite_statuses": [
+      "majority"
+     ],
+     "cite_conclusions": [
+      "CON-3050882f822f"
+     ],
+     "cite_conclusion_paired": [],
+     "q_cited": [
+      "q_002"
+     ],
+     "gate_traces": []
+    }
+   ]
+  },
+  {
+   "slug": "ai171",
+   "run_case_dir": "印度航空 AI171 空难（2025.6–2026.5）",
+   "n_questions": 3,
+   "face_sizes_by_q": {
+    "q_001": {
+     "volume": 1462,
+     "union": 273,
+     "rerank": 21,
+     "focus": 7,
+     "prio": 3,
+     "close": 3,
+     "top7": 7,
+     "cut": 14,
+     "sp": 3,
+     "cited": 13,
+     "ct_ledger": 72,
+     "pair_opts": 0,
+     "pair_rows": 0,
+     "conflict_sides": 12,
+     "pair_loser": 7,
+     "pair_winner": 5,
+     "merge_blocked": 12,
+     "drops": 0,
+     "rejected": 0
+    },
+    "q_002": {
+     "volume": 1462,
+     "union": 318,
+     "rerank": 29,
+     "focus": 7,
+     "prio": 1,
+     "close": 1,
+     "top7": 7,
+     "cut": 22,
+     "sp": 3,
+     "cited": 15,
+     "ct_ledger": 72,
+     "pair_opts": 0,
+     "pair_rows": 0,
+     "conflict_sides": 0,
+     "pair_loser": 0,
+     "pair_winner": 0,
+     "merge_blocked": 12,
+     "drops": 0,
+     "rejected": 3
+    },
+    "q_003": {
+     "volume": 1462,
+     "union": 299,
+     "rerank": 25,
+     "focus": 7,
+     "prio": 1,
+     "close": 1,
+     "top7": 7,
+     "cut": 18,
+     "sp": 3,
+     "cited": 3,
+     "ct_ledger": 72,
+     "pair_opts": 0,
+     "pair_rows": 0,
+     "conflict_sides": 3,
+     "pair_loser": 3,
+     "pair_winner": 0,
+     "merge_blocked": 1,
+     "drops": 0,
+     "rejected": 7
+    }
+   },
+   "n_volume_segments": 1462,
+   "r1_cited_intersect": 0,
+   "union_case": 502,
+   "hot_case": 29,
+   "locator_noloc": 0,
+   "locator_mapped": 55,
+   "r1_total": 12,
+   "r1_tally": {
+    "A2 进提示未引用·只在宽料并集": 7,
+    "C 池外（未召回／召回即被箱限·二者不可再分）": 5
+   },
+   "r1_rows": [
+    {
+     "key": "doc_014#p1",
+     "grade": "C 池外（未召回／召回即被箱限·二者不可再分）",
+     "in_hot_face": [],
+     "in_rerank": false,
+     "rerank_best_rank": null,
+     "in_cut": false,
+     "q_union": [],
+     "q_hot": []
+    },
+    {
+     "key": "doc_014#p2",
+     "grade": "C 池外（未召回／召回即被箱限·二者不可再分）",
+     "in_hot_face": [],
+     "in_rerank": false,
+     "rerank_best_rank": null,
+     "in_cut": false,
+     "q_union": [],
+     "q_hot": []
+    },
+    {
+     "key": "doc_016#p20",
+     "grade": "A2 进提示未引用·只在宽料并集",
+     "in_hot_face": [],
+     "in_rerank": false,
+     "rerank_best_rank": null,
+     "in_cut": false,
+     "q_union": [
+      "q_002"
+     ],
+     "q_hot": []
+    },
+    {
+     "key": "doc_018#p21",
+     "grade": "A2 进提示未引用·只在宽料并集",
+     "in_hot_face": [],
+     "in_rerank": false,
+     "rerank_best_rank": null,
+     "in_cut": false,
+     "q_union": [
+      "q_001",
+      "q_003"
+     ],
+     "q_hot": []
+    },
+    {
+     "key": "doc_025#p9",
+     "grade": "C 池外（未召回／召回即被箱限·二者不可再分）",
+     "in_hot_face": [],
+     "in_rerank": false,
+     "rerank_best_rank": null,
+     "in_cut": false,
+     "q_union": [],
+     "q_hot": []
+    },
+    {
+     "key": "doc_031#p6",
+     "grade": "A2 进提示未引用·只在宽料并集",
+     "in_hot_face": [],
+     "in_rerank": true,
+     "rerank_best_rank": 11,
+     "in_cut": true,
+     "q_union": [
+      "q_001",
+      "q_002",
+      "q_003"
+     ],
+     "q_hot": []
+    },
+    {
+     "key": "doc_036#p16",
+     "grade": "A2 进提示未引用·只在宽料并集",
+     "in_hot_face": [],
+     "in_rerank": false,
+     "rerank_best_rank": null,
+     "in_cut": false,
+     "q_union": [
+      "q_002"
+     ],
+     "q_hot": []
+    },
+    {
+     "key": "doc_044#p16",
+     "grade": "A2 进提示未引用·只在宽料并集",
+     "in_hot_face": [],
+     "in_rerank": false,
+     "rerank_best_rank": null,
+     "in_cut": false,
+     "q_union": [
+      "q_003"
+     ],
+     "q_hot": []
+    },
+    {
+     "key": "doc_049#p1",
+     "grade": "A2 进提示未引用·只在宽料并集",
+     "in_hot_face": [],
+     "in_rerank": false,
+     "rerank_best_rank": null,
+     "in_cut": false,
+     "q_union": [
+      "q_001",
+      "q_002"
+     ],
+     "q_hot": []
+    },
+    {
+     "key": "doc_055#p18",
+     "grade": "A2 进提示未引用·只在宽料并集",
+     "in_hot_face": [],
+     "in_rerank": false,
+     "rerank_best_rank": null,
+     "in_cut": false,
+     "q_union": [
+      "q_003"
+     ],
+     "q_hot": []
+    },
+    {
+     "key": "doc_057#p4",
+     "grade": "C 池外（未召回／召回即被箱限·二者不可再分）",
+     "in_hot_face": [],
+     "in_rerank": false,
+     "rerank_best_rank": null,
+     "in_cut": false,
+     "q_union": [],
+     "q_hot": []
+    },
+    {
+     "key": "doc_057#p5",
+     "grade": "C 池外（未召回／召回即被箱限·二者不可再分）",
+     "in_hot_face": [],
+     "in_rerank": false,
+     "rerank_best_rank": null,
+     "in_cut": false,
+     "q_union": [],
+     "q_hot": []
+    }
+   ],
+   "r2_total": 2,
+   "r2_tally": {
+    "E1 成对未进流·只在胜方侧（甲规则只交败方＝有意不交）": 1,
+    "E2 有候选·判定环留痕（闸/分流/丢弃在场）": 1
+   },
+   "r2_rows": [
+    {
+     "key": "doc_003#p1",
+     "grade": "E1 成对未进流·只在胜方侧（甲规则只交败方＝有意不交）",
+     "candidate_faces": [
+      "merge_blocked"
+     ],
+     "paired_loser": false,
+     "paired_winner": true,
+     "cited_now": true,
+     "merge_blocked": true,
+     "in_conflict_drops": false,
+     "citation_check_failed": false,
+     "gate_kinds": [
+      "merge_gate 否决"
+     ],
+     "n_cites": 3,
+     "cite_roles": [
+      "redteam",
+      "technologist"
+     ],
+     "cite_statuses": [
+      "majority"
+     ],
+     "cite_conclusions": [
+      "CON-40b1a900dba8",
+      "CON-6e510eaec98d",
+      "CON-947290ba483b"
+     ],
+     "cite_conclusion_paired": [
+      "CON-40b1a900dba8"
+     ],
+     "q_cited": [
+      "q_001"
+     ],
+     "gate_traces": []
+    },
+    {
+     "key": "doc_036#p18",
+     "grade": "E2 有候选·判定环留痕（闸/分流/丢弃在场）",
+     "candidate_faces": [
+      "merge_blocked"
+     ],
+     "paired_loser": false,
+     "paired_winner": false,
+     "cited_now": true,
+     "merge_blocked": true,
+     "in_conflict_drops": false,
+     "citation_check_failed": false,
+     "gate_kinds": [
+      "merge_gate 否决"
+     ],
+     "n_cites": 3,
+     "cite_roles": [
+      "mainstream",
+      "redteam",
+      "technologist"
+     ],
+     "cite_statuses": [
+      "majority"
+     ],
+     "cite_conclusions": [
+      "CON-03a39d408a70",
+      "CON-344e5399e640",
+      "CON-4b002608a9b6"
+     ],
+     "cite_conclusion_paired": [],
+     "q_cited": [
+      "q_002"
+     ],
+     "gate_traces": []
+    }
+   ]
+  },
+  {
+   "slug": "kh_th",
+   "run_case_dir": "柬泰边境争端（2025.12–2026.9）",
+   "n_questions": 3,
+   "face_sizes_by_q": {
+    "q_001": {
+     "volume": 746,
+     "union": 211,
+     "rerank": 28,
+     "focus": 7,
+     "prio": 1,
+     "close": 1,
+     "top7": 7,
+     "cut": 21,
+     "sp": 3,
+     "cited": 13,
+     "ct_ledger": 51,
+     "pair_opts": 0,
+     "pair_rows": 0,
+     "conflict_sides": 13,
+     "pair_loser": 11,
+     "pair_winner": 6,
+     "merge_blocked": 12,
+     "drops": 0,
+     "rejected": 2
+    },
+    "q_002": {
+     "volume": 746,
+     "union": 189,
+     "rerank": 29,
+     "focus": 7,
+     "prio": 3,
+     "close": 3,
+     "top7": 7,
+     "cut": 22,
+     "sp": 3,
+     "cited": 10,
+     "ct_ledger": 51,
+     "pair_opts": 0,
+     "pair_rows": 0,
+     "conflict_sides": 9,
+     "pair_loser": 9,
+     "pair_winner": 5,
+     "merge_blocked": 0,
+     "drops": 0,
+     "rejected": 3
+    },
+    "q_003": {
+     "volume": 746,
+     "union": 217,
+     "rerank": 27,
+     "focus": 7,
+     "prio": 1,
+     "close": 1,
+     "top7": 7,
+     "cut": 20,
+     "sp": 3,
+     "cited": 9,
+     "ct_ledger": 51,
+     "pair_opts": 0,
+     "pair_rows": 0,
+     "conflict_sides": 0,
+     "pair_loser": 0,
+     "pair_winner": 0,
+     "merge_blocked": 6,
+     "drops": 0,
+     "rejected": 3
+    }
+   },
+   "n_volume_segments": 746,
+   "r1_cited_intersect": 0,
+   "union_case": 349,
+   "hot_case": 28,
+   "locator_noloc": 0,
+   "locator_mapped": 71,
+   "r1_total": 5,
+   "r1_tally": {
+    "C 池外（未召回／召回即被箱限·二者不可再分）": 4,
+    "A2 进提示未引用·只在宽料并集": 1
+   },
+   "r1_rows": [
+    {
+     "key": "doc_006#p4",
+     "grade": "A2 进提示未引用·只在宽料并集",
+     "in_hot_face": [],
+     "in_rerank": false,
+     "rerank_best_rank": null,
+     "in_cut": false,
+     "q_union": [
+      "q_002"
+     ],
+     "q_hot": []
+    },
+    {
+     "key": "doc_006#p8",
+     "grade": "C 池外（未召回／召回即被箱限·二者不可再分）",
+     "in_hot_face": [],
+     "in_rerank": false,
+     "rerank_best_rank": null,
+     "in_cut": false,
+     "q_union": [],
+     "q_hot": []
+    },
+    {
+     "key": "doc_008#p2",
+     "grade": "C 池外（未召回／召回即被箱限·二者不可再分）",
+     "in_hot_face": [],
+     "in_rerank": false,
+     "rerank_best_rank": null,
+     "in_cut": false,
+     "q_union": [],
+     "q_hot": []
+    },
+    {
+     "key": "doc_009#p11",
+     "grade": "C 池外（未召回／召回即被箱限·二者不可再分）",
+     "in_hot_face": [],
+     "in_rerank": false,
+     "rerank_best_rank": null,
+     "in_cut": false,
+     "q_union": [],
+     "q_hot": []
+    },
+    {
+     "key": "doc_009#p12",
+     "grade": "C 池外（未召回／召回即被箱限·二者不可再分）",
+     "in_hot_face": [],
+     "in_rerank": false,
+     "rerank_best_rank": null,
+     "in_cut": false,
+     "q_union": [],
+     "q_hot": []
+    }
+   ],
+   "r2_total": 2,
+   "r2_tally": {
+    "E2 有候选·判定环留痕（闸/分流/丢弃在场）": 1,
+    "E4 有引用无候选": 1
+   },
+   "r2_rows": [
+    {
+     "key": "doc_020#p1",
+     "grade": "E4 有引用无候选",
+     "candidate_faces": [],
+     "paired_loser": false,
+     "paired_winner": false,
+     "cited_now": true,
+     "merge_blocked": false,
+     "in_conflict_drops": false,
+     "citation_check_failed": false,
+     "gate_kinds": [],
+     "n_cites": 1,
+     "cite_roles": [
+      "mainstream"
+     ],
+     "cite_statuses": [
+      "majority"
+     ],
+     "cite_conclusions": [
+      "CON-36b176983f76"
+     ],
+     "cite_conclusion_paired": [],
+     "q_cited": [
+      "q_003"
+     ],
+     "gate_traces": []
+    },
+    {
+     "key": "doc_023#p2",
+     "grade": "E2 有候选·判定环留痕（闸/分流/丢弃在场）",
+     "candidate_faces": [
+      "merge_blocked"
+     ],
+     "paired_loser": false,
+     "paired_winner": false,
+     "cited_now": true,
+     "merge_blocked": true,
+     "in_conflict_drops": false,
+     "citation_check_failed": false,
+     "gate_kinds": [
+      "merge_gate 否决"
+     ],
+     "n_cites": 5,
+     "cite_roles": [
+      "mainstream",
+      "redteam",
+      "technologist"
+     ],
+     "cite_statuses": [
+      "majority"
+     ],
+     "cite_conclusions": [
+      "CON-051473daa71d",
+      "CON-100d08697ab8",
+      "CON-54d2c7112a7f",
+      "CON-5578676b2019",
+      "CON-b49d1c6a5fa6"
+     ],
+     "cite_conclusion_paired": [],
+     "q_cited": [
+      "q_003"
+     ],
+     "gate_traces": []
+    }
+   ]
+  },
+  {
+   "slug": "wanghong",
+   "run_case_dir": "王虹“北大discouraged”事件",
+   "n_questions": 3,
+   "face_sizes_by_q": {
+    "q_001": {
+     "volume": 614,
+     "union": 210,
+     "rerank": 24,
+     "focus": 7,
+     "prio": 1,
+     "close": 1,
+     "top7": 7,
+     "cut": 17,
+     "sp": 3,
+     "cited": 7,
+     "ct_ledger": 7,
+     "pair_opts": 0,
+     "pair_rows": 0,
+     "conflict_sides": 0,
+     "pair_loser": 0,
+     "pair_winner": 0,
+     "merge_blocked": 7,
+     "drops": 0,
+     "rejected": 0
+    },
+    "q_002": {
+     "volume": 614,
+     "union": 221,
+     "rerank": 26,
+     "focus": 7,
+     "prio": 3,
+     "close": 3,
+     "top7": 7,
+     "cut": 19,
+     "sp": 3,
+     "cited": 11,
+     "ct_ledger": 7,
+     "pair_opts": 0,
+     "pair_rows": 0,
+     "conflict_sides": 9,
+     "pair_loser": 6,
+     "pair_winner": 6,
+     "merge_blocked": 5,
+     "drops": 0,
+     "rejected": 10
+    },
+    "q_003": {
+     "volume": 614,
+     "union": 219,
+     "rerank": 25,
+     "focus": 7,
+     "prio": 3,
+     "close": 3,
+     "top7": 7,
+     "cut": 18,
+     "sp": 3,
+     "cited": 7,
+     "ct_ledger": 7,
+     "pair_opts": 0,
+     "pair_rows": 0,
+     "conflict_sides": 7,
+     "pair_loser": 1,
+     "pair_winner": 6,
+     "merge_blocked": 6,
+     "drops": 0,
+     "rejected": 2
+    }
+   },
+   "n_volume_segments": 614,
+   "r1_cited_intersect": 0,
+   "union_case": 308,
+   "hot_case": 26,
+   "locator_noloc": 0,
+   "locator_mapped": 53,
+   "r1_total": 10,
+   "r1_tally": {
+    "A2 进提示未引用·只在宽料并集": 9,
+    "C 池外（未召回／召回即被箱限·二者不可再分）": 1
+   },
+   "r1_rows": [
+    {
+     "key": "doc_004#p7",
+     "grade": "A2 进提示未引用·只在宽料并集",
+     "in_hot_face": [],
+     "in_rerank": false,
+     "rerank_best_rank": null,
+     "in_cut": false,
+     "q_union": [
+      "q_001"
+     ],
+     "q_hot": []
+    },
+    {
+     "key": "doc_010#p3",
+     "grade": "A2 进提示未引用·只在宽料并集",
+     "in_hot_face": [],
+     "in_rerank": false,
+     "rerank_best_rank": null,
+     "in_cut": false,
+     "q_union": [
+      "q_002",
+      "q_003"
+     ],
+     "q_hot": []
+    },
+    {
+     "key": "doc_015#p7",
+     "grade": "A2 进提示未引用·只在宽料并集",
+     "in_hot_face": [],
+     "in_rerank": false,
+     "rerank_best_rank": null,
+     "in_cut": false,
+     "q_union": [
+      "q_001"
+     ],
+     "q_hot": []
+    },
+    {
+     "key": "doc_029#p3",
+     "grade": "C 池外（未召回／召回即被箱限·二者不可再分）",
+     "in_hot_face": [],
+     "in_rerank": false,
+     "rerank_best_rank": null,
+     "in_cut": false,
+     "q_union": [],
+     "q_hot": []
+    },
+    {
+     "key": "doc_034#p2",
+     "grade": "A2 进提示未引用·只在宽料并集",
+     "in_hot_face": [],
+     "in_rerank": false,
+     "rerank_best_rank": null,
+     "in_cut": false,
+     "q_union": [
+      "q_001",
+      "q_002",
+      "q_003"
+     ],
+     "q_hot": []
+    },
+    {
+     "key": "doc_046#p3",
+     "grade": "A2 进提示未引用·只在宽料并集",
+     "in_hot_face": [],
+     "in_rerank": false,
+     "rerank_best_rank": null,
+     "in_cut": false,
+     "q_union": [
+      "q_002",
+      "q_003"
+     ],
+     "q_hot": []
+    },
+    {
+     "key": "doc_056#p1",
+     "grade": "A2 进提示未引用·只在宽料并集",
+     "in_hot_face": [],
+     "in_rerank": false,
+     "rerank_best_rank": null,
+     "in_cut": false,
+     "q_union": [
+      "q_001"
+     ],
+     "q_hot": []
+    },
+    {
+     "key": "doc_063#p4",
+     "grade": "A2 进提示未引用·只在宽料并集",
+     "in_hot_face": [],
+     "in_rerank": true,
+     "rerank_best_rank": 25,
+     "in_cut": true,
+     "q_union": [
+      "q_002",
+      "q_003"
+     ],
+     "q_hot": []
+    },
+    {
+     "key": "doc_071#p2",
+     "grade": "A2 进提示未引用·只在宽料并集",
+     "in_hot_face": [],
+     "in_rerank": false,
+     "rerank_best_rank": null,
+     "in_cut": false,
+     "q_union": [
+      "q_002"
+     ],
+     "q_hot": []
+    },
+    {
+     "key": "doc_073#p2",
+     "grade": "A2 进提示未引用·只在宽料并集",
+     "in_hot_face": [],
+     "in_rerank": false,
+     "rerank_best_rank": null,
+     "in_cut": false,
+     "q_union": [
+      "q_002",
+      "q_003"
+     ],
+     "q_hot": []
+    }
+   ],
+   "r2_total": 2,
+   "r2_tally": {
+    "E2 有候选·判定环留痕（闸/分流/丢弃在场）": 1,
+    "E4 有引用无候选": 1
+   },
+   "r2_rows": [
+    {
+     "key": "doc_004#p10",
+     "grade": "E2 有候选·判定环留痕（闸/分流/丢弃在场）",
+     "candidate_faces": [
+      "merge_blocked"
+     ],
+     "paired_loser": false,
+     "paired_winner": false,
+     "cited_now": true,
+     "merge_blocked": true,
+     "in_conflict_drops": false,
+     "citation_check_failed": false,
+     "gate_kinds": [
+      "merge_gate 否决"
+     ],
+     "n_cites": 1,
+     "cite_roles": [
+      "mainstream"
+     ],
+     "cite_statuses": [
+      "majority"
+     ],
+     "cite_conclusions": [
+      "CON-ec6db0b3b3d8"
+     ],
+     "cite_conclusion_paired": [],
+     "q_cited": [
+      "q_001"
+     ],
+     "gate_traces": []
+    },
+    {
+     "key": "doc_010#p5",
+     "grade": "E4 有引用无候选",
+     "candidate_faces": [],
+     "paired_loser": false,
+     "paired_winner": false,
+     "cited_now": true,
+     "merge_blocked": false,
+     "in_conflict_drops": false,
+     "citation_check_failed": false,
+     "gate_kinds": [],
+     "n_cites": 1,
+     "cite_roles": [
+      "mainstream"
+     ],
+     "cite_statuses": [
+      "majority"
+     ],
+     "cite_conclusions": [
+      "CON-1f3a03fede3c"
+     ],
+     "cite_conclusion_paired": [],
+     "q_cited": [
+      "q_002"
+     ],
+     "gate_traces": []
+    }
+   ]
+  }
+ ]
+}

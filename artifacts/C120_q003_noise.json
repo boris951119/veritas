@@ -1,0 +1,691 @@
+{
+  "qid": "q_003",
+  "passes_per_arm": 3,
+  "lost_target": [
+    "doc_012#p5"
+  ],
+  "off_l3": [
+    3,
+    2,
+    2
+  ],
+  "on_l3": [
+    1,
+    2,
+    2
+  ],
+  "off_mean": 2.3333333333333335,
+  "on_mean": 1.6666666666666667,
+  "off_span": 1,
+  "on_span": 1,
+  "cause_a_list_bias": false,
+  "cause_b_noise": true,
+  "cause_c_transcribe": true,
+  "leaks": 0,
+  "temperature": null,
+  "rows": [
+    {
+      "arm": "off",
+      "pass": 1,
+      "box_n": 95,
+      "denom": 5,
+      "gold_in_box": [
+        "doc_002#p3",
+        "doc_006#p3",
+        "doc_012#p5",
+        "doc_033#p5"
+      ],
+      "must": [],
+      "must_gold_in_box_hits": [],
+      "must_non_gold_cited": [],
+      "block_chars": 22172,
+      "server_input_tokens": null,
+      "lost_target_cited": [
+        "doc_012#p5"
+      ],
+      "lost_target_claimed_id": [
+        "doc_012#p5"
+      ],
+      "lost_target_evidence": [
+        {
+          "seg_ids": [
+            "doc_012#p5"
+          ],
+          "quote_head": "上海体育局发布该声明的背景是，体育局因应巡视组整改要求清理“在编不在岗”",
+          "check_fails": []
+        }
+      ],
+      "wall_s": 74.6,
+      "l3": 3,
+      "hit_para_n": 3,
+      "hit_quote_n": 2,
+      "cited_gold_ids": [
+        "doc_002#p3",
+        "doc_006#p3",
+        "doc_012#p5"
+      ],
+      "seen_not_id_face": [
+        "doc_033#p5"
+      ],
+      "n_evidences": 6,
+      "n_conclusions": 4,
+      "cited_ids_all": [
+        "doc_002#p3",
+        "doc_006#p3",
+        "doc_012#p5",
+        "doc_046#p3",
+        "doc_050#p10"
+      ],
+      "evidences": [
+        {
+          "seg_ids": [
+            "doc_046#p3"
+          ],
+          "quote_head": "公开资料显示，刘翔2015年4月正式退役，但人事关系一直保留在上海体育系",
+          "check_fails": []
+        },
+        {
+          "seg_ids": [
+            "doc_050#p10"
+          ],
+          "quote_head": "退役之后，刘翔的人事关系一直保留在上海竞技体育训练管理中心，挂有上海市体",
+          "check_fails": []
+        },
+        {
+          "seg_ids": [
+            "doc_002#p3"
+          ],
+          "quote_head": "9月1日，刘翔递交了自愿选择自主择业申请表，并签署了有关协议；9月7日，",
+          "check_fails": []
+        },
+        {
+          "seg_ids": [
+            "doc_006#p3"
+          ],
+          "quote_head": "刘翔表示，官方说按规定处理“在编不在岗”，但其退役至今，没有接到过任何编",
+          "check_fails": []
+        },
+        {
+          "seg_ids": [
+            "doc_046#p3"
+          ],
+          "quote_head": "此次被要求选择“买断或上班”，或与近几年全国范围内的编制专项清理工作直接",
+          "check_fails": []
+        },
+        {
+          "seg_ids": [
+            "doc_012#p5"
+          ],
+          "quote_head": "上海体育局发布该声明的背景是，体育局因应巡视组整改要求清理“在编不在岗”",
+          "check_fails": []
+        }
+      ]
+    },
+    {
+      "arm": "off",
+      "pass": 2,
+      "box_n": 95,
+      "denom": 5,
+      "gold_in_box": [
+        "doc_002#p3",
+        "doc_006#p3",
+        "doc_012#p5",
+        "doc_033#p5"
+      ],
+      "must": [],
+      "must_gold_in_box_hits": [],
+      "must_non_gold_cited": [],
+      "block_chars": 22172,
+      "server_input_tokens": null,
+      "lost_target_cited": [
+        "doc_012#p5"
+      ],
+      "lost_target_claimed_id": [
+        "doc_012#p5"
+      ],
+      "lost_target_evidence": [
+        {
+          "seg_ids": [
+            "doc_012#p5"
+          ],
+          "quote_head": "上海体育局发布该声明的背景是，体育局因应巡视组整改要求清理‘在编不在岗’",
+          "check_fails": [
+            "引文未命中任何所指段落（doc_012#p5）"
+          ]
+        }
+      ],
+      "wall_s": 49.8,
+      "l3": 2,
+      "hit_para_n": 2,
+      "hit_quote_n": 0,
+      "cited_gold_ids": [
+        "doc_006#p3",
+        "doc_012#p5"
+      ],
+      "seen_not_id_face": [
+        "doc_002#p3",
+        "doc_033#p5"
+      ],
+      "n_evidences": 5,
+      "n_conclusions": 4,
+      "cited_ids_all": [
+        "doc_006#p3",
+        "doc_012#p5",
+        "doc_027#p3",
+        "doc_046#p3",
+        "doc_050#p10"
+      ],
+      "evidences": [
+        {
+          "seg_ids": [
+            "doc_046#p3"
+          ],
+          "quote_head": "公开资料显示，刘翔2015年4月正式退役，但人事关系一直保留在上海体育系",
+          "check_fails": [
+            "引文未命中任何所指段落（doc_046#p3）"
+          ]
+        },
+        {
+          "seg_ids": [
+            "doc_050#p10"
+          ],
+          "quote_head": "退役之后，刘翔的人事关系一直保留在上海竞技体育训练管理中心，挂有上海市体",
+          "check_fails": []
+        },
+        {
+          "seg_ids": [
+            "doc_006#p3"
+          ],
+          "quote_head": "刘翔表示，官方说按规定处理‘在编不在岗’，但其退役至今，没有接到过任何编",
+          "check_fails": [
+            "引文未命中任何所指段落（doc_006#p3）"
+          ]
+        },
+        {
+          "seg_ids": [
+            "doc_027#p3"
+          ],
+          "quote_head": "2015年4月刘翔退役后，人事关系保留在上海体育系统，挂任市体育局团委副",
+          "check_fails": [
+            "引文未命中任何所指段落（doc_027#p3）"
+          ]
+        },
+        {
+          "seg_ids": [
+            "doc_012#p5"
+          ],
+          "quote_head": "上海体育局发布该声明的背景是，体育局因应巡视组整改要求清理‘在编不在岗’",
+          "check_fails": [
+            "引文未命中任何所指段落（doc_012#p5）"
+          ]
+        }
+      ]
+    },
+    {
+      "arm": "off",
+      "pass": 3,
+      "box_n": 95,
+      "denom": 5,
+      "gold_in_box": [
+        "doc_002#p3",
+        "doc_006#p3",
+        "doc_012#p5",
+        "doc_033#p5"
+      ],
+      "must": [],
+      "must_gold_in_box_hits": [],
+      "must_non_gold_cited": [],
+      "block_chars": 22172,
+      "server_input_tokens": null,
+      "lost_target_cited": [],
+      "lost_target_claimed_id": [],
+      "lost_target_evidence": [],
+      "wall_s": 59.4,
+      "l3": 2,
+      "hit_para_n": 2,
+      "hit_quote_n": 1,
+      "cited_gold_ids": [
+        "doc_002#p3",
+        "doc_006#p3"
+      ],
+      "seen_not_id_face": [
+        "doc_012#p5",
+        "doc_033#p5"
+      ],
+      "n_evidences": 6,
+      "n_conclusions": 5,
+      "cited_ids_all": [
+        "doc_002#p3",
+        "doc_006#p3",
+        "doc_027#p3",
+        "doc_046#p3",
+        "doc_050#p10"
+      ],
+      "evidences": [
+        {
+          "seg_ids": [
+            "doc_046#p3"
+          ],
+          "quote_head": "公开资料显示，刘翔2015年4月正式退役，但人事关系一直保留在上海体育系",
+          "check_fails": [
+            "引文未命中任何所指段落（doc_046#p3）"
+          ]
+        },
+        {
+          "seg_ids": [
+            "doc_027#p3"
+          ],
+          "quote_head": "2015年4月刘翔退役后，人事关系保留在上海体育系统，挂任市体育局团委副",
+          "check_fails": [
+            "引文未命中任何所指段落（doc_027#p3）"
+          ]
+        },
+        {
+          "seg_ids": [
+            "doc_006#p3"
+          ],
+          "quote_head": "刘翔表示，官方说按规定处理‘在编不在岗’，但其退役至今，没有接到过任何编",
+          "check_fails": [
+            "引文未命中任何所指段落（doc_006#p3）"
+          ]
+        },
+        {
+          "seg_ids": [
+            "doc_002#p3"
+          ],
+          "quote_head": "9月1日，刘翔递交了自愿选择自主择业申请表，并签署了有关协议；9月7日，",
+          "check_fails": []
+        },
+        {
+          "seg_ids": [
+            "doc_027#p3"
+          ],
+          "quote_head": "2015年4月刘翔退役后，人事关系保留在上海体育系统，挂任市体育局团委副",
+          "check_fails": []
+        },
+        {
+          "seg_ids": [
+            "doc_050#p10"
+          ],
+          "quote_head": "近些年全国开展事业单位编制清理整治，重点排查‘在编不在岗’的情况，这份搁",
+          "check_fails": [
+            "引文未命中任何所指段落（doc_050#p10）"
+          ]
+        }
+      ]
+    },
+    {
+      "arm": "on",
+      "pass": 1,
+      "box_n": 95,
+      "denom": 5,
+      "gold_in_box": [
+        "doc_002#p3",
+        "doc_006#p3",
+        "doc_012#p5",
+        "doc_033#p5"
+      ],
+      "must": [
+        "doc_012#p5",
+        "doc_046#p3",
+        "doc_006#p3",
+        "doc_002#p3",
+        "doc_033#p5",
+        "doc_027#p3",
+        "doc_050#p10",
+        "doc_029#p6",
+        "doc_043#p4",
+        "doc_025#p1"
+      ],
+      "must_gold_in_box_hits": [
+        "doc_006#p3"
+      ],
+      "must_non_gold_cited": [
+        "doc_029#p6",
+        "doc_046#p3",
+        "doc_050#p10"
+      ],
+      "block_chars": 22361,
+      "server_input_tokens": null,
+      "lost_target_cited": [],
+      "lost_target_claimed_id": [],
+      "lost_target_evidence": [],
+      "wall_s": 72.7,
+      "l3": 1,
+      "hit_para_n": 1,
+      "hit_quote_n": 0,
+      "cited_gold_ids": [
+        "doc_006#p3"
+      ],
+      "seen_not_id_face": [
+        "doc_002#p3",
+        "doc_012#p5",
+        "doc_033#p5"
+      ],
+      "n_evidences": 6,
+      "n_conclusions": 6,
+      "cited_ids_all": [
+        "doc_006#p3",
+        "doc_029#p6",
+        "doc_046#p3",
+        "doc_050#p10"
+      ],
+      "evidences": [
+        {
+          "seg_ids": [
+            "doc_046#p3"
+          ],
+          "quote_head": "公开资料显示，刘翔2015年4月正式退役，但人事关系一直保留在上海体育系",
+          "check_fails": [
+            "引文未命中任何所指段落（doc_046#p3）"
+          ]
+        },
+        {
+          "seg_ids": [
+            "doc_029#p6"
+          ],
+          "quote_head": "9月1日：刘翔办理了自主择业手续，获得49.4万元买断费，正式与体育局解",
+          "check_fails": []
+        },
+        {
+          "seg_ids": [
+            "doc_006#p3"
+          ],
+          "quote_head": "刘翔表示，官方说按规定处理‘在编不在岗’，但其退役至今，没有接到过任何编",
+          "check_fails": [
+            "引文未命中任何所指段落（doc_006#p3）"
+          ]
+        },
+        {
+          "seg_ids": [
+            "doc_050#p10"
+          ],
+          "quote_head": "退役之后，刘翔的人事关系一直保留在上海竞技体育训练管理中心，挂有上海市体",
+          "check_fails": []
+        },
+        {
+          "seg_ids": [
+            "doc_046#p3"
+          ],
+          "quote_head": "此次被要求选择‘买断或上班’，或与近几年全国范围内的编制专项清理工作直接",
+          "check_fails": [
+            "引文未命中任何所指段落（doc_046#p3）"
+          ]
+        },
+        {
+          "seg_ids": [
+            "doc_029#p6"
+          ],
+          "quote_head": "9月1日：刘翔办理了自主择业手续，获得49.4万元买断费，正式与体育局解",
+          "check_fails": []
+        }
+      ]
+    },
+    {
+      "arm": "on",
+      "pass": 2,
+      "box_n": 95,
+      "denom": 5,
+      "gold_in_box": [
+        "doc_002#p3",
+        "doc_006#p3",
+        "doc_012#p5",
+        "doc_033#p5"
+      ],
+      "must": [
+        "doc_012#p5",
+        "doc_046#p3",
+        "doc_006#p3",
+        "doc_002#p3",
+        "doc_033#p5",
+        "doc_027#p3",
+        "doc_050#p10",
+        "doc_029#p6",
+        "doc_043#p4",
+        "doc_025#p1"
+      ],
+      "must_gold_in_box_hits": [
+        "doc_006#p3",
+        "doc_012#p5"
+      ],
+      "must_non_gold_cited": [
+        "doc_029#p6",
+        "doc_043#p4",
+        "doc_046#p3",
+        "doc_050#p10"
+      ],
+      "block_chars": 22361,
+      "server_input_tokens": null,
+      "lost_target_cited": [
+        "doc_012#p5"
+      ],
+      "lost_target_claimed_id": [
+        "doc_012#p5"
+      ],
+      "lost_target_evidence": [
+        {
+          "seg_ids": [
+            "doc_012#p5"
+          ],
+          "quote_head": "上海体育局发布该声明的背景是，体育局因应巡视组整改要求清理‘在编不在岗’",
+          "check_fails": [
+            "引文未命中任何所指段落（doc_012#p5）"
+          ]
+        }
+      ],
+      "wall_s": 65.8,
+      "l3": 2,
+      "hit_para_n": 2,
+      "hit_quote_n": 0,
+      "cited_gold_ids": [
+        "doc_006#p3",
+        "doc_012#p5"
+      ],
+      "seen_not_id_face": [
+        "doc_002#p3",
+        "doc_033#p5"
+      ],
+      "n_evidences": 6,
+      "n_conclusions": 4,
+      "cited_ids_all": [
+        "doc_006#p3",
+        "doc_012#p5",
+        "doc_029#p6",
+        "doc_043#p4",
+        "doc_046#p3",
+        "doc_050#p10"
+      ],
+      "evidences": [
+        {
+          "seg_ids": [
+            "doc_046#p3"
+          ],
+          "quote_head": "公开资料显示，刘翔2015年4月正式退役，但人事关系一直保留在上海体育系",
+          "check_fails": [
+            "引文未命中任何所指段落（doc_046#p3）"
+          ]
+        },
+        {
+          "seg_ids": [
+            "doc_050#p10"
+          ],
+          "quote_head": "退役之后，刘翔的人事关系一直保留在上海竞技体育训练管理中心，挂有上海市体",
+          "check_fails": []
+        },
+        {
+          "seg_ids": [
+            "doc_029#p6"
+          ],
+          "quote_head": "9月1日：刘翔办理了自主择业手续，获得49.4万元买断费，正式与体育局解",
+          "check_fails": []
+        },
+        {
+          "seg_ids": [
+            "doc_043#p4"
+          ],
+          "quote_head": "刘翔星期四上午在个人微博就自己的安置问题写道，已在9月1日完成买断，获得",
+          "check_fails": []
+        },
+        {
+          "seg_ids": [
+            "doc_006#p3"
+          ],
+          "quote_head": "刘翔表示，官方说按规定处理‘在编不在岗’，但其退役至今，没有接到过任何编",
+          "check_fails": [
+            "引文未命中任何所指段落（doc_006#p3）"
+          ]
+        },
+        {
+          "seg_ids": [
+            "doc_012#p5"
+          ],
+          "quote_head": "上海体育局发布该声明的背景是，体育局因应巡视组整改要求清理‘在编不在岗’",
+          "check_fails": [
+            "引文未命中任何所指段落（doc_012#p5）"
+          ]
+        }
+      ]
+    },
+    {
+      "arm": "on",
+      "pass": 3,
+      "box_n": 95,
+      "denom": 5,
+      "gold_in_box": [
+        "doc_002#p3",
+        "doc_006#p3",
+        "doc_012#p5",
+        "doc_033#p5"
+      ],
+      "must": [
+        "doc_012#p5",
+        "doc_046#p3",
+        "doc_006#p3",
+        "doc_002#p3",
+        "doc_033#p5",
+        "doc_027#p3",
+        "doc_050#p10",
+        "doc_029#p6",
+        "doc_043#p4",
+        "doc_025#p1"
+      ],
+      "must_gold_in_box_hits": [
+        "doc_006#p3",
+        "doc_012#p5"
+      ],
+      "must_non_gold_cited": [
+        "doc_027#p3",
+        "doc_029#p6",
+        "doc_043#p4",
+        "doc_046#p3"
+      ],
+      "block_chars": 22361,
+      "server_input_tokens": null,
+      "lost_target_cited": [
+        "doc_012#p5"
+      ],
+      "lost_target_claimed_id": [
+        "doc_012#p5"
+      ],
+      "lost_target_evidence": [
+        {
+          "seg_ids": [
+            "doc_012#p5"
+          ],
+          "quote_head": "上海体育局曾按当时规则分得刘翔广告收入约20%。",
+          "check_fails": []
+        }
+      ],
+      "wall_s": 85.8,
+      "l3": 2,
+      "hit_para_n": 2,
+      "hit_quote_n": 0,
+      "cited_gold_ids": [
+        "doc_006#p3",
+        "doc_012#p5"
+      ],
+      "seen_not_id_face": [
+        "doc_002#p3",
+        "doc_033#p5"
+      ],
+      "n_evidences": 8,
+      "n_conclusions": 6,
+      "cited_ids_all": [
+        "doc_006#p3",
+        "doc_012#p5",
+        "doc_027#p3",
+        "doc_029#p6",
+        "doc_043#p4",
+        "doc_046#p3"
+      ],
+      "evidences": [
+        {
+          "seg_ids": [
+            "doc_046#p3"
+          ],
+          "quote_head": "公开资料显示，刘翔2015年4月正式退役，但人事关系一直保留在上海体育系",
+          "check_fails": [
+            "引文未命中任何所指段落（doc_046#p3）"
+          ]
+        },
+        {
+          "seg_ids": [
+            "doc_027#p3"
+          ],
+          "quote_head": "2015年4月刘翔退役后，人事关系保留在上海体育系统，挂任市体育局团委副",
+          "check_fails": [
+            "引文未命中任何所指段落（doc_027#p3）"
+          ]
+        },
+        {
+          "seg_ids": [
+            "doc_029#p6"
+          ],
+          "quote_head": "9月1日：刘翔办理了自主择业手续，获得49.4万元买断费，正式与体育局解",
+          "check_fails": []
+        },
+        {
+          "seg_ids": [
+            "doc_043#p4"
+          ],
+          "quote_head": "刘翔星期四上午在个人微博就自己的安置问题写道，已在9月1日完成买断，获得",
+          "check_fails": []
+        },
+        {
+          "seg_ids": [
+            "doc_006#p3"
+          ],
+          "quote_head": "刘翔表示，官方说按规定处理‘在编不在岗’，但其退役至今，没有接到过任何编",
+          "check_fails": [
+            "引文未命中任何所指段落（doc_006#p3）"
+          ]
+        },
+        {
+          "seg_ids": [
+            "doc_043#p4"
+          ],
+          "quote_head": "刘翔并称，自己在9月2日将2015年4月退役至今所有收入98万2935元",
+          "check_fails": [
+            "引文未命中任何所指段落（doc_043#p4）"
+          ]
+        },
+        {
+          "seg_ids": [
+            "doc_012#p5"
+          ],
+          "quote_head": "上海体育局曾按当时规则分得刘翔广告收入约20%。",
+          "check_fails": []
+        },
+        {
+          "seg_ids": [
+            "doc_046#p3"
+          ],
+          "quote_head": "此次被要求选择‘买断或上班’，或与近几年全国范围内的编制专项清理工作直接",
+          "check_fails": [
+            "引文未命中任何所指段落（doc_046#p3）"
+          ]
+        }
+      ]
+    }
+  ]
+}

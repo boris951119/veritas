@@ -1,0 +1,97 @@
+{
+  "ticket": "C-130",
+  "part": "measure_only",
+  "date": "2026-11-03",
+  "tip": "9481f9e",
+  "ancestors_ok": ["ae77b77", "c2306e7", "5a2d736"],
+  "target_selected": "停",
+  "part2_entered": false,
+  "branch_created": false,
+  "commits_made": 0,
+  "harness": {
+    "based_on": "C-120 件② 同尺（单分析师、锁本机、温度未钉、600s、C-120 env 组）",
+    "upgrade": "选料块逐行复刻 pipeline L593-610 真块，旗 VERITAS_TEST_TREE_LINE 驱动两臂真面差",
+    "model": "openai/veritas-qwen3-14b（本机 Ollama，零现金）",
+    "passes_per_arm": 5,
+    "probe_copy": "/tmp/c130/probe_c130_measure.py",
+    "raw_rows": ["/tmp/c130/C130_m1_liuxiang_q_003.json", "/tmp/c130/C130_m1_wanghong_q_002.json"]
+  },
+  "paired_runs": {
+    "liuxiang_q_003": {
+      "gold_denom": 5,
+      "off": {
+        "surface_line": "density_bridge",
+        "focus_n": 7, "focus_gold_n": 4, "focus_precision": 0.5714,
+        "face_chars": 2271,
+        "l3": [2, 1, 3, 4, 3], "l3_mean": 2.6, "l3_span": 3,
+        "evidences_total": 28, "ev_check_fail": 18, "fail_rate_range": [0.5, 0.8],
+        "fail_buckets": {"empty_quote": 0, "seg_missing": 0, "verbatim_miss": 18, "adjacent_only": 0, "other": 0}
+      },
+      "on": {
+        "surface_line": "test_tree",
+        "focus_n": 3, "focus_gold_n": 2, "focus_precision": 0.6667,
+        "face_chars": 933,
+        "l3": [2, 2, 2, 2, 2], "l3_mean": 2.0, "l3_span": 0,
+        "evidences_total": 15, "ev_check_fail": 0,
+        "fail_buckets": {"empty_quote": 0, "seg_missing": 0, "verbatim_miss": 0, "adjacent_only": 0, "other": 0}
+      },
+      "delta_mean": -0.6,
+      "separated": false,
+      "separation_note": "|Δ|0.6 ≤ 关臂跨度 3，噪声盖过；开旗在真生产臂上无 C-120 时代显著回落"
+    },
+    "wanghong_q_002": {
+      "gold_denom": 5,
+      "off": {"focus_n": 3, "focus_gold_n": 2, "focus_precision": 0.6667, "face_chars": 976,
+              "l3": [1, 1, 1, 1, 1], "l3_mean": 1.0, "l3_span": 0, "ev_check_fail": 0},
+      "on": {"focus_n": 3, "focus_gold_n": 2, "focus_precision": 0.6667, "face_chars": 976,
+             "l3": [1, 1, 1, 1, 1], "l3_mean": 1.0, "l3_span": 0, "ev_check_fail": 0},
+      "note": "两臂 focus 逐位同＝旗对该题零可观察面差"
+    }
+  },
+  "zero_llm_scans": {
+    "seat_topup_from_own_pool": {
+      "surface_rank_order_is_box": true,
+      "liuxiang_q_003_submit_ranked_top30_gold": 2,
+      "liuxiang_gold_positions": [[1, "doc_006#p3"], [8, "doc_012#p5"]],
+      "wanghong_q_002_submit_ranked_top30_gold": 0,
+      "wanghong_pool_ranked_gold_2_at_about_30": true,
+      "verdict": "扩席产益≈0，靶A(测试树方向)死"
+    },
+    "density_bridge_focus_cap": {
+      "gold_positions_by_question": {
+        "liuxiang_q_001": [[1], [2], [3], [4]],
+        "liuxiang_q_002": [[1], [4], [5], [7]],
+        "liuxiang_q_003": [[1], [3], [4], [5]],
+        "wanghong_q_001": [[1]],
+        "wanghong_q_002": [[1], [2]],
+        "wanghong_q_003": [[1], [2], [3]]
+      },
+      "cap_at_4_coverage_loss": {"liuxiang_q_002": "4→2", "liuxiang_q_003": "4→3"},
+      "verdict": "C-121 失败模式提前复现，收紧帽死"
+    },
+    "cite_bucket": {"on_arm_total_fails_both_cases": "0/30", "off_arm_liuxiang_verbatim_miss": 18,
+                    "off_arm_18_reattribution": "未做（产物卫生不存 quote 原文）；C-122 先例＝高风险",
+                    "verdict": "靶B死（开旗线空桶；关臂桶属软化禁区）"},
+    "chain_ranking_gap": "密度桥 cores 7 席含 4 金 vs 测试树融合序前 30 ≤2 金＝树22/一筛禁刀域，只记录"
+  },
+  "dominant_red_verdict": [
+    "开旗线主导红＝focus 覆盖塌缩（2/5、1/5 钉死）＋自身排序池无金标可补（修＝树22 排序，禁刀）",
+    "关旗线主导红＝逐字核对未命中 64%（转写类；修＝软化/重挂，禁＋先例败）",
+    "两靶均不可零/低 LLM 修 ⇒ 按工单停针条款＝停"
+  ],
+  "leak": {
+    "explicit_audit": "两臂×两案×全 6 题 accounting 禁键命中合计 0",
+    "built_in_audits": "build_test_tree_surface 双审计＋hints 审计＋assert_clean_pack_kwargs 全程零异常"
+  },
+  "post_check": {
+    "env_popped": true,
+    "settings_dataclass": false,
+    "settings_from_env": false,
+    "code_dirs_clean": true,
+    "tip_unchanged": "9481f9e",
+    "forbidden_branches_untouched": ["C-123", "C-113", "C-121", "C-122", "C-124"]
+  },
+  "hygiene": "零官方原文、零 quote_head；金标只进量尺侧；.kg_lab_vault/.kgcache/逐题原始 json 未提交进库",
+  "not_measured": "关臂 18 条 verbatim_miss 的逐条再归因（需存 quote 原文的专项票）；六案满跑；默认开复测",
+  "wall_total_s": {"liuxiang_5v5": 485.3, "wanghong_5v5_note": "见 raw json"}
+}

@@ -1,0 +1,4055 @@
+{
+ "schema_version": "c122.cite_check_stable.v1",
+ "ticket": "C-122",
+ "branch": "qoder/c122-cite-check-stable",
+ "gate_declared_before_results": {
+  "p_fail_rate_le": 0.05,
+  "gold_after_on_ge_off": true,
+  "leak_eq": 0,
+  "ruler_fail_eq": 0,
+  "unattributed_eq": 0,
+  "side_legs": 2
+ },
+ "path_chosen": "A 扩展归一化 ＋ B 有界一次回贴（四道闸＋回贴后再过现行尺＝总闸）",
+ "flag": {
+  "env": "VERITAS_CITE_CHECK_STABLE",
+  "default": false,
+  "settings_key": "cite_check_stable"
+ },
+ "件1_归因": {
+  "schema_version": "c122.taxonomy.v1",
+  "ruler": "app/core.citation_check.check_evidence（生产同一把尺）",
+  "source": "自家 cases/*/out*/report.json（零模型调用；原文与引文不落产物）",
+  "glob_used": "/Users/liuboyu/Developer/veritas/cases/*/out*/report.json",
+  "n_bad_files": 0,
+  "n_files": 34,
+  "n_items": 982,
+  "n_kept": 792,
+  "n_rejected": 190,
+  "n_rejected_without_ids": 0,
+  "n_fail": 187,
+  "fail_rate": 0.1904,
+  "buckets": {
+   "pass_current_check": 795,
+   "fuzzy_close": 106,
+   "real_hallucination": 70,
+   "fmt_recoverable": 10,
+   "other_seg_hit": 1
+  },
+  "buckets_by_state": {
+   "kept": {
+    "pass_current_check": 792
+   },
+   "rejected": {
+    "fuzzy_close": 106,
+    "real_hallucination": 70,
+    "fmt_recoverable": 10,
+    "pass_current_check": 3,
+    "other_seg_hit": 1
+   }
+  },
+  "diff_char_classes": {
+   "other": 875,
+   "punct_ascii": 801,
+   "digit": 137,
+   "entity": 24,
+   "punct_cjk": 19,
+   "dash_wave": 4
+  },
+  "thresholds": {
+   "fuzzy_ratio": 0.85,
+   "fuzzy_lcs_share": 0.6,
+   "min_lcs": 8
+  },
+  "reading": "失败 187/982＝0.1904｜A 面（排版归一化可救）＝10 条＝占失败 0.053｜B 面（近似转写可回贴）＝106 条＝占失败 0.567｜救不了（真胡编／挂错段／空引文）＝71 条",
+  "details": [
+   {
+    "case": "bi-delivery-risk",
+    "run": "out",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC3#s4"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "f1342433",
+    "bucket": "real_hallucination",
+    "quote_len": 87,
+    "best_ratio": 0.322,
+    "best_lcs": 18,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC3#s2"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "aa77be43",
+    "bucket": "fuzzy_close",
+    "quote_len": 47,
+    "best_ratio": 0.132,
+    "best_lcs": 32,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC3#s7"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "db937aba",
+    "bucket": "fmt_recoverable",
+    "quote_len": 115,
+    "best_ratio": null,
+    "best_lcs": null,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC5#s1"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "fc0a10bc",
+    "bucket": "real_hallucination",
+    "quote_len": 12,
+    "best_ratio": 0.021,
+    "best_lcs": 3,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_a_1",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC1#s10"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "0056c1d4",
+    "bucket": "fuzzy_close",
+    "quote_len": 117,
+    "best_ratio": 0.309,
+    "best_lcs": 66,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_a_1",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC3#s4"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "f5693f44",
+    "bucket": "real_hallucination",
+    "quote_len": 34,
+    "best_ratio": 0.151,
+    "best_lcs": 4,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_a_1",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC3#s2"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "04e85aaa",
+    "bucket": "real_hallucination",
+    "quote_len": 78,
+    "best_ratio": 0.226,
+    "best_lcs": 10,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_a_1",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC3#s7"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "4cc0fc19",
+    "bucket": "real_hallucination",
+    "quote_len": 65,
+    "best_ratio": 0.253,
+    "best_lcs": 10,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_a_1",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC4#s7"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "14c4f6db",
+    "bucket": "real_hallucination",
+    "quote_len": 51,
+    "best_ratio": 0.306,
+    "best_lcs": 14,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_a_1",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC5#s1"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "298b1c5a",
+    "bucket": "fuzzy_close",
+    "quote_len": 45,
+    "best_ratio": 0.123,
+    "best_lcs": 20,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_a_1",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC5#s2"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "255ba154",
+    "bucket": "fuzzy_close",
+    "quote_len": 61,
+    "best_ratio": 0.217,
+    "best_lcs": 26,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_a_1",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC5#s9"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "73e463f6",
+    "bucket": "fuzzy_close",
+    "quote_len": 44,
+    "best_ratio": 0.099,
+    "best_lcs": 19,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_a_1",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC4#s4"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "a3a922ae",
+    "bucket": "fuzzy_close",
+    "quote_len": 88,
+    "best_ratio": 0.483,
+    "best_lcs": 68,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_a_1",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC6#s5"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "e8cc6e95",
+    "bucket": "fuzzy_close",
+    "quote_len": 162,
+    "best_ratio": 0.535,
+    "best_lcs": 62,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_a_2",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC1#s10"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "dfdfb148",
+    "bucket": "real_hallucination",
+    "quote_len": 55,
+    "best_ratio": 0.178,
+    "best_lcs": 24,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_a_2",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC2#s5"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "8b434829",
+    "bucket": "fuzzy_close",
+    "quote_len": 112,
+    "best_ratio": 0.415,
+    "best_lcs": 76,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_a_2",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC3#s1"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "1b6f7dfa",
+    "bucket": "real_hallucination",
+    "quote_len": 28,
+    "best_ratio": 0.045,
+    "best_lcs": 4,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_a_2",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC4#s4"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "adaad423",
+    "bucket": "fmt_recoverable",
+    "quote_len": 31,
+    "best_ratio": null,
+    "best_lcs": null,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_a_2",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC4#s1"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "bef59066",
+    "bucket": "real_hallucination",
+    "quote_len": 28,
+    "best_ratio": 0.055,
+    "best_lcs": 2,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_a_2",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC5#s2"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "81b18384",
+    "bucket": "fuzzy_close",
+    "quote_len": 19,
+    "best_ratio": 0.089,
+    "best_lcs": 10,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_a_2",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC1#s2"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "9300c20a",
+    "bucket": "real_hallucination",
+    "quote_len": 38,
+    "best_ratio": 0.164,
+    "best_lcs": 12,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_a_2",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC4#s4"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "687b6ee6",
+    "bucket": "fuzzy_close",
+    "quote_len": 91,
+    "best_ratio": 0.492,
+    "best_lcs": 68,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_a_2",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC5#s1"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "60d698a8",
+    "bucket": "real_hallucination",
+    "quote_len": 104,
+    "best_ratio": 0.386,
+    "best_lcs": 51,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_a_2",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC4#s6"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "4d8bc73a",
+    "bucket": "real_hallucination",
+    "quote_len": 151,
+    "best_ratio": 0.55,
+    "best_lcs": 56,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_a_2",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC1#s2"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "59b244cd",
+    "bucket": "fuzzy_close",
+    "quote_len": 119,
+    "best_ratio": 0.407,
+    "best_lcs": 80,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_a_3",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC3#s4"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "108e9612",
+    "bucket": "fmt_recoverable",
+    "quote_len": 76,
+    "best_ratio": null,
+    "best_lcs": null,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_a_3",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC3#s2"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "72ae76f0",
+    "bucket": "fuzzy_close",
+    "quote_len": 53,
+    "best_ratio": 0.178,
+    "best_lcs": 32,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_a_3",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC3#s7"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "548e5b45",
+    "bucket": "fmt_recoverable",
+    "quote_len": 47,
+    "best_ratio": null,
+    "best_lcs": null,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_a_3",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC4#s4"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "44d81f6f",
+    "bucket": "fuzzy_close",
+    "quote_len": 27,
+    "best_ratio": 0.192,
+    "best_lcs": 16,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_a_3",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC5#s2"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "45168512",
+    "bucket": "real_hallucination",
+    "quote_len": 18,
+    "best_ratio": 0.044,
+    "best_lcs": 4,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_a_3",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC6#s3"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "ae9b8b2e",
+    "bucket": "real_hallucination",
+    "quote_len": 16,
+    "best_ratio": 0.034,
+    "best_lcs": 4,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_a_3",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC1#s2"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "52e570df",
+    "bucket": "fmt_recoverable",
+    "quote_len": 53,
+    "best_ratio": null,
+    "best_lcs": null,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_a_3",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC3#s4"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "108e9612",
+    "bucket": "fmt_recoverable",
+    "quote_len": 76,
+    "best_ratio": null,
+    "best_lcs": null,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_a_3",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC3#s7"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "548e5b45",
+    "bucket": "fmt_recoverable",
+    "quote_len": 47,
+    "best_ratio": null,
+    "best_lcs": null,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_a_3",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC3#s2"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "bda8c183",
+    "bucket": "fmt_recoverable",
+    "quote_len": 72,
+    "best_ratio": null,
+    "best_lcs": null,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_a_3",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC4#s7"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "314c7065",
+    "bucket": "fmt_recoverable",
+    "quote_len": 44,
+    "best_ratio": null,
+    "best_lcs": null,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_a_3",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC4#s8"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "d178d76e",
+    "bucket": "fmt_recoverable",
+    "quote_len": 63,
+    "best_ratio": null,
+    "best_lcs": null,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_b_1",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC3#s4"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "3d9abe9f",
+    "bucket": "real_hallucination",
+    "quote_len": 42,
+    "best_ratio": 0.231,
+    "best_lcs": 16,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_b_1",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC4#s4"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "a6933b51",
+    "bucket": "fuzzy_close",
+    "quote_len": 67,
+    "best_ratio": 0.423,
+    "best_lcs": 41,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_b_1",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC4#s7"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "2b97939a",
+    "bucket": "real_hallucination",
+    "quote_len": 38,
+    "best_ratio": 0.185,
+    "best_lcs": 11,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_b_2",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC3#s4"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "1e7cbdde",
+    "bucket": "fuzzy_close",
+    "quote_len": 240,
+    "best_ratio": 0.749,
+    "best_lcs": 134,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_b_2",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC4#s4"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "fc801eaa",
+    "bucket": "fuzzy_close",
+    "quote_len": 69,
+    "best_ratio": 0.424,
+    "best_lcs": 41,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_b_2",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC6#s1"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "c8bd48ed",
+    "bucket": "fuzzy_close",
+    "quote_len": 70,
+    "best_ratio": 0.243,
+    "best_lcs": 40,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_b_2",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC1#s7"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "cd0b0b33",
+    "bucket": "real_hallucination",
+    "quote_len": 68,
+    "best_ratio": 0.26,
+    "best_lcs": 24,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_b_2",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC3#s7"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "fa6d27a8",
+    "bucket": "fuzzy_close",
+    "quote_len": 169,
+    "best_ratio": 0.595,
+    "best_lcs": 85,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_b_2",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC4#s1"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "0c965c23",
+    "bucket": "fuzzy_close",
+    "quote_len": 212,
+    "best_ratio": 0.803,
+    "best_lcs": 132,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_b_2",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC5#s1"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "b83055ff",
+    "bucket": "fuzzy_close",
+    "quote_len": 219,
+    "best_ratio": 0.657,
+    "best_lcs": 168,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_b_3",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC3#s4"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "1e7cbdde",
+    "bucket": "fuzzy_close",
+    "quote_len": 240,
+    "best_ratio": 0.749,
+    "best_lcs": 134,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_b_3",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC4#s4"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "a3a922ae",
+    "bucket": "fuzzy_close",
+    "quote_len": 88,
+    "best_ratio": 0.483,
+    "best_lcs": 68,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_b_3",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC1#s10"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "7eb30c42",
+    "bucket": "fuzzy_close",
+    "quote_len": 93,
+    "best_ratio": 0.22,
+    "best_lcs": 38,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_b_3",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC6#s3"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "6573589e",
+    "bucket": "fuzzy_close",
+    "quote_len": 106,
+    "best_ratio": 0.319,
+    "best_lcs": 53,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_b_3",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC3#s7"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "caf542a1",
+    "bucket": "fuzzy_close",
+    "quote_len": 164,
+    "best_ratio": 0.588,
+    "best_lcs": 85,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_b_3",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC4#s8"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "0ff5304c",
+    "bucket": "fuzzy_close",
+    "quote_len": 95,
+    "best_ratio": 0.249,
+    "best_lcs": 62,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_b_3",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC1#s2"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "7369489b",
+    "bucket": "fuzzy_close",
+    "quote_len": 84,
+    "best_ratio": 0.299,
+    "best_lcs": 51,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_b_3",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC3#s7"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "fa6d27a8",
+    "bucket": "fuzzy_close",
+    "quote_len": 169,
+    "best_ratio": 0.595,
+    "best_lcs": 85,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_b_3",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC4#s6"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "4d8bc73a",
+    "bucket": "real_hallucination",
+    "quote_len": 151,
+    "best_ratio": 0.55,
+    "best_lcs": 56,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_f2_1",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC3#s2"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "db7b5e03",
+    "bucket": "fuzzy_close",
+    "quote_len": 61,
+    "best_ratio": 0.143,
+    "best_lcs": 35,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_f2_1",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC5#s7"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "3b02c369",
+    "bucket": "fuzzy_close",
+    "quote_len": 65,
+    "best_ratio": 0.119,
+    "best_lcs": 28,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_f2_1",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC1#s1"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "d2045115",
+    "bucket": "real_hallucination",
+    "quote_len": 42,
+    "best_ratio": 0.068,
+    "best_lcs": 9,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_f2_1",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC3#s4"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "1c9251d2",
+    "bucket": "real_hallucination",
+    "quote_len": 31,
+    "best_ratio": 0.055,
+    "best_lcs": 4,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_f2_1",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC3#s2"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "d3189b94",
+    "bucket": "real_hallucination",
+    "quote_len": 74,
+    "best_ratio": 0.112,
+    "best_lcs": 10,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_f2_1",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC4#s2"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "5b9dde89",
+    "bucket": "real_hallucination",
+    "quote_len": 54,
+    "best_ratio": 0.182,
+    "best_lcs": 10,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_f2_1",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC4#s7"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "acb55cce",
+    "bucket": "real_hallucination",
+    "quote_len": 55,
+    "best_ratio": 0.239,
+    "best_lcs": 6,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_f2_1",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC5#s1"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "4fc5d66e",
+    "bucket": "fuzzy_close",
+    "quote_len": 68,
+    "best_ratio": 0.056,
+    "best_lcs": 11,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_f2_1",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC5#s7"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "f1c249a5",
+    "bucket": "fuzzy_close",
+    "quote_len": 23,
+    "best_ratio": 0.036,
+    "best_lcs": 8,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_f2_1",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC6#s1"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "8f7c1bcf",
+    "bucket": "fuzzy_close",
+    "quote_len": 51,
+    "best_ratio": 0.105,
+    "best_lcs": 27,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_f2_2",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC3#s7"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "b600276a",
+    "bucket": "fuzzy_close",
+    "quote_len": 275,
+    "best_ratio": 0.848,
+    "best_lcs": 167,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_f2_2",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC3#s1"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "bf39da27",
+    "bucket": "real_hallucination",
+    "quote_len": 24,
+    "best_ratio": 0.061,
+    "best_lcs": 2,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_f2_2",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC4#s4"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "7a0bfb05",
+    "bucket": "fuzzy_close",
+    "quote_len": 67,
+    "best_ratio": 0.424,
+    "best_lcs": 41,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_f2_2",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC4#s1"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "bf6d4830",
+    "bucket": "real_hallucination",
+    "quote_len": 26,
+    "best_ratio": 0.087,
+    "best_lcs": 3,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_f2_2",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC5#s1"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "e537d823",
+    "bucket": "real_hallucination",
+    "quote_len": 47,
+    "best_ratio": 0.212,
+    "best_lcs": 26,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_f2_2",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC5#s2"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "75efe3b2",
+    "bucket": "fuzzy_close",
+    "quote_len": 148,
+    "best_ratio": 0.484,
+    "best_lcs": 70,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_f2_2",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC6#s1"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "33eac288",
+    "bucket": "real_hallucination",
+    "quote_len": 64,
+    "best_ratio": 0.23,
+    "best_lcs": 36,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_f2_2",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC6#s5"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "245ba21e",
+    "bucket": "real_hallucination",
+    "quote_len": 169,
+    "best_ratio": 0.558,
+    "best_lcs": 62,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_f2_2",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC6#s1"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "08282212",
+    "bucket": "real_hallucination",
+    "quote_len": 10,
+    "best_ratio": 0.02,
+    "best_lcs": 2,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_f2_3",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC2#s5"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "3ccca2c3",
+    "bucket": "real_hallucination",
+    "quote_len": 59,
+    "best_ratio": 0.259,
+    "best_lcs": 32,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_f2_3",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC3#s4"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "e6b0207f",
+    "bucket": "real_hallucination",
+    "quote_len": 150,
+    "best_ratio": 0.643,
+    "best_lcs": 68,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_f2_3",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC3#s7"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "2fa172df",
+    "bucket": "real_hallucination",
+    "quote_len": 133,
+    "best_ratio": 0.592,
+    "best_lcs": 44,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_f2_3",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC4#s8"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "ac7ebba8",
+    "bucket": "fuzzy_close",
+    "quote_len": 54,
+    "best_ratio": 0.088,
+    "best_lcs": 20,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_f2_3",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC5#s1"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "8e6a341a",
+    "bucket": "fuzzy_close",
+    "quote_len": 48,
+    "best_ratio": 0.09,
+    "best_lcs": 18,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_f2_3",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC6#s1"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "d0c6894e",
+    "bucket": "fuzzy_close",
+    "quote_len": 44,
+    "best_ratio": 0.105,
+    "best_lcs": 27,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_f2_3",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC1#s2"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "03c31bf0",
+    "bucket": "real_hallucination",
+    "quote_len": 60,
+    "best_ratio": 0.234,
+    "best_lcs": 22,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_f2_3",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC5#s7"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "f502c8da",
+    "bucket": "fuzzy_close",
+    "quote_len": 299,
+    "best_ratio": 0.593,
+    "best_lcs": 158,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_f2_3",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC2#s1"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "0dc84b04",
+    "bucket": "fuzzy_close",
+    "quote_len": 65,
+    "best_ratio": 0.349,
+    "best_lcs": 55,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_f2_3",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC3#s4"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "a6b8dd29",
+    "bucket": "real_hallucination",
+    "quote_len": 29,
+    "best_ratio": 0.055,
+    "best_lcs": 4,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_f2_3",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC2#s5"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "92fea846",
+    "bucket": "fuzzy_close",
+    "quote_len": 72,
+    "best_ratio": 0.304,
+    "best_lcs": 44,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_f2_3",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC3#s4"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "7c383b5a",
+    "bucket": "real_hallucination",
+    "quote_len": 59,
+    "best_ratio": 0.217,
+    "best_lcs": 10,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_f2_3",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC3#s2"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "382c309b",
+    "bucket": "fuzzy_close",
+    "quote_len": 16,
+    "best_ratio": 0.056,
+    "best_lcs": 10,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_f2_3",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC3#s7"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "b33ba221",
+    "bucket": "real_hallucination",
+    "quote_len": 80,
+    "best_ratio": 0.284,
+    "best_lcs": 10,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_f2_3",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC3#s1"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "820d52df",
+    "bucket": "fuzzy_close",
+    "quote_len": 26,
+    "best_ratio": 0.189,
+    "best_lcs": 20,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_f2_3",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC4#s4"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "78d9bf77",
+    "bucket": "real_hallucination",
+    "quote_len": 79,
+    "best_ratio": 0.469,
+    "best_lcs": 41,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_f2_3",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC4#s8"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "104041a2",
+    "bucket": "real_hallucination",
+    "quote_len": 115,
+    "best_ratio": 0.392,
+    "best_lcs": 49,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_f2_3",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC4#s7"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "540949d3",
+    "bucket": "real_hallucination",
+    "quote_len": 50,
+    "best_ratio": 0.292,
+    "best_lcs": 12,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_f2_3",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC4#s1"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "eb532592",
+    "bucket": "fuzzy_close",
+    "quote_len": 33,
+    "best_ratio": 0.245,
+    "best_lcs": 27,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_f2_3",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC5#s1"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "0ee682fe",
+    "bucket": "real_hallucination",
+    "quote_len": 53,
+    "best_ratio": 0.237,
+    "best_lcs": 19,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_f2_3",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC6#s5"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "f4839baf",
+    "bucket": "real_hallucination",
+    "quote_len": 75,
+    "best_ratio": 0.325,
+    "best_lcs": 39,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_f_1",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC3#s4"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "a1960685",
+    "bucket": "real_hallucination",
+    "quote_len": 35,
+    "best_ratio": 0.068,
+    "best_lcs": 4,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_f_1",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC3#s2"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "cddf0676",
+    "bucket": "real_hallucination",
+    "quote_len": 71,
+    "best_ratio": 0.196,
+    "best_lcs": 10,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_f_1",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC4#s7"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "1948db82",
+    "bucket": "real_hallucination",
+    "quote_len": 57,
+    "best_ratio": 0.177,
+    "best_lcs": 11,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_f_1",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC5#s1"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "f62af07d",
+    "bucket": "real_hallucination",
+    "quote_len": 47,
+    "best_ratio": 0.145,
+    "best_lcs": 11,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_f_1",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC6#s5"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "511ecf17",
+    "bucket": "real_hallucination",
+    "quote_len": 68,
+    "best_ratio": 0.326,
+    "best_lcs": 39,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_f_1",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC1#s2"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "818b83c9",
+    "bucket": "real_hallucination",
+    "quote_len": 69,
+    "best_ratio": 0.313,
+    "best_lcs": 23,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_f_1",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC3#s2"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "21d77d9d",
+    "bucket": "fuzzy_close",
+    "quote_len": 65,
+    "best_ratio": 0.143,
+    "best_lcs": 35,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_f_1",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC6#s1"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "a6acad38",
+    "bucket": "fuzzy_close",
+    "quote_len": 68,
+    "best_ratio": 0.243,
+    "best_lcs": 40,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_f_1",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC1#s3"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "2c6dce35",
+    "bucket": "fuzzy_close",
+    "quote_len": 43,
+    "best_ratio": 0.292,
+    "best_lcs": 31,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_f_2",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC1#s2"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "87ebdec0",
+    "bucket": "fuzzy_close",
+    "quote_len": 32,
+    "best_ratio": 0.115,
+    "best_lcs": 22,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_f_2",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC3#s4"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "a6ae7580",
+    "bucket": "real_hallucination",
+    "quote_len": 34,
+    "best_ratio": 0.055,
+    "best_lcs": 4,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_f_2",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC3#s2"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "b2087303",
+    "bucket": "fuzzy_close",
+    "quote_len": 44,
+    "best_ratio": 0.04,
+    "best_lcs": 10,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_f_2",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC4#s7"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "3c20956b",
+    "bucket": "fuzzy_close",
+    "quote_len": 34,
+    "best_ratio": 0.154,
+    "best_lcs": 11,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_f_2",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC5#s1"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "b9453940",
+    "bucket": "real_hallucination",
+    "quote_len": 26,
+    "best_ratio": 0.055,
+    "best_lcs": 8,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_f_2",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC4#s4"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "fc801eaa",
+    "bucket": "fuzzy_close",
+    "quote_len": 69,
+    "best_ratio": 0.424,
+    "best_lcs": 41,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_f_2",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC3#s4"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "ff5ce98f",
+    "bucket": "fuzzy_close",
+    "quote_len": 75,
+    "best_ratio": 0.341,
+    "best_lcs": 55,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_f_2",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC3#s4"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "e63103e2",
+    "bucket": "fuzzy_close",
+    "quote_len": 72,
+    "best_ratio": 0.331,
+    "best_lcs": 52,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_f_2",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC1#s4"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "1a58b7ac",
+    "bucket": "real_hallucination",
+    "quote_len": 97,
+    "best_ratio": 0.276,
+    "best_lcs": 45,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_f_2",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC1#s4"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "eb17b7dd",
+    "bucket": "real_hallucination",
+    "quote_len": 96,
+    "best_ratio": 0.279,
+    "best_lcs": 45,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_f_3",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC3#s4"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "fd59d615",
+    "bucket": "real_hallucination",
+    "quote_len": 63,
+    "best_ratio": 0.13,
+    "best_lcs": 10,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_f_3",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC3#s2"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "4649a37d",
+    "bucket": "fuzzy_close",
+    "quote_len": 72,
+    "best_ratio": 0.056,
+    "best_lcs": 10,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_f_3",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC3#s7"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "dea6670e",
+    "bucket": "fuzzy_close",
+    "quote_len": 62,
+    "best_ratio": 0.198,
+    "best_lcs": 19,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_f_3",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC3#s1"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "3914c0fe",
+    "bucket": "real_hallucination",
+    "quote_len": 20,
+    "best_ratio": 0.07,
+    "best_lcs": 4,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_f_3",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC4#s8"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "63b3c92f",
+    "bucket": "fuzzy_close",
+    "quote_len": 74,
+    "best_ratio": 0.245,
+    "best_lcs": 61,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_f_3",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC4#s7"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "3702570a",
+    "bucket": "real_hallucination",
+    "quote_len": 25,
+    "best_ratio": 0.11,
+    "best_lcs": 6,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_f_3",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC4#s1"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "72a57960",
+    "bucket": "real_hallucination",
+    "quote_len": 21,
+    "best_ratio": 0.072,
+    "best_lcs": 4,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_f_3",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC5#s1"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "459cadf9",
+    "bucket": "fuzzy_close",
+    "quote_len": 58,
+    "best_ratio": 0.09,
+    "best_lcs": 18,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_f_3",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC6#s1"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "96cd6619",
+    "bucket": "fuzzy_close",
+    "quote_len": 63,
+    "best_ratio": 0.102,
+    "best_lcs": 22,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_f_3",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC3#s4"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "e9dfb68a",
+    "bucket": "fuzzy_close",
+    "quote_len": 69,
+    "best_ratio": 0.107,
+    "best_lcs": 10,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_f_3",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC3#s7"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "5e62ca4f",
+    "bucket": "fuzzy_close",
+    "quote_len": 111,
+    "best_ratio": 0.199,
+    "best_lcs": 29,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_f_3",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC4#s6"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "ce544142",
+    "bucket": "fuzzy_close",
+    "quote_len": 68,
+    "best_ratio": 0.179,
+    "best_lcs": 29,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_f_3",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC1#s4"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "204c47c7",
+    "bucket": "fuzzy_close",
+    "quote_len": 43,
+    "best_ratio": 0.151,
+    "best_lcs": 42,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_f_3",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC5#s1"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "b41d6e97",
+    "bucket": "fuzzy_close",
+    "quote_len": 77,
+    "best_ratio": 0.128,
+    "best_lcs": 26,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_f_3",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC6#s1"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "d0300a9c",
+    "bucket": "fuzzy_close",
+    "quote_len": 48,
+    "best_ratio": 0.091,
+    "best_lcs": 19,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_h_1",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC1#s1"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "1318c884",
+    "bucket": "fuzzy_close",
+    "quote_len": 254,
+    "best_ratio": 0.575,
+    "best_lcs": 151,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_h_1",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC3#s2"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "7971aa08",
+    "bucket": "real_hallucination",
+    "quote_len": 327,
+    "best_ratio": 0.65,
+    "best_lcs": 129,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_h_1",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC4#s6"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "9a3ee5f1",
+    "bucket": "fuzzy_close",
+    "quote_len": 266,
+    "best_ratio": 0.806,
+    "best_lcs": 143,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_h_1",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC5#s2"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "e6d24d9c",
+    "bucket": "fuzzy_close",
+    "quote_len": 150,
+    "best_ratio": 0.484,
+    "best_lcs": 70,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_h_1",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC3#s4"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "fd59d615",
+    "bucket": "real_hallucination",
+    "quote_len": 63,
+    "best_ratio": 0.13,
+    "best_lcs": 10,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_h_1",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC3#s2"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "e6333cde",
+    "bucket": "fuzzy_close",
+    "quote_len": 89,
+    "best_ratio": 0.06,
+    "best_lcs": 15,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_h_1",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC5#s1"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "4fd4c399",
+    "bucket": "fuzzy_close",
+    "quote_len": 63,
+    "best_ratio": 0.128,
+    "best_lcs": 26,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_h_2",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC3#s2"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "2532c5e7",
+    "bucket": "fuzzy_close",
+    "quote_len": 64,
+    "best_ratio": 0.181,
+    "best_lcs": 34,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_h_2",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC3#s2"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "2815c8fb",
+    "bucket": "fuzzy_close",
+    "quote_len": 61,
+    "best_ratio": 0.178,
+    "best_lcs": 32,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_h_2",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC4#s1"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "52c9aef5",
+    "bucket": "real_hallucination",
+    "quote_len": 35,
+    "best_ratio": 0.114,
+    "best_lcs": 5,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_h_2",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC5#s1"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "de11dc32",
+    "bucket": "fuzzy_close",
+    "quote_len": 46,
+    "best_ratio": 0.123,
+    "best_lcs": 20,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_h_2",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC3#s4"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "6d0fee5a",
+    "bucket": "real_hallucination",
+    "quote_len": 13,
+    "best_ratio": 0.055,
+    "best_lcs": 4,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_h_2",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC3#s4"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "869c1d8e",
+    "bucket": "real_hallucination",
+    "quote_len": 14,
+    "best_ratio": 0.055,
+    "best_lcs": 4,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_h_2",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC3#s2"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "fcfb569a",
+    "bucket": "fuzzy_close",
+    "quote_len": 34,
+    "best_ratio": 0.056,
+    "best_lcs": 10,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_h_2",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC3#s2"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "f685d46b",
+    "bucket": "fuzzy_close",
+    "quote_len": 32,
+    "best_ratio": 0.056,
+    "best_lcs": 10,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_h_2",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC3#s7"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "3f4cbd87",
+    "bucket": "fuzzy_close",
+    "quote_len": 66,
+    "best_ratio": 0.135,
+    "best_lcs": 19,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_h_2",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC4#s8"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "b73db64f",
+    "bucket": "fuzzy_close",
+    "quote_len": 45,
+    "best_ratio": 0.088,
+    "best_lcs": 20,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_h_2",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC4#s7"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "6b585efe",
+    "bucket": "real_hallucination",
+    "quote_len": 23,
+    "best_ratio": 0.067,
+    "best_lcs": 7,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_h_2",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC5#s1"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "d7a2b77e",
+    "bucket": "fuzzy_close",
+    "quote_len": 40,
+    "best_ratio": 0.1,
+    "best_lcs": 18,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_h_2",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC6#s1"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "d2b8df62",
+    "bucket": "fuzzy_close",
+    "quote_len": 34,
+    "best_ratio": 0.068,
+    "best_lcs": 17,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_h_2",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC4#s4"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "7a0bfb05",
+    "bucket": "fuzzy_close",
+    "quote_len": 67,
+    "best_ratio": 0.424,
+    "best_lcs": 41,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_h_2",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC6#s1"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "a6acad38",
+    "bucket": "fuzzy_close",
+    "quote_len": 68,
+    "best_ratio": 0.243,
+    "best_lcs": 40,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_h_3",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC3#s4"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "891b508a",
+    "bucket": "real_hallucination",
+    "quote_len": 24,
+    "best_ratio": 0.118,
+    "best_lcs": 4,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_h_3",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC3#s7"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "2a426a1a",
+    "bucket": "real_hallucination",
+    "quote_len": 89,
+    "best_ratio": 0.151,
+    "best_lcs": 10,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_h_3",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC4#s8"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "030ac0a0",
+    "bucket": "fuzzy_close",
+    "quote_len": 83,
+    "best_ratio": 0.224,
+    "best_lcs": 49,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_h_3",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC5#s1"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "20c69589",
+    "bucket": "fuzzy_close",
+    "quote_len": 46,
+    "best_ratio": 0.09,
+    "best_lcs": 18,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_h_3",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC2#s5"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "c55c658f",
+    "bucket": "real_hallucination",
+    "quote_len": 63,
+    "best_ratio": 0.265,
+    "best_lcs": 32,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_h_3",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC3#s4"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "5c012139",
+    "bucket": "real_hallucination",
+    "quote_len": 174,
+    "best_ratio": 0.508,
+    "best_lcs": 19,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_h_3",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC3#s7"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "96778ed4",
+    "bucket": "real_hallucination",
+    "quote_len": 111,
+    "best_ratio": 0.389,
+    "best_lcs": 19,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_h_3",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC4#s8"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "82444b49",
+    "bucket": "fuzzy_close",
+    "quote_len": 67,
+    "best_ratio": 0.084,
+    "best_lcs": 19,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_h_3",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC5#s9"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "94f6ac80",
+    "bucket": "real_hallucination",
+    "quote_len": 66,
+    "best_ratio": 0.209,
+    "best_lcs": 10,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_h_3",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC5#s1"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "9b407f66",
+    "bucket": "fuzzy_close",
+    "quote_len": 39,
+    "best_ratio": 0.128,
+    "best_lcs": 26,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_h_3",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC6#s1"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "99529cf4",
+    "bucket": "fuzzy_close",
+    "quote_len": 44,
+    "best_ratio": 0.105,
+    "best_lcs": 27,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_h_3",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC6#s5"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "2bd08e71",
+    "bucket": "real_hallucination",
+    "quote_len": 77,
+    "best_ratio": 0.334,
+    "best_lcs": 39,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_p_2",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC1#s10"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "0056c1d4",
+    "bucket": "fuzzy_close",
+    "quote_len": 117,
+    "best_ratio": 0.309,
+    "best_lcs": 66,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_p_2",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC4#s7"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "df8443a4",
+    "bucket": "fuzzy_close",
+    "quote_len": 54,
+    "best_ratio": 0.273,
+    "best_lcs": 27,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_p_3",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC3#s2"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "848756a9",
+    "bucket": "fuzzy_close",
+    "quote_len": 50,
+    "best_ratio": 0.056,
+    "best_lcs": 14,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_p_3",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC3#s2"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "ad0293ea",
+    "bucket": "fuzzy_close",
+    "quote_len": 49,
+    "best_ratio": 0.06,
+    "best_lcs": 15,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_p_3",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC5#s9"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "4b91acd6",
+    "bucket": "fuzzy_close",
+    "quote_len": 57,
+    "best_ratio": 0.074,
+    "best_lcs": 12,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_p_3",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC5#s9"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "a396f3bb",
+    "bucket": "fuzzy_close",
+    "quote_len": 58,
+    "best_ratio": 0.074,
+    "best_lcs": 12,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_p_3",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC5#s9"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "99d3c830",
+    "bucket": "fuzzy_close",
+    "quote_len": 54,
+    "best_ratio": 0.053,
+    "best_lcs": 10,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_p_3",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC6#s5"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "c7432a6e",
+    "bucket": "fuzzy_close",
+    "quote_len": 75,
+    "best_ratio": 0.243,
+    "best_lcs": 39,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_probe_1",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC3#s4"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "ec7799f8",
+    "bucket": "fuzzy_close",
+    "quote_len": 26,
+    "best_ratio": 0.068,
+    "best_lcs": 10,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_probe_1",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC4#s2"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "ea5eeed4",
+    "bucket": "fuzzy_close",
+    "quote_len": 54,
+    "best_ratio": 0.182,
+    "best_lcs": 28,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_probe_2",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC1#s4"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "ff727088",
+    "bucket": "fuzzy_close",
+    "quote_len": 411,
+    "best_ratio": 0.757,
+    "best_lcs": 253,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_ab_probe_2",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC5#s9"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "253ea29e",
+    "bucket": "fuzzy_close",
+    "quote_len": 38,
+    "best_ratio": 0.099,
+    "best_lcs": 12,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_hetero_1",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC3#s6"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "2ad58015",
+    "bucket": "fuzzy_close",
+    "quote_len": 69,
+    "best_ratio": 0.107,
+    "best_lcs": 10,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_hetero_1",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC1#s9"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "e39d8918",
+    "bucket": "real_hallucination",
+    "quote_len": 46,
+    "best_ratio": 0.724,
+    "best_lcs": 23,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_hetero_1",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC3#s2"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "1d8e17c8",
+    "bucket": "fuzzy_close",
+    "quote_len": 66,
+    "best_ratio": 0.065,
+    "best_lcs": 15,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_hetero_2",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC1#s4"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "40c2c634",
+    "bucket": "fuzzy_close",
+    "quote_len": 44,
+    "best_ratio": 0.355,
+    "best_lcs": 42,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_hetero_2",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC5#s2"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "506a8313",
+    "bucket": "other_seg_hit",
+    "quote_len": 25,
+    "best_ratio": null,
+    "best_lcs": null,
+    "problems": [
+     "引文只命中相邻段落、未命中所声明段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_hetero_2",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC1#s9"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "76d316d7",
+    "bucket": "real_hallucination",
+    "quote_len": 47,
+    "best_ratio": 0.724,
+    "best_lcs": 23,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_local14b",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC5#s1"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "8bf442f7",
+    "bucket": "fuzzy_close",
+    "quote_len": 254,
+    "best_ratio": 0.624,
+    "best_lcs": 188,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_local14b",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC4#s7"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "83c88e02",
+    "bucket": "fuzzy_close",
+    "quote_len": 312,
+    "best_ratio": 0.988,
+    "best_lcs": 199,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_local14b",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC1#s4"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "04fdd384",
+    "bucket": "fuzzy_close",
+    "quote_len": 55,
+    "best_ratio": 0.369,
+    "best_lcs": 32,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_local14b_knife1",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC1#s14"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "ce2f9de6",
+    "bucket": "fuzzy_close",
+    "quote_len": 60,
+    "best_ratio": 0.202,
+    "best_lcs": 32,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   },
+   {
+    "case": "bi-delivery-risk",
+    "run": "out_local14b_knife1",
+    "state": "rejected",
+    "seg_ids": [
+     "SRC1#s14"
+    ],
+    "n_seg": 1,
+    "quote_sha8": "74343cbe",
+    "bucket": "fuzzy_close",
+    "quote_len": 76,
+    "best_ratio": 0.235,
+    "best_lcs": 39,
+    "problems": [
+     "引文未命中任何所指段落"
+    ]
+   }
+  ]
+ },
+ "件2b_零模型腿": {
+  "schema_version": "c122.stable_offline.v1",
+  "ruler_off": "_check_strict（现行生产尺）",
+  "ruler_on": "citation_stable.check_stable（A 规范化＋B 有界回贴）",
+  "n_items_with_ids": 982,
+  "fail_off": 187,
+  "fail_on": 146,
+  "rate_off": 0.1904,
+  "rate_on": 0.1487,
+  "recovered_by_A": 10,
+  "recovered_by_B": 31,
+  "still_fail": 146,
+  "pass_both": 795,
+  "per_case": {
+   "bi-delivery-risk": {
+    "n": 924,
+    "fail_off": 187,
+    "fail_on": 146
+   },
+   "demo-solid-state": {
+    "n": 23,
+    "fail_off": 0,
+    "fail_on": 0
+   },
+   "rumor-vs-official": {
+    "n": 18,
+    "fail_off": 0,
+    "fail_on": 0
+   },
+   "user-20261008-144308": {
+    "n": 17,
+    "fail_off": 0,
+    "fail_on": 0
+   }
+  },
+  "regressions": 0,
+  "invariant": "n_tot == pass_both + recovered_A + recovered_B + still_fail",
+  "invariant_ok": true,
+  "note": "regressions 必须＝0：开旗只准救回，不准则把原本能过的证条判死（那等于拿稳定性换召回）；不为 0 就当场把这条腿写红"
+ },
+ "件3_桩腿判据": {
+  "两臂盒指纹相同": true,
+  "两臂提示字节相同": true,
+  "五条桩都进了剪证前清单": true,
+  "关臂至少打回 3 条（排版脏＋漏字＋凭空编）": true,
+  "开臂打回严格少于关臂": true,
+  "A 刀真救回过": true,
+  "B 刀真救回过（案卷里落了原文回贴）": true,
+  "凭空编那条两臂都被打掉": true,
+  "两臂剪完都没有假绿（当期尺全过）": true,
+  "两臂幸存条目活路全可归因（严格尺／A 子串／B 留痕）": true,
+  "开臂确有 A 宽容面（strict_fail 非空比空的正数）": true,
+  "开臂 accounting 写数且 Σ 闭合": true,
+  "关臂不写 accounting 键": true,
+  "泄漏＝0（越界 id／禁品键）": true,
+  "金标被引剪后开臂≥关臂": true
+ },
+ "件3_真跑": {
+  "case": "刘翔编制“二选一”事件",
+  "qid": "q_003",
+  "model": "openai/veritas-qwen3-14b",
+  "temperature": null,
+  "passes_per_arm": 5,
+  "prune_ruler": "pipeline._reject_failed_citations（生产剪证那一步＝打回后口径）",
+  "fail_rate": {
+   "off": [
+    0.625,
+    0.8333,
+    0.7778,
+    0.75,
+    0.6667
+   ],
+   "on": [
+    0.8,
+    1.0,
+    0.6667,
+    0.0,
+    0.8
+   ],
+   "mean_off": 0.7306,
+   "mean_on": 0.6533
+  },
+  "gold_cited_after_prune": {
+   "off": [
+    2,
+    0,
+    2,
+    1,
+    1
+   ],
+   "on": [
+    1,
+    0,
+    1,
+    1,
+    0
+   ],
+   "mean_off": 1.2,
+   "mean_on": 0.6
+  },
+  "kept_evidences_after_prune": {
+   "off": [
+    3,
+    1,
+    2,
+    1,
+    2
+   ],
+   "on": [
+    1,
+    0,
+    2,
+    4,
+    1
+   ],
+   "mean_off": 1.8,
+   "mean_on": 1.6
+  },
+  "l3_after_prune": {
+   "off": [
+    2,
+    0,
+    2,
+    1,
+    1
+   ],
+   "on": [
+    1,
+    0,
+    1,
+    1,
+    0
+   ],
+   "mean_off": 1.2,
+   "mean_on": 0.6
+  },
+  "l3_before_prune_mean": {
+   "off": 2.6,
+   "on": 1.8
+  },
+  "on_arm_tally": {
+   "n_checked": 27,
+   "n_fmt_pass_A": 3,
+   "n_reanchored_B": 0
+  },
+  "pairwise": {
+   "fail_rate_mean_off": 0.7306,
+   "fail_rate_mean_on": 0.6533,
+   "p_fail_rate_lower": 0.43493,
+   "gold_cited_post_mean_off": 1.2,
+   "gold_cited_post_mean_on": 0.6,
+   "p_gold_cited_post_on_gt_off": 0.95995,
+   "n_ev_post_mean_off": 1.8,
+   "n_ev_post_mean_on": 1.6,
+   "p_n_ev_post_on_gt_off": 0.68997,
+   "per_pass_gold_cited_off": [
+    2.0,
+    0.0,
+    2.0,
+    1.0,
+    1.0
+   ],
+   "per_pass_gold_cited_on": [
+    1.0,
+    0.0,
+    1.0,
+    1.0,
+    0.0
+   ],
+   "per_pass_fail_rate_off": [
+    0.625,
+    0.8333,
+    0.7778,
+    0.75,
+    0.6667
+   ],
+   "per_pass_fail_rate_on": [
+    0.8,
+    1.0,
+    0.6667,
+    0.0,
+    0.8
+   ]
+  },
+  "leaks_total": 0,
+  "ruler_fail_after_sum": 0,
+  "unattributed_after_sum": 0,
+  "strict_fail_after_mean_on": 0.6
+ },
+ "旁证": [
+  {
+   "qid": "q_001",
+   "ran": true,
+   "passes": 3,
+   "fail_off": 0.1111,
+   "fail_on": 0.0833,
+   "gold_off": 3.0,
+   "gold_on": 3.0,
+   "kept_off": 3.0,
+   "kept_on": 3.6667,
+   "leak": 0,
+   "ruler_fail_on": 0,
+   "unattributed_on": 0
+  },
+  {
+   "qid": "q_002",
+   "ran": true,
+   "passes": 3,
+   "fail_off": 0.3,
+   "fail_on": 0.0,
+   "gold_off": 2.0,
+   "gold_on": 2.3333,
+   "kept_off": 3.3333,
+   "kept_on": 5.0,
+   "leak": 0,
+   "ruler_fail_on": 0,
+   "unattributed_on": 0
+  }
+ ],
+ "汇总三题（证条级池化）": {
+  "runs_used": [
+   "q_003",
+   "q_001",
+   "q_002"
+  ],
+  "pool_off": {
+   "n_pre": 58,
+   "rej": 30,
+   "kept": 28,
+   "gold": 21,
+   "nongold": 7
+  },
+  "pool_on": {
+   "n_pre": 54,
+   "rej": 20,
+   "kept": 34,
+   "gold": 19,
+   "nongold": 12
+  },
+  "rate_off": 0.5172,
+  "rate_on": 0.3704,
+  "p_fisher_fail_on_lower": 0.084839,
+  "gold_ids_off": 21,
+  "gold_ids_on": 19,
+  "cited_ids_off": 28,
+  "cited_ids_on": 31,
+  "gold_share_off": 0.75,
+  "gold_share_on": 0.6129,
+  "p_fisher_gold_share_on_higher": 0.920553
+ },
+ "假阳性防护": {
+  "guard_cells": 13,
+  "knives": [
+   {
+    "knife": "K1 旗出厂默认翻成开",
+    "occ": 1,
+    "failed": 1,
+    "cells": [
+     "test_a_default_off_both_by_env_and_settings"
+    ],
+    "teeth": true
+   },
+   {
+    "knife": "K2 三道阈值放宽",
+    "occ": 1,
+    "failed": 1,
+    "cells": [
+     "test_g_thresholds_are_pinned_literals"
+    ],
+    "teeth": true
+   },
+   {
+    "knife": "K3 摘掉数字守恒闸",
+    "occ": 1,
+    "failed": 1,
+    "cells": [
+     "test_e_dirty_transcription_still_fails[\\\\u7b7e\\\\u8ba2\\\\u65e5\\\\u671f2023-05-28\\\\uff0c\\\\u5408\\\\u540c\\\\u91d1\\\\u989d12,900,000.00\\\\u5143\\\\uff0c\\\\u7ea6\\\\u5b9a\\\\u6267\\\\u884c\\\\u5468\\\\u671f2023.6.1-2024.9.12-\\\\u6539\\\\u6570\\\\u5b57]"
+    ],
+    "teeth": true
+   },
+   {
+    "knife": "K4 摘掉「回贴后还要过现行尺」总闸",
+    "occ": 1,
+    "failed": 1,
+    "cells": [
+     "test_k_master_gate_rejects_when_declared_segment_missing"
+    ],
+    "teeth": true
+   },
+   {
+    "knife": "K5 让 materialize 写进非原文",
+    "occ": 1,
+    "failed": 2,
+    "cells": [
+     "test_d_flag_on_reanchor_writes_verbatim_from_declared_segment",
+     "test_j_production_prune_consumes_the_same_failure_list"
+    ],
+    "teeth": true
+   },
+   {
+    "knife": "K6 摘掉 B 刀（只留 A）",
+    "occ": 1,
+    "failed": 2,
+    "cells": [
+     "test_d_flag_on_reanchor_writes_verbatim_from_declared_segment",
+     "test_j_production_prune_consumes_the_same_failure_list"
+    ],
+    "teeth": true
+   },
+   {
+    "knife": "K7 摘掉 A 刀（只留 B）",
+    "occ": 1,
+    "failed": 1,
+    "cells": [
+     "test_c_flag_on_formatting_only_quote_recovers"
+    ],
+    "teeth": true
+   },
+   {
+    "knife": "K8 对外入口无视旗（永远走严格尺）",
+    "occ": 1,
+    "failed": 2,
+    "cells": [
+     "test_c_flag_on_formatting_only_quote_recovers",
+     "test_d_flag_on_reanchor_writes_verbatim_from_declared_segment"
+    ],
+    "teeth": true
+   },
+   {
+    "knife": "K9 回贴没落笔时改成放行（假绿）",
+    "occ": 1,
+    "failed": 3,
+    "cells": [
+     "test_d_flag_on_reanchor_writes_verbatim_from_declared_segment",
+     "test_i_materialize_failure_fails_closed",
+     "test_j_production_prune_consumes_the_same_failure_list"
+    ],
+    "teeth": true
+   },
+   {
+    "knife": "K10 不写 accounting 账",
+    "occ": 1,
+    "failed": 5,
+    "cells": [
+     "test_c_flag_on_formatting_only_quote_recovers",
+     "test_d_flag_on_reanchor_writes_verbatim_from_declared_segment",
+     "test_i_materialize_failure_fails_closed",
+     "test_j_production_prune_consumes_the_same_failure_list"
+    ],
+    "teeth": true
+   },
+   {
+    "knife": "K11 把键从 pipeline kept 白名单摘掉",
+    "occ": 2,
+    "failed": 0,
+    "cells": [],
+    "teeth": false
+   }
+  ],
+  "knives_with_teeth": 10,
+  "knives_blunt": [
+   "K11 把键从 pipeline kept 白名单摘掉"
+  ]
+ },
+ "判据逐条": {
+  "1_fail_rate_down_p_le_0.05": false,
+  "2_gold_after_not_down": false,
+  "3_leak_zero": true,
+  "4_no_false_green": true,
+  "5_dirty_transcription_still_fails": true,
+  "6_side_legs_no_drop": true
+ },
+ "verdict": "NO",
+ "rows": [
+  {
+   "arm": "off",
+   "stub": false,
+   "denom": 5,
+   "box_n": 95,
+   "box_sel_sha": "8a02208cccf7",
+   "n_ev_pre": 8,
+   "n_rejected": 5,
+   "n_ev_post": 3,
+   "fail_rate": 0.625,
+   "ruler_fail_after": 0,
+   "strict_fail_after": 0,
+   "unattributed_after": 0,
+   "fabricated_line_survived": false,
+   "gold_cited_pre": 3,
+   "gold_cited_post": 2,
+   "gold_cited_post_ids": [
+    "doc_002#p3",
+    "doc_012#p5"
+   ],
+   "nongold_cited_pre": 3,
+   "nongold_cited_post": 1,
+   "l3_pre": 3,
+   "l3_post": 2,
+   "rejected_ids": [
+    "EV-c10684ceea6d",
+    "EV-c8ebbf3c84c9",
+    "EV-0b9d4eb326c7",
+    "EV-ef0d65a009b3",
+    "EV-4539d4632845"
+   ],
+   "tally": {},
+   "n_reanchored_in_products": 0,
+   "prompt_sha": [
+    "ec80ffd3ead12936"
+   ],
+   "prompt_chars": 3789,
+   "leaks": [],
+   "wall_s": 95.1,
+   "conclusions_post": 3,
+   "pass": 1
+  },
+  {
+   "arm": "off",
+   "stub": false,
+   "denom": 5,
+   "box_n": 95,
+   "box_sel_sha": "8a02208cccf7",
+   "n_ev_pre": 6,
+   "n_rejected": 5,
+   "n_ev_post": 1,
+   "fail_rate": 0.8333,
+   "ruler_fail_after": 0,
+   "strict_fail_after": 0,
+   "unattributed_after": 0,
+   "fabricated_line_survived": false,
+   "gold_cited_pre": 1,
+   "gold_cited_post": 0,
+   "gold_cited_post_ids": [],
+   "nongold_cited_pre": 3,
+   "nongold_cited_post": 1,
+   "l3_pre": 1,
+   "l3_post": 0,
+   "rejected_ids": [
+    "EV-e38b12029e71",
+    "EV-37a0b81895e2",
+    "EV-819699bbbcc4",
+    "EV-4a18741b95c2",
+    "EV-4445d0007f4c"
+   ],
+   "tally": {},
+   "n_reanchored_in_products": 0,
+   "prompt_sha": [
+    "ec80ffd3ead12936"
+   ],
+   "prompt_chars": 3789,
+   "leaks": [],
+   "wall_s": 57.1,
+   "conclusions_post": 1,
+   "pass": 2
+  },
+  {
+   "arm": "off",
+   "stub": false,
+   "denom": 5,
+   "box_n": 95,
+   "box_sel_sha": "8a02208cccf7",
+   "n_ev_pre": 9,
+   "n_rejected": 7,
+   "n_ev_post": 2,
+   "fail_rate": 0.7778,
+   "ruler_fail_after": 0,
+   "strict_fail_after": 0,
+   "unattributed_after": 0,
+   "fabricated_line_survived": false,
+   "gold_cited_pre": 4,
+   "gold_cited_post": 2,
+   "gold_cited_post_ids": [
+    "doc_002#p3",
+    "doc_033#p5"
+   ],
+   "nongold_cited_pre": 3,
+   "nongold_cited_post": 0,
+   "l3_pre": 4,
+   "l3_post": 2,
+   "rejected_ids": [
+    "EV-848f44272725",
+    "EV-c43988ae8cbb",
+    "EV-67cc263e80e0",
+    "EV-cd9acddc329d",
+    "EV-72c353c2c9f6",
+    "EV-9612cc888408",
+    "EV-096d22406c6d"
+   ],
+   "tally": {},
+   "n_reanchored_in_products": 0,
+   "prompt_sha": [
+    "ec80ffd3ead12936"
+   ],
+   "prompt_chars": 3789,
+   "leaks": [],
+   "wall_s": 86.7,
+   "conclusions_post": 2,
+   "pass": 3
+  },
+  {
+   "arm": "off",
+   "stub": false,
+   "denom": 5,
+   "box_n": 95,
+   "box_sel_sha": "8a02208cccf7",
+   "n_ev_pre": 4,
+   "n_rejected": 3,
+   "n_ev_post": 1,
+   "fail_rate": 0.75,
+   "ruler_fail_after": 0,
+   "strict_fail_after": 0,
+   "unattributed_after": 0,
+   "fabricated_line_survived": false,
+   "gold_cited_pre": 2,
+   "gold_cited_post": 1,
+   "gold_cited_post_ids": [
+    "doc_002#p3"
+   ],
+   "nongold_cited_pre": 2,
+   "nongold_cited_post": 0,
+   "l3_pre": 2,
+   "l3_post": 1,
+   "rejected_ids": [
+    "EV-effea832bb36",
+    "EV-d339b69e6181",
+    "EV-00f604ac014d"
+   ],
+   "tally": {},
+   "n_reanchored_in_products": 0,
+   "prompt_sha": [
+    "ec80ffd3ead12936"
+   ],
+   "prompt_chars": 3789,
+   "leaks": [],
+   "wall_s": 40.3,
+   "conclusions_post": 1,
+   "pass": 4
+  },
+  {
+   "arm": "off",
+   "stub": false,
+   "denom": 5,
+   "box_n": 95,
+   "box_sel_sha": "8a02208cccf7",
+   "n_ev_pre": 6,
+   "n_rejected": 4,
+   "n_ev_post": 2,
+   "fail_rate": 0.6667,
+   "ruler_fail_after": 0,
+   "strict_fail_after": 0,
+   "unattributed_after": 0,
+   "fabricated_line_survived": false,
+   "gold_cited_pre": 3,
+   "gold_cited_post": 1,
+   "gold_cited_post_ids": [
+    "doc_002#p3"
+   ],
+   "nongold_cited_pre": 2,
+   "nongold_cited_post": 1,
+   "l3_pre": 3,
+   "l3_post": 1,
+   "rejected_ids": [
+    "EV-5cb7d0b0a470",
+    "EV-a73b4734d756",
+    "EV-1d4345231bf5",
+    "EV-3eafee46c304"
+   ],
+   "tally": {},
+   "n_reanchored_in_products": 0,
+   "prompt_sha": [
+    "ec80ffd3ead12936"
+   ],
+   "prompt_chars": 3789,
+   "leaks": [],
+   "wall_s": 70.3,
+   "conclusions_post": 2,
+   "pass": 5
+  },
+  {
+   "arm": "on",
+   "stub": false,
+   "denom": 5,
+   "box_n": 95,
+   "box_sel_sha": "8a02208cccf7",
+   "n_ev_pre": 5,
+   "n_rejected": 4,
+   "n_ev_post": 1,
+   "fail_rate": 0.8,
+   "ruler_fail_after": 0,
+   "strict_fail_after": 0,
+   "unattributed_after": 0,
+   "fabricated_line_survived": false,
+   "gold_cited_pre": 2,
+   "gold_cited_post": 1,
+   "gold_cited_post_ids": [
+    "doc_002#p3"
+   ],
+   "nongold_cited_pre": 2,
+   "nongold_cited_post": 0,
+   "l3_pre": 2,
+   "l3_post": 1,
+   "rejected_ids": [
+    "EV-9e75aef5eda9",
+    "EV-fe046255a7c9",
+    "EV-adc23005b48d",
+    "EV-e70e167cead9"
+   ],
+   "tally": {
+    "n_checked": 5,
+    "n_pass_strict": 1,
+    "n_fmt_pass": 0,
+    "n_reanchored": 0,
+    "n_still_fail": 4,
+    "rounds": 1
+   },
+   "n_reanchored_in_products": 0,
+   "prompt_sha": [
+    "ec80ffd3ead12936"
+   ],
+   "prompt_chars": 3789,
+   "leaks": [],
+   "wall_s": 50.4,
+   "conclusions_post": 1,
+   "pass": 1
+  },
+  {
+   "arm": "on",
+   "stub": false,
+   "denom": 5,
+   "box_n": 95,
+   "box_sel_sha": "8a02208cccf7",
+   "n_ev_pre": 7,
+   "n_rejected": 7,
+   "n_ev_post": 0,
+   "fail_rate": 1.0,
+   "ruler_fail_after": 0,
+   "strict_fail_after": 0,
+   "unattributed_after": 0,
+   "fabricated_line_survived": false,
+   "gold_cited_pre": 2,
+   "gold_cited_post": 0,
+   "gold_cited_post_ids": [],
+   "nongold_cited_pre": 3,
+   "nongold_cited_post": 0,
+   "l3_pre": 2,
+   "l3_post": 0,
+   "rejected_ids": [
+    "EV-9cd264f5fcd2",
+    "EV-f9166e9ea5df",
+    "EV-ea4621d6cbd9",
+    "EV-990e8d6e67e8",
+    "EV-bef3b0d85318",
+    "EV-99ada7f2b687",
+    "EV-216b0460840a"
+   ],
+   "tally": {
+    "n_checked": 7,
+    "n_pass_strict": 0,
+    "n_fmt_pass": 0,
+    "n_reanchored": 0,
+    "n_still_fail": 7,
+    "rounds": 1
+   },
+   "n_reanchored_in_products": 0,
+   "prompt_sha": [
+    "ec80ffd3ead12936"
+   ],
+   "prompt_chars": 3789,
+   "leaks": [],
+   "wall_s": 71.0,
+   "conclusions_post": 0,
+   "pass": 2
+  },
+  {
+   "arm": "on",
+   "stub": false,
+   "denom": 5,
+   "box_n": 95,
+   "box_sel_sha": "8a02208cccf7",
+   "n_ev_pre": 6,
+   "n_rejected": 4,
+   "n_ev_post": 2,
+   "fail_rate": 0.6667,
+   "ruler_fail_after": 0,
+   "strict_fail_after": 0,
+   "unattributed_after": 0,
+   "fabricated_line_survived": false,
+   "gold_cited_pre": 2,
+   "gold_cited_post": 1,
+   "gold_cited_post_ids": [
+    "doc_012#p5"
+   ],
+   "nongold_cited_pre": 3,
+   "nongold_cited_post": 1,
+   "l3_pre": 2,
+   "l3_post": 1,
+   "rejected_ids": [
+    "EV-2be2d7ef625e",
+    "EV-7a0fa3b56cf9",
+    "EV-931a9ccf3d99",
+    "EV-e8a279eef0e6"
+   ],
+   "tally": {
+    "n_checked": 6,
+    "n_pass_strict": 2,
+    "n_fmt_pass": 0,
+    "n_reanchored": 0,
+    "n_still_fail": 4,
+    "rounds": 1
+   },
+   "n_reanchored_in_products": 0,
+   "prompt_sha": [
+    "ec80ffd3ead12936"
+   ],
+   "prompt_chars": 3789,
+   "leaks": [],
+   "wall_s": 65.6,
+   "conclusions_post": 2,
+   "pass": 3
+  },
+  {
+   "arm": "on",
+   "stub": false,
+   "denom": 5,
+   "box_n": 95,
+   "box_sel_sha": "8a02208cccf7",
+   "n_ev_pre": 4,
+   "n_rejected": 0,
+   "n_ev_post": 4,
+   "fail_rate": 0.0,
+   "ruler_fail_after": 0,
+   "strict_fail_after": 3,
+   "unattributed_after": 0,
+   "fabricated_line_survived": false,
+   "gold_cited_pre": 1,
+   "gold_cited_post": 1,
+   "gold_cited_post_ids": [
+    "doc_006#p3"
+   ],
+   "nongold_cited_pre": 3,
+   "nongold_cited_post": 3,
+   "l3_pre": 1,
+   "l3_post": 1,
+   "rejected_ids": [],
+   "tally": {
+    "n_checked": 4,
+    "n_pass_strict": 1,
+    "n_fmt_pass": 3,
+    "n_reanchored": 0,
+    "n_still_fail": 0,
+    "rounds": 1
+   },
+   "n_reanchored_in_products": 0,
+   "prompt_sha": [
+    "ec80ffd3ead12936"
+   ],
+   "prompt_chars": 3789,
+   "leaks": [],
+   "wall_s": 42.2,
+   "conclusions_post": 3,
+   "pass": 4
+  },
+  {
+   "arm": "on",
+   "stub": false,
+   "denom": 5,
+   "box_n": 95,
+   "box_sel_sha": "8a02208cccf7",
+   "n_ev_pre": 5,
+   "n_rejected": 4,
+   "n_ev_post": 1,
+   "fail_rate": 0.8,
+   "ruler_fail_after": 0,
+   "strict_fail_after": 0,
+   "unattributed_after": 0,
+   "fabricated_line_survived": false,
+   "gold_cited_pre": 2,
+   "gold_cited_post": 0,
+   "gold_cited_post_ids": [],
+   "nongold_cited_pre": 3,
+   "nongold_cited_post": 1,
+   "l3_pre": 2,
+   "l3_post": 0,
+   "rejected_ids": [
+    "EV-096f866a383e",
+    "EV-15073505cce4",
+    "EV-8e8142474522",
+    "EV-7d215ba05088"
+   ],
+   "tally": {
+    "n_checked": 5,
+    "n_pass_strict": 1,
+    "n_fmt_pass": 0,
+    "n_reanchored": 0,
+    "n_still_fail": 4,
+    "rounds": 1
+   },
+   "n_reanchored_in_products": 0,
+   "prompt_sha": [
+    "ec80ffd3ead12936"
+   ],
+   "prompt_chars": 3789,
+   "leaks": [],
+   "wall_s": 49.3,
+   "conclusions_post": 1,
+   "pass": 5
+  }
+ ]
+}

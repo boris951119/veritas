@@ -1,0 +1,207 @@
+{
+ "schema_version": "c121.three_arm.v1",
+ "case": "刘翔编制“二选一”事件",
+ "qid": "q_002",
+ "model": "openai/veritas-qwen3-14b",
+ "temperature": null,
+ "passes_per_arm": 1,
+ "rule": {
+  "kept_reasons": [
+   "close_read",
+   "conflict_pair"
+  ],
+  "cap": 5,
+  "min_score": 0.0
+ },
+ "lists": {
+  "raw_ids": [
+   "doc_009#p5",
+   "doc_011#p7",
+   "doc_041#p1",
+   "doc_002#p3",
+   "doc_051#p3",
+   "doc_051#p5",
+   "doc_029#p7",
+   "doc_025#p1",
+   "doc_052#p1",
+   "doc_029#p8"
+  ],
+  "kept_ids": [
+   "doc_009#p5",
+   "doc_011#p7",
+   "doc_041#p1",
+   "doc_002#p3",
+   "doc_051#p3"
+  ],
+  "box_gold": [
+   "doc_002#p3",
+   "doc_009#p5",
+   "doc_028#p1",
+   "doc_029#p7",
+   "doc_051#p3"
+  ]
+ },
+ "leaks_total": 0,
+ "rows": [
+  {
+   "arm": "off",
+   "pass": 1,
+   "denom": 5,
+   "box_n": 94,
+   "list_n": 0,
+   "list_gold": 0,
+   "block_chars": 0,
+   "nongold_cited": 3,
+   "list_nongold_cited": 0,
+   "doc_002_p3_cited": false,
+   "doc_012_p5_cited": false,
+   "check_fail_n": 2,
+   "check_fail_tot": 6,
+   "text_leak": [],
+   "ids_outside_box": [],
+   "wall_s": 67.4,
+   "l3": 2,
+   "cited_gold_ids": [
+    "doc_029#p7",
+    "doc_051#p3"
+   ],
+   "n_evidences": 6,
+   "n_conclusions": 4,
+   "cited_ids_all": [
+    "doc_011#p7",
+    "doc_029#p7",
+    "doc_041#p1",
+    "doc_051#p3",
+    "doc_051#p5"
+   ],
+   "evidences": [
+    {
+     "seg_ids": [
+      "doc_041#p1"
+     ],
+     "quote_head": "我一直没有离开，并不是我不想走，而是你没让我走。",
+     "check_fails": [
+      "引文未命中任何所指段落（doc_041#p1）"
+     ]
+    },
+    {
+     "seg_ids": [
+      "doc_011#p7"
+     ],
+     "quote_head": "过去11年，不是他赖在单位不走，而是单位没有主动‘安置’他。",
+     "check_fails": [
+      "引文未命中任何所指段落（doc_011#p7）"
+     ]
+    },
+    {
+     "seg_ids": [
+      "doc_029#p7"
+     ],
+     "quote_head": "刘翔目前还在该单位，后续需关注官网统一发布的公告。",
+     "check_fails": []
+    },
+    {
+     "seg_ids": [
+      "doc_051#p5"
+     ],
+     "quote_head": "刘翔目前还在该单位，后续需关注官网统一发布的公告。",
+     "check_fails": []
+    },
+    {
+     "seg_ids": [
+      "doc_029#p7"
+     ],
+     "quote_head": "刘翔将2015年4月退役至今体制发放的全部工资及补助（共计982935元",
+     "check_fails": []
+    },
+    {
+     "seg_ids": [
+      "doc_051#p3"
+     ],
+     "quote_head": "拟依据相关规定，主要通过组织安置或自主择业对其予以妥善安置。",
+     "check_fails": []
+    }
+   ],
+   "seen_not_id_face": [
+    "doc_009#p5",
+    "doc_002#p3",
+    "doc_028#p1"
+   ]
+  },
+  {
+   "arm": "filt",
+   "pass": 1,
+   "denom": 5,
+   "box_n": 94,
+   "list_n": 5,
+   "list_gold": 3,
+   "block_chars": 163,
+   "nongold_cited": 2,
+   "list_nongold_cited": 2,
+   "doc_002_p3_cited": false,
+   "doc_012_p5_cited": false,
+   "check_fail_n": 1,
+   "check_fail_tot": 5,
+   "text_leak": [],
+   "ids_outside_box": [],
+   "wall_s": 56.6,
+   "l3": 2,
+   "cited_gold_ids": [
+    "doc_029#p7",
+    "doc_051#p3"
+   ],
+   "n_evidences": 5,
+   "n_conclusions": 5,
+   "cited_ids_all": [
+    "doc_011#p7",
+    "doc_029#p7",
+    "doc_041#p1",
+    "doc_051#p3"
+   ],
+   "evidences": [
+    {
+     "seg_ids": [
+      "doc_041#p1"
+     ],
+     "quote_head": "我一直没有离开，并不是我不想走，而是你没让我走。",
+     "check_fails": [
+      "引文未命中任何所指段落（doc_041#p1）"
+     ]
+    },
+    {
+     "seg_ids": [
+      "doc_051#p3"
+     ],
+     "quote_head": "根据国家体育总局与本市关于运动员退役安置的有关规定，8月26日下午，上海",
+     "check_fails": []
+    },
+    {
+     "seg_ids": [
+      "doc_011#p7"
+     ],
+     "quote_head": "过去11年，不是他赖在单位不走，而是单位没有主动“安置”他。双方很可能存",
+     "check_fails": []
+    },
+    {
+     "seg_ids": [
+      "doc_029#p7"
+     ],
+     "quote_head": "刘翔目前还在单位，后续统一发公告",
+     "check_fails": []
+    },
+    {
+     "seg_ids": [
+      "doc_029#p7"
+     ],
+     "quote_head": "刘翔将2015年4月退役至今体制发放的全部工资及补助（共计982935元",
+     "check_fails": []
+    }
+   ],
+   "seen_not_id_face": [
+    "doc_009#p5",
+    "doc_002#p3",
+    "doc_028#p1"
+   ]
+  }
+ ]
+}

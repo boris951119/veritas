@@ -1,0 +1,964 @@
+{
+  "ticket": "C-149",
+  "run_root": "/tmp/s4runs/time-20261104-135401",
+  "official_cases_root": "/Users/liuboyu/Desktop/veritas-testcases/样例集-拓尔思-20261012",
+  "gate": {
+    "recall": 0.5,
+    "precision": 0.55,
+    "denominator": "gold_dedup_segment_keys"
+  },
+  "verdict": "NO",
+  "verdict_why": "Recall 0.0494（门槛 0.5）／Precision 0.0800（门槛 0.55）任一未过 → 不开实现票，交唯一下一刀",
+  "next_knife": "语义检出（最大损失桶＝段在卷却未进任何冲突候选流；其中分析师引用过 11 段（漏在成对/判定环）、从未引用 48 段（漏在取证环）；导出侧全放开的 Recall 上界也只有 0.2593＝够不到门槛）",
+  "total": {
+    "missing_cases": [],
+    "gold_items_total": 91,
+    "gold_keys_total": 81,
+    "gold_keys_pooled": 78,
+    "gold_noloc_total": 0,
+    "jia_rows_total": 53,
+    "jia_keys_total": 50,
+    "skipped_tie_total": 91,
+    "skipped_noloc_total": 0,
+    "hit_total": 4,
+    "recall_key": 0.04938271604938271,
+    "precision_key": 0.08,
+    "ub_hit_total": 21,
+    "ub_recall_key": 0.25925925925925924,
+    "ub_precision_key": 0.04565217391304348,
+    "match_91": {
+      "n_sub": 50,
+      "n_gold": 91,
+      "exact": 4,
+      "Precision_conf": 0.08,
+      "Recall_conf": 0.04395604395604396
+    },
+    "ding_union_total": 460,
+    "wu_hit_total": 6,
+    "wu_gold_total": 81,
+    "buckets_all": {
+      "b2_total": 17,
+      "b2_loser_anomaly": [],
+      "b2_tie_only": 6,
+      "b2_noroute": 11,
+      "b1_total": 60,
+      "b1_in_volume": 59,
+      "b1_in_volume_quoted": 11,
+      "b1_in_volume_unquoted": 48,
+      "b1_not_in_volume": 1,
+      "b1_in_volume_keys": [
+        "doc_001#p230",
+        "doc_001#p422",
+        "doc_001#p424",
+        "doc_002#p1",
+        "doc_024#p6",
+        "doc_038#p1",
+        "doc_047#p7",
+        "doc_048#p4",
+        "doc_062#p11",
+        "doc_064#p6",
+        "doc_065#p8",
+        "doc_002#p2",
+        "doc_007#p4",
+        "doc_013#p3",
+        "doc_025#p4",
+        "doc_026#p2",
+        "doc_026#p5",
+        "doc_026#p6",
+        "doc_026#p7",
+        "doc_027#p3",
+        "doc_027#p4",
+        "doc_028#p3",
+        "doc_045#p6",
+        "doc_051#p1",
+        "doc_052#p1",
+        "doc_053#p4",
+        "doc_003#p1",
+        "doc_014#p1",
+        "doc_014#p2",
+        "doc_016#p20",
+        "doc_018#p21",
+        "doc_025#p9",
+        "doc_031#p6",
+        "doc_036#p16",
+        "doc_036#p18",
+        "doc_044#p16",
+        "doc_049#p1",
+        "doc_055#p18",
+        "doc_057#p4",
+        "doc_057#p5",
+        "doc_006#p4",
+        "doc_006#p8",
+        "doc_008#p2",
+        "doc_009#p11",
+        "doc_009#p12",
+        "doc_020#p1",
+        "doc_023#p2",
+        "doc_004#p10",
+        "doc_004#p7",
+        "doc_010#p3",
+        "doc_010#p5",
+        "doc_015#p7",
+        "doc_029#p3",
+        "doc_034#p2",
+        "doc_046#p3",
+        "doc_056#p1",
+        "doc_063#p4",
+        "doc_071#p2",
+        "doc_073#p2"
+      ],
+      "b1_in_volume_unquoted_keys": [
+        "doc_001#p230",
+        "doc_001#p422",
+        "doc_001#p424",
+        "doc_002#p1",
+        "doc_024#p6",
+        "doc_038#p1",
+        "doc_047#p7",
+        "doc_048#p4",
+        "doc_062#p11",
+        "doc_064#p6",
+        "doc_065#p8",
+        "doc_025#p4",
+        "doc_026#p5",
+        "doc_026#p6",
+        "doc_026#p7",
+        "doc_027#p3",
+        "doc_028#p3",
+        "doc_045#p6",
+        "doc_051#p1",
+        "doc_052#p1",
+        "doc_053#p4",
+        "doc_014#p1",
+        "doc_014#p2",
+        "doc_016#p20",
+        "doc_018#p21",
+        "doc_025#p9",
+        "doc_031#p6",
+        "doc_036#p16",
+        "doc_044#p16",
+        "doc_049#p1",
+        "doc_055#p18",
+        "doc_057#p4",
+        "doc_057#p5",
+        "doc_006#p4",
+        "doc_006#p8",
+        "doc_008#p2",
+        "doc_009#p11",
+        "doc_009#p12",
+        "doc_004#p7",
+        "doc_010#p3",
+        "doc_015#p7",
+        "doc_029#p3",
+        "doc_034#p2",
+        "doc_046#p3",
+        "doc_056#p1",
+        "doc_063#p4",
+        "doc_071#p2",
+        "doc_073#p2"
+      ],
+      "b4_exported_not_gold": [
+        "doc_001#p21",
+        "doc_001#p237",
+        "doc_027#p1",
+        "doc_031#p6",
+        "doc_033#p2",
+        "doc_038#p1",
+        "doc_041#p18",
+        "doc_064#p3",
+        "doc_076#p3",
+        "doc_088#p3",
+        "doc_092#p3",
+        "doc_115#p16",
+        "doc_166#p3",
+        "doc_180#p8",
+        "doc_208#p5",
+        "doc_229#p14",
+        "doc_272#p49",
+        "doc_276#p18",
+        "doc_318#p1",
+        "doc_329#p6",
+        "doc_017#p10",
+        "doc_023#p8",
+        "doc_042#p1",
+        "doc_043#p6",
+        "doc_058#p2",
+        "doc_058#p4",
+        "doc_002#p3",
+        "doc_030#p5",
+        "doc_030#p8",
+        "doc_033#p4",
+        "doc_038#p1",
+        "doc_001#p3",
+        "doc_020#p17",
+        "doc_035#p4",
+        "doc_046#p4",
+        "doc_047#p11",
+        "doc_054#p1",
+        "doc_068#p1",
+        "doc_072#p2",
+        "doc_072#p3",
+        "doc_085#p2",
+        "doc_088#p1",
+        "doc_098#p7",
+        "doc_103#p8",
+        "doc_063#p3",
+        "doc_073#p3"
+      ]
+    },
+    "ding_streams": {
+      "conflicts": {
+        "locable": 93,
+        "discarded": 0
+      },
+      "fact_ledger": {
+        "locable": 316,
+        "discarded": 0
+      },
+      "rejected": {
+        "locable": 82,
+        "discarded": 0
+      },
+      "dissent": {
+        "locable": 50,
+        "discarded": 0
+      }
+    }
+  },
+  "cases": [
+    {
+      "slug": "jilong",
+      "n_questions": 3,
+      "n_gold_items": 11,
+      "n_gold_keys": 6,
+      "n_jia_pairs": 35,
+      "n_jia_rows": 24,
+      "n_jia_keys": 21,
+      "skipped_tie": 10,
+      "skipped_noloc": 0,
+      "ding_streams": {
+        "conflicts": {
+          "locable": 23,
+          "discarded": 0,
+          "added_to_union": 23
+        },
+        "fact_ledger": {
+          "locable": 180,
+          "discarded": 0,
+          "added_to_union": 176
+        },
+        "rejected": {
+          "locable": 18,
+          "discarded": 0,
+          "added_to_union": 11
+        },
+        "dissent": {
+          "locable": 21,
+          "discarded": 0,
+          "added_to_union": 0
+        }
+      },
+      "ding_union_n": 210,
+      "ding_conservation": {
+        "max_locable": 180,
+        "union": 210,
+        "sum_locable": 242,
+        "ok": true
+      },
+      "wu_n_pairs": 3228,
+      "wu_union_n": 180,
+      "wu_hit": 0,
+      "wu_gold_keys": 6,
+      "wu_kind_keys": {
+        "数字": 180,
+        "重复报道": 110
+      },
+      "wu_kind_hit": {
+        "数字": 0,
+        "重复报道": 0
+      },
+      "wu_discarded": 0,
+      "hit_keys_n": 1,
+      "recall_key": 0.16666666666666666,
+      "precision_key": 0.047619047619047616,
+      "ub_hit_keys": 1,
+      "ub_recall_key": 0.16666666666666666,
+      "ub_precision_key": 0.004761904761904762,
+      "match_91": {
+        "n_sub": 21,
+        "n_gold": 11,
+        "exact": 1,
+        "Precision_conf": 0.047619047619047616,
+        "Recall_conf": 0.09090909090909091
+      },
+      "buckets": {
+        "hit": 1,
+        "b2_total": 0,
+        "b2_loser_anomaly": [],
+        "b2_tie_only": 0,
+        "b2_noroute": 0,
+        "b1_total": 5,
+        "b1_in_volume": 4,
+        "b1_in_volume_quoted": 0,
+        "b1_in_volume_unquoted": 4,
+        "b1_in_volume_quoted_keys": [],
+        "b1_not_in_volume": 1,
+        "b1_in_volume_keys": [
+          "doc_001#p230",
+          "doc_001#p422",
+          "doc_001#p424",
+          "doc_002#p1"
+        ],
+        "b1_in_volume_unquoted_keys": [
+          "doc_001#p230",
+          "doc_001#p422",
+          "doc_001#p424",
+          "doc_002#p1"
+        ],
+        "b4_exported_not_gold": [
+          "doc_001#p21",
+          "doc_001#p237",
+          "doc_027#p1",
+          "doc_031#p6",
+          "doc_033#p2",
+          "doc_038#p1",
+          "doc_041#p18",
+          "doc_064#p3",
+          "doc_076#p3",
+          "doc_088#p3",
+          "doc_092#p3",
+          "doc_115#p16",
+          "doc_166#p3",
+          "doc_180#p8",
+          "doc_208#p5",
+          "doc_229#p14",
+          "doc_272#p49",
+          "doc_276#p18",
+          "doc_318#p1",
+          "doc_329#p6"
+        ]
+      },
+      "jia_key_list": [
+        "doc_001#p21",
+        "doc_001#p237",
+        "doc_001#p80",
+        "doc_027#p1",
+        "doc_031#p6",
+        "doc_033#p2",
+        "doc_038#p1",
+        "doc_041#p18",
+        "doc_064#p3",
+        "doc_076#p3",
+        "doc_088#p3",
+        "doc_092#p3",
+        "doc_115#p16",
+        "doc_166#p3",
+        "doc_180#p8",
+        "doc_208#p5",
+        "doc_229#p14",
+        "doc_272#p49",
+        "doc_276#p18",
+        "doc_318#p1",
+        "doc_329#p6"
+      ]
+    },
+    {
+      "slug": "us_cn_ai",
+      "n_questions": 3,
+      "n_gold_items": 7,
+      "n_gold_keys": 7,
+      "n_jia_pairs": 45,
+      "n_jia_rows": 6,
+      "n_jia_keys": 6,
+      "skipped_tie": 31,
+      "skipped_noloc": 0,
+      "ding_streams": {
+        "conflicts": {
+          "locable": 18,
+          "discarded": 0,
+          "added_to_union": 18
+        },
+        "fact_ledger": {
+          "locable": 0,
+          "discarded": 0,
+          "added_to_union": 0
+        },
+        "rejected": {
+          "locable": 21,
+          "discarded": 0,
+          "added_to_union": 18
+        },
+        "dissent": {
+          "locable": 6,
+          "discarded": 0,
+          "added_to_union": 0
+        }
+      },
+      "ding_union_n": 36,
+      "ding_conservation": {
+        "max_locable": 21,
+        "union": 36,
+        "sum_locable": 45,
+        "ok": true
+      },
+      "wu_n_pairs": 0,
+      "wu_union_n": 0,
+      "wu_hit": 0,
+      "wu_gold_keys": 7,
+      "wu_kind_keys": {},
+      "wu_kind_hit": {},
+      "wu_discarded": 0,
+      "hit_keys_n": 0,
+      "recall_key": 0.0,
+      "precision_key": 0.0,
+      "ub_hit_keys": 0,
+      "ub_recall_key": 0.0,
+      "ub_precision_key": 0.0,
+      "match_91": {
+        "n_sub": 6,
+        "n_gold": 7,
+        "exact": 0,
+        "Precision_conf": 0.0,
+        "Recall_conf": 0.0
+      },
+      "buckets": {
+        "hit": 0,
+        "b2_total": 0,
+        "b2_loser_anomaly": [],
+        "b2_tie_only": 0,
+        "b2_noroute": 0,
+        "b1_total": 7,
+        "b1_in_volume": 7,
+        "b1_in_volume_quoted": 0,
+        "b1_in_volume_unquoted": 7,
+        "b1_in_volume_quoted_keys": [],
+        "b1_not_in_volume": 0,
+        "b1_in_volume_keys": [
+          "doc_024#p6",
+          "doc_038#p1",
+          "doc_047#p7",
+          "doc_048#p4",
+          "doc_062#p11",
+          "doc_064#p6",
+          "doc_065#p8"
+        ],
+        "b1_in_volume_unquoted_keys": [
+          "doc_024#p6",
+          "doc_038#p1",
+          "doc_047#p7",
+          "doc_048#p4",
+          "doc_062#p11",
+          "doc_064#p6",
+          "doc_065#p8"
+        ],
+        "b4_exported_not_gold": [
+          "doc_017#p10",
+          "doc_023#p8",
+          "doc_042#p1",
+          "doc_043#p6",
+          "doc_058#p2",
+          "doc_058#p4"
+        ]
+      },
+      "jia_key_list": [
+        "doc_017#p10",
+        "doc_023#p8",
+        "doc_042#p1",
+        "doc_043#p6",
+        "doc_058#p2",
+        "doc_058#p4"
+      ]
+    },
+    {
+      "slug": "liuxiang",
+      "n_questions": 3,
+      "n_gold_items": 22,
+      "n_gold_keys": 22,
+      "n_jia_pairs": 20,
+      "n_jia_rows": 5,
+      "n_jia_keys": 5,
+      "skipped_tie": 14,
+      "skipped_noloc": 0,
+      "ding_streams": {
+        "conflicts": {
+          "locable": 16,
+          "discarded": 0,
+          "added_to_union": 16
+        },
+        "fact_ledger": {
+          "locable": 6,
+          "discarded": 0,
+          "added_to_union": 6
+        },
+        "rejected": {
+          "locable": 14,
+          "discarded": 0,
+          "added_to_union": 10
+        },
+        "dissent": {
+          "locable": 5,
+          "discarded": 0,
+          "added_to_union": 0
+        }
+      },
+      "ding_union_n": 32,
+      "ding_conservation": {
+        "max_locable": 16,
+        "union": 32,
+        "sum_locable": 41,
+        "ok": true
+      },
+      "wu_n_pairs": 51,
+      "wu_union_n": 6,
+      "wu_hit": 1,
+      "wu_gold_keys": 22,
+      "wu_kind_keys": {
+        "数字": 6,
+        "重复报道": 5
+      },
+      "wu_kind_hit": {
+        "数字": 1,
+        "重复报道": 1
+      },
+      "wu_discarded": 0,
+      "hit_keys_n": 0,
+      "recall_key": 0.0,
+      "precision_key": 0.0,
+      "ub_hit_keys": 7,
+      "ub_recall_key": 0.3181818181818182,
+      "ub_precision_key": 0.21875,
+      "match_91": {
+        "n_sub": 5,
+        "n_gold": 22,
+        "exact": 0,
+        "Precision_conf": 0.0,
+        "Recall_conf": 0.0
+      },
+      "buckets": {
+        "hit": 0,
+        "b2_total": 7,
+        "b2_loser_anomaly": [],
+        "b2_tie_only": 3,
+        "b2_noroute": 4,
+        "b1_total": 15,
+        "b1_in_volume": 15,
+        "b1_in_volume_quoted": 5,
+        "b1_in_volume_unquoted": 10,
+        "b1_in_volume_quoted_keys": [
+          "doc_002#p2",
+          "doc_007#p4",
+          "doc_013#p3",
+          "doc_026#p2",
+          "doc_027#p4"
+        ],
+        "b1_not_in_volume": 0,
+        "b1_in_volume_keys": [
+          "doc_002#p2",
+          "doc_007#p4",
+          "doc_013#p3",
+          "doc_025#p4",
+          "doc_026#p2",
+          "doc_026#p5",
+          "doc_026#p6",
+          "doc_026#p7",
+          "doc_027#p3",
+          "doc_027#p4",
+          "doc_028#p3",
+          "doc_045#p6",
+          "doc_051#p1",
+          "doc_052#p1",
+          "doc_053#p4"
+        ],
+        "b1_in_volume_unquoted_keys": [
+          "doc_025#p4",
+          "doc_026#p5",
+          "doc_026#p6",
+          "doc_026#p7",
+          "doc_027#p3",
+          "doc_028#p3",
+          "doc_045#p6",
+          "doc_051#p1",
+          "doc_052#p1",
+          "doc_053#p4"
+        ],
+        "b4_exported_not_gold": [
+          "doc_002#p3",
+          "doc_030#p5",
+          "doc_030#p8",
+          "doc_033#p4",
+          "doc_038#p1"
+        ]
+      },
+      "jia_key_list": [
+        "doc_002#p3",
+        "doc_030#p5",
+        "doc_030#p8",
+        "doc_033#p4",
+        "doc_038#p1"
+      ]
+    },
+    {
+      "slug": "ai171",
+      "n_questions": 3,
+      "n_gold_items": 20,
+      "n_gold_keys": 19,
+      "n_jia_pairs": 10,
+      "n_jia_rows": 4,
+      "n_jia_keys": 4,
+      "skipped_tie": 8,
+      "skipped_noloc": 0,
+      "ding_streams": {
+        "conflicts": {
+          "locable": 10,
+          "discarded": 0,
+          "added_to_union": 10
+        },
+        "fact_ledger": {
+          "locable": 72,
+          "discarded": 0,
+          "added_to_union": 69
+        },
+        "rejected": {
+          "locable": 10,
+          "discarded": 0,
+          "added_to_union": 9
+        },
+        "dissent": {
+          "locable": 4,
+          "discarded": 0,
+          "added_to_union": 0
+        }
+      },
+      "ding_union_n": 88,
+      "ding_conservation": {
+        "max_locable": 72,
+        "union": 88,
+        "sum_locable": 96,
+        "ok": true
+      },
+      "wu_n_pairs": 4797,
+      "wu_union_n": 72,
+      "wu_hit": 3,
+      "wu_gold_keys": 19,
+      "wu_kind_keys": {
+        "数字": 72,
+        "重复报道": 64
+      },
+      "wu_kind_hit": {
+        "数字": 3,
+        "重复报道": 3
+      },
+      "wu_discarded": 0,
+      "hit_keys_n": 0,
+      "recall_key": 0.0,
+      "precision_key": 0.0,
+      "ub_hit_keys": 5,
+      "ub_recall_key": 0.2631578947368421,
+      "ub_precision_key": 0.056818181818181816,
+      "match_91": {
+        "n_sub": 4,
+        "n_gold": 20,
+        "exact": 0,
+        "Precision_conf": 0.0,
+        "Recall_conf": 0.0
+      },
+      "buckets": {
+        "hit": 0,
+        "b2_total": 5,
+        "b2_loser_anomaly": [],
+        "b2_tie_only": 1,
+        "b2_noroute": 4,
+        "b1_total": 14,
+        "b1_in_volume": 14,
+        "b1_in_volume_quoted": 2,
+        "b1_in_volume_unquoted": 12,
+        "b1_in_volume_quoted_keys": [
+          "doc_003#p1",
+          "doc_036#p18"
+        ],
+        "b1_not_in_volume": 0,
+        "b1_in_volume_keys": [
+          "doc_003#p1",
+          "doc_014#p1",
+          "doc_014#p2",
+          "doc_016#p20",
+          "doc_018#p21",
+          "doc_025#p9",
+          "doc_031#p6",
+          "doc_036#p16",
+          "doc_036#p18",
+          "doc_044#p16",
+          "doc_049#p1",
+          "doc_055#p18",
+          "doc_057#p4",
+          "doc_057#p5"
+        ],
+        "b1_in_volume_unquoted_keys": [
+          "doc_014#p1",
+          "doc_014#p2",
+          "doc_016#p20",
+          "doc_018#p21",
+          "doc_025#p9",
+          "doc_031#p6",
+          "doc_036#p16",
+          "doc_044#p16",
+          "doc_049#p1",
+          "doc_055#p18",
+          "doc_057#p4",
+          "doc_057#p5"
+        ],
+        "b4_exported_not_gold": [
+          "doc_001#p3",
+          "doc_020#p17",
+          "doc_035#p4",
+          "doc_046#p4"
+        ]
+      },
+      "jia_key_list": [
+        "doc_001#p3",
+        "doc_020#p17",
+        "doc_035#p4",
+        "doc_046#p4"
+      ]
+    },
+    {
+      "slug": "kh_th",
+      "n_questions": 3,
+      "n_gold_items": 12,
+      "n_gold_keys": 9,
+      "n_jia_pairs": 37,
+      "n_jia_rows": 9,
+      "n_jia_keys": 9,
+      "skipped_tie": 23,
+      "skipped_noloc": 0,
+      "ding_streams": {
+        "conflicts": {
+          "locable": 19,
+          "discarded": 0,
+          "added_to_union": 19
+        },
+        "fact_ledger": {
+          "locable": 51,
+          "discarded": 0,
+          "added_to_union": 46
+        },
+        "rejected": {
+          "locable": 8,
+          "discarded": 0,
+          "added_to_union": 5
+        },
+        "dissent": {
+          "locable": 9,
+          "discarded": 0,
+          "added_to_union": 0
+        }
+      },
+      "ding_union_n": 70,
+      "ding_conservation": {
+        "max_locable": 51,
+        "union": 70,
+        "sum_locable": 87,
+        "ok": true
+      },
+      "wu_n_pairs": 414,
+      "wu_union_n": 51,
+      "wu_hit": 2,
+      "wu_gold_keys": 9,
+      "wu_kind_keys": {
+        "数字": 51,
+        "重复报道": 30
+      },
+      "wu_kind_hit": {
+        "数字": 2,
+        "重复报道": 0
+      },
+      "wu_discarded": 0,
+      "hit_keys_n": 0,
+      "recall_key": 0.0,
+      "precision_key": 0.0,
+      "ub_hit_keys": 2,
+      "ub_recall_key": 0.2222222222222222,
+      "ub_precision_key": 0.02857142857142857,
+      "match_91": {
+        "n_sub": 9,
+        "n_gold": 12,
+        "exact": 0,
+        "Precision_conf": 0.0,
+        "Recall_conf": 0.0
+      },
+      "buckets": {
+        "hit": 0,
+        "b2_total": 2,
+        "b2_loser_anomaly": [],
+        "b2_tie_only": 1,
+        "b2_noroute": 1,
+        "b1_total": 7,
+        "b1_in_volume": 7,
+        "b1_in_volume_quoted": 2,
+        "b1_in_volume_unquoted": 5,
+        "b1_in_volume_quoted_keys": [
+          "doc_020#p1",
+          "doc_023#p2"
+        ],
+        "b1_not_in_volume": 0,
+        "b1_in_volume_keys": [
+          "doc_006#p4",
+          "doc_006#p8",
+          "doc_008#p2",
+          "doc_009#p11",
+          "doc_009#p12",
+          "doc_020#p1",
+          "doc_023#p2"
+        ],
+        "b1_in_volume_unquoted_keys": [
+          "doc_006#p4",
+          "doc_006#p8",
+          "doc_008#p2",
+          "doc_009#p11",
+          "doc_009#p12"
+        ],
+        "b4_exported_not_gold": [
+          "doc_047#p11",
+          "doc_054#p1",
+          "doc_068#p1",
+          "doc_072#p2",
+          "doc_072#p3",
+          "doc_085#p2",
+          "doc_088#p1",
+          "doc_098#p7",
+          "doc_103#p8"
+        ]
+      },
+      "jia_key_list": [
+        "doc_047#p11",
+        "doc_054#p1",
+        "doc_068#p1",
+        "doc_072#p2",
+        "doc_072#p3",
+        "doc_085#p2",
+        "doc_088#p1",
+        "doc_098#p7",
+        "doc_103#p8"
+      ]
+    },
+    {
+      "slug": "wanghong",
+      "n_questions": 3,
+      "n_gold_items": 19,
+      "n_gold_keys": 18,
+      "n_jia_pairs": 29,
+      "n_jia_rows": 5,
+      "n_jia_keys": 5,
+      "skipped_tie": 5,
+      "skipped_noloc": 0,
+      "ding_streams": {
+        "conflicts": {
+          "locable": 7,
+          "discarded": 0,
+          "added_to_union": 7
+        },
+        "fact_ledger": {
+          "locable": 7,
+          "discarded": 0,
+          "added_to_union": 7
+        },
+        "rejected": {
+          "locable": 11,
+          "discarded": 0,
+          "added_to_union": 10
+        },
+        "dissent": {
+          "locable": 5,
+          "discarded": 0,
+          "added_to_union": 0
+        }
+      },
+      "ding_union_n": 24,
+      "ding_conservation": {
+        "max_locable": 11,
+        "union": 24,
+        "sum_locable": 30,
+        "ok": true
+      },
+      "wu_n_pairs": 75,
+      "wu_union_n": 7,
+      "wu_hit": 0,
+      "wu_gold_keys": 18,
+      "wu_kind_keys": {
+        "数字": 7,
+        "重复报道": 3
+      },
+      "wu_kind_hit": {
+        "数字": 0,
+        "重复报道": 0
+      },
+      "wu_discarded": 0,
+      "hit_keys_n": 3,
+      "recall_key": 0.16666666666666666,
+      "precision_key": 0.6,
+      "ub_hit_keys": 6,
+      "ub_recall_key": 0.3333333333333333,
+      "ub_precision_key": 0.25,
+      "match_91": {
+        "n_sub": 5,
+        "n_gold": 19,
+        "exact": 3,
+        "Precision_conf": 0.6,
+        "Recall_conf": 0.15789473684210525
+      },
+      "buckets": {
+        "hit": 3,
+        "b2_total": 3,
+        "b2_loser_anomaly": [],
+        "b2_tie_only": 1,
+        "b2_noroute": 2,
+        "b1_total": 12,
+        "b1_in_volume": 12,
+        "b1_in_volume_quoted": 2,
+        "b1_in_volume_unquoted": 10,
+        "b1_in_volume_quoted_keys": [
+          "doc_004#p10",
+          "doc_010#p5"
+        ],
+        "b1_not_in_volume": 0,
+        "b1_in_volume_keys": [
+          "doc_004#p10",
+          "doc_004#p7",
+          "doc_010#p3",
+          "doc_010#p5",
+          "doc_015#p7",
+          "doc_029#p3",
+          "doc_034#p2",
+          "doc_046#p3",
+          "doc_056#p1",
+          "doc_063#p4",
+          "doc_071#p2",
+          "doc_073#p2"
+        ],
+        "b1_in_volume_unquoted_keys": [
+          "doc_004#p7",
+          "doc_010#p3",
+          "doc_015#p7",
+          "doc_029#p3",
+          "doc_034#p2",
+          "doc_046#p3",
+          "doc_056#p1",
+          "doc_063#p4",
+          "doc_071#p2",
+          "doc_073#p2"
+        ],
+        "b4_exported_not_gold": [
+          "doc_063#p3",
+          "doc_073#p3"
+        ]
+      },
+      "jia_key_list": [
+        "doc_017#p1",
+        "doc_030#p2",
+        "doc_048#p3",
+        "doc_063#p3",
+        "doc_073#p3"
+      ]
+    }
+  ]
+}

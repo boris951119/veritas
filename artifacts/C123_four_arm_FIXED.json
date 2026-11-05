@@ -1,0 +1,1158 @@
+{
+ "schema_version": "c123.four_arm.v1",
+ "tip_declared": "0e957faa0952e6260c4f981d048d8ca785ec189a",
+ "arms": [
+  {
+   "arm": "arm0_双旗关＝生产默认",
+   "trace": "0",
+   "calib": "0"
+  },
+  {
+   "arm": "arm1_只开冲突留痕",
+   "trace": "1",
+   "calib": "0"
+  },
+  {
+   "arm": "arm2_只开置信校准",
+   "trace": "0",
+   "calib": "1"
+  },
+  {
+   "arm": "arm3_双旗开",
+   "trace": "1",
+   "calib": "1"
+  }
+ ],
+ "base_env_pinned": {
+  "VERITAS_KG_SUBMIT_SURFACE": "1",
+  "VERITAS_KG_STAGE1": "1",
+  "VERITAS_KG_REHYDRATE_BOX": "1",
+  "VERITAS_MULTI_BOX": "0",
+  "VERITAS_SECOND_PASS": "0",
+  "VERITAS_REVIEW_BOOST": "0",
+  "VERITAS_TREE15_DEPRESS": "0",
+  "VERITAS_ANCHOR_STABLE": "0",
+  "VERITAS_CONFLICT_TRACE": "0",
+  "VERITAS_CONF_CALIB": "0",
+  "VERITAS_CLAIM_SLOTS": "0",
+  "VERITAS_MECH_MERGE": "0",
+  "VERITAS_LEDGER_OUTLIER_TAG": "0",
+  "VERITAS_LEDGER_TIME_CLASS": "0",
+  "VERITAS_SOURCE_TIME_UNIFIED": "0",
+  "VERITAS_EVOLVE_VALUE_CHANGE": "0",
+  "VERITAS_METRIC_CANON": "0",
+  "VERITAS_RELEVANCE_SOFT_GATE": "1",
+  "VERITAS_MODEL_PROBE": "0",
+  "VERITAS_OCR": "0",
+  "VERITAS_FETCH_LINKS": "0"
+ },
+ "model_calls": 0,
+ "legs": {
+  "A": {
+   "arms": {
+    "arm0_双旗关＝生产默认": {
+     "trace_env": "0",
+     "calib_env": "0",
+     "per_case": {
+      "刘翔编制“二选一”事件": {
+       "wrote_key": false,
+       "n": 0,
+       "coverage_rate": null,
+       "unclassified": null,
+       "trace_complete_rate": null,
+       "by_class": null,
+       "note": "旗关＝按设计不写键（对照基线）"
+      },
+      "王虹“北大discouraged”事件": {
+       "wrote_key": false,
+       "n": 0,
+       "coverage_rate": null,
+       "unclassified": null,
+       "trace_complete_rate": null,
+       "by_class": null,
+       "note": "旗关＝按设计不写键（对照基线）"
+      },
+      "柬泰边境争端（2025.12–2026.9）": {
+       "wrote_key": false,
+       "n": 0,
+       "coverage_rate": null,
+       "unclassified": null,
+       "trace_complete_rate": null,
+       "by_class": null,
+       "note": "旗关＝按设计不写键（对照基线）"
+      },
+      "印度航空 AI171 空难（2025.6–2026.5）": {
+       "wrote_key": false,
+       "n": 0,
+       "coverage_rate": null,
+       "unclassified": null,
+       "trace_complete_rate": null,
+       "by_class": null,
+       "note": "旗关＝按设计不写键（对照基线）"
+      }
+     },
+     "total_n": 0,
+     "total_classified": 0,
+     "total_unclassified": 0,
+     "coverage_rate_pooled": null,
+     "by_class_pooled": {}
+    },
+    "arm1_只开冲突留痕": {
+     "trace_env": "1",
+     "calib_env": "0",
+     "per_case": {
+      "刘翔编制“二选一”事件": {
+       "wrote_key": true,
+       "n": 3,
+       "coverage_rate": 1.0,
+       "unclassified": 0,
+       "trace_complete_rate": 1.0,
+       "by_class": {
+        "unknown_time": 3,
+        "cross_day": 0,
+        "same_window": 0,
+        "unclassified": 0
+       },
+       "n_fields_manual_check": 3
+      },
+      "王虹“北大discouraged”事件": {
+       "wrote_key": true,
+       "n": 5,
+       "coverage_rate": 1.0,
+       "unclassified": 0,
+       "trace_complete_rate": 1.0,
+       "by_class": {
+        "unknown_time": 5,
+        "cross_day": 0,
+        "same_window": 0,
+        "unclassified": 0
+       },
+       "n_fields_manual_check": 5
+      },
+      "柬泰边境争端（2025.12–2026.9）": {
+       "wrote_key": true,
+       "n": 15,
+       "coverage_rate": 1.0,
+       "unclassified": 0,
+       "trace_complete_rate": 1.0,
+       "by_class": {
+        "unknown_time": 15,
+        "cross_day": 0,
+        "same_window": 0,
+        "unclassified": 0
+       },
+       "n_fields_manual_check": 15
+      },
+      "印度航空 AI171 空难（2025.6–2026.5）": {
+       "wrote_key": true,
+       "n": 12,
+       "coverage_rate": 1.0,
+       "unclassified": 0,
+       "trace_complete_rate": 1.0,
+       "by_class": {
+        "unknown_time": 0,
+        "cross_day": 9,
+        "same_window": 3,
+        "unclassified": 0
+       },
+       "n_fields_manual_check": 12
+      }
+     },
+     "total_n": 35,
+     "total_classified": 35,
+     "total_unclassified": 0,
+     "coverage_rate_pooled": 1.0,
+     "by_class_pooled": {
+      "unknown_time": 23,
+      "cross_day": 9,
+      "same_window": 3,
+      "unclassified": 0
+     }
+    },
+    "arm2_只开置信校准": {
+     "trace_env": "0",
+     "calib_env": "1",
+     "per_case": {
+      "刘翔编制“二选一”事件": {
+       "wrote_key": false,
+       "n": 0,
+       "coverage_rate": null,
+       "unclassified": null,
+       "trace_complete_rate": null,
+       "by_class": null,
+       "note": "旗关＝按设计不写键（对照基线）"
+      },
+      "王虹“北大discouraged”事件": {
+       "wrote_key": false,
+       "n": 0,
+       "coverage_rate": null,
+       "unclassified": null,
+       "trace_complete_rate": null,
+       "by_class": null,
+       "note": "旗关＝按设计不写键（对照基线）"
+      },
+      "柬泰边境争端（2025.12–2026.9）": {
+       "wrote_key": false,
+       "n": 0,
+       "coverage_rate": null,
+       "unclassified": null,
+       "trace_complete_rate": null,
+       "by_class": null,
+       "note": "旗关＝按设计不写键（对照基线）"
+      },
+      "印度航空 AI171 空难（2025.6–2026.5）": {
+       "wrote_key": false,
+       "n": 0,
+       "coverage_rate": null,
+       "unclassified": null,
+       "trace_complete_rate": null,
+       "by_class": null,
+       "note": "旗关＝按设计不写键（对照基线）"
+      }
+     },
+     "total_n": 0,
+     "total_classified": 0,
+     "total_unclassified": 0,
+     "coverage_rate_pooled": null,
+     "by_class_pooled": {}
+    },
+    "arm3_双旗开": {
+     "trace_env": "1",
+     "calib_env": "1",
+     "per_case": {
+      "刘翔编制“二选一”事件": {
+       "wrote_key": true,
+       "n": 3,
+       "coverage_rate": 1.0,
+       "unclassified": 0,
+       "trace_complete_rate": 1.0,
+       "by_class": {
+        "unknown_time": 3,
+        "cross_day": 0,
+        "same_window": 0,
+        "unclassified": 0
+       },
+       "n_fields_manual_check": 3
+      },
+      "王虹“北大discouraged”事件": {
+       "wrote_key": true,
+       "n": 5,
+       "coverage_rate": 1.0,
+       "unclassified": 0,
+       "trace_complete_rate": 1.0,
+       "by_class": {
+        "unknown_time": 5,
+        "cross_day": 0,
+        "same_window": 0,
+        "unclassified": 0
+       },
+       "n_fields_manual_check": 5
+      },
+      "柬泰边境争端（2025.12–2026.9）": {
+       "wrote_key": true,
+       "n": 15,
+       "coverage_rate": 1.0,
+       "unclassified": 0,
+       "trace_complete_rate": 1.0,
+       "by_class": {
+        "unknown_time": 15,
+        "cross_day": 0,
+        "same_window": 0,
+        "unclassified": 0
+       },
+       "n_fields_manual_check": 15
+      },
+      "印度航空 AI171 空难（2025.6–2026.5）": {
+       "wrote_key": true,
+       "n": 12,
+       "coverage_rate": 1.0,
+       "unclassified": 0,
+       "trace_complete_rate": 1.0,
+       "by_class": {
+        "unknown_time": 0,
+        "cross_day": 9,
+        "same_window": 3,
+        "unclassified": 0
+       },
+       "n_fields_manual_check": 12
+      }
+     },
+     "total_n": 35,
+     "total_classified": 35,
+     "total_unclassified": 0,
+     "coverage_rate_pooled": 1.0,
+     "by_class_pooled": {
+      "unknown_time": 23,
+      "cross_day": 9,
+      "same_window": 3,
+      "unclassified": 0
+     }
+    }
+   },
+   "cases": {
+    "刘翔编制“二选一”事件": {
+     "n_collisions": 3,
+     "n_cross_source": 2,
+     "time_class_hist": {
+      "unknown_time": 3
+     }
+    },
+    "王虹“北大discouraged”事件": {
+     "n_collisions": 5,
+     "n_cross_source": 5,
+     "time_class_hist": {
+      "unknown_time": 5
+     }
+    },
+    "柬泰边境争端（2025.12–2026.9）": {
+     "n_collisions": 15,
+     "n_cross_source": 15,
+     "time_class_hist": {
+      "unknown_time": 15
+     }
+    },
+    "印度航空 AI171 空难（2025.6–2026.5）": {
+     "n_collisions": 12,
+     "n_cross_source": 10,
+     "time_class_hist": {
+      "cross_day": 9,
+      "same_window": 3
+     }
+    }
+   },
+   "n_cases_loaded": 4
+  },
+  "B": {
+   "arms": {
+    "arm0_双旗关＝生产默认": {
+     "trace_env": "0",
+     "wrote_key": false,
+     "accounting_keys": [],
+     "payload_n": null,
+     "summary_present": false,
+     "coverage_when_empty": null,
+     "honest_empty": false
+    },
+    "arm1_只开冲突留痕": {
+     "trace_env": "1",
+     "wrote_key": true,
+     "accounting_keys": [
+      "conflict_trace"
+     ],
+     "payload_n": 0,
+     "summary_present": true,
+     "coverage_when_empty": 0.0,
+     "honest_empty": true
+    },
+    "arm2_只开置信校准": {
+     "trace_env": "0",
+     "wrote_key": false,
+     "accounting_keys": [],
+     "payload_n": null,
+     "summary_present": false,
+     "coverage_when_empty": null,
+     "honest_empty": false
+    },
+    "arm3_双旗开": {
+     "trace_env": "1",
+     "wrote_key": true,
+     "accounting_keys": [
+      "conflict_trace"
+     ],
+     "payload_n": 0,
+     "summary_present": true,
+     "coverage_when_empty": 0.0,
+     "honest_empty": true
+    }
+   }
+  },
+  "C": {
+   "ruler": "C-116 同尺＝calibration/face_v2_row_snapshot.jsonl（自标，非金标提示）",
+   "n_rows": 226,
+   "arms": {
+    "arm0_双旗关＝生产默认": {
+     "calib_env": "0",
+     "trace_env": "0",
+     "n_rows": 226,
+     "high_band_precision": {
+      "n_high": 29,
+      "n_hit": 6,
+      "precision": 0.20689655172413793,
+      "accuracy": 0.5172413793103449,
+      "strict": true
+     },
+     "ece": 0.056505,
+     "high_coverage_count": 29,
+     "n_demoted": 0,
+     "demote_reason_hist": {},
+     "leaks": 0
+    },
+    "arm1_只开冲突留痕": {
+     "calib_env": "0",
+     "trace_env": "1",
+     "n_rows": 226,
+     "high_band_precision": {
+      "n_high": 29,
+      "n_hit": 6,
+      "precision": 0.20689655172413793,
+      "accuracy": 0.5172413793103449,
+      "strict": true
+     },
+     "ece": 0.056505,
+     "high_coverage_count": 29,
+     "n_demoted": 0,
+     "demote_reason_hist": {},
+     "leaks": 0
+    },
+    "arm2_只开置信校准": {
+     "calib_env": "1",
+     "trace_env": "0",
+     "n_rows": 226,
+     "high_band_precision": {
+      "n_high": 11,
+      "n_hit": 3,
+      "precision": 0.2727272727272727,
+      "accuracy": 0.6363636363636364,
+      "strict": true
+     },
+     "ece": 0.054964,
+     "high_coverage_count": 11,
+     "n_demoted": 18,
+     "demote_reason_hist": {
+      "panel_disagreement": 13,
+      "chain_incomplete": 4,
+      "min_evidence": 2
+     },
+     "leaks": 0
+    },
+    "arm3_双旗开": {
+     "calib_env": "1",
+     "trace_env": "1",
+     "n_rows": 226,
+     "high_band_precision": {
+      "n_high": 11,
+      "n_hit": 3,
+      "precision": 0.2727272727272727,
+      "accuracy": 0.6363636363636364,
+      "strict": true
+     },
+     "ece": 0.054964,
+     "high_coverage_count": 11,
+     "n_demoted": 18,
+     "demote_reason_hist": {
+      "panel_disagreement": 13,
+      "chain_incomplete": 4,
+      "min_evidence": 2
+     },
+     "leaks": 0
+    }
+   },
+   "note_未能量": "五道降档闸里 `conflict_undecided` 这一道在离线快照面永远测不到——它要案卷里有未决冲突对（`dossier.conflicts`），快照只有 parts＝没有冲突。这一道的真读数只看 E 腿（真走 pipeline 的案卷）。"
+  },
+  "D": {
+   "arms": {
+    "arm0_双旗关＝生产默认": {
+     "trace_env": "0",
+     "calib_env": "0",
+     "liuxiang_at7": 12,
+     "liuxiang_l2": 13,
+     "holdout_l2": 29,
+     "leaks_total": 0,
+     "rows": [
+      {
+       "slug": "liuxiang",
+       "qid": "q_001",
+       "role": "regression",
+       "l2": 4,
+       "at7": 4,
+       "leaks": 0,
+       "n_sel": 88
+      },
+      {
+       "slug": "liuxiang",
+       "qid": "q_002",
+       "role": "regression",
+       "l2": 5,
+       "at7": 4,
+       "leaks": 0,
+       "n_sel": 94
+      },
+      {
+       "slug": "liuxiang",
+       "qid": "q_003",
+       "role": "regression",
+       "l2": 4,
+       "at7": 4,
+       "leaks": 0,
+       "n_sel": 95
+      },
+      {
+       "slug": "wanghong",
+       "qid": "q_001",
+       "role": "holdout",
+       "l2": 2,
+       "at7": 1,
+       "leaks": 0,
+       "n_sel": 76
+      },
+      {
+       "slug": "wanghong",
+       "qid": "q_002",
+       "role": "holdout",
+       "l2": 2,
+       "at7": 2,
+       "leaks": 0,
+       "n_sel": 92
+      },
+      {
+       "slug": "wanghong",
+       "qid": "q_003",
+       "role": "holdout",
+       "l2": 3,
+       "at7": 3,
+       "leaks": 0,
+       "n_sel": 78
+      },
+      {
+       "slug": "kh_th",
+       "qid": "q_001",
+       "role": "holdout",
+       "l2": 1,
+       "at7": 1,
+       "leaks": 0,
+       "n_sel": 79
+      },
+      {
+       "slug": "kh_th",
+       "qid": "q_002",
+       "role": "holdout",
+       "l2": 3,
+       "at7": 2,
+       "leaks": 0,
+       "n_sel": 64
+      },
+      {
+       "slug": "kh_th",
+       "qid": "q_003",
+       "role": "holdout",
+       "l2": 5,
+       "at7": 2,
+       "leaks": 0,
+       "n_sel": 77
+      },
+      {
+       "slug": "ai171",
+       "qid": "q_001",
+       "role": "holdout",
+       "l2": 4,
+       "at7": 2,
+       "leaks": 0,
+       "n_sel": 108
+      },
+      {
+       "slug": "ai171",
+       "qid": "q_002",
+       "role": "holdout",
+       "l2": 5,
+       "at7": 1,
+       "leaks": 0,
+       "n_sel": 118
+      },
+      {
+       "slug": "ai171",
+       "qid": "q_003",
+       "role": "holdout",
+       "l2": 4,
+       "at7": 1,
+       "leaks": 0,
+       "n_sel": 151
+      }
+     ]
+    },
+    "arm1_只开冲突留痕": {
+     "trace_env": "1",
+     "calib_env": "0",
+     "liuxiang_at7": 12,
+     "liuxiang_l2": 13,
+     "holdout_l2": 29,
+     "leaks_total": 0,
+     "rows": [
+      {
+       "slug": "liuxiang",
+       "qid": "q_001",
+       "role": "regression",
+       "l2": 4,
+       "at7": 4,
+       "leaks": 0,
+       "n_sel": 88
+      },
+      {
+       "slug": "liuxiang",
+       "qid": "q_002",
+       "role": "regression",
+       "l2": 5,
+       "at7": 4,
+       "leaks": 0,
+       "n_sel": 94
+      },
+      {
+       "slug": "liuxiang",
+       "qid": "q_003",
+       "role": "regression",
+       "l2": 4,
+       "at7": 4,
+       "leaks": 0,
+       "n_sel": 95
+      },
+      {
+       "slug": "wanghong",
+       "qid": "q_001",
+       "role": "holdout",
+       "l2": 2,
+       "at7": 1,
+       "leaks": 0,
+       "n_sel": 76
+      },
+      {
+       "slug": "wanghong",
+       "qid": "q_002",
+       "role": "holdout",
+       "l2": 2,
+       "at7": 2,
+       "leaks": 0,
+       "n_sel": 92
+      },
+      {
+       "slug": "wanghong",
+       "qid": "q_003",
+       "role": "holdout",
+       "l2": 3,
+       "at7": 3,
+       "leaks": 0,
+       "n_sel": 78
+      },
+      {
+       "slug": "kh_th",
+       "qid": "q_001",
+       "role": "holdout",
+       "l2": 1,
+       "at7": 1,
+       "leaks": 0,
+       "n_sel": 79
+      },
+      {
+       "slug": "kh_th",
+       "qid": "q_002",
+       "role": "holdout",
+       "l2": 3,
+       "at7": 2,
+       "leaks": 0,
+       "n_sel": 64
+      },
+      {
+       "slug": "kh_th",
+       "qid": "q_003",
+       "role": "holdout",
+       "l2": 5,
+       "at7": 2,
+       "leaks": 0,
+       "n_sel": 77
+      },
+      {
+       "slug": "ai171",
+       "qid": "q_001",
+       "role": "holdout",
+       "l2": 4,
+       "at7": 2,
+       "leaks": 0,
+       "n_sel": 108
+      },
+      {
+       "slug": "ai171",
+       "qid": "q_002",
+       "role": "holdout",
+       "l2": 5,
+       "at7": 1,
+       "leaks": 0,
+       "n_sel": 118
+      },
+      {
+       "slug": "ai171",
+       "qid": "q_003",
+       "role": "holdout",
+       "l2": 4,
+       "at7": 1,
+       "leaks": 0,
+       "n_sel": 151
+      }
+     ]
+    },
+    "arm2_只开置信校准": {
+     "trace_env": "0",
+     "calib_env": "1",
+     "liuxiang_at7": 12,
+     "liuxiang_l2": 13,
+     "holdout_l2": 29,
+     "leaks_total": 0,
+     "rows": [
+      {
+       "slug": "liuxiang",
+       "qid": "q_001",
+       "role": "regression",
+       "l2": 4,
+       "at7": 4,
+       "leaks": 0,
+       "n_sel": 88
+      },
+      {
+       "slug": "liuxiang",
+       "qid": "q_002",
+       "role": "regression",
+       "l2": 5,
+       "at7": 4,
+       "leaks": 0,
+       "n_sel": 94
+      },
+      {
+       "slug": "liuxiang",
+       "qid": "q_003",
+       "role": "regression",
+       "l2": 4,
+       "at7": 4,
+       "leaks": 0,
+       "n_sel": 95
+      },
+      {
+       "slug": "wanghong",
+       "qid": "q_001",
+       "role": "holdout",
+       "l2": 2,
+       "at7": 1,
+       "leaks": 0,
+       "n_sel": 76
+      },
+      {
+       "slug": "wanghong",
+       "qid": "q_002",
+       "role": "holdout",
+       "l2": 2,
+       "at7": 2,
+       "leaks": 0,
+       "n_sel": 92
+      },
+      {
+       "slug": "wanghong",
+       "qid": "q_003",
+       "role": "holdout",
+       "l2": 3,
+       "at7": 3,
+       "leaks": 0,
+       "n_sel": 78
+      },
+      {
+       "slug": "kh_th",
+       "qid": "q_001",
+       "role": "holdout",
+       "l2": 1,
+       "at7": 1,
+       "leaks": 0,
+       "n_sel": 79
+      },
+      {
+       "slug": "kh_th",
+       "qid": "q_002",
+       "role": "holdout",
+       "l2": 3,
+       "at7": 2,
+       "leaks": 0,
+       "n_sel": 64
+      },
+      {
+       "slug": "kh_th",
+       "qid": "q_003",
+       "role": "holdout",
+       "l2": 5,
+       "at7": 2,
+       "leaks": 0,
+       "n_sel": 77
+      },
+      {
+       "slug": "ai171",
+       "qid": "q_001",
+       "role": "holdout",
+       "l2": 4,
+       "at7": 2,
+       "leaks": 0,
+       "n_sel": 108
+      },
+      {
+       "slug": "ai171",
+       "qid": "q_002",
+       "role": "holdout",
+       "l2": 5,
+       "at7": 1,
+       "leaks": 0,
+       "n_sel": 118
+      },
+      {
+       "slug": "ai171",
+       "qid": "q_003",
+       "role": "holdout",
+       "l2": 4,
+       "at7": 1,
+       "leaks": 0,
+       "n_sel": 151
+      }
+     ]
+    },
+    "arm3_双旗开": {
+     "trace_env": "1",
+     "calib_env": "1",
+     "liuxiang_at7": 12,
+     "liuxiang_l2": 13,
+     "holdout_l2": 29,
+     "leaks_total": 0,
+     "rows": [
+      {
+       "slug": "liuxiang",
+       "qid": "q_001",
+       "role": "regression",
+       "l2": 4,
+       "at7": 4,
+       "leaks": 0,
+       "n_sel": 88
+      },
+      {
+       "slug": "liuxiang",
+       "qid": "q_002",
+       "role": "regression",
+       "l2": 5,
+       "at7": 4,
+       "leaks": 0,
+       "n_sel": 94
+      },
+      {
+       "slug": "liuxiang",
+       "qid": "q_003",
+       "role": "regression",
+       "l2": 4,
+       "at7": 4,
+       "leaks": 0,
+       "n_sel": 95
+      },
+      {
+       "slug": "wanghong",
+       "qid": "q_001",
+       "role": "holdout",
+       "l2": 2,
+       "at7": 1,
+       "leaks": 0,
+       "n_sel": 76
+      },
+      {
+       "slug": "wanghong",
+       "qid": "q_002",
+       "role": "holdout",
+       "l2": 2,
+       "at7": 2,
+       "leaks": 0,
+       "n_sel": 92
+      },
+      {
+       "slug": "wanghong",
+       "qid": "q_003",
+       "role": "holdout",
+       "l2": 3,
+       "at7": 3,
+       "leaks": 0,
+       "n_sel": 78
+      },
+      {
+       "slug": "kh_th",
+       "qid": "q_001",
+       "role": "holdout",
+       "l2": 1,
+       "at7": 1,
+       "leaks": 0,
+       "n_sel": 79
+      },
+      {
+       "slug": "kh_th",
+       "qid": "q_002",
+       "role": "holdout",
+       "l2": 3,
+       "at7": 2,
+       "leaks": 0,
+       "n_sel": 64
+      },
+      {
+       "slug": "kh_th",
+       "qid": "q_003",
+       "role": "holdout",
+       "l2": 5,
+       "at7": 2,
+       "leaks": 0,
+       "n_sel": 77
+      },
+      {
+       "slug": "ai171",
+       "qid": "q_001",
+       "role": "holdout",
+       "l2": 4,
+       "at7": 2,
+       "leaks": 0,
+       "n_sel": 108
+      },
+      {
+       "slug": "ai171",
+       "qid": "q_002",
+       "role": "holdout",
+       "l2": 5,
+       "at7": 1,
+       "leaks": 0,
+       "n_sel": 118
+      },
+      {
+       "slug": "ai171",
+       "qid": "q_003",
+       "role": "holdout",
+       "l2": 4,
+       "at7": 1,
+       "leaks": 0,
+       "n_sel": 151
+      }
+     ]
+    }
+   },
+   "plan_n": 12,
+   "meta_present": true
+  },
+  "E": {
+   "arms": {
+    "arm0_双旗关＝生产默认": {
+     "trace_env": "0",
+     "calib_env": "0",
+     "error": null,
+     "export_files": [
+      "causal_evidence.json",
+      "conclusions.json",
+      "confidence.json",
+      "conflict_resolution.json",
+      "evidence.json",
+      "q_001",
+      "q_002",
+      "字段说明.md"
+     ],
+     "official_five_complete": true,
+     "conflict_trace_json_written": false,
+     "conflict_trace_summary": null,
+     "confidence_band_fields": {
+      "band": 4,
+      "band_rel": 4
+     },
+     "dossier_trace_key_after_run": [
+      "NO",
+      "NO"
+     ],
+     "n_conflict_pairs": [
+      1,
+      1
+     ],
+     "n_majority": [
+      2,
+      2
+     ],
+     "wall_s": 6.0
+    },
+    "arm1_只开冲突留痕": {
+     "trace_env": "1",
+     "calib_env": "0",
+     "error": null,
+     "export_files": [
+      "causal_evidence.json",
+      "conclusions.json",
+      "confidence.json",
+      "conflict_resolution.json",
+      "conflict_trace.json",
+      "evidence.json",
+      "q_001",
+      "q_002",
+      "字段说明.md"
+     ],
+     "official_five_complete": true,
+     "conflict_trace_json_written": true,
+     "conflict_trace_summary": {
+      "n": 8,
+      "classified": 8,
+      "unclassified": 0,
+      "coverage_rate": 1.0,
+      "trace_complete": 8,
+      "trace_complete_rate": 1.0,
+      "by_class": {
+       "unknown_time": 8,
+       "cross_day": 0,
+       "same_window": 0,
+       "unclassified": 0
+      },
+      "by_disposition": {
+       "dissent": 0,
+       "undecided": 8,
+       "keep": 0
+      }
+     },
+     "confidence_band_fields": {
+      "band": 4,
+      "band_rel": 4
+     },
+     "dossier_trace_key_after_run": [
+      "HAS",
+      "HAS"
+     ],
+     "n_conflict_pairs": [
+      1,
+      1
+     ],
+     "n_majority": [
+      2,
+      2
+     ],
+     "wall_s": 6.2
+    },
+    "arm2_只开置信校准": {
+     "trace_env": "0",
+     "calib_env": "1",
+     "error": null,
+     "export_files": [
+      "causal_evidence.json",
+      "conclusions.json",
+      "confidence.json",
+      "conflict_resolution.json",
+      "evidence.json",
+      "q_001",
+      "q_002",
+      "字段说明.md"
+     ],
+     "official_five_complete": true,
+     "conflict_trace_json_written": false,
+     "conflict_trace_summary": null,
+     "confidence_band_fields": {
+      "band": 4,
+      "predicted_band": 4,
+      "demote_reasons": 4,
+      "band_rel": 4
+     },
+     "dossier_trace_key_after_run": [
+      "NO",
+      "NO"
+     ],
+     "n_conflict_pairs": [
+      1,
+      1
+     ],
+     "n_majority": [
+      2,
+      2
+     ],
+     "wall_s": 6.0
+    },
+    "arm3_双旗开": {
+     "trace_env": "1",
+     "calib_env": "1",
+     "error": null,
+     "export_files": [
+      "causal_evidence.json",
+      "conclusions.json",
+      "confidence.json",
+      "conflict_resolution.json",
+      "conflict_trace.json",
+      "evidence.json",
+      "q_001",
+      "q_002",
+      "字段说明.md"
+     ],
+     "official_five_complete": true,
+     "conflict_trace_json_written": true,
+     "conflict_trace_summary": {
+      "n": 8,
+      "classified": 8,
+      "unclassified": 0,
+      "coverage_rate": 1.0,
+      "trace_complete": 8,
+      "trace_complete_rate": 1.0,
+      "by_class": {
+       "unknown_time": 8,
+       "cross_day": 0,
+       "same_window": 0,
+       "unclassified": 0
+      },
+      "by_disposition": {
+       "dissent": 0,
+       "undecided": 8,
+       "keep": 0
+      }
+     },
+     "confidence_band_fields": {
+      "band": 4,
+      "predicted_band": 4,
+      "demote_reasons": 4,
+      "band_rel": 4
+     },
+     "dossier_trace_key_after_run": [
+      "HAS",
+      "HAS"
+     ],
+     "n_conflict_pairs": [
+      1,
+      1
+     ],
+     "n_majority": [
+      2,
+      2
+     ],
+     "wall_s": 6.2
+    }
+   },
+   "case": "刘翔编制“二选一”事件",
+   "n_questions": 2,
+   "checks": {},
+   "question_ids": [
+    "q_001",
+    "q_002"
+   ]
+  }
+ },
+ "checks": {
+  "A腿四臂都在场": true,
+  "A腿开臂都取到条数（不许空比空）": true,
+  "A腿关臂也真取到对撞数（不是没跑）": true,
+  "A腿关臂不写键／开臂写键": true,
+  "A腿三箱计数非空": true,
+  "B腿关臂确实不写键": true,
+  "B腿开臂写出 n=0 的诚实空态": true,
+  "C腿四臂都取到 ECE": true,
+  "C腿行数两侧一致（非空）": true,
+  "C腿只开留痕＝置信面零漂移（两旗不串）": true,
+  "D腿四臂都取到 @7／holdout": true,
+  "D腿逐臂都取到行数（12 题）": true,
+  "D腿泄漏＝0（逐臂实测，不是没跑）": true,
+  "D腿 @7 两侧都非零": true,
+  "E腿四臂都跑完": true,
+  "E腿逐臂交卷五份齐全": true,
+  "E腿无异常吞跑": true
+ },
+ "checks_failed": [],
+ "legs_requested": [
+  "A",
+  "B",
+  "C",
+  "D",
+  "E"
+ ],
+ "legs_ran": [
+  "A",
+  "B",
+  "C",
+  "D",
+  "E"
+ ]
+}
