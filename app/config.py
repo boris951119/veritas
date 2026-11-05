@@ -602,6 +602,13 @@ class Settings:
     # env VERITAS_CONF_FACE_DETAIL；config.json conf_face_detail。
     conf_face_detail: bool = True
 
+    # C-159：置信面「档位依据＋高档收据」（主观 3.2 的收据面）。默认 True；
+    # 关＝VERITAS_CONF_RECEIPT=0 ⇒ confidence.json 与字段说明逐字节回 C-156 面。
+    # 只加两个解释键，不抬档：score／band／band_rel／terms 与 _AGG、LEVEL_WEIGHT、
+    # 档阈值数值一字不动（实现只读已印出的行内数值与常量表）。
+    # env VERITAS_CONF_RECEIPT；config.json conf_receipt。
+    conf_receipt: bool = True
+
     # C-117：树15 满箱减压（有界加一档字预算／可选 +1 续盒）。默认 False；
     # 开＝VERITAS_TREE15_DEPRESS=1。禁无界开窗；禁 pack 多维系数。
     # env VERITAS_TREE15_DEPRESS；config.json tree15_depress。
@@ -927,6 +934,11 @@ class Settings:
             s.conf_face_detail = False
         elif cfd in ("1", "true", "on", "yes"):
             s.conf_face_detail = True
+        cr = (os.environ.get("VERITAS_CONF_RECEIPT") or "").strip().lower()
+        if cr in ("0", "false", "off", "no"):
+            s.conf_receipt = False
+        elif cr in ("1", "true", "on", "yes"):
+            s.conf_receipt = True
         t15 = (os.environ.get("VERITAS_TREE15_DEPRESS") or "").strip().lower()
         if t15 in ("0", "false", "off", "no"):
             s.tree15_depress = False
@@ -1154,6 +1166,13 @@ class Settings:
                 s.conf_face_detail = raw_cfd
             elif isinstance(raw_cfd, (int, str)):
                 s.conf_face_detail = str(raw_cfd).strip().lower() not in (
+                    "0", "false", "off", "no", "")
+        if "conf_receipt" in data:
+            raw_cr = data.get("conf_receipt")
+            if isinstance(raw_cr, bool):
+                s.conf_receipt = raw_cr
+            elif isinstance(raw_cr, (int, str)):
+                s.conf_receipt = str(raw_cr).strip().lower() not in (
                     "0", "false", "off", "no", "")
         if "test_tree_line" in data:
             raw_ttl = data.get("test_tree_line")

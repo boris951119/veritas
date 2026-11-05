@@ -20,6 +20,11 @@ from app.core.confidence import (
     band_rel_rule_of,
     row_score_detail,
 )
+from app.core.confidence_receipt import (
+    HIGH_KEY as _RECEIPT_HIGH_KEY,
+    RECEIPT_KEY as _RECEIPT_KEY,
+    attach_receipts,
+)
 from app.core.conflicts import METHOD_TO_RESOLUTION_TYPE
 from app.core.evidence import (
     Dossier,
@@ -422,6 +427,30 @@ def conf_face_detail_enabled(settings: Any | None = None) -> bool:
     return True
 
 
+_CONF_RECEIPT_ENV = "VERITAS_CONF_RECEIPT"
+
+
+def conf_receipt_enabled(settings: Any | None = None) -> bool:
+    """C-159：置信面「档位依据＋高档收据」披露旗。出厂默认开；``=0``＝关。
+
+    关＝confidence.json 与字段说明逐字节回到 C-156 面（本票「换分＝0」那条腿走这里）；
+    开＝只往 confidence.json 加两个解释键（档位依据／高档收据）＋字段说明一段。
+    score、band、band_rel、terms、合式常量与阈值一个都不动——本旗不产生新判定，
+    也不读 C-156 之外的任何来源：字段不在场就写「未披露」。
+    """
+    if settings is None:
+        from app.config import Settings
+        settings = Settings.from_env()
+    if hasattr(settings, "conf_receipt"):
+        return bool(getattr(settings, "conf_receipt"))
+    v = (os.environ.get(_CONF_RECEIPT_ENV) or "").strip().lower()
+    if v in ("0", "false", "off", "no"):
+        return False
+    if v in ("1", "true", "on", "yes"):
+        return True
+    return True
+
+
 def _printed_recompute(terms: dict, score: float) -> dict:
     """评委只拿「印在这行上的四位数」复算这条 score——与程序内部同一式子，不另发明算法。
 
@@ -532,6 +561,60 @@ def _conf_constants_block() -> str:
         "行内 `component_basis` 给的是该行的真数来源（证据条数／署名数／编队人数／证据等级／"
         "最弱一条强度／六环 applicable 与 broken），`recompute` 是「只拿本行印出的数复算」的结果与差值。\n"
     )
+
+
+def _receipt_notes_block() -> str:
+    """confidence.json 两个解释键的字段说明（阈值与权重原样从常量表取，不手抄数字）。"""
+    consts = aggregate_constants()
+    thr = consts["band_thresholds"]
+    return (
+        "## confidence.json 档位依据与高档收据（C-159；只读已有字段，不新造判定）\n"
+        f"- 档位依据：每行一句，写明该行落这一档的机械理由——score 与阈值 "
+        f"{json.dumps(thr, ensure_ascii=False)} 的关系（高阈值＝官方达标行原文、"
+        "中阈值＝我方设定）、五项贡献（印出的权重×印出的分量，round4）、"
+        "贡献最大项与最低分量、证据等级构成、支撑与署名条数、六环适用与断、"
+        "三道硬门状态、按印出数复算结果、分位档。\n"
+        "- 高档收据：仅 band＝「高」的行携带，把「凭什么这条算高置信」摊成可核字段"
+        "（阈值原样值／高出阈值量／五项贡献／等级构成与等级权／支撑与署名／六环／"
+        "硬门逐门状态／复算结果）。中档与低档不出这个键，不出=没依据可摊。\n"
+        "- 数字纪律：理由句里的数字只允许来自该行自身数值、上行常量表，或由这两者"
+        "现算出的乘积与差值（±round4）；出现新数字＝越界，量尺逐行独立复算这套允许集"
+        "（scripts/probe_c159_conf_receipt.py），不由本模块自己盖章。\n"
+        "- 不抬档：本键不参与任何计算，score／band／band_rel／terms 一律由合式与阈值"
+        "现判；`_AGG`、LEVEL_WEIGHT、档阈值数值一字未动。高档少＝分布事实，"
+        "提档要动权重或补证据，都不在本票权限内（本票只让已有的高档条可核）。\n"
+        "- 来源不在场就写「未披露（置信面细节旗关）」：VERITAS_CONF_FACE_DETAIL=0 时"
+        " component_basis／recompute 整个缺席，本键不会凭空补出等级或复算结论。\n"
+        "- 三分量对官方 3.2.1 维度的映射：信源可信度↔strength；证据数量与一致性↔"
+        "coverage＋agreement_factor；推理链完整性↔chain_score。\n"
+        f"- 开关：VERITAS_CONF_RECEIPT（config.json conf_receipt），出厂默认开；"
+        "关＝confidence.json 与字段说明逐字节回到 C-156 面。\n"
+    )
+
+
+def _receipt_face_lines(rows: list[dict]) -> list[str]:
+    """本次置信收据面现量（在场率／高档覆盖／未披露行／两键自洽）——数字当场数。"""
+    n = len(rows)
+    with_sent = sum(1 for r in rows if str(r.get(_RECEIPT_KEY) or "").strip())
+    hi_rows = sum(1 for r in rows if r.get("band") == "高")
+    with_high = sum(1 for r in rows if isinstance(r.get(_RECEIPT_HIGH_KEY), dict))
+    mismatch = sum(1 for r in rows
+                   if (r.get("band") == "高") != isinstance(r.get(_RECEIPT_HIGH_KEY), dict))
+    undisclosed = sum(1 for r in rows
+                      if "未披露" in str(r.get(_RECEIPT_KEY) or ""))
+    share = round(with_high / n, 4) if n else 0.0
+    return [
+        (
+            f"置信收据本次现量（confidence.json {n} 行）：档位依据在场 {with_sent} 行"
+            f"（空 {n - with_sent} 行）；高档收据在场 {with_high} 行＝band「高」行数 "
+            f"{hi_rows} 行（两键不自洽 {mismatch} 行）；高档覆盖 "
+            f"{with_high}/{n}＝{share}。"
+        ),
+        (
+            f"理由句里出现「未披露」的行＝{undisclosed} 行（＝该行来源键不在场，"
+            f"如实说没有，不硬编依据）；本面不改档，score／band／band_rel 与关旗臂同一批行。"
+        ),
+    ]
 
 
 def _confidence_rows(question_id: str, dossier: Dossier) -> list[dict]:
@@ -992,6 +1075,11 @@ def export_official(runs: list[tuple[dict, Dossier]], out_dir: Path) -> dict[str
         row["band_rel"] = band_rel_of(pooled, float(row["score"]))
         row["band_rel_rule"] = rel_rule
 
+    # C-159：贴「档位依据／高档收据」。必须在 band_rel 落行之后——理由句要读分位档；
+    # 只新增两个解释键，score／band／band_rel／terms 一概不写。
+    if conf_receipt_enabled():
+        attach_receipts(confidence, official_name_of=level_official_of)
+
     paths = {
         "evidence": out_dir / "evidence.json",
         "conclusions": out_dir / "conclusions.json",
@@ -1184,9 +1272,13 @@ def export_official(runs: list[tuple[dict, Dossier]], out_dir: Path) -> dict[str
     if conf_face_detail_enabled():
         detail_block = "\n" + _conf_constants_block()
         conf_lines = _conf_face_lines(confidence)
+    receipt_block = ""
+    if conf_receipt_enabled():
+        receipt_block = "\n" + _receipt_notes_block()
+        conf_lines = conf_lines + _receipt_face_lines(confidence)
     notes_tail = "".join(line + "\n" for line in conf_lines)
     paths["notes"].write_text(
-        _FIELD_NOTES + detail_block + "\n## 本次导出\n" + gate_line + "\n"
+        _FIELD_NOTES + detail_block + receipt_block + "\n## 本次导出\n" + gate_line + "\n"
         + slot_line + "\n" + dedup_line + "\n" + face_line + "\n"
         + diverge_line + "\n" + conflict_skip_line + "\n" + notes_tail,
         encoding="utf-8")

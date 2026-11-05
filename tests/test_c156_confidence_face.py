@@ -13,6 +13,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import pytest
+
 from app.config import Settings
 from app.core import confidence as conf_mod
 from app.core.evidence import Conclusion, EvidenceNode
@@ -90,6 +92,17 @@ def _export(tmp_path: Path, monkeypatch, *, flag: str | None) -> tuple[list[dict
     rows = json.loads(paths["confidence"].read_text(encoding="utf-8"))
     notes = paths["notes"].read_text(encoding="utf-8")
     return rows, notes
+
+
+@pytest.fixture(autouse=True)
+def _c159_receipt_flag_off(monkeypatch):
+    """C-156 的行键集红线只管本票两类键；C-159 的披露旗在这里显式关到零。
+
+    C-159（叠在 C-156 tip 上）另往 confidence.json 加 ``档位依据``／``高档收据``
+    两键且出厂默认开——不收掉它，「关旗＝键集回到改前那一套」这条判据会被别的票
+    搅浑。两个键自有 ``tests/test_c159_conf_receipt.py`` 守。
+    """
+    monkeypatch.setenv("VERITAS_CONF_RECEIPT", "0")
 
 
 # ── 旗：出厂默认开＋env 关 ────────────────────────────────────────────────
